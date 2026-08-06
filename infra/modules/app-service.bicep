@@ -66,6 +66,13 @@ var baseAppSettings = [
     value: appInsightsConnectionString
   }
   {
+    // Exposed to the browser bundle so the Application Insights web SDK can send
+    // page views, route changes, JS errors + custom events. Same connection
+    // string as the server; the ingestion key it carries is not a secret.
+    name: 'NEXT_PUBLIC_APPLICATIONINSIGHTS_CONNECTION_STRING'
+    value: appInsightsConnectionString
+  }
+  {
     name: 'ApplicationInsightsAgent_EXTENSION_VERSION'
     value: '~3'
   }

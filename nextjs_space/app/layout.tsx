@@ -5,6 +5,7 @@ import { ChunkLoadErrorHandler } from '@/components/chunk-load-error-handler'
 import { LanguageProvider } from '@/components/language-provider'
 import { PwaRegister } from '@/components/pwa-register'
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
+import { TelemetryProvider } from '@/components/telemetry-provider'
 import { getSiteUrl } from '@/lib/config/environment'
 
 export const dynamic = 'force-dynamic';
@@ -61,6 +62,7 @@ export default function RootLayout({
           {children}
           <PwaInstallPrompt />
           <PwaRegister />
+          <TelemetryProvider />
           <Toaster />
           <ChunkLoadErrorHandler />
         </LanguageProvider>

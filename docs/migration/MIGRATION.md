@@ -728,3 +728,77 @@ content is altered; the changes are runtime, health, configuration and hardening
   `/api/health/ready`, `server.js` is emitted, and the Middleware bundle builds; `npm run
   test:network` ✅ 1 passed. (The build shows the benign `jose` Edge-runtime warnings inherited from
   Step 17's session code; they do not affect the Node-runtime routes.) No visible UX change.
+
+### Step 19 - Add Application Insights and structured telemetry
+
+This step wires **Azure Application Insights** into the app with **privacy-conscious** telemetry
+across every tier. Nothing in the UI, routing, styling or clinical content changes; the additions are
+observability-only and are a **no-op when unconfigured** (local dev / demo), so the visible parity
+experience is unchanged. The App Insights resource itself was already provisioned in Step 17; this
+step adds the SDKs, the instrumentation and the browser connection-string app setting.
+
+- **Privacy contract (the prime constraint):** telemetry **never carries clinical content**. No
+  uploaded image bytes, base64, medical descriptions, chat transcripts, sensitive prompts, sensitive
+  AI responses, authentication tokens, passwords, API keys or connection strings are ever sent. Both
+  the server ([lib/telemetry/server.ts](../../nextjs_space/lib/telemetry/server.ts)) and browser
+  ([lib/telemetry/client.ts](../../nextjs_space/lib/telemetry/client.ts)) modules run every custom
+  property through a `sanitize`/`sanitizeProperties` guard that **drops blocked keys** (image, base64,
+  photo, message, content, prompt, transcript, description, token, password, secret, apiKey,
+  connectionString, authorization, credential, sas), **rejects nested objects/arrays**, and
+  **truncates** long strings — defence-in-depth so a mistaken caller cannot leak content.
+- **Server SDK (manual, no auto-instrumentation):** the classic `applicationinsights` Node SDK is
+  used via a directly-constructed `TelemetryClient` (cloud role `phoenix-ai-web`) **without**
+  `setup().start()`, so no require-in-the-middle monkey-patching is wired into the server bundle —
+  only the explicit `trackEvent` / `trackMetric` / `trackException` / `trackDependency` calls emit.
+  It is initialised once at startup from
+  [instrumentation.ts](../../nextjs_space/instrumentation.ts) (which also emits an
+  `app_startup_complete` marker) and marked a **webpack server external** in
+  [next.config.js](../../nextjs_space/next.config.js) (its gRPC/OpenTelemetry transitive deps
+  reference Node built-ins webpack cannot bundle); standalone output traces it into the deployed
+  bundle so the runtime `require()` resolves.
+- **Browser SDK:** `@microsoft/applicationinsights-web` is initialised by a client
+  [TelemetryProvider](../../nextjs_space/components/telemetry-provider.tsx) mounted in
+  [app/layout.tsx](../../nextjs_space/app/layout.tsx). It captures **page load** (initial page view),
+  **route transitions** (`enableAutoRouteTracking` + an explicit `route_changed` event on
+  `usePathname` change), **JavaScript errors** and **unhandled promise rejections** (auto exception
+  tracking), and outbound fetch/XHR dependencies (URLs + durations only).
+- **Correlation across all tiers:** the browser stamps an `x-correlation-id` header on same-origin
+  `/api/*` fetches (a one-time `window.fetch` wrapper) and enables W3C distributed tracing
+  (`AI_AND_W3C` + CORS correlation). The API routes read-or-mint the ID via
+  [lib/telemetry/correlation.ts](../../nextjs_space/lib/telemetry/correlation.ts)
+  (`getOrCreateCorrelationId`, validated against a strict token pattern) and thread it into the **AI
+  provider**, **PostgreSQL** and **Blob Storage** telemetry, so a single clinician action can be
+  traced browser → API → AI → DB → Blob without any content.
+- **AI telemetry bridged at the choke point:** rather than re-instrumenting each route, the existing
+  privacy-safe AI telemetry ([lib/ai/telemetry.ts](../../nextjs_space/lib/ai/telemetry.ts)) `emit()`
+  now also forwards its already-redacted, counts-only payloads to App Insights. This single bridge
+  covers **AI request duration** (`ai_request_ms`, `ai_ttfb_ms` metrics), **AI streaming completion**
+  (token metrics + an `AI` dependency on stream settle), and **AI errors** (a distinct `ai_error`
+  event) for all four routes.
+- **API request markers:** each AI route emits a privacy-safe request event at the top —
+  `hcp_analysis_requested` and `community_analysis_requested` (image-analysis requests, `hasImage`
+  flag only), `hcp_chat_requested` and `community_chat_requested` (chat requests, `messageCount`
+  only) — each carrying the correlation ID.
+- **Database + Blob latency:** `checkDatabaseReady` in [lib/db.ts](../../nextjs_space/lib/db.ts) now
+  records a `PostgreSQL` dependency + `postgres_latency_ms` metric (latency + success only), and the
+  Blob provider ([lib/storage/azure-blob-provider.ts](../../nextjs_space/lib/storage/azure-blob-provider.ts))
+  records an `AzureBlob` dependency + `blob_latency_ms` metric around `upload` and `getReadUrl`
+  (operation, duration, outcome only — never blob paths or bytes).
+- **Client clinical/UX events** (all counts + non-sensitive metadata only): `tbsa_calculated`
+  (total/PTL/FTL %, age, severity band) from
+  [tbsa-client.tsx](../../nextjs_space/app/hcp/tbsa/_components/tbsa-client.tsx),
+  `parkland_calculated` (formula, 24 h/first-8 h volume, child flag) from
+  [parkland-client.tsx](../../nextjs_space/app/hcp/parkland/_components/parkland-client.tsx),
+  `language_changed` (from/to codes) instrumented centrally in
+  [language-provider.tsx](../../nextjs_space/components/language-provider.tsx) so **every** control is
+  covered, and `demo_login_completed` (mode manual/quick + role, never email/name) from
+  [login-client.tsx](../../nextjs_space/app/hcp-login/_components/login-client.tsx). The
+  calculation events are debounced so a figure is recorded once inputs settle.
+- **Configuration:** [app-service.bicep](../../infra/modules/app-service.bicep) adds the
+  `NEXT_PUBLIC_APPLICATIONINSIGHTS_CONNECTION_STRING` app setting (same value as the server
+  connection string; the ingestion key it carries is not a secret since browsers post telemetry
+  directly). [.env.example](../../.env.example) documents both variables with the privacy note. When
+  either is absent the corresponding telemetry is silently disabled.
+- **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` (standalone)
+  ✅ 17/17 static pages, `server.js` emitted and `applicationinsights` traced into the standalone
+  bundle; `npm run test:network` ✅ 1 passed. No visible UX change.

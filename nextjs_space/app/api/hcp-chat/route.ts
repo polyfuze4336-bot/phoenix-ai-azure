@@ -7,7 +7,8 @@ import { NextRequest } from 'next/server';
 import { AiMessage } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
 import { createTextPassthroughResponse } from '@/lib/ai/streaming/text-stream';
-import { newCorrelationId } from '@/lib/ai/telemetry';
+import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
+import { trackEvent } from '@/lib/telemetry/server';
 import { checkRequestBodySize } from '@/lib/ai/validation/image-input';
 import { HCP_CHAT_SYSTEM_PROMPT } from '@/lib/ai/prompts/hcp-chat';
 
@@ -36,12 +37,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const correlationId = getOrCreateCorrelationId(request.headers);
+    // Privacy-safe marker: an HCP chat turn started. Only counts + the correlation
+    // ID are recorded — never the chat transcript or any image content.
+    trackEvent('hcp_chat_requested', {
+      correlationId,
+      messageCount: Array.isArray(chatMessages) ? chatMessages.length : 0,
+    });
+
     let upstream;
     try {
       upstream = await getAiProvider().streamChatCompletion({
         messages: llmMessages,
         maxOutputTokens: 3000,
-        correlationId: newCorrelationId(),
+        correlationId,
         route: 'hcp-chat',
       });
     } catch (err) {

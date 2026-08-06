@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { Lang, t as translate } from '@/lib/i18n';
+import { trackClientEvent } from '@/lib/telemetry/client';
 
 interface LanguageContextType {
   lang: Lang;
@@ -16,8 +17,19 @@ const LanguageContext = createContext<LanguageContextType>({
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>('en');
+  const [lang, setLangState] = useState<Lang>('en');
   const t = useCallback((key: string) => translate(key, lang), [lang]);
+
+  // Wrap setLang so every language change (from any control) is recorded.
+  // Privacy-safe: only the language codes are sent, never any content.
+  const setLang = useCallback((next: Lang) => {
+    setLangState((current) => {
+      if (next !== current) {
+        trackClientEvent('language_changed', { from: current, to: next });
+      }
+      return next;
+    });
+  }, []);
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t }}>

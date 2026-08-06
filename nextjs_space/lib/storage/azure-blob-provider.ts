@@ -22,6 +22,7 @@ import {
   type ContainerClient,
 } from '@azure/storage-blob';
 import { DefaultAzureCredential } from '@azure/identity';
+import { trackDependency, trackMetric } from '@/lib/telemetry/server';
 import {
   StorageError,
   buildBlobPath,
@@ -84,14 +85,22 @@ export class AzureBlobProvider implements StorageProvider {
     const container = this.getContainerClient();
     const blockBlob = container.getBlockBlobClient(blobPath);
 
-    const uploaded = await blockBlob.uploadData(
-      input.data instanceof Buffer ? input.data : Buffer.from(input.data),
-      {
-        blobHTTPHeaders: { blobContentType: validation.contentType },
-        metadata: sanitizeMetadata(input.metadata),
-        onProgress: input.onProgress ? (ev) => input.onProgress?.(ev.loadedBytes) : undefined,
-      },
-    );
+    const started = Date.now();
+    let uploaded;
+    try {
+      uploaded = await blockBlob.uploadData(
+        input.data instanceof Buffer ? input.data : Buffer.from(input.data),
+        {
+          blobHTTPHeaders: { blobContentType: validation.contentType },
+          metadata: sanitizeMetadata(input.metadata),
+          onProgress: input.onProgress ? (ev) => input.onProgress?.(ev.loadedBytes) : undefined,
+        },
+      );
+    } catch (err) {
+      recordBlobLatency('upload', Date.now() - started, false);
+      throw err;
+    }
+    recordBlobLatency('upload', Date.now() - started, true);
 
     return {
       blobPath,
@@ -115,7 +124,15 @@ export class AzureBlobProvider implements StorageProvider {
     const expiresOn = new Date(Date.now() + ttl * 1000);
 
     // User delegation key is signed by the managed identity — no account key.
-    const userDelegationKey = await service.getUserDelegationKey(startsOn, expiresOn);
+    const started = Date.now();
+    let userDelegationKey;
+    try {
+      userDelegationKey = await service.getUserDelegationKey(startsOn, expiresOn);
+    } catch (err) {
+      recordBlobLatency('getReadUrl', Date.now() - started, false);
+      throw err;
+    }
+    recordBlobLatency('getReadUrl', Date.now() - started, true);
     const sas = generateBlobSASQueryParameters(
       {
         containerName: container.containerName,
@@ -144,6 +161,20 @@ export class AzureBlobProvider implements StorageProvider {
     const container = this.getContainerClient();
     return container.getBlockBlobClient(blobPath).exists();
   }
+}
+
+/**
+ * Record a Blob Storage operation's latency + success. Privacy-safe: only the
+ * operation name, duration and outcome are recorded — never blob paths or bytes.
+ */
+function recordBlobLatency(operation: 'upload' | 'getReadUrl', durationMs: number, success: boolean): void {
+  trackDependency({
+    dependencyTypeName: 'AzureBlob',
+    name: `blob:${operation}`,
+    duration: durationMs,
+    success,
+  });
+  trackMetric('blob_latency_ms', durationMs, { operation, ok: success });
 }
 
 /** Reject empty or traversal-style paths before any storage call. */

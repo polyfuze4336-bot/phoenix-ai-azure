@@ -5,6 +5,7 @@ import { Calculator, RotateCcw, ArrowRight, Info, Eraser, Paintbrush } from 'luc
 import { motion } from 'framer-motion';
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { trackClientEvent } from '@/lib/telemetry/client';
 
 type AgeGroup = '0' | '1' | '5' | '10' | '15' | 'adult';
 type Depth = 'ptl' | 'ftl';
@@ -366,6 +367,22 @@ export function TbsaClient() {
   }, [antCounts, postCounts, age]);
 
   const severity = getSeverity(breakdown.total);
+
+  // Privacy-safe: after the user stops painting, record that a TBSA figure was
+  // computed with its numeric result + severity band only (no image / drawing).
+  useEffect(() => {
+    if (breakdown.total <= 0) return;
+    const timer = setTimeout(() => {
+      trackClientEvent('tbsa_calculated', {
+        total: breakdown.total,
+        ptlTotal: breakdown.ptlTotal,
+        ftlTotal: breakdown.ftlTotal,
+        age,
+        severity: severity.label,
+      });
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [breakdown.total, breakdown.ptlTotal, breakdown.ftlTotal, age, severity.label]);
 
   const reset = useCallback(() => setResetSignal(s => s + 1), []);
 

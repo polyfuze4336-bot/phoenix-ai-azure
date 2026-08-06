@@ -13,6 +13,7 @@
  */
 
 import { PrismaClient, Prisma } from '@prisma/client'
+import { trackDependency, trackMetric } from '@/lib/telemetry/server'
 
 /** Applied only when the DATABASE_URL does not already specify them. */
 const POOL_DEFAULTS: Record<string, string> = {
@@ -95,18 +96,37 @@ export interface DbReadiness {
 }
 
 /** Lightweight readiness check: `SELECT 1` with transient retry. */
-export async function checkDatabaseReady(): Promise<DbReadiness> {
+export async function checkDatabaseReady(correlationId?: string): Promise<DbReadiness> {
   if (!process.env.DATABASE_URL) {
     return { ok: false, latencyMs: 0, error: 'DATABASE_URL is not configured' }
   }
   const started = Date.now()
   try {
     await withDbRetry(() => prisma.$queryRaw`SELECT 1`, { retries: 2, baseDelayMs: 150 })
-    return { ok: true, latencyMs: Date.now() - started }
+    const latencyMs = Date.now() - started
+    // Privacy-safe: record only the latency + success of the probe, never data.
+    trackDependency({
+      dependencyTypeName: 'PostgreSQL',
+      name: 'postgres:SELECT 1',
+      duration: latencyMs,
+      success: true,
+      correlationId,
+    })
+    trackMetric('postgres_latency_ms', latencyMs, { correlationId, ok: true })
+    return { ok: true, latencyMs }
   } catch (err) {
+    const latencyMs = Date.now() - started
+    trackDependency({
+      dependencyTypeName: 'PostgreSQL',
+      name: 'postgres:SELECT 1',
+      duration: latencyMs,
+      success: false,
+      correlationId,
+    })
+    trackMetric('postgres_latency_ms', latencyMs, { correlationId, ok: false })
     return {
       ok: false,
-      latencyMs: Date.now() - started,
+      latencyMs,
       error: err instanceof Error ? err.message : 'unknown error',
     }
   }

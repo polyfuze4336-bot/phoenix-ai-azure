@@ -14,6 +14,14 @@
 
 const PREFIX = '[Phoenix AI][telemetry]';
 
+// Bridge to Application Insights (no-op when App Insights is not configured).
+import {
+  trackDependency,
+  trackEvent,
+  trackMetric,
+  type TelemetryProperties,
+} from '@/lib/telemetry/server';
+
 /** Rough characters-per-token ratio for a best-effort completion-token estimate
  *  when the upstream stream does not carry a `usage` object. */
 const CHARS_PER_TOKEN = 4;
@@ -102,4 +110,80 @@ function emit(payload: Record<string, unknown>): void {
   } else {
     console.log(`${PREFIX} ${line}`);
   }
+  // Mirror the same redacted, counts-only payload into Application Insights. This
+  // single bridge covers AI request duration, streaming completion and AI errors
+  // for every route, so individual routes never re-instrument the AI call.
+  forwardToAppInsights(payload);
+}
+
+/**
+ * Forward an AI telemetry payload to Application Insights as an event + metrics
+ * (and an exception on failure). The payload is already redacted — it contains
+ * correlation IDs, counts, latencies, token totals and short error codes only,
+ * never message/image content — so it is safe to forward verbatim.
+ */
+function forwardToAppInsights(payload: Record<string, unknown>): void {
+  const event = payload.event;
+  const properties: TelemetryProperties = {
+    correlationId: asString(payload.correlationId),
+    provider: asString(payload.provider),
+    model: asString(payload.model),
+    route: asString(payload.route),
+  };
+
+  if (event === 'ai_request') {
+    trackEvent('ai_request', {
+      ...properties,
+      messageCount: asNumber(payload.messageCount),
+      imageCount: asNumber(payload.imageCount),
+      hasImage: payload.hasImage === true,
+      responseFormat: asString(payload.responseFormat),
+      maxOutputTokens: asNumber(payload.maxOutputTokens),
+    });
+    return;
+  }
+
+  if (event === 'ai_response') {
+    const status = asString(payload.status) ?? 'unknown';
+    const totalMs = asNumber(payload.totalMs);
+    const ttfbMs = asNumber(payload.ttfbMs);
+    const completionTokens = asNumber(payload.completionTokens);
+    const promptTokens = asNumber(payload.promptTokens);
+    const attempts = asNumber(payload.attempts);
+    const reason = asString(payload.reason);
+
+    trackDependency({
+      dependencyTypeName: 'AI',
+      name: `ai:${properties.route ?? properties.provider ?? 'chat'}`,
+      data: `ai_response ${status}`,
+      duration: totalMs ?? 0,
+      success: status === 'success',
+      resultCode: status,
+      correlationId: asString(payload.correlationId),
+      properties: { ...properties, status, attempts, reason },
+    });
+
+    if (typeof totalMs === 'number') trackMetric('ai_request_ms', totalMs, properties);
+    if (typeof ttfbMs === 'number') trackMetric('ai_ttfb_ms', ttfbMs, properties);
+    if (typeof completionTokens === 'number') {
+      trackMetric('ai_completion_tokens', completionTokens, properties);
+    }
+    if (typeof promptTokens === 'number') {
+      trackMetric('ai_prompt_tokens', promptTokens, properties);
+    }
+
+    // AI errors are surfaced as a distinct event for alerting (still no content).
+    if (status === 'error') {
+      trackEvent('ai_error', { ...properties, reason, attempts });
+    }
+    return;
+  }
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function asNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }

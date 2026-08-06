@@ -14,6 +14,10 @@ const nextConfig = {
     outputFileTracingRoot: path.join(__dirname, '../'),
     // Run instrumentation.ts once at server startup for environment validation.
     instrumentationHook: true,
+    // Keep the classic Application Insights Node SDK out of the webpack bundle so
+    // its dynamic require()s (require-in-the-middle) resolve at runtime instead of
+    // triggering build-time warnings. It is loaded only in server code.
+    serverComponentsExternalPackages: ['applicationinsights'],
   },
   typescript: {
     ignoreBuildErrors: false,
@@ -33,6 +37,16 @@ const nextConfig = {
     if (!isServer) {
       config.output.filename = 'static/chunks/[name]-[contenthash:8].js';
       config.output.chunkFilename = 'static/chunks/[contenthash:16].js';
+    }
+    if (isServer) {
+      // The classic Application Insights Node SDK pulls in gRPC + OpenTelemetry,
+      // which reference Node built-ins (net/zlib/...) webpack cannot bundle. Mark
+      // it external so its `require()` resolves at runtime instead — including in
+      // the instrumentation-hook compilation, which serverComponentsExternalPackages
+      // does not cover. Standalone output traces it into the deployed bundle.
+      const externals = Array.isArray(config.externals) ? config.externals : [config.externals].filter(Boolean);
+      externals.push('applicationinsights');
+      config.externals = externals;
     }
     return config;
   },

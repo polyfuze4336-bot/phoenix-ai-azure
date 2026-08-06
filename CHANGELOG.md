@@ -144,6 +144,24 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   analysis). Reviewed Next.js image configuration and deliberately kept `images.unoptimized: true`
   (all images are local static assets, the logo requires pixel fidelity, and visual baselines assert
   parity) — optimisation is left off until proven non-destructive.
+- Added **privacy-conscious Azure observability** with Application Insights across every tier, a
+  no-op when unconfigured (local dev / demo) so the visible experience is unchanged. Server side uses
+  the classic `applicationinsights` SDK via a manually-constructed `TelemetryClient` (no
+  auto-instrumentation) initialised at startup (`lib/telemetry/server.ts`, `instrumentation.ts`);
+  the browser uses `@microsoft/applicationinsights-web` via a `TelemetryProvider` mounted in the root
+  layout (`lib/telemetry/client.ts`, `components/telemetry-provider.tsx`). Instruments page load,
+  route transitions, API/AI request duration, AI streaming completion, AI errors, image-analysis and
+  chat requests, TBSA + Parkland calculations, language changes, demo login mode, PostgreSQL and Blob
+  latency, and JavaScript + server exceptions. Custom events (`hcp_chat_requested`,
+  `hcp_analysis_requested`, `community_chat_requested`, `community_analysis_requested`,
+  `tbsa_calculated`, `parkland_calculated`, `language_changed`, `demo_login_completed`) carry
+  **counts + non-sensitive metadata only**. A correlation ID threads browser → API route → AI
+  provider → PostgreSQL → Blob Storage via an `x-correlation-id` header + W3C distributed tracing.
+  All telemetry passes through a sanitiser that drops blocked keys and never forwards uploaded
+  images, base64, medical descriptions, chat transcripts, sensitive prompts/responses, tokens,
+  passwords, API keys or connection strings. Added the browser
+  `NEXT_PUBLIC_APPLICATIONINSIGHTS_CONNECTION_STRING` app setting (Bicep) and documented both
+  variables in `.env.example`.
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
 - `npm ci --legacy-peer-deps` succeeds (exit 0) with Node v22.19.0 / npm 10.9.3.
 - `npx tsc --noEmit` passes with 0 type errors.

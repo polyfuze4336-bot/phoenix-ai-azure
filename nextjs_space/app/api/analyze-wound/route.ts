@@ -10,7 +10,8 @@ import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
 import { createStructuredSseResponse } from '@/lib/ai/streaming/sse';
 import { parseHcpWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
 import { validateImageInput, checkRequestBodySize } from '@/lib/ai/validation/image-input';
-import { newCorrelationId } from '@/lib/ai/telemetry';
+import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
+import { trackEvent } from '@/lib/telemetry/server';
 import { HCP_WOUND_ANALYSIS_SYSTEM_PROMPT } from '@/lib/ai/prompts/hcp-wound-analysis';
 
 export async function POST(request: NextRequest) {
@@ -28,7 +29,10 @@ export async function POST(request: NextRequest) {
       return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
     }
 
-    const correlationId = newCorrelationId();
+    const correlationId = getOrCreateCorrelationId(request.headers);
+    // Privacy-safe marker: an HCP image-analysis request started. No image bytes,
+    // base64 or clinical text are recorded — only the correlation ID + a flag.
+    trackEvent('hcp_analysis_requested', { correlationId, hasImage: true });
     const messages: AiMessage[] = [
       { role: 'system', content: HCP_WOUND_ANALYSIS_SYSTEM_PROMPT },
       {

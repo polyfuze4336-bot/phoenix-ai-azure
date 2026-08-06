@@ -9,7 +9,8 @@ import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
 import { createStructuredSseResponse } from '@/lib/ai/streaming/sse';
 import { parseCommunityWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
 import { validateImageInput, checkRequestBodySize } from '@/lib/ai/validation/image-input';
-import { newCorrelationId } from '@/lib/ai/telemetry';
+import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
+import { trackEvent } from '@/lib/telemetry/server';
 import { communityWoundAnalysisSystemPrompt } from '@/lib/ai/prompts/community-wound-analysis';
 
 export async function POST(request: NextRequest) {
@@ -27,7 +28,10 @@ export async function POST(request: NextRequest) {
       return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
     }
 
-    const correlationId = newCorrelationId();
+    const correlationId = getOrCreateCorrelationId(request.headers);
+    // Privacy-safe marker: a community image-analysis request started. Only the
+    // correlation ID + a flag are recorded — never the image or any advice text.
+    trackEvent('community_analysis_requested', { correlationId, hasImage: true });
     const messages: AiMessage[] = [
       { role: 'system', content: communityWoundAnalysisSystemPrompt(lang) },
       {

@@ -13,6 +13,11 @@ export async function register(): Promise<void> {
   // Only run in the Node.js server runtime (skip the Edge runtime).
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
 
+  // Initialise Application Insights first so early telemetry is captured. No-op
+  // when APPLICATIONINSIGHTS_CONNECTION_STRING is absent (local dev / demo).
+  const { initServerTelemetry, trackEvent } = await import('@/lib/telemetry/server');
+  initServerTelemetry();
+
   const { validateEnvironment } = await import('@/lib/config/environment');
   const result = validateEnvironment();
 
@@ -32,4 +37,11 @@ export async function register(): Promise<void> {
       `${prefix} core AI configuration is incomplete — the app will start but AI features will fail until it is fixed.`,
     );
   }
+
+  // Privacy-safe startup marker (counts only) for boot visibility in App Insights.
+  trackEvent('app_startup_complete', {
+    ok: result.ok,
+    errorCount: result.errors.length,
+    warningCount: result.warnings.length,
+  });
 }

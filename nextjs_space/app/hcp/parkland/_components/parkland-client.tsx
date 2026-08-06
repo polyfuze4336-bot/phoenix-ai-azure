@@ -5,6 +5,7 @@ import { Droplets, AlertTriangle, Calculator } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { trackClientEvent } from '@/lib/telemetry/client';
 
 type Formula = 'parkland' | 'brooke';
 
@@ -39,6 +40,21 @@ export function ParklandClient() {
   }, [weight, tbsa, formula]);
 
   const tbsaNum = parseFloat(tbsa) || 0;
+
+  // Privacy-safe: after inputs settle, record that a Parkland/Brooke resuscitation
+  // volume was computed with the numeric result + formula only (no patient data).
+  useEffect(() => {
+    if (!results) return;
+    const timer = setTimeout(() => {
+      trackClientEvent('parkland_calculated', {
+        formula,
+        total24hMl: Math.round(results.total24h),
+        first8hMl: Math.round(results.first8h),
+        isChild: results.isChild,
+      });
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [results, formula]);
 
   return (
     <div className="space-y-6">

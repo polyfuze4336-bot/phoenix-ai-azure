@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { trackClientEvent } from '@/lib/telemetry/client';
 
 // Public demo directory — display only. NO passwords live in browser source;
 // credentials are verified server-side via POST /api/auth/login.
@@ -46,10 +47,12 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const startSession = useCallback((user: { name: string; role: string; email: string }) => {
+  const startSession = useCallback((user: { name: string; role: string; email: string }, mode: 'manual' | 'quick') => {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('hcp_auth', JSON.stringify(user));
     }
+    // Privacy-safe: record the login mode + role only. Never the email or name.
+    trackClientEvent('demo_login_completed', { mode, role: user.role });
     router.push('/hcp');
   }, [router]);
 
@@ -69,7 +72,7 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
         return;
       }
       const data = await res.json();
-      startSession(data.user);
+      startSession(data.user, 'manual');
     } catch {
       setError(lang === 'bm' ? 'Ralat sambungan. Sila cuba lagi.' : 'Connection error. Please try again.');
       setLoading(false);
@@ -93,7 +96,7 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
         return;
       }
       const data = await res.json();
-      startSession(data.user);
+      startSession(data.user, 'quick');
     } catch {
       setError(lang === 'bm' ? 'Ralat sambungan. Sila cuba lagi.' : 'Connection error. Please try again.');
       setLoading(false);
