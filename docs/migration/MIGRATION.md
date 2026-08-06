@@ -94,4 +94,22 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 - Created a **private** GitHub repository `phoenix-ai-azure` and pushed the initial history.
   The original Abacus.AI source archive is untouched; this repo is the Azure version only.
 
+### Step 3 — Complete source code audit
+- Authored [`source-code-audit.md`](source-code-audit.md): a full read-only assessment of the
+  imported source before any migration change.
+- Documented the detected architecture, framework versions, build scripts, runtime
+  requirements, every page (13) and API route (4), the server/client component split, state
+  management, styling approach and design tokens, language support, authentication behaviour,
+  data-persistence behaviour, AI integration, image handling, PWA support, external
+  dependencies, environment variables, hard-coded values, mock/simulated and incomplete
+  functionality, security risks, and Azure migration blockers.
+- Explicitly confirmed the 12 known issues (AI key dependency; Abacus LLM endpoint; Abacus
+  script in `layout.tsx`; hardcoded login users/passwords; `sessionStorage` auth; Abacus
+  Prisma output path; unused PostgreSQL; disconnected S3 helpers; unimplemented Azure Blob
+  SDK; ESLint ignored at build; image optimisation disabled; client-side simulated workflows).
+- Additional findings recorded: `@tanstack/react-query`, `zustand`, `jotai`, `swr` are
+  installed but **unused**; all `page.tsx` are server components except `hcp-login` (client);
+  language state is in-memory (not persisted).
+- **No source code was changed** — the identified issues are backlog for later steps.
+
 _Subsequent steps appended below as work proceeds._

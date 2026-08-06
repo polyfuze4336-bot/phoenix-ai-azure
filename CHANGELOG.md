@@ -18,6 +18,9 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   - `.github/workflows/ci.yml` (install + build verification).
   - `.github/copilot-instructions.md` (migration guardrails for AI assistance).
 - Imported the pristine Phoenix AI source from the Abacus.AI archive into `nextjs_space/`.
+- `docs/migration/source-code-audit.md`: complete read-only audit of the imported source —
+  architecture, all 13 pages and 4 API routes, design tokens, dependencies, environment
+  variables, security risks, and Azure migration blockers, with the 12 known issues confirmed.
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
