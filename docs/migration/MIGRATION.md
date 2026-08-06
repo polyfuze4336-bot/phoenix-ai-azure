@@ -125,5 +125,25 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 - Created git tag **`abacus-source-baseline`** on the baseline commit (immutable reference to
   the imported Abacus.AI source) and branch **`migration/azure-port`** for all port work.
 - **No source code or assets were modified** — this step only adds the manifest.
-
+### Step 5 â€” Establish the source build baseline (build health)
+- Authored [`build-health-report.md`](build-health-report.md): an honest baseline of running the
+  **unmodified** imported source with the project's own package manager and lock file. No source
+  code was changed and no build check was newly set to "ignore" to force a pass.
+- Environment: Node.js **v22.19.0**, npm **10.9.3**. Install via `npm ci --legacy-peer-deps`
+  (the `--legacy-peer-deps` flag is required by an inherited `eslint@9` vs
+  `@typescript-eslint/parser@7` peer conflict).
+- Results: **Install** âœ… (exit 0, 1064 packages); **Type-check** (`tsc --noEmit`) âœ… (0 errors);
+  **Build** (`next build`) âœ… (exit 0, 17/17 routes); **Runtime** (dev server) âœ… (14/14 app
+  routes HTTP 200, no server console errors).
+- **Lint cannot run**: `next lint` (Next.js 14.2.28) uses the legacy ESLint API
+  (`useEslintrc`, `extensions`, â€¦) that the pinned `eslint@9` removed. This is the same
+  inherited incompatibility behind the source's pre-existing `eslint.ignoreDuringBuilds: true`
+  (known issue #10). The config `next lint` auto-created was deleted to keep the source pristine.
+- **Security audit**: `npm audit` reports **25 vulnerabilities (2 low, 1 moderate, 21 high, 1
+  critical)**. The critical is `next-auth` (email misdelivery, not wired into the UI); most highs
+  are the ESLint dev-tooling chain. Not remediated in this step (no dependency upgrades).
+- **Environment variables**: none are required to install, type-check, build, or render the UI.
+  Only live AI routes need `ABACUSAI_API_KEY` (to be replaced by Azure OpenAI later);
+  `DATABASE_URL` and `AWS_*` are dead code for parity.
+- **No source code or assets were modified** â€” this step only adds the report.
 _Subsequent steps appended below as work proceeds._

@@ -24,10 +24,17 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 - `docs/migration/source-baseline-manifest.md`: SHA-256 manifest of all 162 tracked files
   establishing an immutable source baseline. Canonical `public/logo.png` SHA-256 recorded
   (`dfb40a3e…917d8241`). Tag `abacus-source-baseline` + branch `migration/azure-port` created.
+- `docs/migration/build-health-report.md`: build-health baseline of the unmodified source on
+  Node 22 / npm 10.9.3 â€” install, type-check, build, and runtime (14/14 routes HTTP 200) all
+  pass; lint is blocked by an inherited `eslint@9` / `next lint` incompatibility; `npm audit`
+  records 25 vulnerabilities (2 low, 1 moderate, 21 high, 1 critical). No source code changed.
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
-- `npm run build` (`next build`) compiles successfully — 17/17 routes generated.
+- `npm ci --legacy-peer-deps` succeeds (exit 0) with Node v22.19.0 / npm 10.9.3.
+- `npx tsc --noEmit` passes with 0 type errors.
+- `npm run build` (`next build`) compiles successfully â€” 17/17 routes generated.
+- Development server serves all 14 application routes with HTTP 200 and no server errors.
 
 ### Known issues / follow-ups
 - `next@14.2.28` security advisory — to be addressed in a dedicated dependency-hardening change.
