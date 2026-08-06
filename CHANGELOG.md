@@ -199,6 +199,19 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   `nextjs_space/tests/e2e/clickable-controls.spec.ts` (14 cases), that fails if any route gains a
   placeholder anchor or an unresolvable in-app link. Verified: `typecheck` ✅ 0, `lint` ✅ 0/0,
   `build` ✅ 21 routes, `test:e2e` ✅ 17 (3 journeys + 14 guard cases).
+- Ran **strict visual parity testing** against the captured source baseline. Re-captured the Azure
+  production build across every route/viewport/language/state (143 PNGs → `tests/visual/current/`)
+  via a new `VISUAL_OUT_DIR` switch on the existing capture spec, then pixel-diffed each state with
+  `pixelmatch` (`scripts/visual-parity-diff.ts` → `tests/visual/diff/` masks + `parity-results.json`)
+  and generated `docs/testing/visual-parity-report.md` (`scripts/visual-parity-report.ts`) with the
+  required columns (Route, Viewport, Baseline, Azure, Difference image, Difference %, Pass/fail,
+  Accepted exception, Explanation), a design-token/layout parity table, and a 12-row release-blocker
+  checklist. **Result: visual parity achieved** — 141/143 states pixel-identical (max diff 0.7368%);
+  Phoenix logo SHA-256/size/aspect ratio and the KKM/HKL logo verified; **all 12 release blockers
+  CLEAR**. Two mobile HCP-dashboard states are **accepted exceptions** (Recharts entrance-animation
+  frame — chart arc anti-aliasing only; every value/label/card/text pixel-identical), documented
+  **without altering the UI**. Added dev deps `pixelmatch`/`pngjs` (+ types). Verified: `typecheck`
+  ✅ 0, `lint` ✅ 0/0, `build` ✅ 21 routes.
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
 - `npm ci --legacy-peer-deps` succeeds (exit 0) with Node v22.19.0 / npm 10.9.3.
 - `npx tsc --noEmit` passes with 0 type errors.

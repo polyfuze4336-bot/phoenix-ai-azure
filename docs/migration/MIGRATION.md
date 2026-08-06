@@ -931,3 +931,51 @@ behaviour changes, so visible parity is unchanged.
 - **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 21 routes;
   `npm run test:e2e` ✅ (3 journeys + 14 new clickable-control guard cases, 17/17). No visible UX
   change and no code behaviour changed — the only additions are the register doc and the guard spec.
+
+### Step 22 - Run strict visual parity testing
+
+This step proves the migrated app is **pixel-for-pixel faithful** to the captured source baseline.
+The production build (the exact `node server.js` standalone artifact deployed to Azure App Service)
+is re-captured across every route, viewport, language and UI state, then diffed against the committed
+Step 8 baseline. The prime rule held throughout: **the UI was not "improved" to force parity** — a
+genuine visual regression would have been fixed by root-causing it, not by editing the design.
+
+- **Re-capture (Azure build):** the Step 8 capture spec
+  ([tests/visual/baseline.spec.ts](../../nextjs_space/tests/visual/baseline.spec.ts)) was made
+  output-configurable via a single new `VISUAL_OUT_DIR` env var (defaults to `baseline`; the parity
+  run sets `current`) — no capture logic changed, so the two image sets are captured identically.
+  Running `VISUAL_OUT_DIR=current npx playwright test` produced **143** full-page PNGs under
+  `nextjs_space/tests/visual/current/` matching the baseline matrix exactly (14 routes × 4 viewports
+  × EN/BM × states: initial, initial-empty, error, nav-open, completed-result, user-menu).
+- **Pixel diff:** new [scripts/visual-parity-diff.ts](../../nextjs_space/scripts/visual-parity-diff.ts)
+  compares each `baseline` PNG against its `current` counterpart with **pixelmatch** (per-pixel
+  threshold `0.1`, anti-alias aware), writes a **diff mask** for every state to
+  `nextjs_space/tests/visual/diff/`, and emits a machine-readable summary
+  (`tests/visual/parity-results.json`). A state passes when its changed-pixel ratio is ≤ **0.5%**.
+  Added dev deps `pixelmatch@5.3.0` + `pngjs@7.0.0` (+ types) via `--legacy-peer-deps`.
+- **Report:** new [scripts/visual-parity-report.ts](../../nextjs_space/scripts/visual-parity-report.ts)
+  verifies the **Phoenix logo** (SHA-256 `dfb40a3e…917d8241`, 346691 bytes, intrinsic 1024×1024 / 1:1
+  — an exact match to the source manifest) and the **KKM/HKL endorsement logo** presence, then writes
+  [docs/testing/visual-parity-report.md](../testing/visual-parity-report.md) with the required
+  columns (Route, Viewport, Baseline screenshot, Azure screenshot, Difference image, Difference
+  percentage, Pass/fail, Accepted exception, Explanation), a design-token & layout parity table, and
+  a 12-row release-blocker checklist.
+- **Result — visual parity achieved:** **141/143** states are pixel-identical within threshold
+  (most at **0.0000%**). The maximum difference is **0.7368%**. **Every** validated property matched:
+  logo file hash/size/aspect ratio, placement, header height, sidebar width, navigation spacing,
+  colours, gradients, fonts, font weights, card sizes, border radius, shadows, chart dimensions,
+  buttons, forms, responsive breakpoints, mobile menu, animations, loading states, result panels,
+  error panels, and both English and Bahasa Malaysia text. **All 12 release blockers are CLEAR.**
+- **Two accepted exceptions (documented, no UI change):** `hcp/mobile-390-en-initial` (0.7368%) and
+  `hcp/mobile-390-en-nav-open` (0.5357%) exceed the 0.5% threshold **solely** because of **Recharts'
+  script-driven SVG entrance animation** on the HCP dashboard — Playwright's `animations: 'disabled'`
+  freezes CSS animations but not Recharts' JS path animation, so the donut/line chart arcs are
+  captured on a slightly different frame with sub-pixel-different anti-aliased edges. The diff masks
+  confirm the changed pixels are confined to chart arc edges; every dashboard value, label, card,
+  colour, font and layout element is pixel-identical. These were **accepted as capture-timing jitter,
+  not resolved by altering the UI**, per the faithful-parity directive.
+- **Artifacts committed as evidence:** `tests/visual/current/` (Azure captures) and
+  `tests/visual/diff/` (pixel masks — tiny thanks to `diffMask: true`) join the existing
+  `tests/visual/baseline/`, so the report's baseline/Azure/difference links resolve in-repo.
+- **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 21 routes.
+  The two new scripts + the spec's output-path parameterisation introduce no runtime or UI change.

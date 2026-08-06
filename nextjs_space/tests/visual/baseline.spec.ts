@@ -37,11 +37,18 @@ async function seedHcpAuth(page: Page) {
   }, DEMO_HCP_SESSION);
 }
 
-/** Save a full-page screenshot under the per-viewport baseline folder. */
+/**
+ * Output directory for the captured screenshots. Defaults to the committed
+ * `baseline` folder; set VISUAL_OUT_DIR=current (Step 22 parity run) to capture
+ * into `tests/visual/current/` for diffing WITHOUT overwriting the baseline.
+ */
+const OUT_DIR = process.env.VISUAL_OUT_DIR || 'baseline';
+
+/** Save a full-page screenshot under the per-viewport output folder. */
 async function shot(page: Page, info: TestInfo, route: string, name: string) {
   const vp = info.project.name;
   await page.screenshot({
-    path: `tests/visual/baseline/${slug(route)}/${vp}-${name}.png`,
+    path: `tests/visual/${OUT_DIR}/${slug(route)}/${vp}-${name}.png`,
     fullPage: true,
     animations: 'disabled',
   });
