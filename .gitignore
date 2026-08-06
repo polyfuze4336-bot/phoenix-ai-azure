@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# Production
+/nextjs_space/.next/
+/nextjs_space/out/
+
+# Environment / secrets (NEVER commit real values)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+*.pem
+*.key
+*.pfx
+*.cer
+
+# Prisma generated client
+**/.prisma/
+**/generated/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+
+# Azure / deploy artifacts
+*.zip
+!Shared.zip
+.azure/
+deploy/
+azd-env-name
+
+# Test artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
+coverage/
