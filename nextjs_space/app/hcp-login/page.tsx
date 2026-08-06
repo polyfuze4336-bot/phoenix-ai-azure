@@ -9,10 +9,12 @@ import Link from 'next/link';
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
-const MOCK_USERS = [
-  { email: 'doctor@phoenix.my', password: 'phoenix2026', name: 'Dr. Ahmad Faizal', role: 'Pakar Perubatan Kecemasan' },
-  { email: 'nurse@phoenix.my', password: 'phoenix2026', name: 'Nurse Siti Aminah', role: 'Jururawat Kanan' },
-  { email: 'admin@phoenix.my', password: 'admin123', name: 'Admin Phoenix', role: 'Pentadbir Sistem' },
+// Public demo directory — display only. NO passwords live in browser source;
+// credentials are verified server-side via POST /api/auth/login.
+const DEMO_USERS = [
+  { email: 'doctor@phoenix.my', name: 'Dr. Ahmad Faizal', role: 'Pakar Perubatan Kecemasan' },
+  { email: 'nurse@phoenix.my', name: 'Nurse Siti Aminah', role: 'Jururawat Kanan' },
+  { email: 'admin@phoenix.my', name: 'Admin Phoenix', role: 'Pentadbir Sistem' },
 ];
 
 export default function HcpLoginPage() {
@@ -24,36 +26,59 @@ export default function HcpLoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const startSession = useCallback((user: { name: string; role: string; email: string }) => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('hcp_auth', JSON.stringify(user));
+    }
+    router.push('/hcp');
+  }, [router]);
+
   const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    await new Promise(r => setTimeout(r, 1200));
-
-    const user = MOCK_USERS.find(u => u.email === email.toLowerCase().trim() && u.password === password);
-    if (user) {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('hcp_auth', JSON.stringify({ name: user.name, role: user.role, email: user.email }));
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.toLowerCase().trim(), password }),
+      });
+      if (!res.ok) {
+        setError(lang === 'bm' ? 'E-mel atau kata laluan tidak sah' : 'Invalid email or password');
+        setLoading(false);
+        return;
       }
-      router.push('/hcp');
-    } else {
-      setError(lang === 'bm' ? 'E-mel atau kata laluan tidak sah' : 'Invalid email or password');
+      const data = await res.json();
+      startSession(data.user);
+    } catch {
+      setError(lang === 'bm' ? 'Ralat sambungan. Sila cuba lagi.' : 'Connection error. Please try again.');
       setLoading(false);
     }
-  }, [email, password, lang, router]);
+  }, [email, password, lang, startSession]);
 
-  const quickLogin = useCallback(async (mockUser: typeof MOCK_USERS[0]) => {
-    setEmail(mockUser.email);
-    setPassword(mockUser.password);
+  const quickLogin = useCallback(async (demoUser: typeof DEMO_USERS[0]) => {
+    setEmail(demoUser.email);
+    setPassword('');
     setLoading(true);
     setError('');
-    await new Promise(r => setTimeout(r, 800));
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('hcp_auth', JSON.stringify({ name: mockUser.name, role: mockUser.role, email: mockUser.email }));
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: demoUser.email, quick: true }),
+      });
+      if (!res.ok) {
+        setError(lang === 'bm' ? 'Log masuk demo gagal' : 'Demo login failed');
+        setLoading(false);
+        return;
+      }
+      const data = await res.json();
+      startSession(data.user);
+    } catch {
+      setError(lang === 'bm' ? 'Ralat sambungan. Sila cuba lagi.' : 'Connection error. Please try again.');
+      setLoading(false);
     }
-    router.push('/hcp');
-  }, [router]);
+  }, [lang, startSession]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50/30 flex flex-col">
@@ -167,7 +192,7 @@ export default function HcpLoginPage() {
 
             {/* Quick Login */}
             <div className="p-6 pt-4 space-y-2">
-              {MOCK_USERS.map((user) => (
+              {DEMO_USERS.map((user) => (
                 <button
                   key={user.email}
                   onClick={() => quickLogin(user)}

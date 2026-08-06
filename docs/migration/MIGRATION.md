@@ -497,3 +497,44 @@ files themselves (plus historical docs and the lockfile).
   managed identity, private container, and short-lived SAS. No secrets.
 - **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 19/19 routes
   (unchanged — provider is unwired); `npm run test:network` ✅ 1 passed. No visible UX change.
+
+### Step 15 - Isolate demo authentication for the parity release
+
+The imported login (`app/hcp-login/page.tsx`) is a **client-side mock**: hard-coded demo users
+(Doctor / Nurse / Administrator) with plaintext passwords in browser source, a fake delay, and a
+`sessionStorage` `hcp_auth` session read by a client-side route guard
+([hcp-layout-client.tsx](../../nextjs_space/app/hcp/_components/hcp-layout-client.tsx)). For the
+first parity deployment the visible experience is preserved while the credentials are moved off the
+client and the design is made explicitly demo-only. This is **not** enterprise authentication.
+
+- **`AUTH_MODE` feature flag** ([lib/auth/auth-config.ts](../../nextjs_space/lib/auth/auth-config.ts)):
+  `demo` (default) or `entra`. Empty/unknown values fall back to `demo`.
+- **Authentication abstraction** (`lib/auth/`), provider-neutral so a real identity provider can be
+  added later without touching the login UI or the route guard:
+  - [types.ts](../../nextjs_space/lib/auth/types.ts) — `AuthProvider` contract, `AuthUser` (session
+    shape unchanged), non-secret `PublicDemoUser`, and typed `AuthError` (code + HTTP status).
+  - [demo-users.ts](../../nextjs_space/lib/auth/demo-users.ts) — **server-only** demo directory. Parity
+    defaults match the original users/roles/passwords; passwords are overridable via
+    `DEMO_AUTH_PASSWORD` / `DEMO_AUTH_ADMIN_PASSWORD`. Exposes a password-free public list.
+  - [demo-provider.ts](../../nextjs_space/lib/auth/demo-provider.ts) — `DemoAuthProvider`
+    (`authenticate`, password-free `quickAuthenticate`, `listPublicUsers`).
+  - [entra-provider.ts](../../nextjs_space/lib/auth/entra-provider.ts) — `EntraAuthProvider`
+    placeholder that fails loudly (HTTP 501) with guidance to use platform-level Entra.
+  - [auth-provider.ts](../../nextjs_space/lib/auth/auth-provider.ts) — `getAuthProvider()` factory
+    (cached per mode) + re-exports.
+- **Credentials moved server-side** — new [POST /api/auth/login](../../nextjs_space/app/api/auth/login/route.ts)
+  verifies demo credentials on the server (manual `{ email, password }` or quick `{ email, quick: true }`)
+  and returns only the session identity. No password is logged. The login page keeps a **non-secret**
+  public directory for the quick-login cards; passwords no longer exist in browser source, and
+  quick-login no longer writes a plaintext password into the form.
+- **Preserved:** the visual login, the three quick-login cards, the `/hcp-login` + `/hcp` routes, the
+  `sessionStorage` `hcp_auth` session, and the amber "Demo Mode" label. Rendered DOM is unchanged, so
+  the visual baselines still match.
+- **Config (`.env.example`):** added the Authentication section — `AUTH_MODE=demo`,
+  `DEMO_AUTH_PASSWORD`, `DEMO_AUTH_ADMIN_PASSWORD` — documenting that this is demo-only and not for
+  production healthcare use.
+- **Docs:** new [docs/security/authentication.md](../security/authentication.md) explains why
+  `sessionStorage` auth is not production-grade for healthcare and how to protect the demo at the
+  platform level (App Service Easy Auth / Entra, access restrictions, or a lightweight gate).
+- **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 18/18 routes
+  (adds `/api/auth/login`); `npm run test:network` ✅ 1 passed. No visible UX change.

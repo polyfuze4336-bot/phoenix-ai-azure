@@ -95,6 +95,16 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   paths, sanitised metadata, safe deletion, and an optional server-side upload-progress callback. It
   is deliberately **not wired** into any UI workflow — no current Phoenix AI workflow persists files
   (wound/burn images are handled as ephemeral base64) — so there is no visible UX change.
+- Isolated the demo HCP login behind an `AUTH_MODE` feature flag (`demo` default, `entra`
+  placeholder) and an authentication abstraction `nextjs_space/lib/auth/` (`AuthProvider` contract,
+  `DemoAuthProvider`, `EntraAuthProvider` placeholder, `getAuthProvider()` factory). Demo credentials
+  moved server-side (`lib/auth/demo-users.ts`, overridable via `DEMO_AUTH_PASSWORD` /
+  `DEMO_AUTH_ADMIN_PASSWORD`) and verified through a new `POST /api/auth/login` route; passwords no
+  longer appear in browser source and quick-login no longer writes a plaintext password into the
+  form. The visual login, quick-login cards, `/hcp-login` + `/hcp` routes, `sessionStorage` session,
+  and "Demo Mode" label are preserved (no visible UX change). New `docs/security/authentication.md`
+  documents why `sessionStorage` auth is not suitable for production healthcare use and how to protect
+  the demo at the platform level (App Service Easy Auth / Entra, access restrictions).
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
