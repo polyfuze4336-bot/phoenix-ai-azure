@@ -1,0 +1,43 @@
+name: CI
+
+# Build-verification for the Phoenix AI Azure migration.
+# Installs dependencies and runs the Next.js production build. No secrets required
+# (the build does not call the LLM; runtime config is supplied on Azure).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Install & build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nextjs_space
+    env:
+      # Non-secret build-time value used only for metadataBase.
+      NEXTAUTH_URL: http://localhost:3000
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: nextjs_space/package-lock.json
+
+      - name: Install dependencies
+        # Pre-existing dev-only peer conflict (eslint 9 vs @typescript-eslint/parser 7).
+        run: npm ci --legacy-peer-deps
+
+      - name: Build (next build)
+        run: npm run build

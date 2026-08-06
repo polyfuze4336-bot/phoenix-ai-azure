@@ -78,4 +78,20 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
   separate, reviewable dependency-hardening commit before go-live.
 - `npm audit`: 25 vulns (mostly transitive/dev). Triage planned pre-deploy.
 
+### Step 2 — Initialise the Azure migration repository
+- Renamed the default branch `master` → `main`.
+- Added repository scaffolding: `.editorconfig`, `.nvmrc` (Node 22, matching the verified
+  build), `README.md` (states this is a parity migration of Phoenix AI from Abacus.AI to
+  Azure), `CONTRIBUTING.md` (workflow + recommended `main` branch protection rules),
+  `CHANGELOG.md`.
+- Reorganised docs into `docs/migration/` (audit trail, moved from `docs/MIGRATION.md`),
+  `docs/architecture/ARCHITECTURE.md` (target Azure topology), and
+  `docs/testing/TEST-STRATEGY.md` (UI-parity strategy).
+- Added `.github/workflows/ci.yml` (install + `next build` verification on push/PR to `main`)
+  and `.github/copilot-instructions.md` (migration guardrails).
+- Branch protection for `main` is documented in `CONTRIBUTING.md` (must be enabled by a repo
+  admin in GitHub settings — cannot be committed as code).
+- Created a **private** GitHub repository `phoenix-ai-azure` and pushed the initial history.
+  The original Abacus.AI source archive is untouched; this repo is the Azure version only.
+
 _Subsequent steps appended below as work proceeds._
