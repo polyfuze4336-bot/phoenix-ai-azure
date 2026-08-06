@@ -3,7 +3,7 @@
 import { useLanguage } from '@/components/language-provider';
 import { LanguageToggleDark } from '@/components/language-toggle';
 import { PhoenixLogo } from '@/components/phoenix-logo';
-import { LayoutDashboard, Brain, Calculator, Droplets, BookOpen, MessageSquare, ArrowLeft, Menu, X, LogOut, User } from 'lucide-react';
+import { LayoutDashboard, Brain, Calculator, Droplets, BookOpen, MessageSquare, History, ArrowLeft, Menu, X, LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, ReactNode, useCallback } from 'react';
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/hcp/parkland', icon: Droplets, labelKey: 'hcp.parkland', shortKey: 'hcp.parkland' },
   { href: '/hcp/guidelines', icon: BookOpen, labelKey: 'hcp.guidelines', shortKey: 'hcp.guidelines' },
   { href: '/hcp/chat', icon: MessageSquare, labelKey: 'hcp.chat', shortKey: 'hcp.chat' },
+  { href: '/hcp/history', icon: History, labelKey: 'hcp.history', shortKey: 'hcp.history' },
 ];
 
 interface HcpUser {

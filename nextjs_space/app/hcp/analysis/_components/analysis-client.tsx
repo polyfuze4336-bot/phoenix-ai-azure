@@ -31,6 +31,32 @@ interface AnalysisResult {
   followUp: string;
 }
 
+/**
+ * Best-effort persistence of a completed analysis (image + result) to the clinician
+ * history page. Fire-and-forget: a save failure must NEVER disrupt the analysis view.
+ */
+async function saveAnalysisToHistory(result: AnalysisResult, image: string, mimeType: string) {
+  try {
+    let clinician: { name?: string; email?: string } | undefined;
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('hcp_auth');
+      if (stored) {
+        try {
+          const u = JSON.parse(stored);
+          clinician = { name: u?.name, email: u?.email };
+        } catch { /* ignore malformed session */ }
+      }
+    }
+    await fetch('/api/hcp/analyses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ result, image, mimeType, clinician }),
+    });
+  } catch {
+    /* best-effort only */
+  }
+}
+
 export function AnalysisClient() {
   const { t } = useLanguage();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -130,6 +156,7 @@ export function AnalysisClient() {
               if (parsed?.status === 'completed' && parsed?.result) {
                 setResult(parsed.result);
                 setAnalyzing(false);
+                void saveAnalysisToHistory(parsed.result, base64, imageFile?.type ?? 'image/jpeg');
                 return;
               }
             } catch (e: any) { /* skip */ }
