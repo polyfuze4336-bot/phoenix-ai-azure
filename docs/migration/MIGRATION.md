@@ -500,6 +500,73 @@ files themselves (plus historical docs and the lockfile).
 
 ### Step 15 - Isolate demo authentication for the parity release
 
+The original login was a client-side mock with hard-coded credentials in browser source. This step
+isolated it behind a feature flag and moved credentials server-side, **without changing the visible
+login experience** (parity preserved).
+
+- **Feature flag `AUTH_MODE`** ([lib/auth/auth-config.ts](../../nextjs_space/lib/auth/auth-config.ts)):
+  `demo` (default) or `entra`. Provider-neutral contract (`AuthProvider`) with a `DemoAuthProvider`
+  and an `EntraAuthProvider` placeholder, resolved by a factory
+  ([lib/auth/auth-provider.ts](../../nextjs_space/lib/auth/auth-provider.ts)).
+- **Credentials moved server-side** ([lib/auth/demo-users.ts](../../nextjs_space/lib/auth/demo-users.ts)):
+  passwords no longer appear in browser source. `POST /api/auth/login` verifies credentials on the
+  server; the login page renders only a non-secret directory (names, roles, emails) for the
+  quick-login cards. Demo passwords resolve from `DEMO_AUTH_PASSWORD` / `DEMO_AUTH_ADMIN_PASSWORD`
+  (server-only) with parity defaults.
+- **Docs:** [docs/security/authentication.md](../security/authentication.md) records why
+  `sessionStorage` auth is demo-only and how to protect the environment at the platform level.
+- **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 18/18 routes
+  (adds `/api/auth/login`); `npm run test:network` ✅ 1 passed.
+
+### Step 16 - Add optional Microsoft Entra ID authentication for HCP users
+
+Built on the Step 15 abstraction, this step makes `AUTH_MODE=entra` a **real** Microsoft Entra ID
+(OpenID Connect) sign-in for the Healthcare Professional portal. It is **opt-in** and **not enabled
+by default** — the parity release still ships `AUTH_MODE=demo`. The community portal stays public.
+
+- **Server-validated session** ([lib/auth/session.ts](../../nextjs_space/lib/auth/session.ts)):
+  a signed **httpOnly** cookie (`hcp_session`, HS256 via `jose`, signed with `SESSION_SECRET` ≥32
+  chars). Session expiration is enforced by the JWT `exp` claim (`AUTH_SESSION_TTL_MINUTES`, default
+  60, clamped 5–1440). `jose` was added as a dependency (Edge + Node compatible).
+- **Entra config + role mapping** ([lib/auth/entra-config.ts](../../nextjs_space/lib/auth/entra-config.ts)):
+  `isEntraConfigured()` / `getEntraConfig()` build the tenant authority, authorize/token/logout/JWKS
+  URLs and issuer. `mapClaimsToRole()` prefers Entra **App Roles** (`Doctor`/`Nurse`/`Administrator`)
+  and falls back to security **group** object-ids (`AZURE_ENTRA_GROUP_ADMIN/_DOCTOR/_NURSE`).
+  Precedence **Administrator > Doctor > Nurse**; no mapped role ⇒ Forbidden.
+- **OIDC flow** ([lib/auth/entra-flow.ts](../../nextjs_space/lib/auth/entra-flow.ts)):
+  authorization-code + **PKCE** with `state` + `nonce`; token exchange; ID-token verification against
+  the tenant JWKS (issuer + audience + nonce); federated logout URL. No Entra internals are logged.
+- **API routes** (all Node runtime, `force-dynamic`):
+  [/api/auth/entra/login](../../nextjs_space/app/api/auth/entra/login/route.ts) (starts the flow,
+  stashes state/nonce/verifier in short-lived httpOnly cookies),
+  [/api/auth/entra/callback](../../nextjs_space/app/api/auth/entra/callback/route.ts) (validates
+  state, exchanges code, verifies token, mints the session cookie → `/hcp`; forbidden/unauthorized
+  redirect to `/hcp-login?error=…`),
+  [/api/auth/logout](../../nextjs_space/app/api/auth/logout/route.ts) (clears the cookie + federated
+  sign-out), and [/api/auth/session](../../nextjs_space/app/api/auth/session/route.ts) (server-verified
+  identity probe).
+- **Server-enforced protection — no client-only guard**
+  ([middleware.ts](../../nextjs_space/middleware.ts)): verifies the session cookie at the edge for
+  HCP pages (`/hcp`, `/hcp/*` → redirect to login) and HCP APIs (`/api/hcp-chat`,
+  `/api/analyze-wound` → `401`). Community routes/APIs stay public. Middleware only enforces when
+  `AUTH_MODE=entra`; in demo mode it is a no-op so the original client-side demo guard is preserved.
+- **Login page** ([app/hcp-login](../../nextjs_space/app/hcp-login)): split into a server component
+  that resolves the mode and a client component. Appearance is preserved; in `entra` mode the
+  sign-in action redirects to Entra (no email/password form or demo cards), and explicit
+  **Unauthorised** / **Forbidden** states are surfaced via `?error=`.
+- **HCP layout** ([hcp-layout-client.tsx](../../nextjs_space/app/hcp/_components/hcp-layout-client.tsx)):
+  reads the server session via `/api/auth/session` in entra mode (keeping `sessionStorage` for demo),
+  and logout hits `/api/auth/logout` for federated sign-out.
+- **Config & docs:** [.env.example](../../.env.example) documents the Entra app registration vars,
+  app-role vs group mapping, `SESSION_SECRET`, and `AUTH_SESSION_TTL_MINUTES` (all server-only, no
+  secrets committed). [docs/security/authentication.md](../security/authentication.md) gains a full
+  Entra section (flow, role mapping, unauthorised/forbidden states, configuration).
+- **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 17/17 static
+  pages, adds `/api/auth/entra/login`, `/api/auth/entra/callback`, `/api/auth/logout`,
+  `/api/auth/session` and the Middleware bundle; `npm run test:network` ✅ 1 passed. Default remains
+  `AUTH_MODE=demo`, so the visible parity experience is unchanged. (Build shows benign `jose` Edge
+  warnings from its unused JWE-decrypt path; the JWS session code is unaffected.)
+
 The imported login (`app/hcp-login/page.tsx`) is a **client-side mock**: hard-coded demo users
 (Doctor / Nurse / Administrator) with plaintext passwords in browser source, a fake delay, and a
 `sessionStorage` `hcp_auth` session read by a client-side route guard

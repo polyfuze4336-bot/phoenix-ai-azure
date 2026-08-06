@@ -14,11 +14,37 @@
 /** Supported authentication modes. Selected via the AUTH_MODE feature flag. */
 export type AuthMode = 'demo' | 'entra';
 
+/**
+ * Canonical HCP role keys. Entra application roles / groups are mapped to one of
+ * these; any of them grants access to the HCP portal. The community portal is
+ * public and does not require a role.
+ */
+export type HcpRoleKey = 'administrator' | 'doctor' | 'nurse';
+
+/** Human-readable label rendered in the HCP portal for each role key. */
+export const HCP_ROLE_LABELS: Record<HcpRoleKey, string> = {
+  administrator: 'Administrator',
+  doctor: 'Doctor',
+  nurse: 'Nurse',
+};
+
 /** The session identity persisted by the client (shape unchanged for parity). */
 export interface AuthUser {
   name: string;
   role: string;
   email: string;
+}
+
+/**
+ * Server-validated session payload for Entra mode. Carried in a signed,
+ * httpOnly cookie (never sessionStorage) and verified on the server / in
+ * middleware before any protected HCP route or API is served.
+ */
+export interface SessionUser {
+  name: string;
+  email: string;
+  roleKey: HcpRoleKey;
+  roleLabel: string;
 }
 
 /**
@@ -50,6 +76,9 @@ export type AuthErrorCode =
   | 'quick_login_disabled'
   | 'unknown_user'
   | 'not_implemented'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'invalid_state'
   | 'auth_error';
 
 /** Typed authentication error carrying an HTTP status for the API layer. */

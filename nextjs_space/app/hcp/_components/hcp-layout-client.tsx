@@ -30,16 +30,55 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<HcpUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [serverSession, setServerSession] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem('hcp_auth');
-      if (stored) {
-        try { setUser(JSON.parse(stored)); } catch { setUser(null); }
+    let cancelled = false;
+
+    async function resolveSession() {
+      // Demo mode (parity): session identity is held client-side.
+      if (typeof window !== 'undefined') {
+        const stored = sessionStorage.getItem('hcp_auth');
+        if (stored) {
+          try {
+            if (!cancelled) {
+              setUser(JSON.parse(stored));
+              setAuthChecked(true);
+            }
+            return;
+          } catch {
+            /* fall through to server session check */
+          }
+        }
       }
-      setAuthChecked(true);
+
+      // Entra mode: identity comes from the server-validated session cookie.
+      // (Access is already enforced by middleware; this only fetches display info.)
+      try {
+        const res = await fetch('/api/auth/session', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.authenticated && data?.user && !cancelled) {
+            setUser({ name: data.user.name, role: data.user.role, email: data.user.email });
+            setServerSession(true);
+            setAuthChecked(true);
+            return;
+          }
+        }
+      } catch {
+        /* no server session */
+      }
+
+      if (!cancelled) {
+        setAuthChecked(true);
+      }
     }
+
+    void resolveSession();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -52,9 +91,14 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('hcp_auth');
     }
+    // Entra mode: end the server session (and federated sign-out) via the route.
+    if (serverSession) {
+      window.location.href = '/api/auth/logout';
+      return;
+    }
     setUser(null);
     router.replace('/hcp-login');
-  }, [router]);
+  }, [router, serverSession]);
 
   // Show nothing while checking auth
   if (!authChecked || !user) {

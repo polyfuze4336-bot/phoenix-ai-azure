@@ -22,3 +22,8 @@ export function resolveAuthMode(): AuthMode {
 export function isDemoMode(): boolean {
   return resolveAuthMode() === 'demo';
 }
+
+/** True when the app is running in Entra ID authentication mode. */
+export function isEntraMode(): boolean {
+  return resolveAuthMode() === 'entra';
+}

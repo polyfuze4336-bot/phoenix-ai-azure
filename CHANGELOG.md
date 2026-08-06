@@ -105,6 +105,19 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   and "Demo Mode" label are preserved (no visible UX change). New `docs/security/authentication.md`
   documents why `sessionStorage` auth is not suitable for production healthcare use and how to protect
   the demo at the platform level (App Service Easy Auth / Entra, access restrictions).
+- Added **optional Microsoft Entra ID authentication** for HCP users (`AUTH_MODE=entra`, opt-in and
+  **not** enabled by default). Real OpenID Connect sign-in (authorization code + PKCE with
+  `state`/`nonce`), server-validated signed **httpOnly** session cookie (`hcp_session`, HS256 via
+  `jose`, `SESSION_SECRET`), and JWT-`exp` session expiration (`AUTH_SESSION_TTL_MINUTES`, default
+  60). Role mapping to Doctor / Nurse / Administrator via Entra **App Roles** (preferred) or security
+  **groups** (`AZURE_ENTRA_GROUP_*`), precedence Administrator > Doctor > Nurse; unmapped users are
+  Forbidden. New routes `nextjs_space/app/api/auth/entra/{login,callback}`, `.../auth/logout`,
+  `.../auth/session`, and `nextjs_space/middleware.ts` server-enforcing HCP page + API protection
+  (`/hcp`, `/hcp/*`, `/api/hcp-chat`, `/api/analyze-wound`) with **no client-only route guard** — the
+  community portal and its APIs stay public, and middleware is a no-op in demo mode. The login page
+  preserves its appearance while redirecting the sign-in action to Entra and surfacing explicit
+  Unauthorised / Forbidden states. `.env.example` and `docs/security/authentication.md` document the
+  Entra app registration, role mapping, and session configuration (server-only, no secrets committed).
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
