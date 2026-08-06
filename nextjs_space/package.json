@@ -10,6 +10,7 @@
     "test": "echo \"No unit test suite is configured yet\"",
     "test:e2e": "playwright test",
     "test:visual": "playwright test --config=playwright.config.ts",
+    "test:network": "playwright test --config=playwright.network.config.ts",
     "format:check": "echo \"No formatter is configured yet\""
   },
   "prisma": {

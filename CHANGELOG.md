@@ -40,6 +40,10 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   `nextjs_space/tests/visual/baseline/`. Added `@playwright/test` dev dependency + Chromium.
 - `docs/testing/visual-baseline.md`: how the baseline is captured, dimensions, routes, states,
   demo-auth handling, and the run command.
+- Abacus runtime-dependency guard: `nextjs_space/tests/network/no-abacus.spec.ts` +
+  `nextjs_space/playwright.network.config.ts` (script `test:network`). Loads every public route
+  in a real browser and fails if any browser request targets an Abacus-owned domain
+  (`apps.abacus.ai`, `abacus.ai`, or any `*.abacus.ai` / `*.abacusai.*` asset host).
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
@@ -68,6 +72,15 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   `tsconfig.json` excludes `tests/` + `playwright.config.ts` from the Next app type project.
   `.gitignore` ignores Playwright `test-results/` / `playwright-report/` anywhere while keeping
   the committed visual baseline tracked. No application code or UI changed.
+- `package.json`: added `test:network` (runs the Abacus guard). `tsconfig.json` also excludes
+  `playwright.network.config.ts` from the Next app type project.
+
+### Removed
+- Removed the Abacus-hosted browser script `https://apps.abacus.ai/chatllm/appllm-lib.js` from
+  `app/layout.tsx` (the Abacus platform preview/chat-widget loader). A full codebase search
+  confirmed no application code references any global, function, or object it provides, so no
+  page functionality changes and no replacement behaviour was required. Server-side AI calls
+  (`app/api/*` → `apps.abacus.ai`) are intentionally left for a later step.
 
 ### Fixed
 - `app/hcp/analysis/_components/analysis-client.tsx`: added the missing `stopCamera` dependency
@@ -78,4 +91,5 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 
 ### Known issues / follow-ups
 - `next@14.2.28` security advisory — to be addressed in a dedicated dependency-hardening change.
-- Abacus.AI platform artifacts (LLM endpoint, injected chat widget) to be migrated/removed.
+- Abacus.AI **server-side** LLM endpoint (`app/api/*` → `apps.abacus.ai`) still to be migrated to
+  Azure OpenAI. The injected browser chat widget has been removed (see Removed, above).

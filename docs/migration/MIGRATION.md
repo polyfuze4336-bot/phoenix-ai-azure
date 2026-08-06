@@ -241,4 +241,32 @@ an **observation-only** step — no UI, styling, content, or app source was chan
 - **Result:** all 68 Playwright tests passed (4 viewports × routes/states). Documented in
   `docs/testing/visual-baseline.md`. `npm run build` ✅ 17/17, `typecheck` ✅ 0, `lint` ✅ 0/0.
 
+### Step 9 — Remove the Abacus-hosted browser script
+Removed the only Abacus-hosted **client-side** dependency: the `appllm-lib.js` loader injected
+by the Abacus platform. No page functionality changes.
+- **Dependency analysis:** `app/layout.tsx` loaded
+  `<script src="https://apps.abacus.ai/chatllm/appllm-lib.js" defer>` in `<head>`. A full
+  codebase search (`appllm`, `chatllm`, `AppLLM`, `window.*abacus*`, `deploymentId`,
+  `deploymentToken`, `widget`, `ChatLLM`, etc.) found **no** application code that references
+  any global, function, object, or config attribute the script provides. It is the Abacus
+  hosting platform's preview/chat-widget loader, injected into the page chrome but never
+  called by Phoenix AI. Confirmed the app does not invoke it → **no dependency**.
+- **Change:** deleted the single `<script>` line from `app/layout.tsx`. Because nothing
+  consumed the script, **no replacement (local or Azure-native) behaviour was required** and
+  no page functionality changes. The `<head>` meta tags, PWA hooks, fonts, and body are
+  untouched.
+- **Regression guard (new test):** `nextjs_space/tests/network/no-abacus.spec.ts` +
+  `nextjs_space/playwright.network.config.ts` (script `npm run test:network`). It loads every
+  public route in a real browser, records all browser network requests, and **fails** if any
+  request targets an Abacus-owned host — matched by `/(^|\.)abacus(ai)?\.(ai|app|com)$/i`,
+  covering `apps.abacus.ai`, `abacus.ai`, and any `*.abacus.ai` / `*.abacusai.*` asset domain.
+  Scope is **browser** requests only; the server-side `app/api/*` → `apps.abacus.ai` calls are
+  made by the Next.js server (not the browser) and are intentionally out of scope here.
+- **Scope note:** per the task, the **server-side** AI API calls were **not** changed in this
+  step — they are migrated to Azure OpenAI in a later step.
+- **Scripts/config:** `package.json` adds `test:network`; `tsconfig.json` also excludes
+  `playwright.network.config.ts` from the Next app type project.
+- **Verification:** `npm run build` ✅ 17/17 routes; `npm run typecheck` ✅ 0; `npm run lint`
+  ✅ 0/0; `npm run test:network` ✅ 1 passed (0 Abacus browser requests across all 14 routes).
+
 _Subsequent steps appended below as work proceeds._
