@@ -5,6 +5,7 @@ import { ChunkLoadErrorHandler } from '@/components/chunk-load-error-handler'
 import { LanguageProvider } from '@/components/language-provider'
 import { PwaRegister } from '@/components/pwa-register'
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
+import { getSiteUrl } from '@/lib/config/environment'
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export const metadata = {
   openGraph: {
     images: ['/og-image.png'],
   },
-  metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
+  metadataBase: getSiteUrl(),
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent' as const,

@@ -157,7 +157,7 @@ resource app 'Microsoft.Web/sites@2024-04-01' = {
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
       http20Enabled: true
-      healthCheckPath: '/api/health'
+      healthCheckPath: '/api/health/live'
       appSettings: concat(baseAppSettings, databaseAppSettings)
     }
   }

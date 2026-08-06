@@ -130,8 +130,20 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   (GitHub Actions OIDC: PR lint + build + what-if, gated manual deploy). Bicep lints and builds
   cleanly; subscription what-if validated the template (the only blocker is 0 App Service compute
   quota in the sandbox subscription, an environment limitation).
-
-### Verified
+- Prepared the Next.js runtime for **Azure App Service (Linux, Node 22)**: pinned the supported
+  Node LTS via `package.json` `engines` (`>=22 <23`); a standalone production build (`node server.js`)
+  that binds to Azure's `PORT` and keeps deep links working after refresh. Added Kubernetes-style
+  health probes `GET /api/health/live` (liveness, no dependencies) and `GET /api/health/ready`
+  (readiness — checks only runtime, PostgreSQL when enabled, Azure AI endpoint *configuration*, and
+  Blob Storage when enabled; never calls the AI model). Added a server-only runtime config +
+  environment-validation module (`lib/config/environment.ts`) surfaced at boot via Next.js
+  instrumentation (`instrumentation.ts`, warns but never crashes), and removed the hard `localhost`
+  dependency from `metadataBase` (derives the site URL from `WEBSITE_HOSTNAME`). Hardened the
+  streaming AI routes for App Service (`runtime = 'nodejs'`, `maxDuration`, a `Content-Length`
+  body-size guard returning 413 for oversized image uploads, and a 110 s request timeout on image
+  analysis). Reviewed Next.js image configuration and deliberately kept `images.unoptimized: true`
+  (all images are local static assets, the logo requires pixel fidelity, and visual baselines assert
+  parity) — optimisation is left off until proven non-destructive.
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
 - `npm ci --legacy-peer-deps` succeeds (exit 0) with Node v22.19.0 / npm 10.9.3.
 - `npx tsc --noEmit` passes with 0 type errors.

@@ -32,6 +32,37 @@ export function approxBase64Bytes(base64: string): number {
   return Math.max(0, Math.floor((clean.length * 3) / 4) - padding);
 }
 
+/**
+ * Upper bound on the raw HTTP request body for an image upload.
+ *
+ * The client sends the image base64-encoded inside a JSON envelope. Base64 inflates
+ * the decoded size by ~33%, plus a small JSON/metadata overhead — so allow ~1.5x the
+ * decoded image ceiling. This lets a route reject an oversized upload from the
+ * Content-Length header BEFORE buffering the whole body into memory.
+ */
+export function maxImageRequestBytes(): number {
+  return Math.floor(maxImageBytes() * 1.5) + 4096;
+}
+
+export interface BodySizeCheck {
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Reject a request whose declared Content-Length exceeds the image upload limit.
+ * A missing/unparseable Content-Length passes here (the decoded-size check in
+ * validateImageInput remains the authoritative guard after parsing).
+ */
+export function checkRequestBodySize(contentLength: string | null): BodySizeCheck {
+  const declared = Number.parseInt(contentLength ?? '', 10);
+  if (Number.isFinite(declared) && declared > maxImageRequestBytes()) {
+    const limitMb = (maxImageRequestBytes() / (1024 * 1024)).toFixed(0);
+    return { ok: false, error: `Request body too large. Maximum upload is about ${limitMb} MB.` };
+  }
+  return { ok: true };
+}
+
 export interface ImageInput {
   image?: unknown;
   mimeType?: unknown;

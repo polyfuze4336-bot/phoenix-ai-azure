@@ -1,16 +1,24 @@
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+// Vision analysis; generous ceiling under the App Service front-end idle timeout.
+export const maxDuration = 120;
 
 import { NextRequest } from 'next/server';
 import { AiMessage } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
 import { createStructuredSseResponse } from '@/lib/ai/streaming/sse';
 import { parseCommunityWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
-import { validateImageInput } from '@/lib/ai/validation/image-input';
+import { validateImageInput, checkRequestBodySize } from '@/lib/ai/validation/image-input';
 import { newCorrelationId } from '@/lib/ai/telemetry';
 import { communityWoundAnalysisSystemPrompt } from '@/lib/ai/prompts/community-wound-analysis';
 
 export async function POST(request: NextRequest) {
   try {
+    const bodySize = checkRequestBodySize(request.headers.get('content-length'));
+    if (!bodySize.ok) {
+      return new Response(JSON.stringify({ error: bodySize.error }), { status: 413 });
+    }
+
     const body = await request.json();
     const { image, mimeType, lang } = body ?? {};
 
@@ -39,6 +47,7 @@ export async function POST(request: NextRequest) {
         responseFormat: 'json_object',
         correlationId,
         route: 'community-analyze',
+        timeoutMs: 110_000,
       });
     } catch (err) {
       return aiErrorResponse(err, 'API error');

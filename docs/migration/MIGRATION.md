@@ -661,3 +661,70 @@ This step provisions the Azure landing zone for the parity demo as **Infrastruct
   deploy — **not** a template defect. To keep the template deployable in quota-constrained
   environments, the plan SKU/tier are parameterised (default `B1`/`Basic`) and `alwaysOn` is
   auto-disabled on the Free tier. No resources were created (what-if is read-only).
+
+### Step 18 - Configure the Next.js application for Azure App Service
+
+This step prepares the imported Next.js app to run as a **full Node.js server on Azure App Service
+(Linux)** without changing the visible experience. Nothing in the UI, routing, styling or clinical
+content is altered; the changes are runtime, health, configuration and hardening only.
+
+- **Supported Node LTS pinned:** [package.json](../../nextjs_space/package.json) gains
+  `"engines": { "node": ">=22 <23" }`, matching the repo's [.nvmrc](../../.nvmrc) (`22`) and the
+  App Service `NODE|22-lts` runtime provisioned by the Bicep template.
+- **Production build & startup:** the app already builds to Next.js **standalone** output
+  (`output: 'standalone'` via `NEXT_OUTPUT_MODE`, set by the deploy), so App Service runs it with
+  `node server.js`. The standalone bundle was verified to emit
+  `.next/standalone/nextjs_space/server.js`. Next.js binds to the `PORT` supplied by App Service
+  automatically — no code change needed, and the server model (not a static export) keeps the
+  **server-side API routes** and makes **deep links resolve after a refresh**.
+- **No `localhost` / local-filesystem dependency at runtime:** added
+  [lib/config/environment.ts](../../nextjs_space/lib/config/environment.ts) with `getSiteUrl()`,
+  which derives the public base URL from `NEXTAUTH_URL` → `WEBSITE_HOSTNAME` (auto-injected by App
+  Service, forced to `https`) → a `http://localhost:3000` **development-only** fallback.
+  [app/layout.tsx](../../nextjs_space/app/layout.tsx) now sets `metadataBase: getSiteUrl()` instead
+  of a hard-coded `http://localhost:3000`. No feature writes to the local filesystem for
+  persistence (uploads are stateless data URLs; Blob Storage, when enabled, uses managed identity).
+- **Health endpoints:** added [`GET /api/health/live`](../../nextjs_space/app/api/health/live/route.ts)
+  (liveness — returns `200 {status:'alive'}` with **no** dependency checks) and
+  [`GET /api/health/ready`](../../nextjs_space/app/api/health/ready/route.ts) (readiness — `200` when
+  ready, `503` when not). Readiness ([lib/health/readiness.ts](../../nextjs_space/lib/health/readiness.ts))
+  verifies **only essential dependencies**: the application runtime, **PostgreSQL when enabled**
+  (`DATABASE_URL` present → live `SELECT 1`; otherwise skipped), the **Azure AI endpoint
+  configuration** (presence of endpoint + deployment — it **never calls the model** on a probe),
+  and **Blob Storage when enabled** (configuration check, no network call). The Bicep
+  `healthCheckPath` was pointed at [`/api/health/live`](../../infra/modules/app-service.bicep). The
+  original `/api/health` and `/api/health/db` routes are kept for back-compat.
+- **Environment-variable validation:** `validateEnvironment()` in the same config module returns
+  structured `{ errors, warnings }` (missing AI endpoint/deployment, or key-auth without a key are
+  errors; missing `AZURE_CLIENT_ID`/`DATABASE_URL`/storage are warnings). It is invoked at process
+  start through Next.js **instrumentation**
+  ([instrumentation.ts](../../nextjs_space/instrumentation.ts), enabled with
+  `experimental.instrumentationHook`), which logs a `[Phoenix AI][startup]` summary but **never
+  throws** — a misconfigured demo can still boot.
+- **Managed identity:** unchanged and preserved — the AI provider and Blob Storage use
+  `DefaultAzureCredential` with the user-assigned identity (`AZURE_CLIENT_ID`); no keys are required.
+- **Streaming API routes hardened for App Service:** each of the four AI routes
+  ([analyze-wound](../../nextjs_space/app/api/analyze-wound/route.ts),
+  [community-analyze](../../nextjs_space/app/api/community-analyze/route.ts),
+  [hcp-chat](../../nextjs_space/app/api/hcp-chat/route.ts),
+  [community-chat](../../nextjs_space/app/api/community-chat/route.ts)) now declares
+  `runtime = 'nodejs'` (so streaming runs on the Node server, not the Edge runtime) and a
+  `maxDuration` (120 s for image analysis, 90 s for chat). A `Content-Length` **body-size guard**
+  (`checkRequestBodySize` in [image-input.ts](../../nextjs_space/lib/ai/validation/image-input.ts))
+  rejects oversized image uploads with **HTTP 413** before buffering, using a limit derived from
+  `AZURE_AI_MAX_IMAGE_MB` plus base64/JSON overhead. Image analysis passes an explicit
+  `timeoutMs: 110_000` so long vision calls complete within the App Service request window while
+  still being bounded.
+- **PWA assets:** `manifest.json`, `sw.js` and the icons continue to be served from `public/` by the
+  Node server; the service worker (which skips `/api/*`) is unaffected by these changes.
+- **Image configuration reviewed:** kept `images: { unoptimized: true }`. Every image is a **local**
+  static asset (`/logo.png`, `/favicon.svg`, `/kkm-hkl-logo.jpeg`) or a runtime `data:` URL — there
+  are no remote domains, and `data:` URLs cannot be optimised anyway. The Phoenix AI logo requires
+  pixel fidelity and the committed visual baselines assert parity, so the optimiser (which would
+  transcode/resize) is **left off until proven non-destructive**, per the prime directive. The
+  decision is documented inline in [next.config.js](../../nextjs_space/next.config.js).
+- **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build`
+  (standalone) ✅ 17/17 static pages — the route list now includes `/api/health/live` and
+  `/api/health/ready`, `server.js` is emitted, and the Middleware bundle builds; `npm run
+  test:network` ✅ 1 passed. (The build shows the benign `jose` Edge-runtime warnings inherited from
+  Step 17's session code; they do not affect the Node-runtime routes.) No visible UX change.

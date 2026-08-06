@@ -1,14 +1,23 @@
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+// Streaming chat (can include an image); allow a generous ceiling for long replies.
+export const maxDuration = 90;
 
 import { NextRequest } from 'next/server';
 import { AiMessage } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
 import { createTextPassthroughResponse } from '@/lib/ai/streaming/text-stream';
 import { newCorrelationId } from '@/lib/ai/telemetry';
+import { checkRequestBodySize } from '@/lib/ai/validation/image-input';
 import { HCP_CHAT_SYSTEM_PROMPT } from '@/lib/ai/prompts/hcp-chat';
 
 export async function POST(request: NextRequest) {
   try {
+    const bodySize = checkRequestBodySize(request.headers.get('content-length'));
+    if (!bodySize.ok) {
+      return new Response(JSON.stringify({ error: bodySize.error }), { status: 413 });
+    }
+
     const body = await request.json();
     const { messages: chatMessages } = body ?? {};
 
