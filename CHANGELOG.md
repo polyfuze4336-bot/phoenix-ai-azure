@@ -21,6 +21,9 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 - `docs/migration/source-code-audit.md`: complete read-only audit of the imported source —
   architecture, all 13 pages and 4 API routes, design tokens, dependencies, environment
   variables, security risks, and Azure migration blockers, with the 12 known issues confirmed.
+- `docs/migration/source-baseline-manifest.md`: SHA-256 manifest of all 162 tracked files
+  establishing an immutable source baseline. Canonical `public/logo.png` SHA-256 recorded
+  (`dfb40a3e…917d8241`). Tag `abacus-source-baseline` + branch `migration/azure-port` created.
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).

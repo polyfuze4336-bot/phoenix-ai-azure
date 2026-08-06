@@ -112,4 +112,18 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
   language state is in-memory (not persisted).
 - **No source code was changed** — the identified issues are backlog for later steps.
 
+### Step 4 — Establish the immutable source baseline
+- Generated [`source-baseline-manifest.md`](source-baseline-manifest.md): a SHA-256 manifest of
+  all 162 git-tracked files (path, size in bytes, SHA-256, asset type), plus a highlighted
+  critical-assets section covering the logos, favicon, OG image, all PWA icons, the TBSA body
+  and mask images, `app/globals.css`, `tailwind.config.ts`, and `STYLE_GUIDE.md`.
+- Recorded the canonical **`public/logo.png` SHA-256 =
+  `dfb40a3ef32007ceef3c06f11a48d6b1794178d240d74e716f34e6f4917d8241`** (346691 bytes). This
+  hash is the reference used later to prove the Azure app serves the exact original logo. The
+  original upload `Uploads/6ed27144-...png` shares this identical hash, confirming the source
+  asset is unaltered. The logo must not be optimised, resized, recoloured, or overwritten.
+- Created git tag **`abacus-source-baseline`** on the baseline commit (immutable reference to
+  the imported Abacus.AI source) and branch **`migration/azure-port`** for all port work.
+- **No source code or assets were modified** — this step only adds the manifest.
+
 _Subsequent steps appended below as work proceeds._
