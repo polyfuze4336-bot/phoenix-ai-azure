@@ -605,3 +605,59 @@ client and the design is made explicitly demo-only. This is **not** enterprise a
   platform level (App Service Easy Auth / Entra, access restrictions, or a lightweight gate).
 - **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 18/18 routes
   (adds `/api/auth/login`); `npm run test:network` ✅ 1 passed. No visible UX change.
+
+### Step 17 - Create Azure infrastructure with Bicep
+
+This step provisions the Azure landing zone for the parity demo as **Infrastructure as Code**
+(Bicep, subscription-scoped). It creates the resource group and every runtime dependency, and
+**reuses** the existing Microsoft Foundry model deployment rather than provisioning a new one.
+
+- **Subscription inspection & reuse decision:** the only existing resource group in the sandbox
+  subscription (`rg-aisgemini-dev`) belongs to a different workload. Reusing its telemetry, secret
+  and storage resources would pollute that workload and add operational risk, so those are **not**
+  reused. The **one** resource reused is the Foundry / Azure OpenAI account **`aif-yfjw6y`**
+  (`kind=AIServices`, `eastus2`, `publicNetworkAccess=Enabled`, `disableLocalAuth=true` — managed
+  identity, which matches the app's AI provider), which already hosts a vision-capable **`gpt-4o`**
+  deployment (2024-11-20, GlobalStandard) with adequate demo quota. Reuse is **read-only**: the
+  template only references the account and grants the app's identity a **`Cognitive Services OpenAI
+  User`** role on it (cross-resource-group), never modifying the owning workload. This conserves
+  scarce model quota without operational coupling.
+- **Target architecture (all created fresh in `rg-phoenixai-demo`, `eastus2`):**
+  - **App Service (Linux, Node 22)** hosting the Next.js app as a **full Node.js server**
+    (`node server.js`, standalone output) — not a static export, because the app has server-side API
+    routes. `alwaysOn`, HTTPS-only, TLS 1.2, HTTP/2, health check `/api/health`, user-assigned
+    managed identity, and Key Vault reference identity.
+  - **Azure Database for PostgreSQL Flexible Server** (Burstable `Standard_B1ms`, PG 16, Entra +
+    password auth, 7-day backup) with the initial `phoenix` database.
+  - **Blob Storage** (StorageV2, `allowSharedKeyAccess=false`, `allowBlobPublicAccess=false`,
+    TLS 1.2, private `clinical-uploads` container, 7-day soft delete).
+  - **Key Vault** (RBAC-authorised, soft delete) holding the database connection string; the app
+    reads it via a `@Microsoft.KeyVault(...)` reference resolved by its managed identity.
+  - **Application Insights + Log Analytics** for telemetry; diagnostics wired from Key Vault,
+    Storage and App Service to the workspace.
+  - **User-assigned managed identity** granted least-privilege roles: `Key Vault Secrets User`,
+    `Storage Blob Data Contributor`, `Monitoring Metrics Publisher`, and (cross-RG) `Cognitive
+    Services OpenAI User` on the reused Foundry account. **No account keys or secrets are used or
+    committed.**
+  - **Operational alerts** (action group + HTTP 5xx and response-time metric alerts).
+- **Structure** ([infra/](../../infra)): [main.bicep](../../infra/main.bicep) (subscription scope —
+  creates the resource group and orchestrates the modules), [main.bicepparam](../../infra/main.bicepparam)
+  (parameters; the PostgreSQL admin password is read from the `PG_ADMIN_PASSWORD` environment
+  variable and is **never** committed), and eleven modules under [infra/modules/](../../infra/modules):
+  `log-analytics`, `application-insights`, `managed-identity`, `key-vault`, `storage`, `postgresql`,
+  `app-service-plan`, `app-service`, `foundry-connection`, `role-assignments`, `alerts`. The
+  managed identity is its own module so its `principalId`/`clientId` feed the role assignments,
+  Foundry connection and App Service without a dependency cycle.
+- **Tags** applied to every resource: `Application=PhoenixAI`, `Environment=Demo`,
+  `Workload=BurnAndWoundCare`, `ManagedBy=Bicep`, `Owner`, `CostCentre`.
+- **CI/CD** ([.github/workflows/infra.yml](../../.github/workflows/infra.yml)): GitHub Actions with
+  **OIDC** federation (`azure/login@v2`, no stored client secret). Pull requests run Bicep
+  lint + build + subscription **what-if** (read-only); deployment is a gated manual dispatch against
+  the `production` environment. `PG_ADMIN_PASSWORD` comes from a repository secret.
+- **Verification:** `az bicep build` (lint + compile) ✅ 0 warnings/errors. `az deployment sub
+  what-if` compiled and preflight-validated the whole template; the **only** blocker is that this
+  MCAPS sandbox subscription has **0 App Service compute quota** (`Total VMs` limit 0 for any SKU,
+  including Free), which is an environment limitation requiring a quota increase before an actual
+  deploy — **not** a template defect. To keep the template deployable in quota-constrained
+  environments, the plan SKU/tier are parameterised (default `B1`/`Basic`) and `alwaysOn` is
+  auto-disabled on the Free tier. No resources were created (what-if is read-only).

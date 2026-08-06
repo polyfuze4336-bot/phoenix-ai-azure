@@ -1,0 +1,91 @@
+name: infra
+
+# Provisions Phoenix AI Azure infrastructure from infra/ using Bicep.
+# Authenticates to Azure with GitHub OIDC (federated credentials) — no stored
+# client secrets. Pull requests run lint + build + what-if (read-only);
+# deployment runs only on manual dispatch against the production environment.
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra.yml'
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Run the deployment (subscription-scoped) after what-if.'
+        type: boolean
+        default: false
+
+# OIDC token + repo read.
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: infra-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AZURE_LOCATION: eastus2
+  TEMPLATE: infra/main.bicep
+  PARAMETERS: infra/main.bicepparam
+
+jobs:
+  validate:
+    name: Lint, build & what-if
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Bicep lint
+        run: az bicep build --file ${{ env.TEMPLATE }} --stdout > /dev/null
+
+      - name: Bicep build (compile to ARM)
+        run: az bicep build --file ${{ env.TEMPLATE }}
+
+      - name: What-if (subscription scope)
+        env:
+          PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
+        run: |
+          az deployment sub what-if \
+            --name phoenixai-infra-${{ github.run_number }} \
+            --location ${{ env.AZURE_LOCATION }} \
+            --template-file ${{ env.TEMPLATE }} \
+            --parameters ${{ env.PARAMETERS }}
+
+  deploy:
+    name: Deploy
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy (subscription scope)
+        env:
+          PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
+        run: |
+          az deployment sub create \
+            --name phoenixai-infra-${{ github.run_number }} \
+            --location ${{ env.AZURE_LOCATION }} \
+            --template-file ${{ env.TEMPLATE }} \
+            --parameters ${{ env.PARAMETERS }}

@@ -118,6 +118,18 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   preserves its appearance while redirecting the sign-in action to Entra and surfacing explicit
   Unauthorised / Forbidden states. `.env.example` and `docs/security/authentication.md` document the
   Entra app registration, role mapping, and session configuration (server-only, no secrets committed).
+- Added **Azure infrastructure as code** (Bicep) under `infra/`: a subscription-scoped
+  `main.bicep` that creates the `rg-phoenixai-demo` resource group and provisions App Service
+  (Linux Node 22 hosting the Next.js server), PostgreSQL Flexible Server, Blob Storage, Key Vault,
+  Application Insights, Log Analytics, and a user-assigned managed identity with least-privilege
+  role assignments — plus operational alerts. The existing Microsoft Foundry `gpt-4o` deployment
+  (`aif-yfjw6y`) is **reused read-only** (cross-resource-group `Cognitive Services OpenAI User`
+  role) instead of provisioning a new model. All resources are tagged (`Application=PhoenixAI`,
+  `Environment=Demo`, `Workload=BurnAndWoundCare`, `ManagedBy=Bicep`, `Owner`, `CostCentre`) and
+  use managed identity — no account keys or secrets. Added `.github/workflows/infra.yml`
+  (GitHub Actions OIDC: PR lint + build + what-if, gated manual deploy). Bicep lints and builds
+  cleanly; subscription what-if validated the template (the only blocker is 0 App Service compute
+  quota in the sandbox subscription, an environment limitation).
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
