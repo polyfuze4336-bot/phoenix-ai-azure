@@ -62,4 +62,20 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 - Initialised git; first commit is the **pristine imported source** for a clean audit trail.
 - Verified local dependency install and production build.
 
+**Verification results (Step 1):**
+- `npm install --legacy-peer-deps` → 1064 packages added, exit 0.
+  (`--legacy-peer-deps` required by a pre-existing dev-only peer conflict:
+  `eslint@9` vs `@typescript-eslint/parser@7` needing `eslint@^8`. Runtime unaffected.)
+- `npm run build` (`next build`) → **compiled successfully**, 17/17 routes generated, exit 0.
+  Confirms `lib/db.ts` (Prisma) and `lib/s3.ts` (AWS) are not part of the build graph —
+  reinforces the "no runtime DB / object store" finding.
+- `npx prisma generate` fails locally: `schema.prisma` hardcodes a Linux `output` path
+  (`/home/ubuntu/...`). Non-blocking (Prisma unused at runtime); will be corrected only if
+  persistence is enabled in a later step. **Assumption documented.**
+
+**Known advisories (not addressed in this step — faithful import first):**
+- `next@14.2.28` has a security advisory (upgrade to a patched 14.2.x). To be handled as a
+  separate, reviewable dependency-hardening commit before go-live.
+- `npm audit`: 25 vulns (mostly transitive/dev). Triage planned pre-deploy.
+
 _Subsequent steps appended below as work proceeds._
