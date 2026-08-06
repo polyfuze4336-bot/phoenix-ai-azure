@@ -6,8 +6,9 @@ import { motion } from 'framer-motion';
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { trackClientEvent } from '@/lib/telemetry/client';
+import { calculateResuscitation, type ResuscitationFormula } from '@/lib/clinical/parkland';
 
-type Formula = 'parkland' | 'brooke';
+type Formula = ResuscitationFormula;
 
 export function ParklandClient() {
   const { t } = useLanguage();
@@ -25,18 +26,7 @@ export function ParklandClient() {
   const results = useMemo(() => {
     const w = parseFloat(weight) || 0;
     const tb = parseFloat(tbsa) || 0;
-    if (w <= 0 || tb <= 0) return null;
-
-    const multiplier = formula === 'parkland' ? 4 : 2;
-    const total24h = multiplier * w * tb;
-    const first8h = total24h / 2;
-    const next16h = total24h / 2;
-    const rate8h = first8h / 8;
-    const rate16h = next16h / 16;
-    const urineTarget = w < 30 ? 1 * w : 0.5 * w;
-    const isChild = w < 30;
-
-    return { total24h, first8h, next16h, rate8h, rate16h, urineTarget, isChild };
+    return calculateResuscitation({ weightKg: w, tbsaPercent: tb, formula });
   }, [weight, tbsa, formula]);
 
   const tbsaNum = parseFloat(tbsa) || 0;

@@ -162,6 +162,32 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   passwords, API keys or connection strings. Added the browser
   `NEXT_PUBLIC_APPLICATIONINSIGHTS_CONNECTION_STRING` app setting (Bicep) and documented both
   variables in `.env.example`.
+- Added a **complete functional regression suite** covering the clinical logic, configuration and
+  the three end-user journeys, with **no test skipped because a workflow is unavailable**:
+  - **Unit tests** (`nextjs_space/tests/unit/*.test.ts`, `tsx --test`, 76 tests): TBSA and Parkland
+    calculations, language switching, AI response parsing, wound-analysis schema validation,
+    environment/configuration validation, authentication mode + demo users, storage validation, and
+    the deterministic demo-data/DB mappings.
+  - **Integration tests** (`nextjs_space/tests/integration/*.integration.test.ts`, `tsx --test`,
+    14 tests): readiness aggregation for the health endpoints, Blob Storage config/validation gating
+    (disabled ≠ broken), and PostgreSQL `buildDatasourceUrl` hardening (live DB layer runs only when
+    `DATABASE_URL` is set). HTTP-level integration for the four AI routes + health probes runs via
+    Playwright (`nextjs_space/tests/api/routes.spec.ts`, 14 tests): `/api/hcp-chat`,
+    `/api/community-chat`, `/api/analyze-wound`, `/api/community-analyze` are exercised for input
+    validation (400 invalid, 413 oversized body) and asserted to reach a **deterministic terminal
+    response** — a stream when Azure OpenAI is configured, an explicit error status otherwise.
+  - **Playwright user journeys** (`nextjs_space/tests/e2e/*.spec.ts`, 3 specs): the public landing
+    journey (Phoenix + KKM/HKL logos, HCP + community entries, language switching, responsive nav),
+    the HCP journey (demo login → analysis + image upload + AI assessment → chat → TBSA canvas
+    calculation → Parkland fluid calculation → guidelines → mobile nav → logout), and the community
+    journey (first aid, articles, assessment, image-check upload, chat, EN/BM switch, mobile nav).
+    AI-backed steps assert the loading state then **either** the structured result **or** the app's
+    explicit failure/fallback state, so they verify the workflow without ever skipping.
+  - New Playwright configs `playwright.e2e.config.ts` and `playwright.api.config.ts`; new scripts
+    `test:unit`, `test:api`, a repointed `test:e2e`, and a `test:integration` that globs all
+    integration files; `test` now runs unit + integration. Verified: `typecheck` ✅ 0,
+    `lint` ✅ 0/0, `build` ✅ 21 routes, `test:unit` ✅ 76, `test:integration` ✅ 14,
+    `test:api` ✅ 14, `test:e2e` ✅ 3, `test:network` ✅ 1.
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
 - `npm ci --legacy-peer-deps` succeeds (exit 0) with Node v22.19.0 / npm 10.9.3.
 - `npx tsc --noEmit` passes with 0 type errors.

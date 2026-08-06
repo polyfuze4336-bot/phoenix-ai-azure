@@ -750,6 +750,93 @@ step adds the SDKs, the instrumentation and the browser connection-string app se
   used via a directly-constructed `TelemetryClient` (cloud role `phoenix-ai-web`) **without**
   `setup().start()`, so no require-in-the-middle monkey-patching is wired into the server bundle —
   only the explicit `trackEvent` / `trackMetric` / `trackException` / `trackDependency` calls emit.
+
+### Step 20 - Add a complete functional regression suite
+
+This step adds a full functional test suite spanning the clinical logic, configuration/health
+surface and the three end-user journeys. It is **test-only**: no UI, routing, styling, clinical
+content or runtime behaviour changes, so visible parity is unchanged. The overriding rule is that
+**no test is skipped merely because a workflow is unavailable** — where a workflow depends on Azure
+OpenAI (which is unconfigured in the stateless demo), the test asserts a **deterministic terminal
+state** (the real result when configured, or the app's explicit failure/fallback state otherwise),
+never a skip and never a hang.
+
+- **Toolchain (no new heavy dependencies):** unit and integration tests run on the Node.js built-in
+  `node:test` runner + `node:assert/strict` via `tsx --test` — the already-present `tsx` + Playwright
+  toolchain, avoiding a jest/vitest peer-dependency conflict (the repo requires
+  `--legacy-peer-deps`). Test files use **relative imports** into `lib/…` because `tsx` does not
+  resolve the `@/*` tsconfig path alias at runtime; the library/component sources are unchanged and
+  keep their `@/` imports. `tests/` remains excluded from `tsc --noEmit`, and the two new Playwright
+  configs were added to the tsconfig `exclude` list alongside the existing ones.
+- **Small extractions to make logic unit-testable (behaviour-preserving):** the TBSA and Parkland
+  calculations were lifted verbatim into pure modules
+  ([lib/clinical/tbsa.ts](../../nextjs_space/lib/clinical/tbsa.ts),
+  [lib/clinical/parkland.ts](../../nextjs_space/lib/clinical/parkland.ts)) and the client components
+  now import them, producing byte-identical results (Parkland 4 × weight × TBSA, modified Brooke ×2,
+  50/50 8h/16h split, urine targets, `<30 kg` child boundary; TBSA Lund & Browder region maxima,
+  fraction glyphs, severity bands, anterior/posterior summation). The `VARIABLE_AREAS` reference
+  table used by the TBSA age table is now exported from the same module. The demo seed rows +
+  bilingual articles were extracted to [scripts/seed-data.ts](../../nextjs_space/scripts/seed-data.ts)
+  (imported by `scripts/seed.ts`; the `safe-seed.ts` destructive-pattern guard still passes), and
+  `buildDatasourceUrl` is now exported from [lib/db.ts](../../nextjs_space/lib/db.ts) for direct
+  testing. None of these change output.
+- **Unit tests** ([tests/unit/](../../nextjs_space/tests/unit/), 76 tests): TBSA calculations,
+  Parkland calculations, language switching (`lib/i18n` — EN/BM differ, key echo on miss, every entry
+  present in both languages), AI response parsing (`parseHcpWoundAnalysis` /
+  `parseCommunityWoundAnalysis` fallbacks + coercion), wound-analysis Zod schema validation
+  (defaults, coercion, `isBurn`), environment/configuration validation (`getAiConfig`,
+  `validateEnvironment`, storage/site-url precedence), authentication mode + demo users
+  (`resolveAuthMode`, `verifyDemoCredentials`, case-insensitive email), storage validation
+  (`validateUpload`, `buildBlobPath` — no filename leak), image-input validation, and the
+  deterministic 48-row demo dataset + 5 bilingual articles mapping.
+- **Integration tests** ([tests/integration/](../../nextjs_space/tests/integration/), `tsx --test`,
+  14 tests): readiness aggregation ([lib/health/readiness.ts](../../nextjs_space/lib/health/readiness.ts))
+  that backs `/api/health/ready` — always surfaces the four essential checks (runtime, azure-ai,
+  postgresql, blob-storage), degrades when AI is unconfigured, and treats disabled DB/storage as
+  `skipped` (not `degraded`); Blob Storage facade wiring + enablement gating (a disabled provider is a
+  supported state, not a failure); and PostgreSQL `buildDatasourceUrl` hardening (sslmode + pool
+  defaults, explicit settings preserved, unparseable pass-through). The live database layer
+  (readiness + idempotent, non-destructive `seed-selftest` upsert) is registered **only** when
+  `DATABASE_URL` is set — the absence of an external database is not a broken workflow.
+- **HTTP API integration** ([tests/api/routes.spec.ts](../../nextjs_space/tests/api/routes.spec.ts),
+  Playwright request context against the production build, 14 tests): the health probes
+  (`/api/health`, `/api/health/live`, `/api/health/db` 200/503, `/api/health/ready` reports the
+  essential checks) and the four AI routes. Each AI route is asserted for input validation without a
+  model call — **400** on a missing/invalid image and **413** on an oversized body (the web server is
+  booted with `AZURE_AI_MAX_IMAGE_MB=1` so the guard trips on a light ~2 MB payload) — and a
+  well-formed request is asserted to reach a **deterministic terminal HTTP response** (a `2xx` stream
+  when Azure OpenAI is configured, or an explicit error status otherwise).
+- **Playwright user journeys** ([tests/e2e/](../../nextjs_space/tests/e2e/), 3 specs against the
+  production build via `playwright.e2e.config.ts`):
+  - **Public landing:** loads `/`, confirms the Phoenix logo (`/logo.png`) and the KKM/HKL
+    endorsement logo, the HCP (`/hcp-login`) and community (`/community`) entries, language switching
+    (EN ↔ BM via the `Toggle language` control), and responsive navigation at mobile + desktop widths.
+  - **HCP:** `/hcp-login` → real demo doctor login (`doctor@phoenix.my`, verified via
+    `/api/auth/login`) → `/hcp` → analysis (uploads a valid 1×1 PNG, requests the AI assessment,
+    confirms the loading state, then asserts the structured `Analysis Results` **or** the explicit
+    failure state) → chat (sends a clinical question, confirms the user turn renders and the assistant
+    bubble reaches content or the error fallback) → TBSA (paints the body canvas and asserts the Total
+    TBSA readout leaves `0%`) → Parkland (weight 70 kg + TBSA 25% → `7000 mL`) → guidelines (content
+    present) → mobile drawer navigation → logout back to `/hcp-login`.
+  - **Community:** `/community` → first aid → articles → assessment → image-check (uploads an image,
+    confirms simplified advice **or** the explicit failure state) → chat (sends a question, confirms a
+    response or the error fallback) → EN ↔ BM switch (language-conditional chat placeholder) → mobile
+    drawer navigation.
+  AI-backed steps use a shared `expectAiTerminalState` helper so a broken/unconfigured workflow yields
+  a passing, non-skipped assertion on the visible failure state rather than a skip.
+- **Scripts & configs:** added `test:unit` (`tsx --test "tests/unit/*.test.ts"`), `test:api`
+  (Playwright API config), repointed `test:e2e` to the journey config, and widened `test:integration`
+  to glob all `tests/integration/*.integration.test.ts`; `test` now runs unit + integration. New
+  [playwright.e2e.config.ts](../../nextjs_space/playwright.e2e.config.ts) and
+  [playwright.api.config.ts](../../nextjs_space/playwright.api.config.ts) boot `npm run start` for
+  their specs.
+- **Verification:** `npm run typecheck` ✅ 0 (also fixed a pre-existing break from the TBSA
+  extraction by exporting `VARIABLE_AREAS`); `npm run lint` ✅ 0/0; `npm run build` ✅ 21 routes;
+  `npm run test:unit` ✅ 76/76; `npm run test:integration` ✅ 14/14; `npm run test:api` ✅ 14/14
+  (AI routes returned explicit config-error statuses in the stateless demo — the intended terminal
+  state, not a skip); `npm run test:e2e` ✅ 3/3 (all journeys passed against the demo build, asserting
+  the failure/fallback states for the AI steps); `npm run test:network` ✅ 1. No visible UX change.
+
   It is initialised once at startup from
   [instrumentation.ts](../../nextjs_space/instrumentation.ts) (which also emits an
   `app_startup_complete` marker) and marked a **webpack server external** in

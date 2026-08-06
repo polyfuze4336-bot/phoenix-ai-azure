@@ -6,8 +6,17 @@ import { motion } from 'framer-motion';
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { trackClientEvent } from '@/lib/telemetry/client';
+import {
+  REGION_KEYS,
+  getSeverity,
+  formatFraction,
+  computeTbsaBreakdown,
+  VARIABLE_AREAS,
+  type AgeGroup,
+  type RegionKey,
+  type Counts,
+} from '@/lib/clinical/tbsa';
 
-type AgeGroup = '0' | '1' | '5' | '10' | '15' | 'adult';
 type Depth = 'ptl' | 'ftl';
 type Tool = 'paint' | 'erase';
 type ViewKind = 'ant' | 'post';
@@ -16,57 +25,11 @@ const AGE_LABELS: Record<AgeGroup, string> = {
   '0': 'Age 0', '1': '1 yr', '5': '5 yrs', '10': '10 yrs', '15': '15 yrs', 'adult': 'Adult',
 };
 
-// Lund & Browder age-variable areas
-const VARIABLE_AREAS = {
-  head: { label: 'A = ½ OF HEAD', '0': 9.5, '1': 8.5, '5': 6.5, '10': 5.5, '15': 4.5, 'adult': 3.5 },
-  thigh: { label: 'B = ½ OF ONE THIGH', '0': 2.75, '1': 3.25, '5': 4, '10': 4.25, '15': 4.5, 'adult': 4.75 },
-  lowerLeg: { label: 'C = ½ OF ONE LOWER LEG', '0': 2.5, '1': 2.5, '5': 2.75, '10': 3, '15': 3.25, 'adult': 3.5 },
-};
-
-const REGION_KEYS = [
-  'head', 'neck', 'antTrunk', 'postTrunk',
-  'rightArm', 'leftArm', 'buttocks', 'genitalia',
-  'rightLeg', 'leftLeg',
-] as const;
-type RegionKey = typeof REGION_KEYS[number];
-
 const REGION_LABELS: Record<RegionKey, string> = {
   head: 'Head', neck: 'Neck', antTrunk: 'Ant. trunk', postTrunk: 'Post. trunk',
   rightArm: 'Right arm', leftArm: 'Left arm', buttocks: 'Buttocks', genitalia: 'Genitalia',
   rightLeg: 'Right leg', leftLeg: 'Left leg',
 };
-
-const FIXED_MAXES: Record<RegionKey, number> = {
-  head: 0, neck: 2, antTrunk: 13, postTrunk: 13, rightArm: 9, leftArm: 9,
-  buttocks: 5, genitalia: 1, rightLeg: 0, leftLeg: 0,
-};
-
-function getMaxForRegion(region: RegionKey, age: AgeGroup): number {
-  if (region === 'head') return VARIABLE_AREAS.head[age] * 2;
-  if (region === 'rightLeg' || region === 'leftLeg') {
-    return (VARIABLE_AREAS.thigh[age] * 2) + (VARIABLE_AREAS.lowerLeg[age] * 2) + 3.5;
-  }
-  return FIXED_MAXES[region];
-}
-
-function formatFraction(n: number): string {
-  if (n === Math.floor(n)) return String(n);
-  const whole = Math.floor(n);
-  const frac = n - whole;
-  if (Math.abs(frac - 0.25) < 0.01) return whole ? `${whole}¼` : '¼';
-  if (Math.abs(frac - 0.5) < 0.01) return whole ? `${whole}½` : '½';
-  if (Math.abs(frac - 0.75) < 0.01) return whole ? `${whole}¾` : '¾';
-  return String(n);
-}
-
-function getSeverity(tbsa: number): { label: string; color: string } {
-  if (tbsa < 10) return { label: 'Minor (<10%)', color: 'bg-green-500' };
-  if (tbsa <= 20) return { label: 'Moderate (10-20%)', color: 'bg-yellow-500' };
-  if (tbsa <= 40) return { label: 'Major (20-40%)', color: 'bg-orange-500' };
-  return { label: 'Critical (>40%)', color: 'bg-red-600' };
-}
-
-const round1 = (n: number) => Math.round(n * 10) / 10;
 
 /* ===================== BODY SHAPE DATA ===================== */
 
@@ -139,8 +102,6 @@ function buildPath(s: Shape): Path2D {
   p.rect(s.x, s.y, s.w, s.h);
   return p;
 }
-
-type Counts = { total: Record<string, number>; ptl: Record<string, number>; ftl: Record<string, number> };
 
 /* ===================== BODY PAINTER ===================== */
 
@@ -351,20 +312,10 @@ export function TbsaClient() {
     if (view === 'ant') setAntCounts(counts); else setPostCounts(counts);
   }, []);
 
-  const breakdown = useMemo(() => {
-    const rows = REGION_KEYS.map(region => {
-      const tot = (antCounts.total[region] || 0) + (postCounts.total[region] || 0);
-      const p = (antCounts.ptl[region] || 0) + (postCounts.ptl[region] || 0);
-      const f = (antCounts.ftl[region] || 0) + (postCounts.ftl[region] || 0);
-      const max = getMaxForRegion(region, age);
-      const ptlPct = tot > 0 ? round1((p / tot) * max) : 0;
-      const ftlPct = tot > 0 ? round1((f / tot) * max) : 0;
-      return { region, ptlPct, ftlPct };
-    });
-    const ptlTotal = round1(rows.reduce((a, r) => a + r.ptlPct, 0));
-    const ftlTotal = round1(rows.reduce((a, r) => a + r.ftlPct, 0));
-    return { rows, ptlTotal, ftlTotal, total: round1(ptlTotal + ftlTotal) };
-  }, [antCounts, postCounts, age]);
+  const breakdown = useMemo(
+    () => computeTbsaBreakdown(antCounts, postCounts, age),
+    [antCounts, postCounts, age],
+  );
 
   const severity = getSeverity(breakdown.total);
 

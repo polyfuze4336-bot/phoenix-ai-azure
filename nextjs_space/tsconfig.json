@@ -40,6 +40,8 @@
     "node_modules",
     "tests",
     "playwright.config.ts",
-    "playwright.network.config.ts"
+    "playwright.network.config.ts",
+    "playwright.e2e.config.ts",
+    "playwright.api.config.ts"
   ]
 }

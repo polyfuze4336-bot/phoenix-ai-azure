@@ -23,7 +23,7 @@ const POOL_DEFAULTS: Record<string, string> = {
 }
 
 /** Ensure SSL and sane pool defaults without clobbering explicit settings. */
-function buildDatasourceUrl(raw: string | undefined): string | undefined {
+export function buildDatasourceUrl(raw: string | undefined): string | undefined {
   if (!raw) return raw
   try {
     const url = new URL(raw)
