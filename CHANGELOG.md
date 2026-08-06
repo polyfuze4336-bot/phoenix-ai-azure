@@ -88,6 +88,13 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   - Gated integration test `tests/integration/db.integration.test.ts` (`npm run test:integration`,
     skips without `DATABASE_URL`) and new `db:*` npm scripts.
   - Reference doc `docs/data/postgresql-data-model.md`.
+- Azure-native storage layer `nextjs_space/lib/storage/` (`types.ts`, `azure-blob-provider.ts`,
+  `storage-provider.ts`) as the sanctioned replacement for the removed AWS S3 helpers. Server-only:
+  managed identity (`DefaultAzureCredential`, no account key), private container, short-lived
+  read-only **user delegation SAS**, MIME + max-size validation, unique UUID/date-partitioned blob
+  paths, sanitised metadata, safe deletion, and an optional server-side upload-progress callback. It
+  is deliberately **not wired** into any UI workflow — no current Phoenix AI workflow persists files
+  (wound/burn images are handled as ephemeral base64) — so there is no visible UX change.
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
@@ -146,6 +153,11 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   the Azure OpenAI settings (managed-identity default). Templates only, no secrets.
 
 ### Removed
+- Removed the unused AWS S3 storage helpers after confirming no page, route, or component imported
+  them: deleted `nextjs_space/lib/s3.ts` and `nextjs_space/lib/aws-config.ts`, and uninstalled
+  `@aws-sdk/client-s3` and `@aws-sdk/s3-request-presigner` (26 transitive packages). Replaced by the
+  Azure-native `lib/storage/` layer. `.env.example` swapped the `AWS_*` storage variables for
+  `AZURE_STORAGE_*`.
 - Removed the Abacus.AI runtime provider entirely: deleted `lib/ai/abacus-provider.ts` (the
   `https://apps.abacus.ai/v1/chat/completions` call, `ABACUSAI_API_KEY` credential, hard-coded
   `gpt-5.4-mini` default model, and Abacus-specific error/config wording). Narrowed

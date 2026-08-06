@@ -31,7 +31,7 @@ technically possible.
 | --- | --- | --- |
 | **LLM** — `https://apps.abacus.ai/v1/chat/completions` (`gpt-5.4-mini`, streaming, vision), `ABACUSAI_API_KEY` | **Yes** — the only live backend dependency. Powers `analyze-wound`, `hcp-chat`, `community-chat`, `community-analyze`. | Azure OpenAI (vision-capable deployment, e.g. `gpt-4o`) — OpenAI-compatible chat completions. |
 | **PostgreSQL** via Prisma (`lib/db.ts`, `prisma/schema.prisma`) | **No** — `prisma` client is defined but never imported by any page/route. Dashboard/article/guideline data is mock/hardcoded client-side. | Deferred. Azure Database for PostgreSQL Flexible Server only if persistence is later required. |
-| **AWS S3** (`lib/s3.ts`, `lib/aws-config.ts`) | **No** — helpers defined but never imported. Images are read client-side via `FileReader` and sent as base64 to the LLM routes. | Deferred. Azure Blob Storage (`@azure/storage-blob` already present) only if upload persistence is required. |
+| **AWS S3** (`lib/s3.ts`, `lib/aws-config.ts`) | **No** — helpers defined but never imported. Images are read client-side via `FileReader` and sent as base64 to the LLM routes. | Done (Step 14). Helpers + `@aws-sdk/*` removed; Azure-native `lib/storage/` (managed identity, private container, user delegation SAS) added as an unwired building block. |
 | Abacus chat widget `apps.abacus.ai/chatllm/appllm-lib.js` (in `app/layout.tsx`) | Platform artifact (not part of Phoenix AI UI) | To be removed in a later step (platform-injected, not app branding). Documented assumption. |
 
 ### Key assumption (documented)
@@ -457,3 +457,43 @@ data available for a future wiring step.
 - **Verification:** `npm run db:migrate:validate` ✅ 1 migration; `npm run typecheck` ✅ 0;
   `npm run lint` ✅ 0/0; `npm run build` ✅ 19/19 routes (adds `/api/health`, `/api/health/db`);
   `npm run test:integration` ✅ skipped (no DB in CI).
+
+### Step 14 - Replace AWS storage helpers with Azure Blob Storage
+
+The imported source shipped AWS S3 helpers (`lib/s3.ts`, `lib/aws-config.ts`) and the
+`@aws-sdk/client-s3` / `@aws-sdk/s3-request-presigner` packages. A dependency scan confirmed the
+helpers are **never imported** by any page, route, or component — the only references were the
+files themselves (plus historical docs and the lockfile).
+
+- **Persistence assessment (per workflow):** every image workflow is ephemeral — HCP wound-analysis
+  ([app/hcp/analysis](../../nextjs_space/app/hcp/analysis)), community image-check
+  ([app/community/image-check](../../nextjs_space/app/community/image-check)), and both chat portals
+  read the file client-side via `FileReader` and POST it to the AI routes as base64. Nothing is
+  persisted. There is no case-image upload, no report-asset persistence, and article images are
+  URL string references (not uploads). **Conclusion: no current workflow requires persisted files.**
+  Persisting clinical images would be a new capability that changes data handling, so it is out of
+  scope for a faithful parity migration.
+- **Azure-native provider (`lib/storage/`)** built as the sanctioned, secure replacement, but
+  intentionally **not wired** into any UI workflow (parity preserved):
+  - [types.ts](../../nextjs_space/lib/storage/types.ts) — provider-neutral contract
+    (`StorageProvider`, `UploadInput`, `UploadResult`, `ReadUrl`), `StorageError`, and pure shared
+    helpers: MIME allow-list (images + PDF), `validateUpload` (MIME + max size), `maxStorageFileBytes`,
+    and `buildBlobPath` (unique, date-partitioned, UUID-based; original file name never used verbatim).
+  - [azure-blob-provider.ts](../../nextjs_space/lib/storage/azure-blob-provider.ts) — `AzureBlobProvider`
+    using `@azure/storage-blob` + `@azure/identity`. Managed identity (`DefaultAzureCredential`,
+    user-assigned via `AZURE_CLIENT_ID`); **no account key** is ever read. Reads are served via
+    short-lived, read-only **user delegation SAS** URLs (clamped 60 s–1 h, default 5 min). Server-side
+    `uploadData` with content-type headers, sanitised ASCII metadata, and an optional progress
+    callback. Safe deletion via `deleteIfExists({ deleteSnapshots: 'include' })`, path-traversal guard,
+    and no logging of file bytes/metadata values. The target container must be **private**.
+  - [storage-provider.ts](../../nextjs_space/lib/storage/storage-provider.ts) — `getStorageProvider()`
+    factory (lazy singleton) plus public re-exports.
+- **Removed after confirming unused:** `lib/s3.ts`, `lib/aws-config.ts`, and the `@aws-sdk/client-s3`
+  + `@aws-sdk/s3-request-presigner` packages (26 transitive packages removed). No source code
+  imported them. `@azure/storage-blob` and `@azure/identity` were already present.
+- **Config (`.env.example`):** replaced the AWS block (`AWS_REGION` / `AWS_BUCKET_NAME` /
+  `AWS_FOLDER_PREFIX`) with the Azure Storage block (`AZURE_STORAGE_ACCOUNT` /
+  `AZURE_STORAGE_ACCOUNT_URL` / `AZURE_STORAGE_CONTAINER` / `AZURE_STORAGE_MAX_FILE_MB`), documenting
+  managed identity, private container, and short-lived SAS. No secrets.
+- **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 19/19 routes
+  (unchanged — provider is unwired); `npm run test:network` ✅ 1 passed. No visible UX change.
