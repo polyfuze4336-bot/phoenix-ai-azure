@@ -1,0 +1,60 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/phoenix_ai/nextjs_space/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Case {
+  id              String   @id @default(cuid())
+  caseType        String   // BURN, DIABETIC_ULCER, PRESSURE_ULCER, TRAUMATIC_WOUND, SURGICAL_WOUND
+  burnDegree      String?  // 1ST, 2ND_SUPERFICIAL, 2ND_DEEP, 3RD, 4TH
+  severity        String   // MILD, MODERATE, SEVERE, CRITICAL
+  tbsaPercent     Float?
+  bodyRegion      String?
+  confidence      Float?
+  ageGroup        String?
+  outcome         String?  // HEALED, ONGOING, REFERRED, COMPLICATED
+  characteristics String?
+  recommendations String?
+  imageKey        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([caseType])
+  @@index([createdAt])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  portal    String   // HCP, COMMUNITY
+  role      String   // user, assistant
+  content   String
+  imageKey  String?
+  sessionId String
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([portal])
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  titleEn     String
+  titleBm     String
+  contentEn   String
+  contentBm   String
+  summaryEn   String
+  summaryBm   String
+  category    String
+  imageUrl    String?
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+}

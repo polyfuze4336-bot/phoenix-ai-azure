@@ -1,0 +1,150 @@
+export type Lang = 'en' | 'bm';
+
+export const translations: Record<string, Record<Lang, string>> = {
+  // Landing
+  'landing.tagline': { en: 'Burn & Wound Care Assessment Tool', bm: 'Alat Penilaian Penjagaan Luka & Kelecuran' },
+  'landing.subtitle': { en: 'AI-powered clinical decision support for healthcare professionals and health education for the community.', bm: 'Sokongan keputusan klinikal berkuasa AI untuk profesional penjagaan kesihatan dan pendidikan kesihatan untuk komuniti.' },
+  'landing.hcp_title': { en: 'Healthcare Professional Portal', bm: 'Portal Profesional Penjagaan Kesihatan' },
+  'landing.hcp_desc': { en: 'Clinical tools for burn & wound assessment, TBSA calculation, fluid resuscitation, and AI-powered image analysis.', bm: 'Alat klinikal untuk penilaian kelecuran, pengiraan TBSA, resusitasi cecair, dan analisis imej berkuasa AI.' },
+  'landing.community_title': { en: 'Community Portal', bm: 'Portal Komuniti' },
+  'landing.community_desc': { en: 'First aid education, burn severity self-assessment, health articles, and expert guidance for the public.', bm: 'Pendidikan pertolongan cemas, penilaian kendiri keterukan kelecuran, artikel kesihatan, dan panduan pakar untuk orang awam.' },
+  'landing.enter': { en: 'Enter Portal', bm: 'Masuk Portal' },
+
+  // HCP Navigation
+  'hcp.dashboard': { en: 'Dashboard', bm: 'Papan Pemuka' },
+  'hcp.analysis': { en: 'AI Analysis', bm: 'Analisis AI' },
+  'hcp.tbsa': { en: 'TBSA Calculator', bm: 'Kalkulator TBSA' },
+  'hcp.parkland': { en: 'Parkland Formula', bm: 'Formula Parkland' },
+  'hcp.guidelines': { en: 'Guidelines', bm: 'Garis Panduan' },
+  'hcp.chat': { en: 'Specialist Chat', bm: 'Sembang Pakar' },
+  'hcp.portal': { en: 'HCP Portal', bm: 'Portal HCP' },
+
+  // Community Navigation
+  'community.home': { en: 'Home', bm: 'Utama' },
+  'community.firstaid': { en: 'First Aid', bm: 'Pertolongan Cemas' },
+  'community.assessment': { en: 'Self-Assessment', bm: 'Penilaian Kendiri' },
+  'community.imagecheck': { en: 'Image Check', bm: 'Semakan Imej' },
+  'community.articles': { en: 'Articles', bm: 'Artikel' },
+  'community.chat': { en: 'Ask Expert', bm: 'Tanya Pakar' },
+  'community.portal': { en: 'Community Portal', bm: 'Portal Komuniti' },
+
+  // Dashboard
+  'dash.total_cases': { en: 'Total Cases', bm: 'Jumlah Kes' },
+  'dash.burn_cases': { en: 'Burn Cases', bm: 'Kes Kelecuran' },
+  'dash.wound_cases': { en: 'Wound Cases', bm: 'Kes Luka' },
+  'dash.critical': { en: 'Critical Cases', bm: 'Kes Kritikal' },
+  'dash.avg_tbsa': { en: 'Average TBSA', bm: 'Purata TBSA' },
+  'dash.severity_dist': { en: 'Burn Severity Distribution', bm: 'Taburan Keterukan Kelecuran' },
+  'dash.body_region': { en: 'Cases by Body Region', bm: 'Kes Mengikut Bahagian Badan' },
+  'dash.monthly_trend': { en: 'Monthly Case Trend', bm: 'Trend Kes Bulanan' },
+  'dash.wound_type': { en: 'Wound Type Distribution', bm: 'Taburan Jenis Luka' },
+  'dash.tbsa_range': { en: 'TBSA Range Distribution', bm: 'Taburan Julat TBSA' },
+  'dash.age_group': { en: 'Age Group Distribution', bm: 'Taburan Kumpulan Umur' },
+  'dash.outcomes': { en: 'Treatment Outcomes', bm: 'Hasil Rawatan' },
+
+  // Analysis
+  'analysis.title': { en: 'AI Wound & Burn Analysis', bm: 'Analisis Luka & Kelecuran AI' },
+  'analysis.upload': { en: 'Upload Image', bm: 'Muat Naik Imej' },
+  'analysis.camera': { en: 'Use Camera', bm: 'Guna Kamera' },
+  'analysis.analyze': { en: 'Analyze Image', bm: 'Analisis Imej' },
+  'analysis.analyzing': { en: 'Analyzing...', bm: 'Menganalisis...' },
+  'analysis.results': { en: 'Analysis Results', bm: 'Keputusan Analisis' },
+  'analysis.wound_type': { en: 'Wound/Burn Type', bm: 'Jenis Luka/Kelecuran' },
+  'analysis.burn_degree': { en: 'Burn Degree', bm: 'Darjah Kelecuran' },
+  'analysis.severity': { en: 'Estimated Severity', bm: 'Anggaran Keterukan' },
+  'analysis.characteristics': { en: 'Wound Characteristics', bm: 'Ciri-ciri Luka' },
+  'analysis.confidence': { en: 'Confidence Level', bm: 'Tahap Keyakinan' },
+  'analysis.management': { en: 'Management Recommendations', bm: 'Cadangan Pengurusan' },
+  'analysis.disclaimer': { en: '⚠️ This AI analysis is for clinical decision support only. Always confirm with clinical assessment.', bm: '⚠️ Analisis AI ini hanya untuk sokongan keputusan klinikal. Sentiasa sahkan dengan penilaian klinikal.' },
+  'analysis.generate_report': { en: 'Generate Report', bm: 'Jana Laporan' },
+
+  // TBSA
+  'tbsa.title': { en: 'TBSA Calculator', bm: 'Kalkulator TBSA' },
+  'tbsa.subtitle': { en: 'Total Body Surface Area — Rule of Nines', bm: 'Jumlah Kawasan Permukaan Badan — Peraturan Sembilan' },
+  'tbsa.adult': { en: 'Adult', bm: 'Dewasa' },
+  'tbsa.paediatric': { en: 'Paediatric', bm: 'Pediatrik' },
+  'tbsa.anterior': { en: 'Anterior', bm: 'Anterior' },
+  'tbsa.posterior': { en: 'Posterior', bm: 'Posterior' },
+  'tbsa.total': { en: 'Total TBSA', bm: 'Jumlah TBSA' },
+  'tbsa.minor': { en: 'Minor', bm: 'Ringan' },
+  'tbsa.moderate': { en: 'Moderate', bm: 'Sederhana' },
+  'tbsa.major': { en: 'Major', bm: 'Besar' },
+  'tbsa.critical': { en: 'Critical', bm: 'Kritikal' },
+  'tbsa.head_neck': { en: 'Head & Neck', bm: 'Kepala & Leher' },
+  'tbsa.chest': { en: 'Chest (Anterior Trunk)', bm: 'Dada (Batang Badan Anterior)' },
+  'tbsa.back': { en: 'Back (Posterior Trunk)', bm: 'Belakang (Batang Badan Posterior)' },
+  'tbsa.right_arm': { en: 'Right Arm', bm: 'Lengan Kanan' },
+  'tbsa.left_arm': { en: 'Left Arm', bm: 'Lengan Kiri' },
+  'tbsa.right_thigh': { en: 'Right Thigh', bm: 'Peha Kanan' },
+  'tbsa.left_thigh': { en: 'Left Thigh', bm: 'Peha Kiri' },
+  'tbsa.right_leg': { en: 'Right Leg', bm: 'Kaki Kanan' },
+  'tbsa.left_leg': { en: 'Left Leg', bm: 'Kaki Kiri' },
+  'tbsa.perineum': { en: 'Perineum', bm: 'Perineum' },
+  'tbsa.calculate_parkland': { en: 'Calculate Parkland Formula', bm: 'Kira Formula Parkland' },
+  'tbsa.age': { en: 'Age', bm: 'Umur' },
+  'tbsa.select_regions': { en: 'Click body regions to select affected burn areas', bm: 'Klik bahagian badan untuk memilih kawasan kelecuran' },
+
+  // Parkland
+  'parkland.title': { en: 'Parkland Formula Calculator', bm: 'Kalkulator Formula Parkland' },
+  'parkland.subtitle': { en: 'Fluid Resuscitation Calculator for Burn Patients', bm: 'Kalkulator Resusitasi Cecair untuk Pesakit Kelecuran' },
+  'parkland.weight': { en: 'Patient Weight (kg)', bm: 'Berat Pesakit (kg)' },
+  'parkland.tbsa': { en: 'TBSA %', bm: 'TBSA %' },
+  'parkland.burn_time': { en: 'Time of Burn', bm: 'Masa Kelecuran' },
+  'parkland.formula': { en: 'Formula', bm: 'Formula' },
+  'parkland.parkland': { en: 'Parkland (4 × kg × TBSA%)', bm: 'Parkland (4 × kg × TBSA%)' },
+  'parkland.brooke': { en: 'Modified Brooke (2 × kg × TBSA%)', bm: 'Brooke Diubahsuai (2 × kg × TBSA%)' },
+  'parkland.total_24h': { en: 'Total 24h Fluid', bm: 'Jumlah Cecair 24j' },
+  'parkland.first_8h': { en: 'First 8 Hours', bm: '8 Jam Pertama' },
+  'parkland.next_16h': { en: 'Next 16 Hours', bm: '16 Jam Seterusnya' },
+  'parkland.rate': { en: 'Rate', bm: 'Kadar' },
+  'parkland.urine_target': { en: 'Urine Output Target', bm: 'Sasaran Output Urin' },
+  'parkland.fluid_type': { en: 'Fluid Type: Lactated Ringer\'s (LR) Solution', bm: 'Jenis Cecair: Larutan Ringer Laktat (LR)' },
+  'parkland.icu_alert': { en: '⚠️ TBSA >20% — ICU referral recommended', bm: '⚠️ TBSA >20% — Rujukan ICU dicadangkan' },
+  'parkland.calculate': { en: 'Calculate', bm: 'Kira' },
+
+  // Guidelines
+  'guidelines.title': { en: 'Clinical Management Guidelines', bm: 'Garis Panduan Pengurusan Klinikal' },
+  'guidelines.subtitle': { en: 'Evidence-based protocols aligned with Malaysian CPG', bm: 'Protokol berasaskan bukti selaras dengan CPG Malaysia' },
+  'guidelines.search': { en: 'Search guidelines...', bm: 'Cari garis panduan...' },
+  'guidelines.burn_care': { en: 'Burn Care', bm: 'Penjagaan Kelecuran' },
+  'guidelines.wound_care': { en: 'Wound Care', bm: 'Penjagaan Luka' },
+  'guidelines.infection': { en: 'Infection Management', bm: 'Pengurusan Jangkitan' },
+  'guidelines.dressing': { en: 'Dressing Types', bm: 'Jenis Pembalut' },
+  'guidelines.surgical': { en: 'Surgical Indications', bm: 'Petunjuk Pembedahan' },
+
+  // Chat
+  'chat.placeholder': { en: 'Type your message...', bm: 'Taip mesej anda...' },
+  'chat.send': { en: 'Send', bm: 'Hantar' },
+  'chat.attach': { en: 'Attach Image', bm: 'Lampirkan Imej' },
+  'chat.escalate': { en: 'Escalate to Human Specialist', bm: 'Naiktaraf ke Pakar Manusia' },
+  'chat.specialist_title': { en: 'Specialist Consultation', bm: 'Perundingan Pakar' },
+  'chat.community_title': { en: 'Ask an Expert', bm: 'Tanya Pakar' },
+  'chat.quick_prompts': { en: 'Quick Actions', bm: 'Tindakan Pantas' },
+
+  // Community
+  'community.welcome': { en: 'Welcome to Phoenix AI Community Health', bm: 'Selamat Datang ke Kesihatan Komuniti Phoenix AI' },
+  'community.welcome_desc': { en: 'Your trusted guide for burn and wound first aid, prevention, and health education.', bm: 'Panduan dipercayai anda untuk pertolongan cemas kelecuran dan luka, pencegahan, dan pendidikan kesihatan.' },
+  'community.emergency': { en: 'Emergency? Call 999', bm: 'Kecemasan? Hubungi 999' },
+  'community.firstaid_title': { en: 'First Aid Education', bm: 'Pendidikan Pertolongan Cemas' },
+  'community.firstaid_desc': { en: 'Step-by-step guides for burn and wound first aid', bm: 'Panduan langkah demi langkah untuk pertolongan cemas kelecuran dan luka' },
+  'community.assessment_title': { en: 'Burn Severity Self-Assessment', bm: 'Penilaian Kendiri Keterukan Kelecuran' },
+  'community.assessment_desc': { en: 'Quick assessment to help you decide when to seek medical help', bm: 'Penilaian pantas untuk membantu anda memutuskan bila untuk mendapatkan bantuan perubatan' },
+  'community.imagecheck_title': { en: 'Image Check', bm: 'Semakan Imej' },
+  'community.imagecheck_desc': { en: 'Upload a photo for a basic AI assessment of your wound', bm: 'Muat naik foto untuk penilaian AI asas luka anda' },
+  'community.articles_title': { en: 'Health Articles', bm: 'Artikel Kesihatan' },
+  'community.do': { en: 'DO', bm: 'BUAT' },
+  'community.dont': { en: "DON'T", bm: 'JANGAN' },
+
+  // Common
+  'common.back': { en: 'Back', bm: 'Kembali' },
+  'common.loading': { en: 'Loading...', bm: 'Memuatkan...' },
+  'common.error': { en: 'An error occurred', bm: 'Ralat telah berlaku' },
+  'common.reset': { en: 'Reset', bm: 'Set Semula' },
+  'common.clear': { en: 'Clear', bm: 'Kosongkan' },
+  'common.next': { en: 'Next', bm: 'Seterusnya' },
+  'common.previous': { en: 'Previous', bm: 'Sebelumnya' },
+};
+
+export function t(key: string, lang: Lang): string {
+  return translations?.[key]?.[lang] ?? key;
+}
