@@ -54,6 +54,26 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   to `abacus` for now and becomes `azure` on Azure once Azure OpenAI is provisioned. System
   prompts were moved verbatim into `lib/ai/prompts/`; the four API routes now call the
   abstraction. No API keys are exposed to the browser and the streamed output is byte-identical.
+- Real Microsoft Foundry / Azure OpenAI model integration (the `azure` provider is now
+  production-ready; `AI_PROVIDER` still defaults to `abacus` until cutover):
+  - Managed-identity authentication via `lib/ai/azure-credential.ts` (`DefaultAzureCredential`,
+    Cognitive Services scope, in-process token cache; user-assigned identity via `AZURE_CLIENT_ID`;
+    Azure CLI locally). `AZURE_AI_API_KEY` is an explicit temporary fallback only.
+  - `azure-foundry-provider.ts` rewritten to read `AZURE_AI_ENDPOINT` / `AZURE_AI_PROJECT_ENDPOINT`
+    / `AZURE_AI_MODEL_DEPLOYMENT` / `AZURE_AI_API_VERSION` / `AZURE_AI_AUTH` / `AZURE_CLIENT_ID`
+    (legacy `AZURE_OPENAI_*` names still accepted), with 60 s timeout + 2 retries by default and
+    `stream_options.include_usage` for exact token telemetry.
+  - Resilient transport: exponential backoff with jitter, 429 handling (honours `Retry-After`),
+    per-request timeout, correlation-ID propagation, and a byte-identical stream wrapper recording
+    latency + token metrics.
+  - `lib/ai/telemetry.ts`: structured, privacy-safe request/response telemetry (correlation ID,
+    provider, model, route, attempts, latency, tokens) that never logs image or message content.
+  - `lib/ai/validation/image-input.ts`: MIME-type allow-list + max decoded image size
+    (`AZURE_AI_MAX_IMAGE_MB`, default 10) enforced before any provider call.
+  - Zod-validated structured results (`hcpWoundAnalysisSchema`, `communityWoundAnalysisSchema`,
+    derived from the front-end fields) with an explicit "assessment could not be completed" safe
+    fallback that preserves the medical disclaimer and never fabricates clinical findings.
+  - Added `@azure/identity@4.13.1`. New `AZURE_AI_*` variables documented in `.env.example`.
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
@@ -88,6 +108,14 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   call the `lib/ai` provider abstraction instead of `fetch`-ing `apps.abacus.ai` directly. Error
   strings, status codes, SSE/text streaming framing, the two community-analyze fallbacks, and all
   clinical prompts are preserved unchanged; the default backend stays Abacus (`AI_PROVIDER=abacus`).
+- Wound-analysis result parsing now validates the model output with Zod and, on invalid data,
+  returns an explicit "assessment could not be completed" safe-fallback state (with the medical
+  disclaimer) instead of echoing the raw model buffer or fabricating fields. This replaces the
+  source app's prior raw-buffer fallbacks (including the community route's two `[DONE]` vs
+  end-of-stream wordings); the fallback is still delivered as the existing `status: 'completed'`
+  SSE result event, so no front-end change is required.
+- The analysis routes now validate image MIME type and size before calling the provider, and all
+  four routes attach a correlation ID (echoed via the `x-correlation-id` response header).
 - `.env.example`: added `AI_PROVIDER` and the Azure OpenAI settings (`AZURE_OPENAI_ENDPOINT`,
   `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_VERSION`) — templates only,
   no secrets.

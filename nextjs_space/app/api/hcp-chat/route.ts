@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server';
 import { AiMessage } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
 import { createTextPassthroughResponse } from '@/lib/ai/streaming/text-stream';
+import { newCorrelationId } from '@/lib/ai/telemetry';
 import { HCP_CHAT_SYSTEM_PROMPT } from '@/lib/ai/prompts/hcp-chat';
 
 export async function POST(request: NextRequest) {
@@ -31,12 +32,14 @@ export async function POST(request: NextRequest) {
       upstream = await getAiProvider().streamChatCompletion({
         messages: llmMessages,
         maxOutputTokens: 3000,
+        correlationId: newCorrelationId(),
+        route: 'hcp-chat',
       });
     } catch (err) {
       return aiErrorResponse(err, 'LLM error');
     }
 
-    return createTextPassthroughResponse(upstream.body);
+    return createTextPassthroughResponse(upstream.body, upstream.correlationId);
   } catch (error: any) {
     console.error('HCP chat error:', error);
     return new Response(JSON.stringify({ error: error?.message ?? 'Internal error' }), { status: 500 });

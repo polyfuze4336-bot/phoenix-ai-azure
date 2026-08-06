@@ -51,10 +51,14 @@ export interface AiChatRequest {
   responseFormat?: AiResponseFormat;
   /** Correlation ID for tracing across the request; generated if omitted. */
   correlationId?: string;
+  /** Logical route/operation label for telemetry (e.g. `analyze-wound`). */
+  route?: string;
   /** Abort the request after this many milliseconds. Disabled when omitted. */
   timeoutMs?: number;
-  /** Number of connection retries on transient (network / 5xx) failure. Default 0. */
+  /** Number of connection retries on transient (network / 5xx / 429) failure. Default 0. */
   retries?: number;
+  /** Base delay (ms) for exponential backoff between retries. Default 500. */
+  retryBaseDelayMs?: number;
   /** Caller cancellation signal, merged with any timeout. */
   signal?: AbortSignal;
 }

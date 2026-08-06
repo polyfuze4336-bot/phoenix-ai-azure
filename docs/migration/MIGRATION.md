@@ -321,4 +321,68 @@ behaviour**. This is the enabling refactor for the Azure OpenAI cutover.
 - **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 17/17 routes;
   `npm run test:network` ✅ 1 passed.
 
+### Step 11 — Migrate model calls to Microsoft Foundry / Azure OpenAI
+Made the Azure provider a real, production-ready backend: managed-identity auth, resilient
+transport, image validation, Zod-validated structured results with an explicit safe-fallback
+state, and privacy-safe telemetry. `AI_PROVIDER` still defaults to `abacus` — this step makes
+the `azure` provider **ready**, not yet the default (the cutover flips it once Azure is provisioned).
+- **Authentication (managed identity preferred):** new `lib/ai/azure-credential.ts` acquires an
+  Azure AD bearer token for the Cognitive Services data plane
+  (`https://cognitiveservices.azure.com/.default`) via `DefaultAzureCredential` — a managed
+  identity in Azure (user-assigned selected by `AZURE_CLIENT_ID`) and Azure CLI credentials
+  locally. Tokens are cached in-process and refreshed ~5 min before expiry. `AZURE_AI_API_KEY`
+  is an **explicit, temporary fallback** used only when `AZURE_AI_AUTH=key` or a token cannot be
+  acquired. Keys/tokens are read/acquired server-side only and never reach the browser.
+- **`azure-foundry-provider.ts` rewritten:** reads the new
+  `AZURE_AI_ENDPOINT` / `AZURE_AI_PROJECT_ENDPOINT` / `AZURE_AI_MODEL_DEPLOYMENT` /
+  `AZURE_AI_API_VERSION` / `AZURE_AI_AUTH` / `AZURE_CLIENT_ID` variables (legacy `AZURE_OPENAI_*`
+  names still accepted as fallbacks). Builds the OpenAI-compatible chat-completions URL (accepts a
+  bare resource endpoint or a full `/chat/completions` URL), applies provider-level resilience
+  defaults (60 s timeout, 2 retries), and requests `stream_options.include_usage` for exact token
+  telemetry when the deployment supports it. Vision + streaming + `response_format: json_object`
+  preserved for gpt-4o-class deployments.
+- **Resilient transport (`openai-compatible.ts`):** added **exponential backoff with jitter**
+  between retries (base 500 ms, capped 20 s), **429 rate-limit** retry honouring `Retry-After`,
+  a per-request **timeout**, correlation-ID propagation (`x-correlation-id`), and a byte-identical
+  stream wrapper that records **latency (TTFB + total) and token metrics** without altering
+  forwarded bytes. The Abacus path is unchanged in behaviour (retries/timeout only apply when the
+  caller sets them).
+- **Telemetry (`lib/ai/telemetry.ts`):** structured `[Phoenix AI][telemetry]` request/response
+  log lines with correlation ID, provider, model, route, attempts, latency, byte count and token
+  counts (exact from `usage`, otherwise a clearly-flagged char-based estimate). **Never logs image
+  or message content** — only counts and derived metadata.
+- **Image validation (`lib/ai/validation/image-input.ts`):** MIME-type allow-list
+  (`image/jpeg|png|webp|gif|heic|heif`) and a maximum decoded size (default 10 MB, overridable via
+  `AZURE_AI_MAX_IMAGE_MB`) enforced in `analyze-wound` and `community-analyze` before any provider
+  call. Invalid uploads return a clear `400` (contract-consistent with the previous `No image
+  provided` behaviour).
+- **Zod-validated results + safe fallback (`validation/wound-analysis-schema.ts`):** typed
+  `hcpWoundAnalysisSchema` (the 22 fields the HCP client renders) and `communityWoundAnalysisSchema`
+  (the 3 fields the community client renders), derived by inspecting the front-end components. The
+  schemas are **tolerant of type variance** (numbers/booleans coerced to strings) so a usable model
+  result is not rejected on a technicality. When the output is **not valid JSON, not an object, or
+  carries none of the expected fields**, the parser does **not fabricate** a clinical result —
+  instead it returns an explicit "assessment could not be completed" state that **preserves the
+  medical disclaimer** and tells the user the analysis failed.
+  - **Behaviour change (documented):** this replaces the source app's prior fallbacks, which echoed
+    the raw model buffer into the result and used two different wordings for the `[DONE]` vs
+    end-of-stream community paths. The new safe-fallback state is delivered as the existing
+    `status: 'completed'` + `result` SSE event using the existing field names, so **no front-end
+    change is required** and the message surfaces in the normal result UI.
+- **Routes:** all four routes now generate a correlation ID (`newCorrelationId()`) and pass a
+  `route` label into the request; the correlation ID is echoed to the client via the
+  `x-correlation-id` response header (harmless to the existing parsers). The exact `console.error`
+  labels, upstream-error prefixes (`LLM API error` / `LLM error` / `API error`), status codes, and
+  streamed byte formats are preserved.
+- **Dependencies:** added `@azure/identity@4.13.1` (`--legacy-peer-deps`). `zod` was already present.
+  The build confirmed no server-bundling issues for `@azure/identity` in the Node route runtime.
+- **Config (`.env.example`):** documented the new `AZURE_AI_*` variables (endpoint / project
+  endpoint / deployment / api-version / auth mode / client id / api key / max image MB) with
+  managed identity as the default, and kept the legacy `AZURE_OPENAI_*` names as accepted fallbacks.
+  Templates only — no secrets.
+- **Streaming preserved:** chat routes still emit byte-identical OpenAI-delta SSE; analysis routes
+  still emit the `processing` → `completed` structured SSE. Client parsing is unchanged.
+- **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 17/17 routes;
+  `npm run test:network` ✅ 1 passed.
+
 _Subsequent steps appended below as work proceeds._

@@ -7,9 +7,11 @@
  * browser receives are byte-identical to the source app — no client changes.
  */
 
-/** Wrap an upstream model byte stream in a passthrough `text/plain` Response. */
+/** Wrap an upstream model byte stream in a passthrough `text/plain` Response.
+ *  An optional `correlationId` is echoed in the `x-correlation-id` header. */
 export function createTextPassthroughResponse(
   upstream: ReadableStream<Uint8Array>,
+  correlationId?: string,
 ): Response {
   const reader = upstream.getReader();
   const decoder = new TextDecoder();
@@ -37,6 +39,7 @@ export function createTextPassthroughResponse(
       'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
+      ...(correlationId ? { 'x-correlation-id': correlationId } : {}),
     },
   });
 }

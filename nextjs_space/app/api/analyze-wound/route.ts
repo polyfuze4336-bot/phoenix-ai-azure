@@ -5,6 +5,8 @@ import { AiMessage } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
 import { createStructuredSseResponse } from '@/lib/ai/streaming/sse';
 import { parseHcpWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
+import { validateImageInput } from '@/lib/ai/validation/image-input';
+import { newCorrelationId } from '@/lib/ai/telemetry';
 import { HCP_WOUND_ANALYSIS_SYSTEM_PROMPT } from '@/lib/ai/prompts/hcp-wound-analysis';
 
 export async function POST(request: NextRequest) {
@@ -12,17 +14,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { image, mimeType } = body ?? {};
 
-    if (!image) {
-      return new Response(JSON.stringify({ error: 'No image provided' }), { status: 400 });
+    const validation = validateImageInput({ image, mimeType });
+    if (!validation.ok) {
+      return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
     }
 
+    const correlationId = newCorrelationId();
     const messages: AiMessage[] = [
       { role: 'system', content: HCP_WOUND_ANALYSIS_SYSTEM_PROMPT },
       {
         role: 'user',
         content: [
           { type: 'text', text: 'Please analyze this wound/burn image and provide a structured clinical assessment in JSON format.' },
-          { type: 'image_url', image_url: { url: `data:${mimeType || 'image/jpeg'};base64,${image}` } },
+          { type: 'image_url', image_url: { url: `data:${validation.mimeType};base64,${image}` } },
         ],
       },
     ];
@@ -33,6 +37,8 @@ export async function POST(request: NextRequest) {
         messages,
         maxOutputTokens: 2000,
         responseFormat: 'json_object',
+        correlationId,
+        route: 'analyze-wound',
       });
     } catch (err) {
       return aiErrorResponse(err, 'LLM API error');
@@ -42,6 +48,7 @@ export async function POST(request: NextRequest) {
       upstream: upstream.body,
       processingEvent: { status: 'processing', message: 'Analyzing' },
       buildResult: (buffer) => parseHcpWoundAnalysis(buffer),
+      correlationId: upstream.correlationId,
     });
   } catch (error: any) {
     console.error('Analyze wound error:', error);

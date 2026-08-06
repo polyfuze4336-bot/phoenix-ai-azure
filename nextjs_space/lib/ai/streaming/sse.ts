@@ -22,6 +22,8 @@ export interface StructuredSseOptions {
   processingEvent: unknown;
   /** Build the final `result` payload from the accumulated model text. */
   buildResult: (buffer: string, phase: StructuredResultPhase) => unknown;
+  /** Optional correlation ID echoed in the `x-correlation-id` response header. */
+  correlationId?: string;
 }
 
 /** Build a `text/event-stream` Response that parses the upstream model output
@@ -87,6 +89,7 @@ export function createStructuredSseResponse(options: StructuredSseOptions): Resp
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
+      ...(options.correlationId ? { 'x-correlation-id': options.correlationId } : {}),
     },
   });
 }
