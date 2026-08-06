@@ -212,6 +212,17 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   frame — chart arc anti-aliasing only; every value/label/card/text pixel-identical), documented
   **without altering the UI**. Added dev deps `pixelmatch`/`pngjs` (+ types). Verified: `typecheck`
   ✅ 0, `lint` ✅ 0/0, `build` ✅ 21 routes.
+- Added **GitHub Actions CI/CD** using **GitHub OIDC federation** to Azure (no stored client
+  secrets). Expanded `.github/workflows/ci.yml` to the full quality gate (lock-file install, lint,
+  type check, unit + integration tests, standalone build, Bicep lint/build, `npm audit` vulnerability
+  report, Playwright smoke test). Added `.github/workflows/infrastructure.yml` (OIDC infra pipeline:
+  PR what-if, gated Development/Demo deploy — supersedes and replaces `infra.yml`) and two deployment
+  pipelines, `.github/workflows/deploy-dev.yml` (**Development**) and `.github/workflows/deploy-demo.yml`
+  (**Demo**, manual + approval-gated). Each deploy runs the eleven-step flow: OIDC auth → validate
+  Bicep → what-if → deploy infrastructure → build app → safe non-destructive DB migration → deploy to
+  App Service **staging** slot → health check → smoke tests → critical HCP + community journeys →
+  **swap to production only after tests pass**. Supporting: `playwright.e2e.config.ts` honours
+  `PLAYWRIGHT_BASE_URL` for staging runs; new `test:smoke` / `test:journeys` scripts. No app/UI change.
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
 - `npm ci --legacy-peer-deps` succeeds (exit 0) with Node v22.19.0 / npm 10.9.3.
 - `npx tsc --noEmit` passes with 0 type errors.

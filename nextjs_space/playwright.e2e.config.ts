@@ -13,7 +13,13 @@ import { defineConfig, devices } from '@playwright/test';
  * single run covers both layouts deterministically.
  *
  * Run `npm run build` first, then `npm run test:e2e`.
+ *
+ * Set PLAYWRIGHT_BASE_URL to run the same journeys against an already-deployed
+ * target (e.g. an App Service staging slot in the deployment pipeline). When it
+ * is set, the local production web server is NOT started.
  */
+const remoteBaseUrl = process.env.PLAYWRIGHT_BASE_URL?.trim();
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
@@ -25,7 +31,7 @@ export default defineConfig({
   timeout: 120_000,
   expect: { timeout: 15_000 },
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: remoteBaseUrl || 'http://localhost:3000',
     locale: 'en-US',
     timezoneId: 'Asia/Kuala_Lumpur',
     colorScheme: 'light',
@@ -38,11 +44,15 @@ export default defineConfig({
       use: {},
     },
   ],
-  webServer: {
-    command: 'npm run start',
-    url: 'http://localhost:3000',
-    timeout: 120_000,
-    reuseExistingServer: !process.env.CI,
-    env: { NEXTAUTH_URL: 'http://localhost:3000' },
-  },
+  // Only boot a local server when targeting localhost. Against a deployed URL the
+  // pipeline points PLAYWRIGHT_BASE_URL at the running site instead.
+  webServer: remoteBaseUrl
+    ? undefined
+    : {
+        command: 'npm run start',
+        url: 'http://localhost:3000',
+        timeout: 120_000,
+        reuseExistingServer: !process.env.CI,
+        env: { NEXTAUTH_URL: 'http://localhost:3000' },
+      },
 });

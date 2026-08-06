@@ -13,6 +13,8 @@
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "tsx --test \"tests/unit/*.test.ts\"",
     "test:e2e": "playwright test --config=playwright.e2e.config.ts",
+    "test:smoke": "playwright test --config=playwright.e2e.config.ts tests/e2e/public-landing.spec.ts",
+    "test:journeys": "playwright test --config=playwright.e2e.config.ts tests/e2e/hcp-journey.spec.ts tests/e2e/community-journey.spec.ts",
     "test:api": "playwright test --config=playwright.api.config.ts",
     "test:visual": "playwright test --config=playwright.config.ts",
     "test:network": "playwright test --config=playwright.network.config.ts",

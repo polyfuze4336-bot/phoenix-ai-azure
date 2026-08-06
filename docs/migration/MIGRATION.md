@@ -979,3 +979,47 @@ genuine visual regression would have been fixed by root-causing it, not by editi
   `tests/visual/baseline/`, so the report's baseline/Azure/difference links resolve in-repo.
 - **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 21 routes.
   The two new scripts + the spec's output-path parameterisation introduce no runtime or UI change.
+
+### Step 23 - Create GitHub Actions CI/CD
+
+This step adds the automated pipelines that build, test and deploy Phoenix AI to Azure. All Azure
+authentication uses **GitHub OIDC federation** (`azure/login@v2` with `permissions: id-token: write`)
+— **no Azure client secrets are stored** anywhere in the workflows. Only non-secret federated
+identifiers (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) and the deploy-time
+`PG_ADMIN_PASSWORD` / optional `DATABASE_URL` come from GitHub secrets.
+
+- **CI ([.github/workflows/ci.yml](../../.github/workflows/ci.yml)):** expanded from the Step 2
+  build-only check into the full quality gate. Jobs run: lock-file install (`npm ci
+  --legacy-peer-deps`), **lint**, **type check** (after `db:generate` so the Prisma client types
+  resolve), **unit tests**, **integration tests**, **Next.js production build** (standalone),
+  **Bicep lint + build** of `infra/main.bicep`, a **dependency vulnerability report** (`npm audit`,
+  report-only artifact — does not block on known dev-tooling advisories), and a **Playwright smoke
+  test** (public-landing journey against the built app). The offline DB-migration validation job is
+  retained. Triggers on push/PR to `main` and pushes to `migration/**`.
+- **Infrastructure ([.github/workflows/infrastructure.yml](../../.github/workflows/infrastructure.yml)):**
+  the canonical infra pipeline (supersedes the Step 17 `infra.yml`, now removed). PRs touching
+  `infra/**` run Bicep lint + build + `az deployment sub what-if` (all read-only). Manual dispatch
+  can deploy against a chosen **Development** or **Demo** environment after what-if.
+- **Deploy — Development ([.github/workflows/deploy-dev.yml](../../.github/workflows/deploy-dev.yml))
+  and Demo ([.github/workflows/deploy-demo.yml](../../.github/workflows/deploy-demo.yml)):** both run
+  the required eleven-step flow — (1) OIDC auth, (2) validate Bicep, (3) Azure what-if, (4) deploy
+  infrastructure (capturing the app name/RG from deployment outputs), (5) build the app (standalone)
+  and package the App Service zip, (6) run the database migration **safely** (`prisma migrate deploy`
+  — applies committed pending migrations only, never resets; skipped when no `DATABASE_URL` is set,
+  since the parity demo uses seeded/mock data), (7) deploy to an App Service **staging** slot, (8)
+  health-check `/api/health/live` on staging, (9) run smoke tests against staging, (10) run the
+  critical **HCP + community** user journeys against staging, and (11) **swap staging into
+  production only after all tests pass**. The deploy plan requests the **Standard (S1)** plan SKU so
+  the staging slot is available. Development deploys on push to `main` / manual dispatch; **Demo** is
+  manual-dispatch only and runs under the **Demo** GitHub Environment, which should be configured with
+  **required reviewers** so a human approves before provisioning or promotion.
+- **Supporting change:** `playwright.e2e.config.ts` now honours an optional `PLAYWRIGHT_BASE_URL`
+  (when set, the same journey specs run against the deployed staging URL and the local web server is
+  not started); new `test:smoke` and `test:journeys` npm scripts select the smoke and critical-journey
+  specs. No application code or UI behaviour changed.
+- **Environment limitation:** actual compute deployment remains blocked by the MCAPS sandbox's zero
+  App Service quota (documented in earlier steps); the pipelines are authored to the spec and are
+  exercisable up to `what-if`. The superseded `infra.yml` was removed to avoid duplicate infra runs.
+- **Verification:** all four workflow YAML files validate with no problems; the expanded CI mirrors
+  the locally green checks (`typecheck` 0, `lint` 0/0, `build` 21 routes, unit 76, integration 14,
+  smoke 1); `az bicep build infra/main.bicep` compiles clean.

@@ -1,23 +1,33 @@
-name: infra
+name: Infrastructure
 
-# Provisions Phoenix AI Azure infrastructure from infra/ using Bicep.
-# Authenticates to Azure with GitHub OIDC (federated credentials) — no stored
-# client secrets. Pull requests run lint + build + what-if (read-only);
-# deployment runs only on manual dispatch against the production environment.
+# Provisions the Phoenix AI Azure infrastructure from infra/ using Bicep.
+#
+# Authenticates to Azure with GitHub OIDC (federated credentials) — NO stored
+# Azure client secrets. Pull requests that touch infra/ run lint + build +
+# what-if (all read-only). Actual deployment runs only on manual dispatch and is
+# gated behind a GitHub Environment (Development or Demo), so the Demo environment
+# can require reviewer approval.
 
 on:
   pull_request:
     paths:
       - 'infra/**'
-      - '.github/workflows/infra.yml'
+      - '.github/workflows/infrastructure.yml'
   workflow_dispatch:
     inputs:
+      environment:
+        description: 'Target GitHub Environment to deploy.'
+        type: choice
+        options:
+          - Development
+          - Demo
+        default: Development
       deploy:
         description: 'Run the deployment (subscription-scoped) after what-if.'
         type: boolean
         default: false
 
-# OIDC token + repo read.
+# OIDC token + repo read. No client secrets are used anywhere in this workflow.
 permissions:
   id-token: write
   contents: read
@@ -35,10 +45,17 @@ jobs:
   validate:
     name: Lint, build & what-if
     runs-on: ubuntu-latest
-    environment: production
+    # PRs validate against Development; manual runs use the chosen environment.
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'Development' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Bicep lint
+        run: az bicep build --file ${{ env.TEMPLATE }} --stdout > /dev/null
+
+      - name: Bicep build (compile to ARM)
+        run: az bicep build --file ${{ env.TEMPLATE }}
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -46,12 +63,6 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Bicep lint
-        run: az bicep build --file ${{ env.TEMPLATE }} --stdout > /dev/null
-
-      - name: Bicep build (compile to ARM)
-        run: az bicep build --file ${{ env.TEMPLATE }}
 
       - name: What-if (subscription scope)
         env:
@@ -64,11 +75,11 @@ jobs:
             --parameters ${{ env.PARAMETERS }}
 
   deploy:
-    name: Deploy
+    name: Deploy infrastructure
     needs: validate
     if: github.event_name == 'workflow_dispatch' && inputs.deploy
     runs-on: ubuntu-latest
-    environment: production
+    environment: ${{ inputs.environment }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
