@@ -34,6 +34,12 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 - `docs/migration/brand-parity-checklist.md`: brand-asset inventory, the 14 confirmed logo /
   metadata placements, the `PhoenixLogo` contract, and the preserved `STYLE_GUIDE.md` design
   system (fonts, colour tokens, gradients, radius/spacing/shadow scales, animation timing).
+- Playwright visual + route baseline: `nextjs_space/playwright.config.ts` (four viewport
+  projects — 1440×1000, 1280×800, 768×1024, 390×844), `nextjs_space/tests/visual/baseline.spec.ts`
+  (all 14 routes × EN/BM × states), and 143 committed baseline PNGs under
+  `nextjs_space/tests/visual/baseline/`. Added `@playwright/test` dev dependency + Chromium.
+- `docs/testing/visual-baseline.md`: how the baseline is captured, dimensions, routes, states,
+  demo-auth handling, and the run command.
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
@@ -58,6 +64,10 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   bar, PWA install prompt) into the shared `PhoenixLogo` component. Pure extraction — wrapper
   sizes, alt text, `drop-shadow-lg`, and animation classes are unchanged; the design system
   (`STYLE_GUIDE.md`) and all brand assets are untouched.
+- `package.json`: `test:e2e` now runs `playwright test` (was a placeholder); added `test:visual`.
+  `tsconfig.json` excludes `tests/` + `playwright.config.ts` from the Next app type project.
+  `.gitignore` ignores Playwright `test-results/` / `playwright-report/` anywhere while keeping
+  the committed visual baseline tracked. No application code or UI changed.
 
 ### Fixed
 - `app/hcp/analysis/_components/analysis-client.tsx`: added the missing `stopCamera` dependency

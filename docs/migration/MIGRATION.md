@@ -215,4 +215,30 @@ change** was made; this step is a pure, verified extraction plus documentation.
 - **Verification:** `npm run typecheck` ✅ 0 errors; `npm run lint` ✅ 0/0; `npm run build`
   ✅ exit 0, 17/17 routes. No asset files modified.
 
+### Step 8 — Capture a route and screenshot baseline
+Added Playwright and captured a full visual + route baseline of the production build. This is
+an **observation-only** step — no UI, styling, content, or app source was changed.
+- **Tooling:** added `@playwright/test@1.49.1` (dev dep) + Chromium. New
+  `nextjs_space/playwright.config.ts` defines four viewport projects — `desktop-1440`
+  (1440×1000), `desktop-1280` (1280×800), `tablet-768` (768×1024), `mobile-390` (390×844) —
+  and auto-starts `next start` (production build) with deterministic settings
+  (`reducedMotion`, pinned timezone `Asia/Kuala_Lumpur`, light colour scheme).
+- **Spec:** `nextjs_space/tests/visual/baseline.spec.ts` captures all 14 accessible routes
+  (`/`, `/hcp-login`, the 6 `/hcp/*` routes, the 6 `/community/*` routes) in English and
+  Bahasa Malaysia, plus mobile nav-open, empty + completed forms (Parkland, community
+  assessment → result panels), the HCP account dropdown, and the invalid-login error state.
+- **Demo auth for gated routes:** the `/hcp/*` pages are behind the existing mock,
+  client-side `sessionStorage['hcp_auth']` check. Per the task, the baseline seeds the same
+  session object the demo "quick login" writes (demo user `doctor@phoenix.my`) via
+  `addInitScript` — the existing demo flow only, no real credentials/backend.
+- **Output:** 143 full-page PNGs under `nextjs_space/tests/visual/baseline/<route>/` named
+  `<viewport>-<lang>-<state>.png` (committed). Transient Playwright artifacts
+  (`test-results/`, `playwright-report/`) are git-ignored; the baseline images are not.
+- **Scripts/config:** `package.json` `test:e2e` now runs `playwright test`; added
+  `test:visual`. `tsconfig.json` excludes `tests/` + `playwright.config.ts` from the Next
+  app's type project (Playwright transpiles specs itself). `.gitignore` updated so
+  Playwright report/result dirs are ignored anywhere while the baseline stays tracked.
+- **Result:** all 68 Playwright tests passed (4 viewports × routes/states). Documented in
+  `docs/testing/visual-baseline.md`. `npm run build` ✅ 17/17, `typecheck` ✅ 0, `lint` ✅ 0/0.
+
 _Subsequent steps appended below as work proceeds._
