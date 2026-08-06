@@ -1023,3 +1023,58 @@ identifiers (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) and 
 - **Verification:** all four workflow YAML files validate with no problems; the expanded CI mirrors
   the locally green checks (`typecheck` 0, `lint` 0/0, `build` 21 routes, unit 76, integration 14,
   smoke 1); `az bicep build infra/main.bicep` compiles clean.
+
+### Step 24 - Deploy the parity release to Azure
+
+This step provisions the target resource group and deploys the parity build to a **live Azure App
+Service**, resolving the compute-quota blocker recorded in earlier steps by relocating to a region
+with available capacity. No application UI or behaviour changed — only deployment configuration.
+
+- **Region selection (quota-driven).** The MCAPS sandbox enforces **region-specific** compute and
+  database quotas. `eastus2` had **zero** App Service (`P1v3`/`standardDDv4Family`) quota **and** a
+  restricted PostgreSQL Flexible Server version list; `westus2` had App Service quota but Postgres was
+  still restricted. **`southeastasia`** was the first region offering **both** PostgreSQL Flexible
+  Server (v11-18) **and** `standardDDv4Family` quota (360 vCPU) for the `P1v3` plan, so the release
+  was deployed there (`rg-phoenixai-demo`, `southeastasia`).
+- **Deployment mechanics.** The installed `az` CLI (2.76.0) fails `az deployment sub create/validate`
+  with an internal "content already consumed" error, so the subscription-scoped deployment was
+  submitted via the **ARM REST API** (`PUT .../providers/Microsoft.Resources/deployments/{name}`,
+  `api-version=2021-04-01`) with a bearer token, sending the compiled `infra/main.bicep` template and
+  parameters in the request body. Deployment `phoenixai-release-sea` reported **Succeeded**.
+- **App packaging.** The Next.js 14 app is built with `output: "standalone"` and packaged with a new
+  Python `zipfile` helper ([nextjs_space/scripts/make-standalone-zip.py](../../nextjs_space/scripts/make-standalone-zip.py))
+  that emits **forward-slash** arcnames (Windows `Compress-Archive` produces backslash paths that
+  break on the Linux host) and uses Windows extended-length (`\\?\`) paths to handle deep
+  `node_modules` directories. The standalone tree (which nests under `.next/standalone/nextjs_space/`)
+  is flattened to the zip root, with `.next/static` and `public` added alongside; the app runs via
+  `node server.js` with `WEBSITES_PORT=3000` and `SCM_DO_BUILD_DURING_DEPLOYMENT=false`.
+- **Prisma Linux engine fix.** The bundled Prisma client was generated only for the Windows query
+  engine, so the database health route returned 503 on the Linux App Service. The generator in
+  [nextjs_space/prisma/schema.prisma](../../nextjs_space/prisma/schema.prisma) now declares
+  `binaryTargets = ["native", "debian-openssl-3.0.x"]`; after `npm run db:generate` and a rebuild both
+  engines ship in the standalone bundle and the health route resolves.
+- **Secret handling under MCAPS policy.** MCAPS policy forces the Key Vault's `publicNetworkAccess` to
+  **Disabled** (the update is silently ignored). With no VNet/private endpoint in this demo topology,
+  the App Service managed identity — although correctly granted **Key Vault Secrets User** — cannot
+  reach the vault, so Key Vault *references* for the database connection cannot resolve. The
+  `DATABASE_URL` is therefore supplied as a **direct App Service application setting** (an approved
+  cloud-secret mechanism per the repository guardrails), pointing at the Flexible Server over TLS
+  (`sslmode=require`) with an `AllowAllAzureIPs` firewall rule permitting Azure-internal traffic. All
+  other backend access (Azure OpenAI, Blob Storage, App Insights) uses **managed identity**, no keys.
+- **Live configuration.** `AI_PROVIDER=azure`, `AUTH_MODE=demo`, Azure OpenAI endpoint + `gpt-4o`
+  deployment (`api-version=2024-10-21`), Blob Storage (`clinical-uploads` container), Application
+  Insights connection string, and the managed identity are all wired on
+  `app-phoenixai-yun55ezsi4yoq` (`https://app-phoenixai-yun55ezsi4yoq.azurewebsites.net`).
+- **Verification (live site).** All **18** routes return `200`; the database health route reports
+  `ready` (PostgreSQL, ~215 ms); AI streaming works end-to-end (`community-chat` SSE `200` via managed
+  identity); the Azure AI and Blob Storage health checks report `identity` auth and the
+  `clinical-uploads` container; the **original Phoenix AI logo** (`public/logo.png`, 346 KB) and PWA
+  icons (192/512) serve; the PWA manifest is served at `/manifest.json` and referenced from the
+  landing HTML; the TBSA and Parkland calculator pages carry their expected clinical content; the
+  EN/BM language toggle is present; the rendered HTML contains **no** Abacus.AI, S3, `localhost` or
+  local-file references; and Application Insights confirms live ingestion (185 requests over the
+  preceding three hours). The compiled ARM template and the release parameter file (which held the
+  database password) are **not** committed — they are regenerable build artifacts, and the parameter
+  file is git-ignored to prevent any secret from entering version control.
+- **Environment note.** All commits from this migration remain on the local `migration/azure-port`
+  branch and have not been pushed.

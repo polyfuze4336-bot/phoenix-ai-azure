@@ -50,6 +50,10 @@ Thumbs.db
 deploy/
 azd-env-name
 
+# Compiled Bicep + release parameter files (regenerable build artifacts; params may hold secrets)
+infra/main.json
+infra/params.release.json
+
 # Test artifacts (Playwright). The visual baseline under tests/visual/baseline/ IS committed.
 test-results/
 playwright-report/

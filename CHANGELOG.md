@@ -9,6 +9,15 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 ## [Unreleased]
 
 ### Added
+- Deployed the Phoenix AI parity build to a live Azure App Service in `southeastasia`
+  (`rg-phoenixai-demo`) after the MCAPS sandbox's region-specific quota blocked `eastus2`. Added
+  `nextjs_space/scripts/make-standalone-zip.py` (forward-slash, extended-length-path packaging of the
+  Next.js standalone output) and declared Linux Prisma `binaryTargets` in
+  `nextjs_space/prisma/schema.prisma`. Verified live: 18/18 routes `200`, PostgreSQL health `ready`,
+  Azure OpenAI streaming via managed identity, Blob Storage + App Insights healthy, original logo and
+  PWA assets serving, EN/BM toggle, TBSA/Parkland calculators, and no Abacus/S3/localhost runtime
+  dependencies. Documented the region pivot, the ARM REST deployment workaround, and the direct
+  `DATABASE_URL` app setting used because MCAPS policy forces Key Vault public access off.
 - Initialised the Phoenix AI Azure migration repository:
   - `.gitignore`, `.editorconfig`, `.nvmrc` (Node 22), `.env.example` (no secrets).
   - `README.md` stating this is a parity migration of Phoenix AI from Abacus.AI to Azure.
