@@ -119,8 +119,21 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 - `.env.example`: added `AI_PROVIDER` and the Azure OpenAI settings (`AZURE_OPENAI_ENDPOINT`,
   `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_VERSION`) — templates only,
   no secrets.
+- Azure OpenAI (Microsoft Foundry) is now the single, default AI backend. `getAiProvider()`
+  returns the Azure provider directly (the `AI_PROVIDER` selector and the `abacus` branch are gone).
+  The model/deployment name comes solely from configuration (`AZURE_AI_MODEL_DEPLOYMENT` /
+  `AZURE_OPENAI_DEPLOYMENT`); no model name is hard-coded in any route. Streaming framing, error
+  wording, status codes, and clinical prompts are unchanged.
+- `.env.example`: removed `AI_PROVIDER` and `ABACUSAI_API_KEY`; the AI section now documents only
+  the Azure OpenAI settings (managed-identity default). Templates only, no secrets.
 
 ### Removed
+- Removed the Abacus.AI runtime provider entirely: deleted `lib/ai/abacus-provider.ts` (the
+  `https://apps.abacus.ai/v1/chat/completions` call, `ABACUSAI_API_KEY` credential, hard-coded
+  `gpt-5.4-mini` default model, and Abacus-specific error/config wording). Narrowed
+  `AiProviderName` to `'azure'` and dropped the provider-selection compatibility code. No
+  production runtime dependency on Abacus.AI remains (the browser guard test is retained). The
+  historical migration record continues to reference Abacus.AI where relevant.
 - Removed the Abacus-hosted browser script `https://apps.abacus.ai/chatllm/appllm-lib.js` from
   `app/layout.tsx` (the Abacus platform preview/chat-widget loader). A full codebase search
   confirmed no application code references any global, function, or object it provides, so no

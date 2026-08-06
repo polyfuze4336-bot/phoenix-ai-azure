@@ -1,39 +1,30 @@
 /**
  * AI provider factory + shared error mapping.
  *
- * `getAiProvider()` selects the backend from the `AI_PROVIDER` environment
- * variable so API routes stay provider-agnostic:
- *   - `abacus` (default, temporary) → the current Abacus.AI backend
- *   - `azure`  → Azure OpenAI (Foundry)
- * Once the Azure OpenAI cutover is complete, the Azure environment sets
- * `AI_PROVIDER=azure` (the intended production default on Azure).
+ * `getAiProvider()` returns the Azure OpenAI (Microsoft Foundry) backend — the
+ * app's single production AI provider. The provider abstraction is retained so
+ * API routes stay backend-agnostic and a future provider could be added without
+ * touching route code.
  *
  * Server-only: providers read credentials from `process.env`; never import this
  * from client code.
  */
 
-import { AbacusProvider } from './abacus-provider';
 import { AzureFoundryProvider } from './azure-foundry-provider';
-import { AiError, AiProvider, AiProviderName } from './types';
+import { AiError, AiProvider } from './types';
 
-/** Resolve the configured provider name (defaults to `abacus` for now). */
-export function resolveProviderName(): AiProviderName {
-  const raw = (process.env.AI_PROVIDER ?? 'abacus').trim().toLowerCase();
-  return raw === 'azure' ? 'azure' : 'abacus';
-}
-
-/** Instantiate the configured AI provider. */
+/** Instantiate the configured AI provider (Azure OpenAI / Foundry). */
 export function getAiProvider(): AiProvider {
-  return resolveProviderName() === 'azure' ? new AzureFoundryProvider() : new AbacusProvider();
+  return new AzureFoundryProvider();
 }
 
 /**
  * Build a faithful JSON error `Response` from a thrown provider error.
  *
- * `upstreamPrefix` reproduces each route's original wording for upstream
- * failures (e.g. `LLM API error`, `LLM error`, `API error`) so client-visible
- * error bodies are unchanged. Credential/config errors keep the provider's safe
- * client message; anything unexpected falls back to a generic 500 (matching the
+ * `upstreamPrefix` gives each route its own wording for upstream failures
+ * (e.g. `LLM API error`, `LLM error`, `API error`) so client-visible error
+ * bodies are stable. Credential/config errors keep the provider's safe client
+ * message; anything unexpected falls back to a generic 500 (matching the
  * routes' original outer catch).
  */
 export function aiErrorResponse(err: unknown, upstreamPrefix: string): Response {

@@ -1,16 +1,16 @@
 /**
  * Phoenix AI — portable AI provider layer: core types.
  *
- * These interfaces describe a provider-neutral chat/vision contract so the app
- * can target Abacus.AI today and Azure OpenAI (Foundry) tomorrow without the API
- * routes knowing which backend is in use. Both current backends are
- * OpenAI-compatible, so the message shape intentionally mirrors OpenAI's.
+ * These interfaces describe a provider-neutral chat/vision contract so the API
+ * routes stay backend-agnostic. The production backend is Azure OpenAI
+ * (Microsoft Foundry), which is OpenAI-compatible, so the message shape
+ * intentionally mirrors OpenAI's.
  *
  * Server-only: implementations read credentials from `process.env` and must
  * never be imported into client components (API keys must not reach the browser).
  */
 
-export type AiProviderName = 'abacus' | 'azure';
+export type AiProviderName = 'azure';
 
 export type AiRole = 'system' | 'user' | 'assistant';
 

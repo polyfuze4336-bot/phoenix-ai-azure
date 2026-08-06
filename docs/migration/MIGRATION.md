@@ -386,3 +386,32 @@ the `azure` provider **ready**, not yet the default (the cutover flips it once A
   `npm run test:network` ✅ 1 passed.
 
 _Subsequent steps appended below as work proceeds._
+### Step 12 — Remove remaining Abacus.AI runtime dependencies (Azure-only cutover)
+
+With the Azure OpenAI (Microsoft Foundry) provider verified in Step 11, the Abacus.AI backend is
+retired and Azure becomes the app's single production AI provider.
+
+- **Default provider:** `getAiProvider()` now constructs `AzureFoundryProvider` directly. The
+  `AI_PROVIDER` environment selector, the `resolveProviderName()` helper, and the `abacus` factory
+  branch are removed — Azure is no longer conditional. The provider abstraction (`AiProvider`
+  interface, factory, shared `aiErrorResponse`) is kept so a future backend could be added without
+  touching route code.
+- **Abacus provider deleted:** `lib/ai/abacus-provider.ts` is removed entirely. This drops the
+  `https://apps.abacus.ai/v1/chat/completions` call, the `ABACUSAI_API_KEY` credential read, the
+  hard-coded `gpt-5.4-mini` default model, and the Abacus-specific missing-credential error/log
+  wording. `AiProviderName` is narrowed from `'abacus' | 'azure'` to `'azure'`.
+- **Deployment name from configuration:** no route hard-codes a model. The Azure provider resolves
+  the deployment name only from `AZURE_AI_MODEL_DEPLOYMENT` (or legacy `AZURE_OPENAI_DEPLOYMENT`);
+  the routes pass no `model`.
+- **Config (`.env.example`):** removed `AI_PROVIDER` and `ABACUSAI_API_KEY`; the AI section now
+  documents only the `AZURE_AI_*` settings (managed identity default) with the legacy
+  `AZURE_OPENAI_*` names retained as accepted fallbacks. Templates only — no secrets.
+- **Comments:** removed lingering "Abacus.AI today / Azure tomorrow" wording from `types.ts` and
+  `openai-compatible.ts`. The browser regression guard (`tests/network`) is intentionally retained
+  — it is a safety net that asserts no browser request ever targets Abacus, not a runtime
+  dependency.
+- **Repository search:** `abacus`, `ABACUS`, `apps.abacus.ai`, `ABACUSAI_API_KEY`, and
+  `gpt-5.4-mini` no longer appear in any production runtime path. Remaining mentions are limited to
+  historical migration documentation and the browser guard test — both intentional.
+- **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 17/17 routes;
+  `npm run test:network` ✅ 1 passed.

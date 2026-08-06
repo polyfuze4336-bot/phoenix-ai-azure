@@ -1,10 +1,10 @@
 /**
  * Shared transport for OpenAI-compatible streaming chat completions.
  *
- * Both providers (Abacus.AI and Azure OpenAI / Foundry) speak the same
- * OpenAI-compatible `/chat/completions` wire format, so the fetch, timeout,
- * retry, cancellation and correlation-ID handling live here once. Providers only
- * supply the endpoint URL, auth headers and concrete model name.
+ * Azure OpenAI (Microsoft Foundry) speaks the OpenAI-compatible
+ * `/chat/completions` wire format, so the fetch, timeout, retry, cancellation
+ * and correlation-ID handling live here once. Providers only supply the
+ * endpoint URL, auth headers and concrete model name.
  *
  * The returned body is the untouched upstream SSE byte stream; callers decide
  * whether to pass it through (text chat) or parse it (structured analysis).
