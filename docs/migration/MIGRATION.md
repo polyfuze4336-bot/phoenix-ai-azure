@@ -270,3 +270,55 @@ by the Abacus platform. No page functionality changes.
   ✅ 0/0; `npm run test:network` ✅ 1 passed (0 Abacus browser requests across all 14 routes).
 
 _Subsequent steps appended below as work proceeds._
+### Step 10 — Introduce a portable AI provider layer
+Introduced a provider abstraction (`nextjs_space/lib/ai/`) so the app is no longer hard-wired to
+Abacus.AI, and rewired the four AI routes through it — **without changing any client-visible
+behaviour**. This is the enabling refactor for the Azure OpenAI cutover.
+
+- **New abstraction (`lib/ai/`):**
+  - `types.ts` — provider-neutral contract: `AiProvider`, `AiMessage` (text + multimodal image
+    parts), `AiChatRequest` (model, max output tokens, response format, correlation ID, timeout,
+    retries, cancellation `signal`), `AiStreamResponse`, and a structured `AiError`.
+  - `openai-compatible.ts` — one shared transport for both backends (they are both
+    OpenAI-compatible). Builds the `stream:true` chat payload, generates a correlation ID
+    (`x-correlation-id`), applies timeout/cancellation via a merged `AbortController`, retries
+    only on transient 5xx/network errors, and returns the **raw** upstream SSE byte stream. To
+    preserve current behaviour the defaults are no timeout and 0 retries.
+  - `abacus-provider.ts` — `AbacusProvider` (name `abacus`), endpoint `apps.abacus.ai`, default
+    model `gpt-5.4-mini`, `Authorization: Bearer ${ABACUSAI_API_KEY}`, and the **exact** original
+    missing-key log + client error message.
+  - `azure-foundry-provider.ts` — `AzureFoundryProvider` (name `azure`) for Azure OpenAI /
+    Foundry: URL `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=…`,
+    `api-key` header, default API version `2024-10-21`. The deployment must be vision-capable to
+    preserve multimodal analysis. Not active until wired up.
+  - `ai-provider.ts` — `resolveProviderName()` reads `AI_PROVIDER` (defaults to `abacus`),
+    `getAiProvider()` factory, and `aiErrorResponse(err, prefix)` which reproduces each route's
+    original upstream-error wording (`LLM API error`, `LLM error`, `API error`) and status.
+  - `prompts/` — the four system prompts moved **verbatim** (HCP wound analysis, HCP chat, and the
+    two community prompts as `lang`-parameterised functions). HCP clinical tone, community-friendly
+    language, Bahasa Malaysia mode, the Malaysian emergency number **999**, Malaysian clinical
+    context, medical disclaimers, and the exact JSON schemas are all unchanged.
+  - `streaming/text-stream.ts` — `createTextPassthroughResponse` reproduces the chat routes' raw
+    decode→encode passthrough and `text/plain` headers.
+  - `streaming/sse.ts` — `createStructuredSseResponse` reproduces the analysis routes' exact SSE
+    parse loop (per-chunk `processing` event, `[DONE]` handling, end-of-stream fallback) with
+    `text/event-stream` headers, distinguishing the `'done'` vs `'end'` completion phases.
+  - `validation/wound-analysis-schema.ts` — `parseHcpWoundAnalysis` and
+    `parseCommunityWoundAnalysis` reproduce the original parse-or-fallback objects, **including
+    the community route's two different fallbacks** for the `[DONE]` path vs the end-of-stream path.
+- **Routes rewired:** `analyze-wound`, `hcp-chat`, `community-analyze`, and `community-chat` now
+  build a provider-neutral `AiMessage[]`, call `getAiProvider().streamChatCompletion(...)`, and
+  return the shared streaming helpers. The outer `try/catch`, the image `400`, every
+  `console.error` label, the upstream-error prefixes, status codes, and streamed bytes are
+  preserved. Because both providers speak the same OpenAI wire format, **no client code changed**.
+- **Config (`AI_PROVIDER`):** added to `.env.example` alongside the Azure OpenAI settings
+  (`AZURE_OPENAI_ENDPOINT` / `AZURE_OPENAI_API_KEY` / `AZURE_OPENAI_DEPLOYMENT` /
+  `AZURE_OPENAI_API_VERSION`) — templates only, no secrets. Default is `abacus`; the intended
+  Azure production default is `azure`, flipped in the later cutover step once Azure OpenAI exists.
+- **Security:** all credentials are read server-side in `lib/ai` (invoked only from `app/api/*`
+  route handlers); no API keys reach the browser. `test:network` still passes (0 Abacus browser
+  requests). The server-side Abacus calls remain by default and are the subject of the cutover step.
+- **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 17/17 routes;
+  `npm run test:network` ✅ 1 passed.
+
+_Subsequent steps appended below as work proceeds._

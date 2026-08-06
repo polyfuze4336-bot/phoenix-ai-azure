@@ -44,6 +44,16 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   `nextjs_space/playwright.network.config.ts` (script `test:network`). Loads every public route
   in a real browser and fails if any browser request targets an Abacus-owned domain
   (`apps.abacus.ai`, `abacus.ai`, or any `*.abacus.ai` / `*.abacusai.*` asset host).
+- Portable AI provider layer under `nextjs_space/lib/ai/` so the app is no longer hard-wired to
+  Abacus.AI. Provider-neutral interfaces (`AiProvider`, `AiMessage`, `AiChatRequest`,
+  `AiStreamResponse`, `AiError`) support text chat, multimodal image analysis, streaming text and
+  streaming structured JSON, model selection, max output tokens, correlation IDs, timeout, retry,
+  cancellation, and structured errors. Two interchangeable providers — `AbacusProvider`
+  (current) and `AzureFoundryProvider` (Azure OpenAI target) — share one OpenAI-compatible
+  transport. A new `AI_PROVIDER` env var selects the backend (`abacus` | `azure`); it defaults
+  to `abacus` for now and becomes `azure` on Azure once Azure OpenAI is provisioned. System
+  prompts were moved verbatim into `lib/ai/prompts/`; the four API routes now call the
+  abstraction. No API keys are exposed to the browser and the streamed output is byte-identical.
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
@@ -74,6 +84,13 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   the committed visual baseline tracked. No application code or UI changed.
 - `package.json`: added `test:network` (runs the Abacus guard). `tsconfig.json` also excludes
   `playwright.network.config.ts` from the Next app type project.
+- The four AI API routes (`analyze-wound`, `hcp-chat`, `community-analyze`, `community-chat`) now
+  call the `lib/ai` provider abstraction instead of `fetch`-ing `apps.abacus.ai` directly. Error
+  strings, status codes, SSE/text streaming framing, the two community-analyze fallbacks, and all
+  clinical prompts are preserved unchanged; the default backend stays Abacus (`AI_PROVIDER=abacus`).
+- `.env.example`: added `AI_PROVIDER` and the Azure OpenAI settings (`AZURE_OPENAI_ENDPOINT`,
+  `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_VERSION`) — templates only,
+  no secrets.
 
 ### Removed
 - Removed the Abacus-hosted browser script `https://apps.abacus.ai/chatllm/appllm-lib.js` from
