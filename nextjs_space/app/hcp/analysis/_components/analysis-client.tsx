@@ -71,6 +71,11 @@ export function AnalysisClient() {
     }
   }, []);
 
+  const stopCamera = useCallback(() => {
+    streamRef?.current?.getTracks()?.forEach((track: any) => track?.stop?.());
+    setCameraActive(false);
+  }, []);
+
   const capturePhoto = useCallback(() => {
     if (!videoRef?.current || !canvasRef?.current) return;
     const canvas = canvasRef.current;
@@ -84,12 +89,7 @@ export function AnalysisClient() {
       if (blob) setImageFile(new File([blob], 'capture.jpg', { type: 'image/jpeg' }));
     }, 'image/jpeg', 0.8);
     stopCamera();
-  }, []);
-
-  const stopCamera = useCallback(() => {
-    streamRef?.current?.getTracks()?.forEach((track: any) => track?.stop?.());
-    setCameraActive(false);
-  }, []);
+  }, [stopCamera]);
 
   const analyzeImage = useCallback(async () => {
     if (!imageFile) return;

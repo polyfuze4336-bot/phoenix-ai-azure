@@ -13,7 +13,8 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.ABACUSAI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'API key not configured' }), { status: 500 });
+      console.error('[Phoenix AI] Missing required environment variable ABACUSAI_API_KEY. Set it in .env (see .env.example) before using the AI features.');
+      return new Response(JSON.stringify({ error: 'Server configuration error: the AI service credential (ABACUSAI_API_KEY) is not set. See .env.example.' }), { status: 500 });
     }
 
     const langInstructions = lang === 'bm' ? 'Respond in Bahasa Malaysia.' : 'Respond in English.';

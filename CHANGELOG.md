@@ -36,7 +36,25 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 - `npm run build` (`next build`) compiles successfully â€” 17/17 routes generated.
 - Development server serves all 14 application routes with HTTP 200 and no server errors.
 
+### Changed
+- Removed Abacus build and filesystem assumptions so the source builds outside Abacus:
+  - Prisma generator restored to the standard `provider = "prisma-client-js"` (dropped the
+    hardcoded `/home/ubuntu/...` `output` path and `linux-musl-arm64` `binaryTargets`);
+    PostgreSQL retained. `prisma generate` now writes to the default `node_modules/@prisma/client`.
+  - Pinned `eslint@8.57.1` + `eslint-config-next@14.2.28` (matching Next.js 14.2.28) and added a
+    minimal `.eslintrc.json` so `next lint` runs. `npm run lint` reports 0 warnings / 0 errors.
+  - Removed `eslint.ignoreDuringBuilds` from `next.config.js` (build now lints for real);
+    `typescript.ignoreBuildErrors` stays `false`.
+  - Completed the npm script set: added `typecheck`, `test`, `test:e2e`, `format:check`
+    (test/e2e/format are honest placeholders until real suites exist).
+
+### Fixed
+- `app/hcp/analysis/_components/analysis-client.tsx`: added the missing `stopCamera` dependency
+  to the `capturePhoto` `useCallback` (behaviour-preserving) — the only lint defect.
+- AI API routes now emit a clear development configuration error and server log when
+  `ABACUSAI_API_KEY` is absent, instead of a terse "API key not configured" (response shape and
+  500 status unchanged).
+
 ### Known issues / follow-ups
 - `next@14.2.28` security advisory — to be addressed in a dedicated dependency-hardening change.
-- `prisma generate` uses a hardcoded Linux `output` path; non-blocking (Prisma unused at runtime).
 - Abacus.AI platform artifacts (LLM endpoint, injected chat widget) to be migrated/removed.

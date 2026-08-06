@@ -146,4 +146,44 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
   Only live AI routes need `ABACUSAI_API_KEY` (to be replaced by Azure OpenAI later);
   `DATABASE_URL` and `AWS_*` are dead code for parity.
 - **No source code or assets were modified** â€” this step only adds the report.
+
+### Step 6 â€” Remove Abacus build and filesystem assumptions
+Smallest changes required to build the source outside the Abacus environment. No pages,
+routes, components, or PWA behaviour changed; Next.js not upgraded; TypeScript checks not
+suppressed.
+- **Prisma generator (portability blocker):** removed the Abacus-specific absolute
+  `output = "/home/ubuntu/phoenix_ai/nextjs_space/node_modules/.prisma/client"` and the
+  `linux-musl-arm64` `binaryTargets`, restoring the standard generator
+  (`provider = "prisma-client-js"`). PostgreSQL retained as the datasource. `npx prisma
+  generate` now succeeds to the default `node_modules/@prisma/client`.
+- **ESLint toolchain fixed so `lint` runs:** the inherited `eslint@9` + `eslint-config-next@15`
+  are incompatible with `next lint` in Next.js 14.2.28 (which calls the legacy ESLint API).
+  Pinned `eslint@8.57.1` and `eslint-config-next@14.2.28` (matching the app's Next version) and
+  added a minimal `.eslintrc.json` (`extends: next/core-web-vitals`). `npm run lint` now runs
+  and reports **0 warnings / 0 errors**. (`--legacy-peer-deps` is still needed for install due
+  to the separate pre-existing `@typescript-eslint/eslint-plugin@7` peer range.)
+- **One real lint defect resolved:** `capturePhoto` in
+  `app/hcp/analysis/_components/analysis-client.tsx` used `stopCamera` without listing it as a
+  `useCallback` dependency. Reordered the two callbacks and added the dependency. `stopCamera`
+  is stable (only refs + setState), so runtime behaviour is unchanged.
+- **`eslint.ignoreDuringBuilds` removed** from `next.config.js` *after* the lint defect was
+  understood and fixed. The build now runs `Linting and checking validity of types` for real
+  (previously `Skipping linting`). `typescript.ignoreBuildErrors` remains `false` (not
+  suppressed). All other `next.config.js` behaviour preserved.
+- **package.json scripts** completed to the required set: `dev`, `build`, `start`, `lint`,
+  `typecheck` (`tsc --noEmit`), `test`, `test:e2e`, `format:check`. No unit/e2e/format tooling
+  is present in the source, so `test`, `test:e2e`, and `format:check` are honest placeholders
+  (echo that no suite is configured) rather than fabricated green checks; they exit 0 so CI
+  wiring can call them today and be replaced when real suites land.
+- **Runtime-safe missing-env handling:** the four AI API routes already returned a JSON 500 for
+  an absent `ABACUSAI_API_KEY` (no stack-trace crash). Improved the message to a clear
+  development configuration error ("the AI service credential (ABACUSAI_API_KEY) is not set. See
+  .env.example.") and added a `console.error` server log. Response shape and 500 status
+  unchanged.
+- **Verification:** `npm run lint` âœ… 0/0; `npm run typecheck` âœ… 0 errors; `npx prisma generate`
+  âœ… default path; `npm run build` âœ… exit 0, 17/17 routes with linting enabled.
+- **Not done (out of scope for the minimum fix):** dependency upgrades / `npm audit fix`,
+  Next.js upgrade, and removing the Abacus chat-widget script + LLM endpoint (deferred to the
+  Azure OpenAI cutover step).
+
 _Subsequent steps appended below as work proceeds._
