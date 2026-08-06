@@ -2,6 +2,7 @@
 
 import { useLanguage } from '@/components/language-provider';
 import { LanguageToggle } from '@/components/language-toggle';
+import { PhoenixLogo } from '@/components/phoenix-logo';
 import { Stethoscope, Users, ArrowRight, Shield, Flame, Heart, Smartphone, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -16,9 +17,7 @@ export function LandingClient() {
       <header className="sticky top-0 z-50 phoenix-gradient safe-area-top">
         <div className="max-w-[1200px] mx-auto px-4 py-2.5 md:py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-3">
-            <div className="relative w-8 h-8 md:w-10 md:h-10">
-              <Image src="/logo.png" alt="Phoenix AI Logo" fill className="object-contain" />
-            </div>
+            <PhoenixLogo className="w-8 h-8 md:w-10 md:h-10" alt="Phoenix AI Logo" />
             <span className="font-display text-lg md:text-xl font-bold text-white tracking-tight">Phoenix AI</span>
           </div>
           <LanguageToggle />
@@ -44,9 +43,7 @@ export function LandingClient() {
             transition={{ duration: 0.5 }}
           >
             <div className="flex justify-center mb-5 md:mb-8">
-              <div className="relative w-28 h-28 md:w-44 md:h-44 animate-spin-slow" style={{ perspective: '800px', transformStyle: 'preserve-3d' }}>
-                <Image src="/logo.png" alt="Phoenix AI" fill className="object-contain drop-shadow-lg" />
-              </div>
+              <PhoenixLogo className="w-28 h-28 md:w-44 md:h-44 animate-spin-slow" style={{ perspective: '800px', transformStyle: 'preserve-3d' }} imageClassName="drop-shadow-lg" />
             </div>
             <h1 className="font-display text-3xl md:text-6xl font-bold tracking-tight mb-2 md:mb-4">
               <span className="phoenix-gradient-text">Phoenix AI</span>

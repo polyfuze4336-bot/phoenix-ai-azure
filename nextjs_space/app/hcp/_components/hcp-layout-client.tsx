@@ -2,8 +2,8 @@
 
 import { useLanguage } from '@/components/language-provider';
 import { LanguageToggleDark } from '@/components/language-toggle';
+import { PhoenixLogo } from '@/components/phoenix-logo';
 import { LayoutDashboard, Brain, Calculator, Droplets, BookOpen, MessageSquare, ArrowLeft, Menu, X, LogOut, User } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, ReactNode, useCallback } from 'react';
@@ -61,7 +61,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
     return (
       <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center gap-3">
-          <div className="relative w-12 h-12"><Image src="/logo.png" alt="Phoenix AI" fill className="object-contain" /></div>
+          <PhoenixLogo className="w-12 h-12" />
           <p className="text-sm text-gray-400">Loading...</p>
         </div>
       </div>
@@ -74,9 +74,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 fixed top-0 left-0 h-full z-40">
         <div className="p-4 border-b border-gray-100">
           <Link href="/" className="flex items-center gap-3">
-            <div className="relative w-9 h-9">
-              <Image src="/logo.png" alt="Phoenix AI" fill className="object-contain" />
-            </div>
+            <PhoenixLogo className="w-9 h-9" />
             <div>
               <span className="font-display text-base font-bold text-gray-900">Phoenix AI</span>
               <p className="text-[10px] text-[#8B0000] font-medium">{t('hcp.portal')}</p>
@@ -120,7 +118,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
       }`}>
         <div className="p-4 border-b flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="relative w-8 h-8"><Image src="/logo.png" alt="Phoenix AI" fill className="object-contain" /></div>
+            <PhoenixLogo className="w-8 h-8" />
             <span className="font-display text-sm font-bold">Phoenix AI</span>
           </Link>
           <button onClick={() => setMobileOpen(false)}><X className="w-5 h-5" /></button>
@@ -160,9 +158,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
                 <Menu className="w-6 h-6 text-gray-600" />
               </button>
               <div className="lg:hidden flex items-center gap-2">
-                <div className="relative w-7 h-7">
-                  <Image src="/logo.png" alt="Phoenix AI" fill className="object-contain" />
-                </div>
+                <PhoenixLogo className="w-7 h-7" />
                 <span className="font-display text-sm font-bold text-gray-800">Phoenix AI</span>
               </div>
             </div>

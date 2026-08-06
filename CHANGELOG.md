@@ -28,6 +28,12 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   Node 22 / npm 10.9.3 â€” install, type-check, build, and runtime (14/14 routes HTTP 200) all
   pass; lint is blocked by an inherited `eslint@9` / `next lint` incompatibility; `npm audit`
   records 25 vulnerabilities (2 low, 1 moderate, 21 high, 1 critical). No source code changed.
+- `components/phoenix-logo.tsx`: a reusable `PhoenixLogo` component wrapping `/logo.png`
+  (`next/image` `fill` + `object-contain`, no filters/recolour), adopted at all 11 logo render
+  sites with zero visual change.
+- `docs/migration/brand-parity-checklist.md`: brand-asset inventory, the 14 confirmed logo /
+  metadata placements, the `PhoenixLogo` contract, and the preserved `STYLE_GUIDE.md` design
+  system (fonts, colour tokens, gradients, radius/spacing/shadow scales, animation timing).
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
@@ -47,6 +53,11 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
     `typescript.ignoreBuildErrors` stays `false`.
   - Completed the npm script set: added `typecheck`, `test`, `test:e2e`, `format:check`
     (test/e2e/format are honest placeholders until real suites exist).
+- Extracted the inline logo markup at 11 sites (landing header + hero, HCP login, HCP loading
+  splash, HCP desktop/mobile nav + mobile top bar, Community desktop/mobile nav + mobile top
+  bar, PWA install prompt) into the shared `PhoenixLogo` component. Pure extraction — wrapper
+  sizes, alt text, `drop-shadow-lg`, and animation classes are unchanged; the design system
+  (`STYLE_GUIDE.md`) and all brand assets are untouched.
 
 ### Fixed
 - `app/hcp/analysis/_components/analysis-client.tsx`: added the missing `stopCamera` dependency

@@ -186,4 +186,33 @@ suppressed.
   Next.js upgrade, and removing the Abacus chat-widget script + LLM endpoint (deferred to the
   Azure OpenAI cutover step).
 
+### Step 7 — Protect the existing UI and branding
+Guard the Phoenix AI identity and design system before any further change. **No visual
+change** was made; this step is a pure, verified extraction plus documentation.
+- **Asset inventory:** audited every use of `/logo.png`, `/kkm-hkl-logo.jpeg`,
+  `/favicon.svg`, `/og-image.png`, the PWA icons, and the TBSA body/mask images. Confirmed
+  the Phoenix logo appears in the landing page, HCP login, HCP desktop + mobile navigation,
+  Community desktop + mobile navigation, the PWA install prompt, browser metadata, and Open
+  Graph metadata. Full matrix in `docs/migration/brand-parity-checklist.md`.
+- **`PhoenixLogo` component** added at `nextjs_space/components/phoenix-logo.tsx`. It renders
+  `/logo.png` with `next/image` `fill` + `object-contain` inside a `relative` wrapper —
+  identical to the prior inline markup. Sizing/spacing come from the caller's `className`;
+  `alt` defaults to `"Phoenix AI"` (call sites needing `"Phoenix AI Logo"` pass it
+  explicitly); `imageClassName` preserves the hero `drop-shadow-lg`; `style` preserves the
+  hero 3D `perspective`. No CSS filters, no recolouring, transparency preserved.
+- **Refactored 11 render sites** across `app/_components/landing-client.tsx`,
+  `app/hcp-login/page.tsx`, `app/hcp/_components/hcp-layout-client.tsx`,
+  `app/community/_components/community-layout-client.tsx`, and
+  `components/pwa-install-prompt.tsx` to use `PhoenixLogo`. Each keeps its exact wrapper size
+  (`w-7/8/9/12`, responsive hero `w-28…md:w-44`), alt text, drop-shadow, and animation
+  classes — the rendered DOM is unchanged. Metadata (`layout.tsx`), `manifest.json`, `sw.js`,
+  the KKM–HKL banner, and non-logo user-content images were intentionally left as-is.
+- **Design system preserved and documented** from `STYLE_GUIDE.md` + `app/globals.css`:
+  DM Sans / Plus Jakarta Sans / JetBrains Mono; `--primary 0 100% 27%` (`#8B0000`),
+  `--secondary 37 92% 50%`, `--accent 172 84% 33%`; `--radius 0.625rem` scale; 8px spacing
+  scale; shadow scale; `--duration 150/250/350ms`; and the `.phoenix-gradient` /
+  `.phoenix-gradient-text` / `.hero-gradient` treatments — all unchanged.
+- **Verification:** `npm run typecheck` ✅ 0 errors; `npm run lint` ✅ 0/0; `npm run build`
+  ✅ exit 0, 17/17 routes. No asset files modified.
+
 _Subsequent steps appended below as work proceeds._
