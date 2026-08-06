@@ -11,6 +11,14 @@
     "test:e2e": "playwright test",
     "test:visual": "playwright test --config=playwright.config.ts",
     "test:network": "playwright test --config=playwright.network.config.ts",
+    "test:integration": "tsx --require dotenv/config tests/integration/db.integration.test.ts",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:migrate:validate": "tsx scripts/validate-migration.ts",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:status": "prisma migrate status",
+    "db:seed": "prisma db seed",
+    "db:readiness": "tsx --require dotenv/config scripts/db-readiness.ts",
     "format:check": "echo \"No formatter is configured yet\""
   },
   "prisma": {

@@ -41,3 +41,26 @@ jobs:
 
       - name: Build (next build)
         run: npm run build
+
+  db-validate:
+    name: Validate DB migrations
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nextjs_space
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: nextjs_space/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Validate migrations (offline)
+        run: npm run db:migrate:validate

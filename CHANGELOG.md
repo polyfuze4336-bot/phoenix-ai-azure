@@ -74,6 +74,20 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
     derived from the front-end fields) with an explicit "assessment could not be completed" safe
     fallback that preserves the medical disclaimer and never fabricates clinical findings.
   - Added `@azure/identity@4.13.1`. New `AZURE_AI_*` variables documented in `.env.example`.
+- Connected the Prisma data layer to **Azure Database for PostgreSQL Flexible Server** (database
+  plumbing only; the dashboard/articles UI still renders the original demo content, preserving
+  visible parity):
+  - Health/readiness routes `GET /api/health` (liveness) and `GET /api/health/db` (`SELECT 1`
+    readiness, 503 when unavailable).
+  - Initial migration `prisma/migrations/20260806120000_init` (+ `migration_lock.toml`), offline
+    validation `scripts/validate-migration.ts` (`npm run db:migrate:validate`) and a `db-validate`
+    CI job, plus a controlled `prisma migrate deploy` workflow
+    `.github/workflows/db-migrate.yml` (`workflow_dispatch`, `environment: production`).
+  - Idempotent, fictional, non-destructive, clearly-marked seed `scripts/seed.ts` (48 `Case` rows +
+    5 `Article` rows via `upsert`) run through the hardened `scripts/safe-seed.ts` guard.
+  - Gated integration test `tests/integration/db.integration.test.ts` (`npm run test:integration`,
+    skips without `DATABASE_URL`) and new `db:*` npm scripts.
+  - Reference doc `docs/data/postgresql-data-model.md`.
 
 ### Verified
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
@@ -83,6 +97,10 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 - Development server serves all 14 application routes with HTTP 200 and no server errors.
 
 ### Changed
+- Hardened the Prisma client (`nextjs_space/lib/db.ts`): auto-applies `sslmode=require` and modest
+  connection-pool defaults (`connection_limit`/`pool_timeout`/`connect_timeout`) to `DATABASE_URL`,
+  and adds a transient-failure retry helper (`withDbRetry`) and readiness check
+  (`checkDatabaseReady`).
 - Removed Abacus build and filesystem assumptions so the source builds outside Abacus:
   - Prisma generator restored to the standard `provider = "prisma-client-js"` (dropped the
     hardcoded `/home/ubuntu/...` `output` path and `linux-musl-arm64` `binaryTargets`);

@@ -2,6 +2,10 @@ generator client {
     provider = "prisma-client-js"
 }
 
+// Datasource: Azure Database for PostgreSQL Flexible Server.
+// TLS is required; lib/db.ts appends sslmode=require and pool defaults to
+// DATABASE_URL. Migrations are applied via the controlled `prisma migrate deploy`
+// step (see .github/workflows/db-migrate.yml), never a destructive reset.
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")

@@ -415,3 +415,45 @@ retired and Azure becomes the app's single production AI provider.
   historical migration documentation and the browser guard test — both intentional.
 - **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 17/17 routes;
   `npm run test:network` ✅ 1 passed.
+
+### Step 13 - Connect Phoenix AI to Azure Database for PostgreSQL
+
+Following the persistence assessment (`docs/migration/persistence-gap-assessment.md`), the Prisma
+data layer is connected to **Azure Database for PostgreSQL Flexible Server**. This step builds the
+database plumbing (client hardening, migrations, seed, health/readiness, tests). It deliberately
+does **not** rewire the dashboard or articles UI - those still render the original in-app demo
+content, so the visible experience is unchanged and parity is preserved. The seed makes matching
+data available for a future wiring step.
+
+- **Client hardening (`lib/db.ts`):** the datasource URL now auto-appends `sslmode=require` (Azure
+  requires TLS) plus modest pool defaults (`connection_limit=5`, `pool_timeout=15`,
+  `connect_timeout=15`) when absent, without clobbering explicit settings. Added `withDbRetry()`
+  (exponential backoff + jitter for transient `P1001/P1002/P1008/P1017`,
+  `PrismaClientInitializationError`, and `ECONNRESET/ETIMEDOUT/...` errors) and
+  `checkDatabaseReady()` (a `SELECT 1` readiness probe with latency). `DATABASE_URL` remains
+  server-only.
+- **Health & readiness:** new Node-runtime routes `GET /api/health` (liveness, no DB) and
+  `GET /api/health/db` (503 when the database is unreachable, 200 when ready).
+- **Migrations:** committed the initial migration `prisma/migrations/20260806120000_init` +
+  `migration_lock.toml` (postgresql). Offline validation via `scripts/validate-migration.ts`
+  (`npm run db:migrate:validate`) checks the lock, non-empty `migration.sql`, and `prisma validate`
+  - wired into a new `db-validate` CI job (runs on every PR). Execution is a **controlled** step:
+  `.github/workflows/db-migrate.yml` (`workflow_dispatch`, `environment: production`) runs a
+  readiness check then `prisma migrate deploy` (applies only pending migrations, never resets) then
+  `prisma migrate status`. No destructive migration runs automatically.
+- **Seed (`scripts/seed.ts` via `scripts/safe-seed.ts`):** idempotent (`upsert` on stable `seed-*`
+  ids), fictional, non-destructive (upserts only), and clearly marked (`seed-case-*` /
+  `seed-article-*` ids; `[DEMO]` markers in case free-text). Seeds 48 deterministic `Case` rows
+  mirroring the dashboard aggregates and 5 `Article` rows mirroring the community articles verbatim;
+  `ChatMessage` is not seeded. The safe-seed guard was hardened to also block `$executeRaw`,
+  `TRUNCATE`, and `DROP` in addition to `delete`/`deleteMany`.
+- **Integration test (`tests/integration/db.integration.test.ts`):** asserts readiness and an
+  idempotent upsert against a live database; skips cleanly (exit 0) when `DATABASE_URL` is unset so
+  CI without a database still passes. Run via `npm run test:integration`.
+- **Config & docs:** `.env.example` documents the Azure `DATABASE_URL` format (SSL required, pool
+  params, optional pooler `DIRECT_DATABASE_URL`); `prisma/schema.prisma` gained a datasource
+  comment; new reference `docs/data/postgresql-data-model.md` documents tables, connection,
+  migrations, and seed.
+- **Verification:** `npm run db:migrate:validate` ✅ 1 migration; `npm run typecheck` ✅ 0;
+  `npm run lint` ✅ 0/0; `npm run build` ✅ 19/19 routes (adds `/api/health`, `/api/health/db`);
+  `npm run test:integration` ✅ skipped (no DB in CI).
