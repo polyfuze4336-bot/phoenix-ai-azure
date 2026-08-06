@@ -188,6 +188,17 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
     integration files; `test` now runs unit + integration. Verified: `typecheck` ✅ 0,
     `lint` ✅ 0/0, `build` ✅ 21 routes, `test:unit` ✅ 76, `test:integration` ✅ 14,
     `test:api` ✅ 14, `test:e2e` ✅ 3, `test:network` ✅ 1.
+- Audited **every visibly clickable control** across all 14 routes and the shared shells, and
+  recorded the result in `docs/testing/clickable-control-register.md` (columns: Route, Control,
+  Label, Expected action, Actual action, Status, Automated test, Defect, Resolution). Finding:
+  every rendered control performs a real, wired action — no `href="#"`, empty handlers, placeholder
+  alerts, dead links, animate-only buttons, or silently-failing controls. Categories absent from the
+  original (report/export, theme switch, tablists, modal dialogs) were **not fabricated**, and the
+  unused `theme-provider` / `theme-toggle` / `layouts/*` starter scaffolding was left unrendered
+  rather than wired in (no fake actions added). Added a deterministic guard,
+  `nextjs_space/tests/e2e/clickable-controls.spec.ts` (14 cases), that fails if any route gains a
+  placeholder anchor or an unresolvable in-app link. Verified: `typecheck` ✅ 0, `lint` ✅ 0/0,
+  `build` ✅ 21 routes, `test:e2e` ✅ 17 (3 journeys + 14 guard cases).
 - `npm install --legacy-peer-deps` succeeds (1064 packages).
 - `npm ci --legacy-peer-deps` succeeds (exit 0) with Node v22.19.0 / npm 10.9.3.
 - `npx tsc --noEmit` passes with 0 type errors.

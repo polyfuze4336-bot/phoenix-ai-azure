@@ -889,3 +889,45 @@ never a skip and never a hang.
 - **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` (standalone)
   ✅ 17/17 static pages, `server.js` emitted and `applicationinsights` traced into the standalone
   bundle; `npm run test:network` ✅ 1 passed. No visible UX change.
+
+### Step 21 - Audit every clickable control
+
+This step is a full audit of **every visibly clickable control** in the app — the prime rule being
+that each one must perform a **meaningful action**, and that **no fake action** may be added merely
+to make a test pass. The audit is documented as a register and is backed by a deterministic
+regression guard. It is **audit + test-only**: no UI, routing, styling, clinical content or runtime
+behaviour changes, so visible parity is unchanged.
+
+- **Scope:** all 14 rendered routes plus the shared HCP/community shells (sidebar nav, back links,
+  mobile drawer + backdrop, user menu, logout, bottom nav), the landing portal cards, the login form
+  (submit, quick-login, show/hide password, Entra anchor), the clinical tools (analysis upload /
+  camera / analyze / clear, TBSA select/toggles/brush/reset/canvas/Parkland link, Parkland inputs,
+  guidelines search/filters/accordions), the chat surfaces (quick prompts, image attach/remove, send,
+  HCP escalate), the community flows (assessment wizard, image-check, articles, first-aid accordions,
+  `tel:999` links), and the global PWA install/dismiss/iOS-guide and language toggles.
+- **Register:** [docs/testing/clickable-control-register.md](../testing/clickable-control-register.md)
+  records **one row per control** with the required columns — Route, Control, Label, Expected action,
+  Actual action, Status, Automated test, Defect, Resolution.
+- **Findings:** every visibly clickable control performs a real, wired action. **No** `href="#"`,
+  empty handlers, placeholder `alert()`s, dead links, unexplained disabled buttons, animate-only
+  buttons, state-less controls, or silently-failing controls were found in the rendered UI. The one
+  `disabled` state (Analyze Wound with no image / while loading) is an explained guard, not a dead
+  control. The HCP chat **Escalate** button updates visible banner state, matching the original
+  client-only demo behaviour (there is no server queue in the source). Categories that are simply
+  **absent by design** — report/export controls, a theme switch, ARIA tablists, modal dialogs — were
+  **not fabricated**, since adding them would be a redesign, not a faithful migration.
+- **Dead scaffolding (not visible controls):** the leftover shadcn/next-themes starter
+  `components/theme-provider.tsx` and `components/theme-toggle.tsx`, and the unused
+  `components/layouts/*` shells, are **never rendered** (no import mounts them). They were left in
+  place, unrendered; a theme toggle was deliberately **not** wired into the UI (the app is light-mode
+  only by parity), so no fake control was introduced.
+- **Automated guard:** new
+  [tests/e2e/clickable-controls.spec.ts](../../nextjs_space/tests/e2e/clickable-controls.spec.ts)
+  asserts, on every rendered route (public/community plus the HCP portal under a seeded demo
+  session), that **no anchor uses a placeholder href** (`#`, empty, or `javascript:`) and that every
+  in-app link **resolves** (non-404). It fails deterministically if a dead link is reintroduced and
+  never skips. Per-control behaviour continues to be exercised by the Step 20 journey specs
+  (`public-landing`, `hcp-journey`, `community-journey`) and API spec (`routes.spec.ts`).
+- **Verification:** `npm run typecheck` ✅ 0; `npm run lint` ✅ 0/0; `npm run build` ✅ 21 routes;
+  `npm run test:e2e` ✅ (3 journeys + 14 new clickable-control guard cases, 17/17). No visible UX
+  change and no code behaviour changed — the only additions are the register doc and the guard spec.
