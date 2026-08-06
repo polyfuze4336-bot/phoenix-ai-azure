@@ -45,6 +45,29 @@ model ChatMessage {
   @@index([portal])
 }
 
+// Persisted HCP AI wound-analysis results, retained for later reference on the
+// clinician history page. The full structured assessment is stored as JSON; a few
+// summary columns are denormalised for fast list rendering. `imageKey` is the
+// private Blob Storage path for the analysed image (served via short-lived SAS).
+model AnalysisRecord {
+  id             String   @id @default(cuid())
+  clinicianName  String?
+  clinicianEmail String?
+  imageKey       String?
+  imageMimeType  String?
+  woundCategory  String?
+  woundType      String?
+  burnDegree     String?
+  severity       String?
+  confidence     String?
+  tbsaEstimate   String?
+  isBurn         Boolean  @default(false)
+  result         Json
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model Article {
   id          String   @id @default(cuid())
   titleEn     String
