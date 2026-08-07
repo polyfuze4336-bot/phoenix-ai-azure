@@ -36,6 +36,7 @@ Trivial changes (copy edits, dependency patch bumps, non-structural refactors) d
 | [ADR-0002](./ADR-0002-architecture-first-governance.md) | Establish architecture-first governance | Accepted | 2024 |
 | [ADR-0003](./ADR-0003-staged-wound-analysis-pipeline.md) | Staged multimodal wound-analysis pipeline | Accepted | 2026-08-07 |
 | [ADR-0004](./ADR-0004-dual-experience-v2.md) | Additive dual-experience Phoenix AI v2.0 | Accepted | 2026-08-07 |
+| [ADR-0005](./ADR-0005-ai-assurance-layer.md) | Responsible AI assurance layer from a code-based control register | Accepted | 2026-08-07 |
 
 ## Template
 

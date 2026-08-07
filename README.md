@@ -120,6 +120,27 @@ synchronized with the code (enforced by the `Architecture Governance` CI workflo
 - **Change records:** [docs/architecture/changes/](docs/architecture/changes/)
 - **Diagrams:** [docs/architecture/diagrams/](docs/architecture/diagrams/)
 
+## Responsible AI & AI Assurance
+
+AI output in PhoenixIQ is **clinical decision-support under human supervision**, not an autonomous
+diagnosis. Responsible AI controls are surfaced as a first-class layer with a **code-based control
+register** as the single source of truth ([`nextjs_space/lib/rai/controls.ts`](nextjs_space/lib/rai/controls.ts)),
+mapped to Microsoft's six Responsible AI principles and traced to code and tests.
+
+- Clinically sensitive values (Parkland fluid resuscitation, Lund & Browder TBSA) are computed
+  **deterministically**, never guessed by the model.
+- Deterministic safety rules run after every analysis: no fabricated measurements, Fitzpatrick /
+  ethnicity **non-inference**, schema validation, automated consistency review, special-site
+  escalation, confidence capping and safe failure.
+- Every result is **AI-labelled**, carries confidence + explicit limitations, and is presented for
+  **clinician review** (reviewed / modified / escalated).
+- Controls are graded honestly **Active / Partial / Planned**. PhoenixIQ makes **no** claim of being
+  "certified", "approved", "bias free" or "100% safe".
+
+In-product surface: **`/v2/hcp/ai-assurance`** and a per-assessment "Analysis Information" panel.
+Tests: `npm run test:rai`. Full documentation: [docs/rai/](docs/rai/README.md) (start with the
+[executive summary](docs/rai/executive-summary.md)).
+
 ## Repository layout
 
 ```
@@ -129,6 +150,7 @@ synchronized with the code (enforced by the `Architecture Governance` CI workflo
 ├─ docs/
 │  ├─ migration/            # Migration audit trail & step log
 │  ├─ architecture/         # Current (AS-IS) + target architecture, ADRs, diagrams, changes
+│  ├─ rai/                  # Responsible AI framework, controls, evidence & limitations
 │  └─ testing/              # Test & UI-parity strategy
 ├─ .github/
 │  ├─ workflows/            # CI + Architecture Governance

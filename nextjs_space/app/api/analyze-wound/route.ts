@@ -16,6 +16,7 @@ import { HCP_WOUND_ANALYSIS_SYSTEM_PROMPT } from '@/lib/ai/prompts/hcp-wound-ana
 import { getAnalysisModelDeployment, getAnalysisPipelineMode } from '@/lib/ai/model-config';
 import { runAnalysisPipeline, type PatientContext } from '@/lib/ai/analysis/pipeline';
 import { toFlatHcpAnalysis } from '@/lib/ai/schemas/burn-wound-analysis';
+import { buildAnalysisMetadata } from '@/lib/ai/analysis/metadata';
 
 /** Coerce an untrusted patient-context object into the typed shape (no invented values). */
 function readPatientContext(raw: unknown): PatientContext | undefined {
@@ -74,8 +75,17 @@ export async function POST(request: NextRequest) {
           refine: refineAnswers && priorAnalysis ? { priorAnalysis, answers: refineAnswers } : undefined,
         });
         const flat = toFlatHcpAnalysis(rich);
+        const meta = buildAnalysisMetadata({
+          analysisId: correlationId,
+          modelDeployment: getAnalysisModelDeployment(),
+          pipelineMode: 'staged',
+          imageQualityAdequate: rich.imageQuality?.adequate,
+          imageQualityIssues: rich.imageQuality?.issues,
+          overallConfidence: rich.overallConfidence,
+          parklandIndicated: rich.parkland?.total24hMl != null,
+        });
         return createResultSseResponse({
-          result: { ...flat, structured: rich },
+          result: { ...flat, structured: rich, meta },
           processingEvent: { status: 'processing', message: 'Analyzing' },
           correlationId,
         });

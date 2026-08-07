@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DemoBadge, SyntheticDataNote } from '@/components/v2/demo-badge';
+import { ClinicalReviewPanel } from '@/components/v2/clinical-review-panel';
 import type { DemoCase } from '@/lib/v2/demo-data';
 import {
   caseTypeLabel, formatDate, statusStyles, priorityStyles, severityStyles, confidenceLabel,
@@ -106,6 +107,9 @@ export function CaseDetailClient({ c }: { c: DemoCase }) {
                 ))}
               </ul>
             </div>
+          </div>
+          <div className="mt-4">
+            <ClinicalReviewPanel clinician={c.clinician} />
           </div>
         </TabsContent>
 

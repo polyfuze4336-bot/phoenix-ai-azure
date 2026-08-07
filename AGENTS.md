@@ -42,6 +42,32 @@ End every architecture-impacting task with an **Architecture Review** block: imp
 before/after, files reviewed/changed, ADR reference, change record, and validation PASS/FAIL. The
 `architecture-governance` CI workflow enforces documentation synchronization on pull requests.
 
+## RESPONSIBLE AI CHANGE POLICY (mandatory)
+
+**AI behaviour is a governed surface. No change to AI behaviour, prompts, models, confidence/limitation
+handling, human oversight, transparency, telemetry, or any Responsible AI control may be implemented
+without keeping the RAI control register and its documentation/evidence synchronized.**
+
+1. **Understand** — read [`docs/rai/README.md`](./docs/rai/README.md) and the relevant document.
+2. **Locate** the affected control(s) by stable ID in
+   [`nextjs_space/lib/rai/controls.ts`](./nextjs_space/lib/rai/controls.ts) (source of truth) and
+   [`docs/rai/rai-implementation-inventory.md`](./docs/rai/rai-implementation-inventory.md).
+3. **Assess honestly** — status is **Active**, **Partial** or **Planned** based on what the code does.
+   Never mark a control Active if it is only documented.
+4. **Evidence** — every Active/Partial control points to real code and, where practical, a test under
+   `nextjs_space/tests/rai/`. Keep `npm run test:rai` green.
+5. **Document** — update the affected `docs/rai/*` file(s), the control matrix, and
+   `known-limitations.md` / `rai-roadmap.md` as needed.
+6. **Never fabricate assurance** — no cartoon shields, gamified trust scores, fake certifications, or
+   claims like "100% safe", "bias free", "hallucination free", "clinically certified" or "regulatory
+   approved" unless independently evidenced.
+7. **Implement** consistent with the documented, evidenced control.
+8. **Validate** — run `npm run test:rai` (and the evaluation harness if analysis behaviour changed);
+   confirm `/v2/hcp/ai-assurance` still reflects reality.
+
+End every RAI-impacting task with a **Responsible AI Review** block: controls added/changed (by ID),
+status before/after, evidence (code + tests), any new limitation, and validation PASS/FAIL.
+
 ## Build & test
 
 - App source is in `nextjs_space/`. Use `npm install --legacy-peer-deps` (pre-existing peer
@@ -55,3 +81,10 @@ before/after, files reviewed/changed, ADR reference, change record, and validati
 - Inventories: `component-inventory.md`, `integration-inventory.md`, `azure-resource-map.md`
 - Decisions: [`docs/architecture/decisions/`](./docs/architecture/decisions/)
 - Change records: [`docs/architecture/changes/`](./docs/architecture/changes/)
+
+## Key Responsible AI paths
+
+- Control register (source of truth): [`nextjs_space/lib/rai/controls.ts`](./nextjs_space/lib/rai/controls.ts)
+- RAI documentation: [`docs/rai/`](./docs/rai/) — start at [`README.md`](./docs/rai/README.md)
+- RAI tests: `nextjs_space/tests/rai/` (`npm run test:rai`)
+- In-product surface: `/v2/hcp/ai-assurance`

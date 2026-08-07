@@ -60,3 +60,7 @@ playwright-report/
 playwright/.cache/
 blob-report/
 coverage/
+
+# Responsible AI evaluation summary (transient CI artifact — do NOT commit)
+nextjs_space/scripts/rai-evaluation-summary.json
+nextjs_space/scripts/rai-evaluation-summary.md

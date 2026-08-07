@@ -52,6 +52,8 @@ flowchart TB
 
     APPINS["Application Insights"]
 
+    ASSURE["AI Assurance layer\nlib/rai/controls.ts + /v2/hcp/ai-assurance\n(see current-ai-assurance.mmd)"]
+
     HCPUI --> RHCPCHAT
     HCPUI --> RHCPAN
     COMMUI --> RCOMCHAT
@@ -92,3 +94,7 @@ flowchart TB
 
     AZPROV --> TEL
     TEL --> APPINS
+
+    SCHEMA -.->|"controls surfaced"| ASSURE
+    VALOUT -.->|"controls surfaced"| ASSURE
+    TEL -.->|"controls surfaced"| ASSURE

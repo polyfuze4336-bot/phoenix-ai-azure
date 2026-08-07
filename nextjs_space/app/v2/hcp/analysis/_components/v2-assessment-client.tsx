@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { StructuredAnalysis, type StructuredAnalysisData } from '@/app/hcp/analysis/_components/structured-analysis';
+import { AnalysisInfoPanel, AssuranceStatusLine } from '@/components/v2/analysis-info-panel';
+import type { AnalysisMetadata } from '@/lib/ai/analysis/metadata';
 
 interface AnalysisResult {
   woundCategory: string;
@@ -21,6 +23,7 @@ interface AnalysisResult {
   tbsaRange: string;
   isBurn: boolean;
   structured?: StructuredAnalysisData;
+  meta?: AnalysisMetadata;
   [k: string]: unknown;
 }
 
@@ -311,6 +314,7 @@ export function V2AssessmentClient() {
 
           {!analyzing && result ? (
             <>
+              {result.meta ? <AssuranceStatusLine meta={result.meta} /> : null}
               {result.structured ? (
                 <StructuredAnalysis data={result.structured} onRefine={refineAnalysis} refining={refining} />
               ) : (
@@ -324,6 +328,7 @@ export function V2AssessmentClient() {
                   </dl>
                 </div>
               )}
+              {result.meta ? <AnalysisInfoPanel meta={result.meta} /> : null}
               <div className="flex justify-center">
                 <Button variant="outline" onClick={reset}>
                   <RotateCcw className="mr-1.5 h-4 w-4" /> Start a new assessment

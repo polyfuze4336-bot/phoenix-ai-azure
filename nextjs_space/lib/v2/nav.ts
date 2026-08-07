@@ -17,6 +17,7 @@ import {
   FileText,
   BarChart3,
   HeartHandshake,
+  ShieldCheck,
 } from 'lucide-react';
 import type { FeatureFlagKey } from './feature-flags';
 
@@ -37,6 +38,7 @@ export const V2_HCP_NAV: NavItem[] = [
   { label: 'AI Assistant', href: '/v2/hcp/chat', icon: MessagesSquare },
   { label: 'Guidelines', href: '/v2/hcp/guidelines', icon: BookOpenText },
   { label: 'Calculators', href: '/v2/hcp/calculators', icon: Calculator },
+  { label: 'AI Assurance', href: '/v2/hcp/ai-assurance', icon: ShieldCheck, matchPrefix: true },
   { label: 'Reports', href: '/v2/hcp/reports', icon: FileText, requiresFlag: 'reports' },
   { label: 'Insights', href: '/v2/hcp/insights', icon: BarChart3, requiresFlag: 'insights' },
 ];

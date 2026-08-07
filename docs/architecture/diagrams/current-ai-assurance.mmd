@@ -1,0 +1,58 @@
+%% PhoenixIQ — Current (AS-IS) AI Assurance flow
+%% The control points that make AI-assisted assessment reliable, transparent and human-supervised.
+%% Each control maps to a stable ID in nextjs_space/lib/rai/controls.ts.
+flowchart TB
+    IN["Clinical input\n(image + optional context)"]
+
+    subgraph LIn["Input assurance"]
+        V1["Image input validation\nRAI-SAFE-001 / RAI-PRIV-006"]
+        V2["Image quality assessment\nRAI-SAFE-002"]
+    end
+
+    subgraph LAn["Analysis assurance"]
+        A1["Objective visual observation\nRAI-SAFE-004"]
+        A2["Clinical interpretation\n(separated from observation)\nRAI-TRANS-001"]
+        A3["Guideline-grounded management\nRAI-TRANS-005 (partial)"]
+        A4["Deterministic calc: Parkland / TBSA\nRAI-SAFE-006 / RAI-SAFE-011"]
+        A5["Bounded execution (timeouts)\nRAI-REL-001"]
+    end
+
+    subgraph LOut["Output assurance"]
+        O1["Structured schema validation\nRAI-SAFE-003"]
+        O2["No fabricated measurements\nRAI-SAFE-007"]
+        O3["Fitzpatrick / ethnicity non-inference\nRAI-FAIR-001 / RAI-FAIR-002"]
+        O4["Automated consistency review\nRAI-SAFE-005"]
+        O5["Special-site escalation\nRAI-SAFE-008"]
+        O6["Confidence capping + limitations\nRAI-SAFE-009 / RAI-TRANS-002"]
+        O7["Safe failure state\nRAI-SAFE-010"]
+    end
+
+    subgraph LOv["Oversight assurance"]
+        H1["AI-generated labelling\nRAI-TRANS-003"]
+        H2["Analysis metadata + versioning\nRAI-TRANS-004"]
+        H3["Clinician review\n(reviewed / modified / escalated)\nRAI-ACCT-001"]
+        H4["Audit persistence\nRAI-ACCT-002"]
+    end
+
+    subgraph LOp["Operations assurance"]
+        P1["Managed-identity access\nRAI-PRIV-001"]
+        P2["Server-side-only model calls\nRAI-PRIV-002"]
+        P3["Privacy-safe telemetry\nRAI-PRIV-003"]
+        P4["Structural evaluation harness\nRAI-ACCT-004"]
+    end
+
+    OUT["Clinician-supervised result\n+ case record"]
+
+    IN --> V1 --> V2 --> A1
+    A1 --> A2 --> A3
+    A2 --> A4
+    A1 --> A5
+    A3 --> O1
+    A4 --> O1
+    O1 --> O2 --> O3 --> O4 --> O5 --> O6 --> O7
+    O7 --> H1 --> H2 --> H3 --> H4 --> OUT
+
+    P1 -.-> LAn
+    P2 -.-> LAn
+    P3 -.-> LOv
+    P4 -.-> LOut

@@ -6,7 +6,7 @@
 > and MUST remain synchronized with the implementation (see
 > [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `1.2.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `1.3.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -250,6 +250,32 @@ restores the original single-pass call.
 
 ---
 
+## 3.9 AI Assurance Layer
+
+The Responsible AI controls that make AI-assisted assessment reliable, transparent and
+human-supervised are surfaced as a first-class layer. The single source of truth is
+`nextjs_space/lib/rai/controls.ts` (register of controls with stable IDs, principle, assurance layer,
+status and code/test evidence). See the [AI assurance flow diagram](./diagrams/current-ai-assurance.mmd)
+and [`docs/rai/`](../rai/README.md).
+
+| Element | Location | Status |
+| --- | --- | --- |
+| RAI control register (source of truth) | `lib/rai/controls.ts` | Implemented |
+| Governance snapshot | `lib/rai/governance.ts` (model deployment name, versions, identity, posture) | Implemented |
+| Prompt / pipeline / schema versions | `lib/ai/prompts/versions.ts` | Implemented |
+| Analysis metadata envelope | `lib/ai/analysis/metadata.ts` (analysis id, model, versions, image-quality band, review status) | Implemented |
+| In-product AI Assurance page | `app/v2/hcp/ai-assurance/` (overview, controls, matrix, governance, limitations) | Implemented |
+| Per-assessment assurance surfaces | `components/v2/analysis-info-panel.tsx`, `components/v2/clinical-review-panel.tsx` | Implemented |
+| RAI test suite | `tests/rai/*` (`npm run test:rai`) | Implemented |
+| Guideline-basis citations | curated general references (`RAI-TRANS-005`) | **Partial** (not version-pinned) |
+| Quantitative fairness benchmark | — | **Not implemented** (non-inference guardrails only) |
+| Formal WCAG accessibility audit | — | **Partial** (`RAI-INCL-002`) |
+
+Controls are honestly graded **Active / Partial / Planned**; the app makes no claim of being "certified",
+"approved", "bias free" or "100% safe". AI output is decision-support only and is reviewed by a clinician.
+
+---
+
 ## 4. Source vs deployment
 
 The source code contains capabilities that are **provisioned but not exercised by any visible
@@ -272,6 +298,8 @@ Feature gating is driven by presence of environment variables, read centrally in
 - Component inventory → [component-inventory.md](./component-inventory.md)
 - Integration inventory → [integration-inventory.md](./integration-inventory.md)
 - Azure resource map → [azure-resource-map.md](./azure-resource-map.md)
+- AI assurance flow → [diagrams/current-ai-assurance.mmd](./diagrams/current-ai-assurance.mmd)
+- Responsible AI controls & evidence → [../rai/README.md](../rai/README.md)
 - Architecture decisions → [decisions/README.md](./decisions/README.md)
 - Change records → [changes/](./changes/)
 - Source-to-Azure migration report → [../migration/phoenix-ai-azure-migration-report.md](../migration/phoenix-ai-azure-migration-report.md)

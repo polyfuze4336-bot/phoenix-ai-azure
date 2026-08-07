@@ -46,6 +46,24 @@ and the architecture-first change policy in .github/copilot-instructions.md / AG
 - [ ] Added a `docs/architecture/changes/CHANGE-YYYYMMDD-*.md` record.
 - [ ] Added/updated an ADR under `docs/architecture/decisions/` (if the decision is significant).
 
+## Responsible AI Impact
+
+- [ ] This PR changes AI behaviour, prompts, models, confidence/limitation handling, human oversight,
+      transparency, telemetry, or any Responsible AI control.
+- [ ] This PR does **not** change any Responsible AI control.
+
+### Responsible AI Assessment (required if this PR changes AI behaviour or a control)
+
+- [ ] I reviewed the affected control(s) by ID in
+      [`nextjs_space/lib/rai/controls.ts`](../nextjs_space/lib/rai/controls.ts) and
+      [`docs/rai/rai-implementation-inventory.md`](../docs/rai/rai-implementation-inventory.md).
+- [ ] Control status (Active / Partial / Planned) is accurate and not overstated.
+- [ ] Every claim is evidenced by code and/or tests — no "safe / bias-free / certified / approved"
+      language without independent evidence.
+- [ ] Confidence, limitations and AI-generated labelling remain truthful and visible.
+- [ ] RAI tests updated/passing (`npm run test:rai`); evaluation impact considered.
+- [ ] Any new limitation is recorded in [`docs/rai/known-limitations.md`](../docs/rai/known-limitations.md).
+
 ## Before
 
 <!-- Relevant AS-IS state (components/integrations/resources) prior to this change. -->
@@ -62,6 +80,7 @@ and the architecture-first change policy in .github/copilot-instructions.md / AG
 - [ ] Mermaid diagrams validate
 - [ ] `scripts/validate-architecture` reports no drift
 - [ ] No secrets committed; Phoenix AI logo and branding unchanged
+- [ ] Responsible AI controls remain accurately represented (`npm run test:rai` passes)
 
 ## Notes
 

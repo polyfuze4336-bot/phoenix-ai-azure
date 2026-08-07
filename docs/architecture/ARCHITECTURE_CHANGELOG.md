@@ -16,6 +16,26 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [1.3.0] — 2026-08-07
+
+### Added
+- **AI Assurance layer** (`current-architecture.md` §3.9) — Responsible AI controls surfaced as a
+  first-class architecture layer (ADR-0005, CHANGE-20260807-rai-assurance-layer). New source-of-truth
+  and supporting libraries: `lib/rai/controls.ts` (control register), `lib/rai/governance.ts`
+  (governance snapshot), `lib/ai/prompts/versions.ts` (prompt/pipeline/schema versions),
+  `lib/ai/analysis/metadata.ts` (analysis metadata envelope). New component IDs: `LIB-RAI`,
+  `AI-PROMPT-VERSIONS`, `AI-ANALYSIS-METADATA`, `UI-V2-AI-ASSURANCE`.
+- **In-product AI Assurance page** (`app/v2/hcp/ai-assurance/*`) plus per-assessment assurance
+  surfaces (`components/v2/analysis-info-panel.tsx`, `components/v2/clinical-review-panel.tsx`) and a
+  new nav entry.
+- **AI assurance flow diagram** (`diagrams/current-ai-assurance.mmd`) and an assurance annotation on
+  `diagrams/current-ai-architecture.mmd`.
+- **RAI test suite** (`tests/rai/*`, `npm run test:rai`) and `docs/rai/` documentation set.
+
+### Changed
+- `analyze-wound` route returns an analysis metadata envelope (`result.meta`) for traceability
+  (non-sensitive: analysis id, model deployment name, versions, image-quality band, review status).
+
 ## [1.2.0] — 2026-08-07
 
 ### Added

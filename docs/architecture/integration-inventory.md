@@ -28,3 +28,10 @@
 > `INT-APP-APPINSIGHTS`. v2 dashboards/insights render deterministic, clearly-labelled **synthetic**
 > data (`lib/v2/demo-data.ts`); they do not query PostgreSQL or Blob. See
 > [ADR-0004](./decisions/ADR-0004-dual-experience-v2.md).
+
+> **AI Assurance layer adds no new integrations.** The Responsible AI surface
+> (`/v2/hcp/ai-assurance`, `LIB-RAI`) reads local configuration and the in-code control register; the
+> `/api/analyze-wound` response now carries a non-sensitive metadata envelope (`result.meta`:
+> analysis id, model deployment name, prompt/pipeline/schema versions, image-quality band, review
+> status) over the existing `INT-BROWSER-APP` channel. No clinical content, keys or prompts are added
+> to any integration. See [ADR-0005](./decisions/ADR-0005-ai-assurance-layer.md).
