@@ -35,6 +35,7 @@ Trivial changes (copy edits, dependency patch bumps, non-structural refactors) d
 | [ADR-0001](./ADR-0001-use-nextjs-app-service.md) | Host Phoenix AI as Next.js on Azure App Service | Accepted | 2024 |
 | [ADR-0002](./ADR-0002-architecture-first-governance.md) | Establish architecture-first governance | Accepted | 2024 |
 | [ADR-0003](./ADR-0003-staged-wound-analysis-pipeline.md) | Staged multimodal wound-analysis pipeline | Accepted | 2026-08-07 |
+| [ADR-0004](./ADR-0004-dual-experience-v2.md) | Additive dual-experience Phoenix AI v2.0 | Accepted | 2026-08-07 |
 
 ## Template
 

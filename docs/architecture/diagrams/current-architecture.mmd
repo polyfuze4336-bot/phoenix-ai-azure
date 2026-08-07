@@ -6,9 +6,10 @@ flowchart TB
     Users["Users (Clinicians & Public)"]
 
     subgraph CLIENT["Client Experience"]
-        Landing["Phoenix AI Landing — ACTIVE"]
-        HCP["HCP Portal: chat, analysis, TBSA, Parkland, guidelines, history — ACTIVE"]
-        Community["Community Portal: chat, image-check, assessment, articles, first-aid — ACTIVE"]
+        Landing["Experience Selector Landing — ACTIVE"]
+        HCP["Original HCP Portal: chat, analysis, TBSA, Parkland, guidelines, history — ACTIVE"]
+        Community["Original Community Portal: chat, image-check, assessment, articles, first-aid — ACTIVE"]
+        V2["Phoenix AI v2.0 Experience (/v2/*): HCP workspace + Community portal — ACTIVE (flag-gated)"]
         PWA["PWA / Mobile + EN/BM toggle — ACTIVE"]
     end
 
@@ -44,11 +45,13 @@ flowchart TB
     Users --> Landing
     Users --> HCP
     Users --> Community
+    Users --> V2
     Users --> PWA
 
     Landing --> Next
     HCP --> Next
     Community --> Next
+    V2 --> Next
     PWA --> Next
 
     Next --> MW

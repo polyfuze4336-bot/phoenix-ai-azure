@@ -30,6 +30,16 @@ Malaysia, with two portals:
 
 It supports English and Bahasa Melayu, and ships as an installable PWA.
 
+### Two experiences
+
+The root `/` is an **experience selector**. The original portals above are preserved unchanged.
+An additive, feature-flag-gated **Phoenix AI v2.0** experience is available under **`/v2/*`** (an
+enhanced HCP workspace and community portal that reuse the same APIs and Azure services, with all
+analytics rendered from clearly-labelled synthetic data). Set `NEXT_PUBLIC_FEATURE_V2_ENABLED=false`
+to revert to the Original-only experience. See
+[docs/design/original-vs-v2.md](docs/design/original-vs-v2.md) and
+[ADR-0004](docs/architecture/decisions/ADR-0004-dual-experience-v2.md).
+
 ## Tech stack (imported from source)
 
 | Layer | Technology |

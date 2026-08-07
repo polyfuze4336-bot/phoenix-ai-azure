@@ -6,7 +6,7 @@
 > and MUST remain synchronized with the implementation (see
 > [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `1.0.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `1.2.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -35,7 +35,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Concern | Current state |
 | --- | --- |
 | Application runtime | Next.js 14 (App Router), React 18, TypeScript 5, standalone Node server (`node server.js`) — **Implemented** |
-| Major portals | Landing, HCP portal, Community portal, PWA + EN/BM — **Implemented** |
+| Major portals | Experience selector landing, Original HCP + Community portals, and an additive **Phoenix AI v2.0** experience (`/v2/*`, feature-flag gated), PWA + EN/BM — **Implemented** |
 | Hosting | Azure App Service (Linux, P1v3), `southeastasia` — **Implemented** |
 | AI processing | Azure OpenAI (Microsoft Foundry) `gpt-4o` via `lib/ai` provider, managed identity — **Implemented** |
 | Data handling | Azure PostgreSQL Flexible Server via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
@@ -56,9 +56,10 @@ flowchart TB
     Users["Users (Clinicians & Public)"]
 
     subgraph CLIENT["Client Experience"]
-        Landing["Phoenix AI Landing — ACTIVE"]
-        HCP["HCP Portal: chat, analysis, TBSA, Parkland, guidelines, history — ACTIVE"]
-        Community["Community Portal: chat, image-check, assessment, articles, first-aid — ACTIVE"]
+        Landing["Experience Selector Landing — ACTIVE"]
+        HCP["Original HCP Portal: chat, analysis, TBSA, Parkland, guidelines, history — ACTIVE"]
+        Community["Original Community Portal: chat, image-check, assessment, articles, first-aid — ACTIVE"]
+        V2["Phoenix AI v2.0 Experience (/v2/*): HCP workspace + Community portal — ACTIVE (flag-gated)"]
         PWA["PWA / Mobile + EN/BM toggle — ACTIVE"]
     end
 
@@ -94,11 +95,13 @@ flowchart TB
     Users --> Landing
     Users --> HCP
     Users --> Community
+    Users --> V2
     Users --> PWA
 
     Landing --> Next
     HCP --> Next
     Community --> Next
+    V2 --> Next
     PWA --> Next
 
     Next --> MW
@@ -141,9 +144,10 @@ Companion diagrams:
 
 | Element | Location | Status |
 | --- | --- | --- |
-| Landing page | `app/_components/*`, `app/page.tsx` | Implemented |
+| Experience selector landing (routes to Original portals or v2) | `app/page.tsx`, `app/_components/experience-selector-client.tsx` (degrades to `app/_components/landing-client.tsx` when v2 disabled) | Implemented |
 | HCP portal (chat, analysis, TBSA, Parkland, guidelines, history) | `app/hcp/*` | Implemented |
 | Community portal (chat, image-check, assessment, articles, first-aid) | `app/community/*` | Implemented |
+| **Phoenix AI v2.0 experience** — additive, isolated, feature-flag gated; reuses the same API contracts and Azure services (ADR-0004) | `app/v2/*`, `components/v2/*`, `lib/v2/*` | Implemented |
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |
 | English / Bahasa Malaysia | `components/language-provider.tsx`, `components/language-toggle.tsx`, `lib/i18n.ts` | Implemented |
 | Responsive interface + theming | Tailwind + shadcn/ui, `components/theme-*` | Implemented |

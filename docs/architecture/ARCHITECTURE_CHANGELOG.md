@@ -16,6 +16,35 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [1.2.0] — 2026-08-07
+
+### Added
+- **Phoenix AI v2.0 experience** (`app/v2/*`, `components/v2/*`, `lib/v2/*`) — an additive,
+  isolated, feature-flag-gated alternative experience layered onto the preserved Original app
+  (ADR-0004, CHANGE-20260807-phoenix-v2-experience). Includes an enhanced HCP workspace
+  (dashboard, cases, guided assessment, AI assistant, calculators, guidelines, reports, insights)
+  and an enhanced community portal (home, self-assessment, image-check, chat, first-aid,
+  education). New component IDs: `UI-V2-HCP`, `UI-V2-COMMUNITY`, `UI-V2-SHELL`, `LIB-V2`.
+- **Experience selector landing** — the root route (`app/page.tsx`) becomes an experience selector
+  that routes to either the unchanged Original portals (`/hcp-login`, `/community`) or v2 (`/v2`).
+  It degrades to the original landing (`app/_components/landing-client.tsx`) when
+  `NEXT_PUBLIC_FEATURE_V2_ENABLED=false`.
+- **v2 unit tests** — `tests/unit/v2-feature-flags.test.ts`, `tests/unit/v2-demo-data.test.ts`,
+  `tests/unit/v2-format.test.ts` (flag defaults, synthetic-data determinism/invariants, first-aid
+  parity).
+
+### Changed
+- `current-architecture.md` §1, §2 diagram, §3.1 Experience Layer; `diagrams/current-architecture.mmd`;
+  `component-inventory.md`; `integration-inventory.md`; `azure-resource-map.md` — all updated to
+  document the additive v2 layer.
+
+### Unchanged
+- **No new Azure resources** and **no new external integrations.** v2 reuses the existing API
+  contracts (`/api/analyze-wound`, `/api/hcp-chat`, `/api/community-analyze`, `/api/community-chat`)
+  and Azure services. v2 dashboards/insights render deterministic, clearly-labelled **synthetic**
+  data only. The Original experience (`app/hcp/*`, `app/community/*`, `app/_components/landing-client.tsx`)
+  is preserved unchanged.
+
 ## [1.1.0] — 2026-08-07
 
 ### Added

@@ -21,3 +21,10 @@
 | INT-GHA-AZURE | GitHub Actions | Azure Resource Manager (`rg-phoenixai-demo`) | HTTPS (ARM) | Provision infra (Bicep) | OIDC federation (no stored secret) | Deployment templates | BUILD |
 | INT-GHA-APPSERVICE | GitHub Actions | Azure App Service | HTTPS (Kudu/zip deploy) | Deploy standalone build | OIDC federation | Application bundle | BUILD |
 | INT-GHA-DBMIGRATE | GitHub Actions (`db-migrate.yml`) | Azure PostgreSQL | PostgreSQL wire (TLS) | Apply Prisma migrations | Deploy-time credentials | Schema migrations | BUILD |
+
+> **Phoenix AI v2.0 (`/v2/*`) adds no new integrations.** The v2 experience reuses the existing
+> API contracts and therefore the same runtime integrations — `INT-BROWSER-APP`, `INT-APP-FOUNDRY`
+> (via `/api/analyze-wound`, `/api/hcp-chat`, `/api/community-analyze`, `/api/community-chat`), and
+> `INT-APP-APPINSIGHTS`. v2 dashboards/insights render deterministic, clearly-labelled **synthetic**
+> data (`lib/v2/demo-data.ts`); they do not query PostgreSQL or Blob. See
+> [ADR-0004](./decisions/ADR-0004-dual-experience-v2.md).

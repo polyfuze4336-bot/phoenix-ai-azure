@@ -3,6 +3,10 @@
 > Maps logical architecture components to deployed Azure services and their IaC modules.
 > **No secrets, connection strings, keys, or credentials appear in this file.**
 > Keep synchronized with [component-inventory.md](./component-inventory.md) and the Bicep under `infra/`.
+>
+> **Phoenix AI v2.0 (`/v2/*`, ADR-0004) introduces NO new Azure resources.** It ships inside the
+> existing Next.js standalone bundle on the same App Service and reuses the same Foundry/Azure OpenAI,
+> Application Insights, Key Vault, and Managed Identity resources. The Azure footprint below is unchanged.
 
 ## Environment
 

@@ -9,9 +9,13 @@
 
 | Component ID | Component | Type | Technology | Location | Purpose | Dependencies | Status | Owner |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| UI-LANDING | Landing experience | UI | Next.js/React | `app/_components`, `app/page.tsx` | Public entry, brand, portal routing | APP-NEXT | ACTIVE | Phoenix AI team |
+| UI-LANDING | Landing / experience selector | UI | Next.js/React | `app/_components`, `app/page.tsx` | Public entry, brand; selects Original vs v2 experience (degrades to Original-only when v2 flag off) | APP-NEXT, LIB-V2 | ACTIVE | Phoenix AI team |
 | UI-HCP | HCP portal | UI | Next.js/React | `app/hcp/*` | Clinician chat, analysis, TBSA, Parkland, guidelines, history | APP-NEXT, AUTH-DEMO, API-* | ACTIVE | Phoenix AI team |
 | UI-COMMUNITY | Community portal | UI | Next.js/React | `app/community/*` | Public chat, image-check, assessment, articles, first-aid | APP-NEXT, API-* | ACTIVE | Phoenix AI team |
+| UI-V2-HCP | Phoenix AI v2.0 HCP workspace | UI | Next.js/React | `app/v2/hcp/*` | Enhanced clinician experience (dashboard, cases, assessment, chat, calculators, guidelines, reports, insights); reuses existing API contracts | APP-NEXT, UI-V2-SHELL, LIB-V2, API-HCP-CHAT, API-HCP-ANALYSIS, CLINICAL-PARKLAND | ACTIVE | Phoenix AI team |
+| UI-V2-COMMUNITY | Phoenix AI v2.0 community portal | UI | Next.js/React | `app/v2/community/*` | Enhanced public experience (home, self-assessment, image-check, chat, first-aid, education); reuses existing API contracts | APP-NEXT, UI-V2-SHELL, LIB-V2, API-COMMUNITY-CHAT, API-COMMUNITY-ANALYSIS | ACTIVE | Phoenix AI team |
+| UI-V2-SHELL | v2 shell + shared components | UI | Next.js/React, Framer Motion | `components/v2/*`, `app/v2/layout.tsx` | App shell (nav rail, command palette, demo badge), stat/chart/case cards; flag-gated at layout | APP-NEXT, LIB-V2 | ACTIVE | Phoenix AI team |
+| LIB-V2 | v2 foundation library | Lib | TypeScript | `lib/v2/*` | Feature flags, deterministic synthetic demo dataset, nav config, format helpers, guideline topics, first-aid parity content, version metadata | — | ACTIVE | Phoenix AI team |
 | UI-PWA | PWA / mobile + i18n | UI | Next.js PWA, Tailwind | `components/pwa-*`, `components/language-*`, `lib/i18n.ts` | Installable app, EN/BM, responsive | APP-NEXT | ACTIVE | Phoenix AI team |
 | APP-NEXT | Next.js server | App | Next.js 14 standalone | `next.config.js`, `app/` | SSR/API host | — | ACTIVE | Phoenix AI team |
 | APP-MIDDLEWARE | Route-protection middleware | App | Next.js middleware | `middleware.ts` | Guard HCP routes/APIs | AUTH-SESSION | ACTIVE | Phoenix AI team |
