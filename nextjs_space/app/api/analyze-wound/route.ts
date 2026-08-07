@@ -1,18 +1,37 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-// Image analysis is the slowest call (vision model + structured output). Allow a
+// The staged pipeline makes several sequential vision/text calls. Allow a
 // generous ceiling, comfortably under the App Service front-end idle timeout (~230s).
-export const maxDuration = 120;
+export const maxDuration = 220;
 
 import { NextRequest } from 'next/server';
 import { AiMessage } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
-import { createStructuredSseResponse } from '@/lib/ai/streaming/sse';
+import { createStructuredSseResponse, createResultSseResponse } from '@/lib/ai/streaming/sse';
 import { parseHcpWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
 import { validateImageInput, checkRequestBodySize } from '@/lib/ai/validation/image-input';
 import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
 import { trackEvent } from '@/lib/telemetry/server';
 import { HCP_WOUND_ANALYSIS_SYSTEM_PROMPT } from '@/lib/ai/prompts/hcp-wound-analysis';
+import { getAnalysisModelDeployment, getAnalysisPipelineMode } from '@/lib/ai/model-config';
+import { runAnalysisPipeline, type PatientContext } from '@/lib/ai/analysis/pipeline';
+import { toFlatHcpAnalysis } from '@/lib/ai/schemas/burn-wound-analysis';
+
+/** Coerce an untrusted patient-context object into the typed shape (no invented values). */
+function readPatientContext(raw: unknown): PatientContext | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const p = raw as Record<string, unknown>;
+  const weight = typeof p.weightKg === 'number' ? p.weightKg : parseFloat(String(p.weightKg ?? ''));
+  const ctx: PatientContext = {
+    weightKg: Number.isFinite(weight) && weight > 0 ? weight : undefined,
+    ageGroup: typeof p.ageGroup === 'string' ? p.ageGroup : undefined,
+    fitzpatrickType: typeof p.fitzpatrickType === 'string' ? p.fitzpatrickType : undefined,
+    mechanism: typeof p.mechanism === 'string' ? p.mechanism : undefined,
+    timeSinceInjury: typeof p.timeSinceInjury === 'string' ? p.timeSinceInjury : undefined,
+    freeText: typeof p.freeText === 'string' ? p.freeText.slice(0, 2000) : undefined,
+  };
+  return Object.values(ctx).some((v) => v !== undefined) ? ctx : undefined;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,16 +49,49 @@ export async function POST(request: NextRequest) {
     }
 
     const correlationId = getOrCreateCorrelationId(request.headers);
+    const patient = readPatientContext(body?.patient);
+    const refineAnswers = typeof body?.refineAnswers === 'string' ? body.refineAnswers : undefined;
+    const priorAnalysis = body?.priorAnalysis && typeof body.priorAnalysis === 'object' ? body.priorAnalysis : undefined;
     // Privacy-safe marker: an HCP image-analysis request started. No image bytes,
-    // base64 or clinical text are recorded — only the correlation ID + a flag.
-    trackEvent('hcp_analysis_requested', { correlationId, hasImage: true });
+    // base64 or clinical text are recorded — only the correlation ID + flags.
+    const pipelineMode = getAnalysisPipelineMode();
+    trackEvent('hcp_analysis_requested', {
+      correlationId,
+      hasImage: true,
+      pipeline: pipelineMode,
+      refine: Boolean(refineAnswers),
+    });
+
+    const imageDataUrl = `data:${validation.mimeType};base64,${image}`;
+
+    // --- Staged pipeline (default): multi-stage, evidence-gated, deterministic calc.
+    if (pipelineMode === 'staged') {
+      try {
+        const rich = await runAnalysisPipeline({
+          imageDataUrl,
+          patient,
+          correlationId,
+          refine: refineAnswers && priorAnalysis ? { priorAnalysis, answers: refineAnswers } : undefined,
+        });
+        const flat = toFlatHcpAnalysis(rich);
+        return createResultSseResponse({
+          result: { ...flat, structured: rich },
+          processingEvent: { status: 'processing', message: 'Analyzing' },
+          correlationId,
+        });
+      } catch (err) {
+        return aiErrorResponse(err, 'LLM API error');
+      }
+    }
+
+    // --- Legacy single-pass path (AI_ANALYSIS_PIPELINE=single).
     const messages: AiMessage[] = [
       { role: 'system', content: HCP_WOUND_ANALYSIS_SYSTEM_PROMPT },
       {
         role: 'user',
         content: [
           { type: 'text', text: 'Please analyze this wound/burn image and provide a structured clinical assessment in JSON format.' },
-          { type: 'image_url', image_url: { url: `data:${validation.mimeType};base64,${image}` } },
+          { type: 'image_url', image_url: { url: imageDataUrl } },
         ],
       },
     ];
@@ -48,6 +100,7 @@ export async function POST(request: NextRequest) {
     try {
       upstream = await getAiProvider().streamChatCompletion({
         messages,
+        model: getAnalysisModelDeployment(),
         maxOutputTokens: 2000,
         responseFormat: 'json_object',
         correlationId,

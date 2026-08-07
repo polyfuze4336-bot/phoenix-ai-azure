@@ -16,9 +16,22 @@ flowchart TB
 
     subgraph Prompts["Prompt Layer (lib/ai/prompts)"]
         PHCPCHAT["hcp-chat\n(clinical, detailed)"]
-        PHCPAN["hcp-wound-analysis\n(structured clinical)"]
+        PHCPAN["hcp-wound-analysis\n(single-pass fallback)"]
         PCOMCHAT["community-chat\n(plain-language, safe)"]
         PCOMAN["community-wound-analysis\n(simplified guidance)"]
+        subgraph StagedPrompts["Staged analysis prompts"]
+            PS1["wound-visual-observation"]
+            PS2["wound-clinical-interpretation"]
+            PS3["wound-management"]
+            PS4["wound-analysis-critic"]
+        end
+    end
+
+    subgraph Pipeline["Staged Analysis Pipeline (lib/ai/analysis)"]
+        ORCH["runAnalysisPipeline\n(flag AI_ANALYSIS_PIPELINE=staged, default)"]
+        DETCALC["Deterministic calc\nlib/clinical/parkland + tbsa\n(no assumed weight)"]
+        SCHEMA["schemas/burn-wound-analysis\n(obs vs interp, confidence, gaps)"]
+        MODELSEL["model-config\nAZURE_AI_ANALYSIS_MODEL_DEPLOYMENT"]
     end
 
     subgraph Provider["AI Provider Abstraction (lib/ai)"]
@@ -27,8 +40,8 @@ flowchart TB
         CRED["azure-credential\n(DefaultAzureCredential)"]
         OAICOMPAT["openai-compatible mapping"]
         VALIN["validation/image-input"]
-        VALOUT["validation/wound-analysis-schema"]
-        STREAM["streaming/sse + text-stream"]
+        VALOUT["validation/wound-analysis-schema\n(+ flat back-compat adapter)"]
+        STREAM["streaming/sse + collect + text-stream"]
         TEL["ai/telemetry"]
     end
 
@@ -45,7 +58,16 @@ flowchart TB
     COMMUI --> RCOMAN
 
     RHCPCHAT --> PHCPCHAT --> FACTORY
-    RHCPAN --> PHCPAN --> FACTORY
+    RHCPAN --> ORCH
+    ORCH --> PS1 --> FACTORY
+    ORCH --> PS2 --> FACTORY
+    ORCH --> PS3 --> FACTORY
+    ORCH --> PS4 --> FACTORY
+    ORCH --> DETCALC
+    ORCH --> SCHEMA
+    ORCH --> MODELSEL
+    MODELSEL --> AZPROV
+    RHCPAN -.->|"AI_ANALYSIS_PIPELINE=single"| PHCPAN --> FACTORY
     RCOMCHAT --> PCOMCHAT --> FACTORY
     RCOMAN --> PCOMAN --> FACTORY
 
@@ -63,6 +85,7 @@ flowchart TB
     STREAM --> HCPUI
     STREAM --> COMMUI
 
+    SCHEMA --> VALOUT
     MODEL --> VALOUT
     VALOUT --> HCPUI
     VALOUT --> COMMUI

@@ -5,6 +5,7 @@ import { Upload, Camera, AlertTriangle, FileText, X, Loader2, Flame, Droplets, C
 import { motion } from 'framer-motion';
 import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import { StructuredAnalysis, type StructuredAnalysisData } from './structured-analysis';
 
 interface AnalysisResult {
   fitzpatrickType: string;
@@ -29,6 +30,14 @@ interface AnalysisResult {
   dressing: string;
   referral: string;
   followUp: string;
+  /** Rich result from the staged pipeline (absent on the legacy single-pass path). */
+  structured?: StructuredAnalysisData;
+}
+
+/** Optional patient context the clinician can supply to improve accuracy. */
+interface PatientContext {
+  weightKg?: number;
+  mechanism?: string;
 }
 
 /**
@@ -65,10 +74,49 @@ export function AnalysisClient() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refining, setRefining] = useState(false);
+  const [weightKg, setWeightKg] = useState('');
+  const [mechanism, setMechanism] = useState('');
+  const lastBase64Ref = useRef<string>('');
+  const lastMimeRef = useRef<string>('image/jpeg');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  const patientContext = useCallback((): PatientContext | undefined => {
+    const w = parseFloat(weightKg);
+    const ctx: PatientContext = {
+      weightKg: Number.isFinite(w) && w > 0 ? w : undefined,
+      mechanism: mechanism.trim() || undefined,
+    };
+    return ctx.weightKg || ctx.mechanism ? ctx : undefined;
+  }, [weightKg, mechanism]);
+
+  /** Read the SSE stream from /api/analyze-wound and resolve the completed result. */
+  const readAnalysisStream = useCallback(async (response: Response): Promise<AnalysisResult | null> => {
+    const reader = response?.body?.getReader();
+    const decoder = new TextDecoder();
+    let partialRead = '';
+    while (true) {
+      const { done, value } = await (reader?.read() ?? { done: true, value: undefined });
+      if (done) break;
+      partialRead += decoder?.decode(value, { stream: true }) ?? '';
+      const lines = partialRead?.split('\n') ?? [];
+      partialRead = lines?.pop() ?? '';
+      for (const line of (lines ?? [])) {
+        if (line?.startsWith('data: ')) {
+          const data = line?.slice(6);
+          if (data === '[DONE]') return null;
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed?.status === 'completed' && parsed?.result) return parsed.result as AnalysisResult;
+          } catch (e: any) { /* skip */ }
+        }
+      }
+    }
+    return null;
+  }, []);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e?.target?.files?.[0];
@@ -129,46 +177,59 @@ export function AnalysisClient() {
         reader.readAsDataURL(imageFile);
       });
 
+      const mime = imageFile?.type ?? 'image/jpeg';
+      lastBase64Ref.current = base64;
+      lastMimeRef.current = mime;
+
       const response = await fetch('/api/analyze-wound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64, mimeType: imageFile?.type ?? 'image/jpeg' }),
+        body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext() }),
       });
 
       if (!response?.ok) throw new Error('Analysis failed');
 
-      const reader2 = response?.body?.getReader();
-      const decoder = new TextDecoder();
-      let partialRead = '';
-
-      while (true) {
-        const { done, value } = await (reader2?.read() ?? { done: true, value: undefined });
-        if (done) break;
-        partialRead += decoder?.decode(value, { stream: true }) ?? '';
-        let lines = partialRead?.split('\n') ?? [];
-        partialRead = lines?.pop() ?? '';
-        for (const line of (lines ?? [])) {
-          if (line?.startsWith('data: ')) {
-            const data = line?.slice(6);
-            if (data === '[DONE]') return;
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed?.status === 'completed' && parsed?.result) {
-                setResult(parsed.result);
-                setAnalyzing(false);
-                void saveAnalysisToHistory(parsed.result, base64, imageFile?.type ?? 'image/jpeg');
-                return;
-              }
-            } catch (e: any) { /* skip */ }
-          }
-        }
+      const completed = await readAnalysisStream(response);
+      if (completed) {
+        setResult(completed);
+        void saveAnalysisToHistory(completed, base64, mime);
       }
     } catch (err: any) {
       setError(err?.message ?? 'Analysis failed');
     } finally {
       setAnalyzing(false);
     }
-  }, [imageFile]);
+  }, [imageFile, patientContext, readAnalysisStream]);
+
+  /** Second pass: re-run the pipeline with clinician answers, no re-upload. */
+  const refineAnalysis = useCallback(async (answers: string) => {
+    if (!lastBase64Ref.current || !result?.structured) return;
+    setRefining(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/analyze-wound', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: lastBase64Ref.current,
+          mimeType: lastMimeRef.current,
+          patient: patientContext(),
+          priorAnalysis: result.structured,
+          refineAnswers: answers,
+        }),
+      });
+      if (!response?.ok) throw new Error('Refine failed');
+      const completed = await readAnalysisStream(response);
+      if (completed) {
+        setResult(completed);
+        void saveAnalysisToHistory(completed, lastBase64Ref.current, lastMimeRef.current);
+      }
+    } catch (err: any) {
+      setError(err?.message ?? 'Refine failed');
+    } finally {
+      setRefining(false);
+    }
+  }, [result, patientContext, readAnalysisStream]);
 
   const clearImage = useCallback(() => {
     setImagePreview(null);
@@ -243,6 +304,35 @@ export function AnalysisClient() {
                 <button onClick={clearImage} className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70">
                   <X className="w-4 h-4" />
                 </button>
+              </div>
+              {/* Optional patient context — improves accuracy; nothing is assumed when blank. */}
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
+                <p className="text-xs font-semibold text-gray-500">Patient details (optional — improves accuracy)</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Weight (kg)</label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      value={weightKg}
+                      onChange={(e) => setWeightKg(e.target.value)}
+                      placeholder="e.g. 68"
+                      className="w-full text-sm border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#8B0000]/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Mechanism</label>
+                    <input
+                      type="text"
+                      value={mechanism}
+                      onChange={(e) => setMechanism(e.target.value)}
+                      placeholder="e.g. scald"
+                      className="w-full text-sm border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#8B0000]/30"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-gray-400">Weight enables an accurate Parkland calculation. No weight is assumed if left blank.</p>
               </div>
               <button
                 onClick={analyzeImage}
@@ -372,7 +462,13 @@ export function AnalysisClient() {
                       </div>
                       <div className="p-4">
                         <p className="text-sm text-gray-800 whitespace-pre-line">{result?.parklandFluid}</p>
-                        <p className="text-xs text-gray-500 mt-3 italic">* Based on assumed 70kg adult. Adjust weight in the Parkland Calculator for precise calculations.</p>
+                        {result?.structured ? (
+                          result?.structured?.parkland?.requiresWeight ? (
+                            <p className="text-xs text-gray-500 mt-3 italic">* Enter the patient weight above (or in the Parkland Calculator) for an accurate calculation. No weight is assumed.</p>
+                          ) : null
+                        ) : (
+                          <p className="text-xs text-gray-500 mt-3 italic">* Based on assumed 70kg adult. Adjust weight in the Parkland Calculator for precise calculations.</p>
+                        )}
                       </div>
                       <div className="px-4 pb-4">
                         <a
@@ -404,6 +500,11 @@ export function AnalysisClient() {
                   </div>
                 ))}
               </div>
+
+              {/* Enhanced staged-pipeline detail: evidence, confidence, gaps, refine. */}
+              {result?.structured && (
+                <StructuredAnalysis data={result.structured} onRefine={refineAnalysis} refining={refining} />
+              )}
             </motion.div>
           )}
 

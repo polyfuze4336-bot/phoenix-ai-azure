@@ -167,13 +167,30 @@ Companion diagrams:
 | --- | --- | --- |
 | AI provider factory | `lib/ai/ai-provider.ts` → `getAiProvider()` returns `AzureFoundryProvider` (single provider; abstraction retained) | Implemented |
 | Model endpoint | Azure OpenAI / Foundry, `gpt-4o`, api-version `2024-10-21` | Implemented |
+| Model selection (purpose-specific) | `lib/ai/model-config.ts` — `AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT` / `AZURE_AI_CHAT_MODEL_DEPLOYMENT` (default to `AZURE_AI_MODEL_DEPLOYMENT`) | Implemented |
 | Credential | `lib/ai/azure-credential.ts` (`DefaultAzureCredential`, key fallback) | Implemented |
 | OpenAI-compatible mapping | `lib/ai/openai-compatible.ts` | Implemented |
 | System prompts (HCP vs Community) | `lib/ai/prompts/{hcp-chat,hcp-wound-analysis,community-chat,community-wound-analysis}.ts` | Implemented |
-| Streaming | `lib/ai/streaming/{sse,text-stream}.ts` | Implemented |
+| Staged analysis prompts | `lib/ai/prompts/{wound-visual-observation,wound-clinical-interpretation,wound-management,wound-analysis-critic}.ts` | Implemented |
+| Staged analysis pipeline | `lib/ai/analysis/pipeline.ts` (`runAnalysisPipeline`, `assembleAnalysis`) — default for `/api/analyze-wound`; flag `AI_ANALYSIS_PIPELINE=single` reverts | Implemented |
+| Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — no assumed patient weight | Implemented |
+| Rich analysis schema + adapter | `lib/ai/schemas/burn-wound-analysis.ts` (observation vs interpretation, field confidence, gaps) + flat back-compat adapter | Implemented |
+| Streaming | `lib/ai/streaming/{sse,collect,text-stream}.ts` | Implemented |
 | Image analysis (multimodal) | `lib/ai/validation/image-input.ts` + vision model | Implemented |
-| Structured response validation | `lib/ai/validation/wound-analysis-schema.ts` (Zod) | Implemented |
+| Structured response validation | `lib/ai/validation/wound-analysis-schema.ts` (Zod, 22-field contract) | Implemented |
+| Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
 | AI telemetry | `lib/ai/telemetry.ts` | Implemented |
+
+**Wound image analysis flow (`/api/analyze-wound`).** The default `staged` pipeline runs four
+sequential model stages — visual observation → clinical interpretation + quantification →
+management & referral → consistency/safety critic — then applies deterministic post-processing:
+Parkland is computed in app code from a supplied weight (never an assumed 70 kg), Fitzpatrick is
+reported only when the clinician supplies it (otherwise `unknown`), measurements are `unavailable`
+without a visible scale reference, confidence is capped on poor-quality images, and special-site
+burns are escalated. The rich result is mapped back to the existing 22-field contract (so the
+client and SSE envelope are unchanged) and the full structure travels under `result.structured`
+for the enhanced UI and the REFINE (second-pass) flow. Setting `AI_ANALYSIS_PIPELINE=single`
+restores the original single-pass call.
 
 ### 3.4 Data Layer
 

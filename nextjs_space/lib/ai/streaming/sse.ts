@@ -93,3 +93,37 @@ export function createStructuredSseResponse(options: StructuredSseOptions): Resp
     },
   });
 }
+
+/**
+ * Emit an ALREADY-COMPUTED result over the same SSE envelope the client expects
+ * (`processing` heartbeat then a single `completed` event). Used by the staged
+ * analysis pipeline, which runs several model calls server-side and therefore
+ * cannot stream tokens — but must still speak the identical wire format so the
+ * existing client parser is unchanged.
+ */
+export function createResultSseResponse(options: {
+  result: unknown;
+  processingEvent?: unknown;
+  correlationId?: string;
+}): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      if (options.processingEvent) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(options.processingEvent)}\n\n`));
+      }
+      controller.enqueue(
+        encoder.encode(`data: ${JSON.stringify({ status: 'completed', result: options.result })}\n\n`),
+      );
+      controller.close();
+    },
+  });
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      ...(options.correlationId ? { 'x-correlation-id': options.correlationId } : {}),
+    },
+  });
+}

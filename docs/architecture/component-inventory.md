@@ -17,7 +17,7 @@
 | APP-MIDDLEWARE | Route-protection middleware | App | Next.js middleware | `middleware.ts` | Guard HCP routes/APIs | AUTH-SESSION | ACTIVE | Phoenix AI team |
 | APP-INSTRUMENTATION | Startup instrumentation | App | Next.js instrumentation hook | `instrumentation.ts` | Env validation + telemetry init | CFG-ENV, OBS-APPINSIGHTS | ACTIVE | Phoenix AI team |
 | API-HCP-CHAT | HCP chat route | API | Next.js route handler | `app/api/hcp-chat/route.ts` | HCP clinical chat | AI-PROVIDER, PROMPT-HCP-CHAT | ACTIVE | Phoenix AI team |
-| API-HCP-ANALYSIS | HCP wound analysis route | API | Next.js route handler | `app/api/analyze-wound/route.ts` | Multimodal wound/burn assessment | AI-PROVIDER, AI-VALIDATION, PROMPT-HCP-ANALYSIS | ACTIVE | Phoenix AI team |
+| API-HCP-ANALYSIS | HCP wound analysis route | API | Next.js route handler | `app/api/analyze-wound/route.ts` | Multimodal wound/burn assessment (staged pipeline default; single-pass fallback) | AI-ANALYSIS-PIPELINE, AI-MODEL-SELECTOR, AI-PROVIDER, AI-VALIDATION, PROMPT-HCP-ANALYSIS | ACTIVE | Phoenix AI team |
 | API-COMMUNITY-CHAT | Community chat route | API | Next.js route handler | `app/api/community-chat/route.ts` | Public plain-language chat | AI-PROVIDER, PROMPT-COMMUNITY-CHAT | ACTIVE | Phoenix AI team |
 | API-COMMUNITY-ANALYSIS | Community image-check route | API | Next.js route handler | `app/api/community-analyze/route.ts` | Simplified image guidance | AI-PROVIDER, AI-VALIDATION, PROMPT-COMMUNITY-ANALYSIS | ACTIVE | Phoenix AI team |
 | API-AUTH-LOGIN | Demo login route | API | Next.js route handler | `app/api/auth/login/route.ts` | Server-verified demo login | AUTH-DEMO, AUTH-SESSION | ACTIVE | Phoenix AI team |
@@ -35,9 +35,15 @@
 | AI-CREDENTIAL | AI credential | Lib | @azure/identity | `lib/ai/azure-credential.ts` | Managed-identity token | INFRA-MI | ACTIVE | Phoenix AI team |
 | AI-STREAMING | AI streaming helpers | Lib | Web Streams/SSE | `lib/ai/streaming/*` | Stream responses | — | ACTIVE | Phoenix AI team |
 | AI-VALIDATION | AI input/output validation | Lib | Zod | `lib/ai/validation/*` | Image + schema validation | — | ACTIVE | Phoenix AI team |
+| AI-MODEL-SELECTOR | Purpose-specific model selection | Lib | TypeScript | `lib/ai/model-config.ts` | Split analysis/chat deployments + pipeline flags | — | ACTIVE | Phoenix AI team |
+| AI-ANALYSIS-PIPELINE | Staged wound-analysis orchestrator | Lib | TypeScript | `lib/ai/analysis/pipeline.ts` | 4-stage analysis + deterministic safety calc | AI-PROVIDER, AI-ANALYSIS-SCHEMA, AI-MODEL-SELECTOR, CLINICAL-PARKLAND, CLINICAL-TBSA, PROMPT-ANALYSIS-STAGES | ACTIVE | Phoenix AI team |
+| AI-ANALYSIS-SCHEMA | Rich analysis schema + adapter | Lib | Zod | `lib/ai/schemas/burn-wound-analysis.ts` | Observation/interpretation/confidence + flat back-compat map | — | ACTIVE | Phoenix AI team |
+| AI-ANALYSIS-CRITIC | Consistency/safety critic stage | Lib | TypeScript | `lib/ai/prompts/wound-analysis-critic.ts` | Audits contradictions/false precision/overclaim | AI-ANALYSIS-PIPELINE | ACTIVE | Phoenix AI team |
+| AI-ANALYSIS-EVAL | Analysis evaluation harness | Test | TypeScript/tsx | `tests/evaluation/burn-wound/*` | Structural/safety scoring (live optional) | AI-ANALYSIS-PIPELINE | ACTIVE | Phoenix AI team |
 | AI-TELEMETRY | AI telemetry | Lib | App Insights | `lib/ai/telemetry.ts` | AI request telemetry | OBS-APPINSIGHTS | ACTIVE | Phoenix AI team |
 | PROMPT-HCP-CHAT | HCP chat prompt | Lib | TypeScript | `lib/ai/prompts/hcp-chat.ts` | Clinical chat prompt | — | ACTIVE | Phoenix AI team |
-| PROMPT-HCP-ANALYSIS | HCP analysis prompt | Lib | TypeScript | `lib/ai/prompts/hcp-wound-analysis.ts` | Structured clinical prompt | — | ACTIVE | Phoenix AI team |
+| PROMPT-HCP-ANALYSIS | HCP analysis prompt (single-pass fallback) | Lib | TypeScript | `lib/ai/prompts/hcp-wound-analysis.ts` | Structured clinical prompt (used when `AI_ANALYSIS_PIPELINE=single`) | — | ACTIVE | Phoenix AI team |
+| PROMPT-ANALYSIS-STAGES | Staged analysis prompts | Lib | TypeScript | `lib/ai/prompts/{wound-visual-observation,wound-clinical-interpretation,wound-management,wound-analysis-critic}.ts` | Per-stage observation/interpretation/management/critic prompts | — | ACTIVE | Phoenix AI team |
 | PROMPT-COMMUNITY-CHAT | Community chat prompt | Lib | TypeScript | `lib/ai/prompts/community-chat.ts` | Plain-language prompt | — | ACTIVE | Phoenix AI team |
 | PROMPT-COMMUNITY-ANALYSIS | Community analysis prompt | Lib | TypeScript | `lib/ai/prompts/community-wound-analysis.ts` | Simplified guidance prompt | — | ACTIVE | Phoenix AI team |
 | CLINICAL-TBSA | TBSA calculator | Lib | TypeScript | `lib/clinical/tbsa.ts` | Total body surface area | — | ACTIVE | Phoenix AI team |

@@ -16,6 +16,41 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [1.1.0] — 2026-08-07
+
+### Added
+- **Staged wound-analysis pipeline** for `/api/analyze-wound` (`lib/ai/analysis/pipeline.ts`):
+  four sequential model stages (visual observation → clinical interpretation & quantification →
+  management & referral → consistency/safety critic) with deterministic post-processing.
+  Default behaviour; `AI_ANALYSIS_PIPELINE=single` reverts to the original single-pass call.
+- **Purpose-specific model selection** (`lib/ai/model-config.ts`):
+  `AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT` / `AZURE_AI_CHAT_MODEL_DEPLOYMENT`, both defaulting to
+  `AZURE_AI_MODEL_DEPLOYMENT` so existing configuration is unchanged.
+- **Rich analysis schema + back-compat adapter** (`lib/ai/schemas/burn-wound-analysis.ts`):
+  observation-vs-interpretation separation, per-field confidence, and explicit information gaps,
+  mapped back to the existing 22-field contract so the SSE envelope and existing client are
+  unchanged; the full structure travels under `result.structured`.
+- **Staged prompts** (`lib/ai/prompts/wound-visual-observation`, `-clinical-interpretation`,
+  `-management`, `-analysis-critic`) and streaming collector (`lib/ai/streaming/collect.ts`).
+- **Enhanced HCP analysis UI** (`app/hcp/analysis/_components/structured-analysis.tsx`):
+  analysis-quality banner, "Why this assessment?" evidence/confidence, and a REFINE second-pass.
+- **Evaluation harness** (`tests/evaluation/burn-wound/`) and analysis unit tests
+  (`tests/unit/analysis-pipeline.test.ts`) for deterministic safety rules.
+
+### Changed
+- `/api/analyze-wound` route wired to the staged pipeline (flagged) with `maxDuration` raised to
+  match multi-stage latency; deterministic Parkland now requires a supplied weight (no assumed
+  70 kg), Fitzpatrick reported only when clinician-supplied, measurements only with a scale.
+- Diagram `current-ai-architecture.mmd` and `current-architecture.md` §3.3 updated to describe
+  the staged pipeline, model split, and deterministic clinical calculation.
+
+### Notes
+- No fabricated accuracy figures: diagnostic accuracy is **not** certified. The evaluation harness
+  is scaffolded but requires live Azure calls against a labelled, consented dataset.
+- See change record
+  [`changes/CHANGE-20260807-improve-ai-analysis-accuracy.md`](./changes/CHANGE-20260807-improve-ai-analysis-accuracy.md)
+  and [ADR-0003](./decisions/ADR-0003-staged-wound-analysis-pipeline.md).
+
 ## [1.0.0] — 2024
 
 ### Added
