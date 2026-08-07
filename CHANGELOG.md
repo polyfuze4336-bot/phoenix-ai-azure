@@ -9,6 +9,22 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 ## [Unreleased]
 
 ### Added
+- Documented the complete Phoenix AI source-to-Azure transformation as an evidence-based audit
+  under `docs/migration/`, `docs/architecture/`, and `docs/testing/`. The consolidated entry
+  point is [docs/migration/phoenix-ai-azure-migration-report.md](docs/migration/phoenix-ai-azure-migration-report.md),
+  linking 24 parts: source-comparison baseline, change inventory, additions, modifications and
+  enhancements, replacements, removals, retained functionality, migration benefits, original-vs-
+  Azure architecture (with Mermaid diagrams), file/dependency/configuration/data-model/API/UI
+  change reports, original-vs-current testing, deployment and operations changes, trade-offs and
+  limitations, an executive summary, a benefit-traceability matrix, and a documentation-validation
+  report. All figures are derived from git (baseline tag `abacus-source-baseline` = `d200b5a`,
+  HEAD `4c47623`: 574 files changed, +20,827/−1,713, 2 AWS files removed, 4 prod + 5 dev deps
+  added), a hash-verified byte-identical logo (git blob `370601e`), and the live Azure environment
+  (12 resources in `rg-phoenixai-demo`; readiness all-`ok`; App Insights 298 requests / 0
+  exceptions over 2 days). The documentation explicitly records that this is a demonstration
+  parity migration with an operational foundation — not a clinically validated or production
+  deployment — and flags demo-grade default auth, partial persistence, single-region hosting, and
+  the MCAPS Key Vault constraint (direct `DATABASE_URL` app setting).
 - Deployed the Phoenix AI parity build to a live Azure App Service in `southeastasia`
   (`rg-phoenixai-demo`) after the MCAPS sandbox's region-specific quota blocked `eastus2`. Added
   `nextjs_space/scripts/make-standalone-zip.py` (forward-slash, extended-length-path packaging of the

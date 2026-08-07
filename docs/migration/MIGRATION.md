@@ -322,7 +322,7 @@ behaviour**. This is the enabling refactor for the Azure OpenAI cutover.
   `npm run test:network` ✅ 1 passed.
 
 ### Step 11 — Migrate model calls to Microsoft Foundry / Azure OpenAI
-Made the Azure provider a real, production-ready backend: managed-identity auth, resilient
+Made the Azure provider a real, first-class backend: managed-identity auth, resilient
 transport, image validation, Zod-validated structured results with an explicit safe-fallback
 state, and privacy-safe telemetry. `AI_PROVIDER` still defaults to `abacus` — this step makes
 the `azure` provider **ready**, not yet the default (the cutover flips it once Azure is provisioned).
