@@ -12,6 +12,7 @@
 - **Source application (Abacus.AI):** https://phoenixai-burnandwound.abacusai.app/hcp
 - **Application name:** Phoenix AI — Burn & Wound Care Assessment Tool
 - **Migration audit trail:** [docs/migration/MIGRATION.md](docs/migration/MIGRATION.md)
+- **Current architecture (AS-IS):** [docs/architecture/current-architecture.md](docs/architecture/current-architecture.md)
 - **Target architecture:** [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
 - **Test strategy:** [docs/testing/TEST-STRATEGY.md](docs/testing/TEST-STRATEGY.md)
 
@@ -78,6 +79,37 @@ Copy [`.env.example`](.env.example) to `nextjs_space/.env` for local development
 are committed to this repository.** On Azure, configuration is supplied via App Service /
 Container Apps app settings, with secrets sourced from Azure Key Vault.
 
+## Architecture
+
+> Architecture version: **1.0.0** (see [docs/architecture/ARCHITECTURE_VERSION](docs/architecture/ARCHITECTURE_VERSION)).
+
+Phoenix AI runs as a Next.js standalone server on Azure App Service, calling Azure OpenAI
+(Microsoft Foundry `gpt-4o`) via a managed identity, with PostgreSQL, Blob Storage, Key Vault,
+Application Insights and Log Analytics in `rg-phoenixai-demo`.
+
+```mermaid
+flowchart LR
+    Users["Users (Clinicians & Public)"] --> App["Phoenix AI (Next.js on Azure App Service)"]
+    App -->|"managed identity"| Foundry["Microsoft Foundry / Azure OpenAI (gpt-4o)"]
+    App -->|"sslmode=require"| PostgreSQL["Azure PostgreSQL Flexible Server"]
+    App -.->|"optional, not wired to UI"| Blob["Azure Blob Storage"]
+    App --> KV["Azure Key Vault"]
+    App --> Insights["Application Insights"] --> Logs["Log Analytics"]
+    GitHub["GitHub Actions (OIDC)"] --> App
+```
+
+This project follows an **architecture-first change policy**: no material change is implemented
+until the current architecture is understood, documented and impact-assessed, and the docs stay
+synchronized with the code (enforced by the `Architecture Governance` CI workflow).
+
+- **Current architecture (AS-IS):** [docs/architecture/current-architecture.md](docs/architecture/current-architecture.md)
+- **Component inventory:** [docs/architecture/component-inventory.md](docs/architecture/component-inventory.md)
+- **Integration inventory:** [docs/architecture/integration-inventory.md](docs/architecture/integration-inventory.md)
+- **Azure resource map:** [docs/architecture/azure-resource-map.md](docs/architecture/azure-resource-map.md)
+- **Decisions (ADRs):** [docs/architecture/decisions/](docs/architecture/decisions/)
+- **Change records:** [docs/architecture/changes/](docs/architecture/changes/)
+- **Diagrams:** [docs/architecture/diagrams/](docs/architecture/diagrams/)
+
 ## Repository layout
 
 ```
@@ -86,11 +118,13 @@ Container Apps app settings, with secrets sourced from Azure Key Vault.
 ├─ Uploads/                 # Sample clinical images from the source (reference only)
 ├─ docs/
 │  ├─ migration/            # Migration audit trail & step log
-│  ├─ architecture/         # Target Azure architecture
+│  ├─ architecture/         # Current (AS-IS) + target architecture, ADRs, diagrams, changes
 │  └─ testing/              # Test & UI-parity strategy
 ├─ .github/
-│  ├─ workflows/            # CI (install + build verification)
+│  ├─ workflows/            # CI + Architecture Governance
+│  ├─ PULL_REQUEST_TEMPLATE.md
 │  └─ copilot-instructions.md
+├─ AGENTS.md                # Architecture-first change policy for agents & contributors
 ├─ .editorconfig
 ├─ .nvmrc
 ├─ .env.example             # Config template (no secrets)

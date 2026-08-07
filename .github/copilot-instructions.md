@@ -47,9 +47,45 @@ visible UX and **document the assumption** in `docs/migration/MIGRATION.md`.
 - At the end of every migration step: run checks, report added/modified/deleted files, report
   tests, list unresolved issues, commit, and update `docs/migration/MIGRATION.md`.
 
+## ARCHITECTURE-FIRST CHANGE POLICY (mandatory)
+
+**NO MATERIAL CHANGE MAY BE IMPLEMENTED UNTIL THE CURRENT ARCHITECTURE IS UNDERSTOOD, DOCUMENTED
+AND IMPACT-ASSESSED. Architecture documentation is part of the source code and must remain
+synchronized with implementation.**
+
+Before implementing any change that touches components, integrations, data/identity/storage/
+observability strategy, or the Azure resource footprint, follow these steps in order:
+
+1. **Understand** the current architecture — read
+   [`docs/architecture/current-architecture.md`](../docs/architecture/current-architecture.md)
+   and the relevant diagram(s) in `docs/architecture/diagrams/`.
+2. **Locate** the affected components/integrations by their stable IDs in
+   [`component-inventory.md`](../docs/architecture/component-inventory.md) and
+   [`integration-inventory.md`](../docs/architecture/integration-inventory.md).
+3. **Assess impact** — determine the impact level (NONE / LOW / MEDIUM / HIGH / MAJOR) and whether
+   a new [ADR](../docs/architecture/decisions/README.md) is required.
+4. **Document first** — update `current-architecture.md`, the affected `.mmd` diagrams, the
+   inventories, and `azure-resource-map.md` in the SAME change. Bump
+   [`ARCHITECTURE_VERSION`](../docs/architecture/ARCHITECTURE_VERSION) and add an entry to
+   [`ARCHITECTURE_CHANGELOG.md`](../docs/architecture/ARCHITECTURE_CHANGELOG.md).
+5. **Record** — add a `docs/architecture/changes/CHANGE-YYYYMMDD-*.md` record for
+   architecture-impacting changes; add/accept an ADR when the decision is significant.
+6. **Implement** the code change, keeping it consistent with the documented architecture.
+7. **Validate** — run typecheck, build, tests, Mermaid validation, and
+   `scripts/validate-architecture`. **STOP if documentation lags implementation** — do not open a
+   PR until docs and code agree.
+
+End every architecture-impacting task with an **Architecture Review** block: impact level,
+version before/after, files reviewed/changed, ADR reference, change record, and validation
+PASS/FAIL. The `architecture-governance` CI workflow enforces docs-sync on pull requests.
+
 ## Key paths
 
 - App source: `nextjs_space/`
 - Migration audit trail: `docs/migration/MIGRATION.md`
-- Target architecture: `docs/architecture/ARCHITECTURE.md`
+- **Authoritative current architecture: `docs/architecture/current-architecture.md`**
+- Component / integration inventories: `docs/architecture/component-inventory.md`,
+  `docs/architecture/integration-inventory.md`
+- Architecture decisions: `docs/architecture/decisions/`
+- Target architecture (design intent): `docs/architecture/ARCHITECTURE.md`
 - Test strategy: `docs/testing/TEST-STRATEGY.md`

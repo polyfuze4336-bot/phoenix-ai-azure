@@ -1,0 +1,78 @@
+%% Phoenix AI — Current (AS-IS) high-level architecture
+%% Source of truth: repository at HEAD + live Azure environment (rg-phoenixai-demo, southeastasia).
+%% Annotations: ACTIVE = implemented & in use, DEMO = mock/fictional, OPTIONAL = configured but not wired to UI,
+%% LEGACY = retained-for-parity/not runtime, PLANNED = not implemented.
+flowchart TB
+    Users["Users (Clinicians & Public)"]
+
+    subgraph CLIENT["Client Experience"]
+        Landing["Phoenix AI Landing — ACTIVE"]
+        HCP["HCP Portal: chat, analysis, TBSA, Parkland, guidelines, history — ACTIVE"]
+        Community["Community Portal: chat, image-check, assessment, articles, first-aid — ACTIVE"]
+        PWA["PWA / Mobile + EN/BM toggle — ACTIVE"]
+    end
+
+    subgraph APP["Phoenix AI Application (Next.js 14 App Router)"]
+        Next["Next.js Server (standalone) — ACTIVE"]
+        MW["middleware.ts route protection — ACTIVE"]
+        API["API Routes (15) — ACTIVE"]
+        Auth["Auth Layer: demo default — DEMO / Entra — OPTIONAL"]
+        AIProvider["AI Provider Layer (lib/ai) — ACTIVE"]
+        Data["Data Access Layer (lib/db, Prisma) — ACTIVE"]
+        Storage["Storage Provider Layer (lib/storage) — OPTIONAL"]
+        Telemetry["Telemetry Layer (lib/telemetry) — ACTIVE"]
+    end
+
+    subgraph AZURE["Microsoft Azure (rg-phoenixai-demo)"]
+        AppService["Azure App Service (Linux, P1v3) — ACTIVE"]
+        Foundry["Microsoft Foundry / Azure OpenAI gpt-4o — ACTIVE"]
+        PostgreSQL["Azure Database for PostgreSQL Flexible Server — ACTIVE"]
+        Blob["Azure Blob Storage (private clinical-uploads) — OPTIONAL"]
+        KV["Azure Key Vault — ACTIVE"]
+        MI["User-assigned Managed Identity — ACTIVE"]
+        Insights["Application Insights — ACTIVE"]
+        Logs["Log Analytics — ACTIVE"]
+        Alerts["Metric Alerts + Action Group — ACTIVE"]
+    end
+
+    subgraph DEVOPS["Engineering"]
+        GitHub["GitHub Repository — ACTIVE"]
+        Actions["GitHub Actions (OIDC) — ACTIVE"]
+        Bicep["Bicep IaC (13 files) — ACTIVE"]
+    end
+
+    Users --> Landing
+    Users --> HCP
+    Users --> Community
+    Users --> PWA
+
+    Landing --> Next
+    HCP --> Next
+    Community --> Next
+    PWA --> Next
+
+    Next --> MW
+    MW --> API
+    API --> Auth
+    API --> AIProvider
+    API --> Data
+    API --> Storage
+    Next --> Telemetry
+
+    AIProvider -->|"managed identity"| Foundry
+    Data -->|"sslmode=require"| PostgreSQL
+    Storage -.->|"managed identity (not wired to UI)"| Blob
+    Auth -.->|"AUTH_MODE=entra (opt-in)"| KV
+
+    Next --> AppService
+    AppService --> Insights
+    Telemetry --> Insights
+    Insights --> Logs
+    Alerts --> Insights
+    KV --> AppService
+    MI --> Foundry
+    MI --> Blob
+
+    GitHub --> Actions
+    Actions -->|"OIDC"| Bicep
+    Actions -->|"OIDC"| AppService

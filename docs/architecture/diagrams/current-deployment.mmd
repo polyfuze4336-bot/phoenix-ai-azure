@@ -1,0 +1,39 @@
+%% Phoenix AI — Current (AS-IS) deployment architecture
+%% Only resources that ACTUALLY exist in rg-phoenixai-demo (southeastasia) are shown.
+%% The Foundry/OpenAI model resource lives in a SEPARATE resource group (rg-aisgemini-dev, eastus2)
+%% and is consumed via managed identity.
+flowchart LR
+    DEV["Developer"]
+    GH["GitHub Repository"]
+    GHA["GitHub Actions"]
+
+    subgraph AZURE["Azure Resource Group: rg-phoenixai-demo (southeastasia)"]
+        APP["Azure App Service\napp-phoenixai-yun55ezsi4yoq (P1v3)"]
+        PLAN["App Service Plan\nplan-phoenixai-yun55ezsi4yoq"]
+        PG["Azure PostgreSQL Flexible Server\npsql-phoenixai-yun55ezsi4yoq"]
+        BLOB["Azure Blob Storage\nstphxyun55ezsi4yoq (clinical-uploads)"]
+        KV["Azure Key Vault\nkv-phx-yun55ezsi4yoq"]
+        MI["User-assigned Managed Identity\nid-phoenixai-yun55ezsi4yoq"]
+        AIAPP["Application Insights\nappi-phoenixai-yun55ezsi4yoq"]
+        LAW["Log Analytics\nlog-phoenixai-yun55ezsi4yoq"]
+        ALERTS["Metric Alerts + Action Group\nag-phoenixai-ops"]
+    end
+
+    subgraph AIRG["Azure Resource Group: rg-aisgemini-dev (eastus2)"]
+        AI["Microsoft Foundry / Azure OpenAI\naif-yfjw6y (gpt-4o)"]
+    end
+
+    DEV --> GH
+    GH --> GHA
+    GHA -->|"OIDC federation"| AZURE
+    GHA --> APP
+
+    PLAN --> APP
+    MI --> APP
+    APP -->|"managed identity"| AI
+    APP -->|"sslmode=require"| PG
+    APP -.->|"managed identity (optional, not wired)"| BLOB
+    APP --> KV
+    APP --> AIAPP
+    AIAPP --> LAW
+    ALERTS --> AIAPP

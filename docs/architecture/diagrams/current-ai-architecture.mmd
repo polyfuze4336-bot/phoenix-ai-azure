@@ -1,0 +1,71 @@
+%% Phoenix AI — Current (AS-IS) AI architecture
+%% Shows the actual AI provider abstraction (lib/ai), prompt separation, streaming,
+%% multimodal image input, and structured-output validation.
+flowchart TB
+    subgraph Interfaces["Client Interfaces"]
+        HCPUI["HCP Interface\n(chat + wound analysis)"]
+        COMMUI["Community Interface\n(chat + image check)"]
+    end
+
+    subgraph Routes["Next.js API Routes"]
+        RHCPCHAT["/api/hcp-chat"]
+        RHCPAN["/api/analyze-wound"]
+        RCOMCHAT["/api/community-chat"]
+        RCOMAN["/api/community-analyze"]
+    end
+
+    subgraph Prompts["Prompt Layer (lib/ai/prompts)"]
+        PHCPCHAT["hcp-chat\n(clinical, detailed)"]
+        PHCPAN["hcp-wound-analysis\n(structured clinical)"]
+        PCOMCHAT["community-chat\n(plain-language, safe)"]
+        PCOMAN["community-wound-analysis\n(simplified guidance)"]
+    end
+
+    subgraph Provider["AI Provider Abstraction (lib/ai)"]
+        FACTORY["getAiProvider()"]
+        AZPROV["AzureFoundryProvider"]
+        CRED["azure-credential\n(DefaultAzureCredential)"]
+        OAICOMPAT["openai-compatible mapping"]
+        VALIN["validation/image-input"]
+        VALOUT["validation/wound-analysis-schema"]
+        STREAM["streaming/sse + text-stream"]
+        TEL["ai/telemetry"]
+    end
+
+    subgraph Azure["Azure AI"]
+        FOUNDRY["Microsoft Foundry / Azure OpenAI"]
+        MODEL["gpt-4o deployment (vision + text)\napi-version 2024-10-21"]
+    end
+
+    APPINS["Application Insights"]
+
+    HCPUI --> RHCPCHAT
+    HCPUI --> RHCPAN
+    COMMUI --> RCOMCHAT
+    COMMUI --> RCOMAN
+
+    RHCPCHAT --> PHCPCHAT --> FACTORY
+    RHCPAN --> PHCPAN --> FACTORY
+    RCOMCHAT --> PCOMCHAT --> FACTORY
+    RCOMAN --> PCOMAN --> FACTORY
+
+    RHCPAN --> VALIN
+    RCOMAN --> VALIN
+    VALIN --> FACTORY
+
+    FACTORY --> AZPROV
+    AZPROV --> CRED
+    AZPROV --> OAICOMPAT
+    OAICOMPAT -->|"managed identity token"| FOUNDRY
+    FOUNDRY --> MODEL
+
+    MODEL --> STREAM
+    STREAM --> HCPUI
+    STREAM --> COMMUI
+
+    MODEL --> VALOUT
+    VALOUT --> HCPUI
+    VALOUT --> COMMUI
+
+    AZPROV --> TEL
+    TEL --> APPINS
