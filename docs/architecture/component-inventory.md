@@ -82,6 +82,7 @@
 | INFRA-LAW | Log Analytics | Infra | Bicep | `infra/modules/log-analytics.bicep` | Log store | — | ACTIVE | Phoenix AI team |
 | INFRA-ALERTS | Alerts + action group | Infra | Bicep | `infra/modules/alerts.bicep` | 5xx + latency alerts | INFRA-APPINSIGHTS | ACTIVE | Phoenix AI team |
 | INFRA-ROLES | Role assignments | Infra | Bicep | `infra/modules/role-assignments.bicep` | RBAC for MI | INFRA-MI | ACTIVE | Phoenix AI team |
+| OPS-DEMO-OWNER-RBAC | Demo operator RBAC | Operations | Azure RBAC | `docs/architecture/changes/CHANGE-20260810-demo-rg-owner-access.md` | Grants `BFG Solutions` group Owner on the dedicated demo RG only | INT-DEMO-OPERATORS-ARM | ACTIVE | BFG Solutions subscription owner |
 | INFRA-FOUNDRY-CONN | Azure AI resource + connection | Infra | Bicep | `infra/modules/foundry-connection.bicep` | Provisions environment-owned AI account, gpt-4o deployment, and inference RBAC | INFRA-MI | ACTIVE | Phoenix AI team |
 | AZ-FOUNDRY | Microsoft Foundry / Azure AI Services | Owned Azure | Azure AI Services | Environment-owned `gpt-4o` deployment | INFRA-MI | ACTIVE | Phoenix AI team |
 | DEVOPS-GHA | GitHub Actions | DevOps | GitHub Actions + OIDC | `.github/workflows/*` | CI/CD | — | ACTIVE | Phoenix AI team |

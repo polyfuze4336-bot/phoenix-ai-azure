@@ -19,6 +19,7 @@
 | INT-ALERTS-APPINSIGHTS | Metric alerts / action group | Application Insights metrics | Azure Monitor | HTTP 5xx + response-time alerting | Azure platform | Metric thresholds | ACTIVE |
 | INT-APP-ENTRA | Next.js Entra provider (`lib/auth/entra-*`) | Microsoft Entra ID | HTTPS (OIDC) | Opt-in SSO sign-in | OIDC client credentials | Tokens, claims | OPTIONAL |
 | INT-GHA-AZURE | GitHub Actions / deployment operator | Azure Resource Manager (`rg-phoenixai-bfgs-demo`) | HTTPS (ARM) | Provision infra (Bicep) | OIDC federation or authenticated Azure CLI (no stored secret) | Deployment templates | BUILD |
+| INT-DEMO-OPERATORS-ARM | `BFG Solutions` Entra security group (3 current members) | Azure Resource Manager (`rg-phoenixai-bfgs-demo`) | HTTPS (ARM) | Full demo resource and RBAC administration | Entra group membership + built-in `Owner`, RG scope only | ARM control-plane operations; no application data-plane credential | ACTIVE |
 | INT-GHA-APPSERVICE | GitHub Actions | Azure App Service | HTTPS (Kudu/zip deploy) | Former standalone bundle deployment | OIDC federation | Application bundle | DEPRECATED |
 | INT-DEPLOY-ACR | GitHub Actions / deployment operator | Azure Container Registry | HTTPS (ACR Tasks) | Remote-build and store the Phoenix AI container image | OIDC federation or authenticated Azure CLI | Source context and OCI image | BUILD |
 | INT-ACR-CONTAINERAPP | Azure Container App | Azure Container Registry | HTTPS (OCI pull) | Pull immutable Phoenix AI image revision | User-assigned managed identity (`AcrPull`) | OCI image layers | BUILD |

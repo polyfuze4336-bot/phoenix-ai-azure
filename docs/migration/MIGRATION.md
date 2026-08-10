@@ -1118,3 +1118,22 @@ no visible UX, prompt, clinical workflow, API contract, or Responsible AI contro
 - **Known limitation.** The preserved dependency baseline reports 35 `npm audit` findings,
   including a Next.js 14.2.28 security warning. Remediation is intentionally deferred to a separate
   behavior-sensitive change with the full architecture, RAI, and parity regression gates.
+
+### Step 26 - Grant demo resource-group Owner access
+
+This step grants the existing Microsoft Entra security group `BFG Solutions` the built-in Azure
+`Owner` role on the dedicated `rg-phoenixai-bfgs-demo` resource group. The operator explicitly
+selected this group and RG-only scope after discovery showed that the group contains 3 of the
+tenant's 42 users; this is not represented as an all-tenant-users grant.
+
+- **Architecture governance.** Architecture version 2.1.0 adds component
+  `OPS-DEMO-OWNER-RBAC`, integration `INT-DEMO-OPERATORS-ARM`, both current diagrams, the Azure
+  resource map, and `CHANGE-20260810-demo-rg-owner-access.md`. Impact is MEDIUM; no ADR is required
+  for the reversible, bounded operational assignment. Responsible AI impact is NONE.
+- **Assignment.** Azure role assignment `152a0de9-1a48-4645-99d6-6ea08e5ffa31` grants the group
+  built-in `Owner` (`8e3af657-a8ff-443c-a75c-2fe8c4bcb635`) at exact scope
+  `/subscriptions/376a2984-f8d4-46e3-a1cb-90f58274d2dc/resourceGroups/rg-phoenixai-bfgs-demo`.
+- **Boundary verification.** The group retains inherited subscription `Contributor` access but has
+  zero subscription-scoped `Owner` assignments. Members can create, change, delete, and delegate
+  access to resources in the Phoenix AI demo RG only. Future access is governed by membership in
+  the `BFG Solutions` group.

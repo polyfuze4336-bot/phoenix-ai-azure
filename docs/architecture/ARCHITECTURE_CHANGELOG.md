@@ -16,6 +16,24 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.1.0] — 2026-08-10
+
+### Changed
+- **Demo operator access** — the existing Microsoft Entra security group `BFG Solutions` receives
+  the built-in Azure `Owner` role on `rg-phoenixai-bfgs-demo`. Its three current members can manage
+  all demo resources and RBAC assignments inside that dedicated resource group.
+- The assignment is operationally managed and represented by stable component
+  `OPS-DEMO-OWNER-RBAC` and integration `INT-DEMO-OPERATORS-ARM`; workload managed-identity roles
+  remain owned by `INFRA-ROLES` and Bicep.
+
+### Boundaries
+- The grant does not apply at subscription scope and does not cover the other 39 tenant users.
+- Existing subscription-level `Contributor` access for the group remains unchanged.
+- Application behavior, runtime identity, data access, prompts, model/version, and Responsible AI
+  controls are unchanged.
+- No ADR is required for this reversible, resource-group-scoped operational access change. See
+  [CHANGE-20260810](./changes/CHANGE-20260810-demo-rg-owner-access.md).
+
 ## [2.0.0] — 2026-08-09
 
 ### Changed

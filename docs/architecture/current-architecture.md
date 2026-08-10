@@ -230,6 +230,8 @@ restores the original single-pass call.
 | Entra ID (OIDC) | `lib/auth/entra-*.ts`, `app/api/auth/entra/*` (opt-in `AUTH_MODE=entra`; placeholder in this release) | Optional |
 | Roles (Doctor/Nurse/Administrator) | `lib/auth/*` role mapping | Implemented (used by demo; Entra role mapping opt-in) |
 | Route protection | `middleware.ts` | Implemented |
+| Azure demo operators | Entra security group `BFG Solutions` | `Owner` on `rg-phoenixai-bfgs-demo` only; 3 current members; operational assignment outside workload Bicep |
+| Workload RBAC | `infra/modules/role-assignments.bicep`, `container-registry.bicep` | Resource-scoped managed-identity roles; unchanged by operator access |
 
 ### 3.7 Observability Layer
 
