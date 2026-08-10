@@ -1,6 +1,6 @@
 # ADR-0001: Host Phoenix AI as Next.js on Azure App Service
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0007
 - **Date:** 2024
 - **Deciders:** Phoenix AI migration team
 - **Related components:** APP-NEXT, INFRA-APPSERVICE, INFRA-PLAN, INFRA-MI, AI-PROVIDER, DEVOPS-GHA

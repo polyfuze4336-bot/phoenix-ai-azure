@@ -69,8 +69,11 @@
 | CFG-ENV | Runtime config/validation | Lib | TypeScript | `lib/config/environment.ts` | Feature gating + env validation | — | ACTIVE | Phoenix AI team |
 | HEALTH-READINESS | Readiness checks | Lib | TypeScript | `lib/health/readiness.ts` | Dependency probes | AI-PROVIDER, DB-PRISMA, STORAGE-BLOB | ACTIVE | Phoenix AI team |
 | OBS-APPINSIGHTS | App Insights telemetry | Lib/Infra | applicationinsights + web SDK | `lib/telemetry/*`, `components/telemetry-provider.tsx` | Privacy-safe telemetry | — | ACTIVE | Phoenix AI team |
-| INFRA-APPSERVICE | Azure App Service | Infra | Bicep | `infra/modules/app-service.bicep` | Web runtime | INFRA-PLAN, INFRA-MI | ACTIVE | Phoenix AI team |
-| INFRA-PLAN | App Service Plan | Infra | Bicep | `infra/modules/app-service-plan.bicep` | Compute (P1v3) | — | ACTIVE | Phoenix AI team |
+| INFRA-APPSERVICE | Azure App Service | Infra | Bicep | `infra/modules/app-service.bicep` | Former web runtime | INFRA-PLAN, INFRA-MI | DEPRECATED | Phoenix AI team |
+| INFRA-PLAN | App Service Plan | Infra | Bicep | `infra/modules/app-service-plan.bicep` | Former compute plan | — | DEPRECATED | Phoenix AI team |
+| INFRA-CONTAINERAPP | Azure Container App | Infra | Bicep | `infra/modules/container-app.bicep` | Next.js standalone runtime, HTTPS ingress, probes, scaling | INFRA-ACA-ENV, INFRA-ACR, INFRA-MI | ACTIVE | Phoenix AI team |
+| INFRA-ACA-ENV | Container Apps managed environment | Infra | Bicep | `infra/modules/container-app-environment.bicep` | Consumption environment + Log Analytics integration | INFRA-LAW | ACTIVE | Phoenix AI team |
+| INFRA-ACR | Azure Container Registry | Infra | Bicep | `infra/modules/container-registry.bicep` | Private image storage and remote build | INFRA-MI | ACTIVE | Phoenix AI team |
 | INFRA-MI | User-assigned managed identity | Infra | Bicep | `infra/modules/managed-identity.bicep` | Workload identity | — | ACTIVE | Phoenix AI team |
 | INFRA-STORAGE | Storage account | Infra | Bicep | `infra/modules/storage.bicep` | Blob backing | — | ACTIVE | Phoenix AI team |
 | INFRA-POSTGRES | PostgreSQL server | Infra | Bicep | `infra/modules/postgresql.bicep` | DB backing | — | ACTIVE | Phoenix AI team |
@@ -79,8 +82,8 @@
 | INFRA-LAW | Log Analytics | Infra | Bicep | `infra/modules/log-analytics.bicep` | Log store | — | ACTIVE | Phoenix AI team |
 | INFRA-ALERTS | Alerts + action group | Infra | Bicep | `infra/modules/alerts.bicep` | 5xx + latency alerts | INFRA-APPINSIGHTS | ACTIVE | Phoenix AI team |
 | INFRA-ROLES | Role assignments | Infra | Bicep | `infra/modules/role-assignments.bicep` | RBAC for MI | INFRA-MI | ACTIVE | Phoenix AI team |
-| INFRA-FOUNDRY-CONN | Foundry connection | Infra | Bicep | `infra/modules/foundry-connection.bicep` | AI backend wiring | — | ACTIVE | Phoenix AI team |
-| AZ-FOUNDRY | Microsoft Foundry / Azure OpenAI | External Azure | Azure OpenAI | `aif-yfjw6y` (rg-aisgemini-dev) | gpt-4o model | INFRA-MI | ACTIVE | Shared AI team |
+| INFRA-FOUNDRY-CONN | Azure AI resource + connection | Infra | Bicep | `infra/modules/foundry-connection.bicep` | Provisions environment-owned AI account, gpt-4o deployment, and inference RBAC | INFRA-MI | ACTIVE | Phoenix AI team |
+| AZ-FOUNDRY | Microsoft Foundry / Azure AI Services | Owned Azure | Azure AI Services | Environment-owned `gpt-4o` deployment | INFRA-MI | ACTIVE | Phoenix AI team |
 | DEVOPS-GHA | GitHub Actions | DevOps | GitHub Actions + OIDC | `.github/workflows/*` | CI/CD | — | ACTIVE | Phoenix AI team |
 | INFRA-BICEP | Bicep IaC root | DevOps | Bicep | `infra/main.bicep`, `main.bicepparam` | Environment definition | INFRA-* modules | ACTIVE | Phoenix AI team |
 | GOV-CI | Architecture governance CI | DevOps | GitHub Actions | `.github/workflows/architecture-governance.yml` | Enforce docs sync + Mermaid validation | — | ACTIVE | Phoenix AI team |

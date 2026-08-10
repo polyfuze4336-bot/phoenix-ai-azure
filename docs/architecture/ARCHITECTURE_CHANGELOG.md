@@ -16,6 +16,47 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.0.0] — 2026-08-09
+
+### Changed
+- **Hosting replacement** — Phoenix AI now runs its unchanged Next.js standalone server in Azure
+  Container Apps Consumption instead of an Azure App Service plan. The target subscription has
+  `Total Regional VMs = 0` for App Service in every checked US region, so ARM preflight rejects all
+  paid App Service SKUs even though the P0v4 SKU meter itself reports capacity.
+- **Container image delivery** — Azure Container Registry Basic stores the Phoenix AI image. ACR
+  Tasks performs the remote build, and the existing user-assigned managed identity receives
+  account-scoped `AcrPull`; registry admin credentials remain disabled.
+- **Runtime configuration** — the Container App uses Key Vault-backed secrets, managed identity,
+  external HTTPS ingress on port 3000, startup/liveness/readiness probes, single-revision traffic,
+  and Consumption scaling from zero to three replicas.
+- `INFRA-APPSERVICE` and `INFRA-PLAN` are deprecated. `INFRA-CONTAINERAPP`, `INFRA-ACA-ENV`, and
+  `INFRA-ACR` are the active hosting components.
+
+### Unchanged
+- Application routes, visible UX, API contracts, AI prompts/model/version, PostgreSQL, Blob,
+  Key Vault, managed identity, Application Insights, and Responsible AI controls are unchanged.
+- See [ADR-0007](./decisions/ADR-0007-use-azure-container-apps.md) and
+  [CHANGE-20260809](./changes/CHANGE-20260809-container-apps-hosting.md).
+
+## [1.4.0] — 2026-08-09
+
+### Changed
+- **Customer-owned Azure AI deployment** — the Bicep deployment now provisions an `AIServices` S0
+  account and a `gpt-4o` `2024-11-20` Global Standard deployment in the Phoenix AI environment
+  resource group instead of referencing the shared `aif-yfjw6y` account in `rg-aisgemini-dev`.
+- **Customer deployment profile** — the current target is `rg-phoenixai-bfgs-demo` in East US 2,
+  using a P0v4 Linux App Service plan because B1 and P1v3 worker quota are unavailable in the
+  customer subscription.
+- `current-architecture.md`, `diagrams/current-architecture.mmd`,
+  `diagrams/current-deployment.mmd`, `component-inventory.md`, `integration-inventory.md`, and
+  `azure-resource-map.md` now describe environment-owned AI resources and managed-identity RBAC.
+
+### Unchanged
+- `INT-APP-FOUNDRY`, the Azure OpenAI-compatible request/response contract, `gpt-4o` model version,
+  prompts, staged analysis pipeline, Responsible AI controls, and visible UX are unchanged.
+- See [ADR-0006](./decisions/ADR-0006-customer-owned-azure-ai.md) and
+  [CHANGE-20260809](./changes/CHANGE-20260809-customer-owned-ai-account.md).
+
 ## [1.3.0] — 2026-08-07
 
 ### Added

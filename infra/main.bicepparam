@@ -2,17 +2,17 @@ using './main.bicep'
 
 // Core
 param location = 'eastus2'
-param resourceGroupName = 'rg-phoenixai-demo'
+param resourceGroupName = 'rg-phoenixai-bfgs-demo'
 param namePrefix = 'phoenixai'
 
 // Ownership / cost tags — fill in for your environment.
 param owner = ''
 param costCentre = ''
 
-// Reused Microsoft Foundry / Azure OpenAI (gpt-4o vision deployment).
-param foundryResourceGroupName = 'rg-aisgemini-dev'
-param foundryAccountName = 'aif-yfjw6y'
+// Environment-owned Microsoft Foundry / Azure AI Services (gpt-4o vision deployment).
 param foundryModelDeployment = 'gpt-4o'
+param foundryModelVersion = '2024-11-20'
+param foundryModelCapacity = 10
 param aiApiVersion = '2024-10-21'
 
 // PostgreSQL
@@ -25,4 +25,8 @@ param postgresDatabaseName = 'phoenix'
 
 // App
 param authMode = 'demo'
+param containerImageTag = 'latest'
+param deployContainerApp = true
+param containerMinReplicas = 0
+param containerMaxReplicas = 3
 param alertEmailAddress = ''

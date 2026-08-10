@@ -1,4 +1,4 @@
-metadata description = 'Managed identity (user-assigned) used by the Phoenix AI App Service to reach Key Vault, Storage and the Foundry model — no secrets/keys.'
+metadata description = 'User-assigned managed identity used by Phoenix AI to reach ACR, Key Vault, Storage and Azure AI without local credentials.'
 
 @description('User-assigned managed identity name.')
 param name string

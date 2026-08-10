@@ -1,12 +1,13 @@
 # Phoenix AI — Current Architecture (AS-IS)
 
 > **Authoritative AS-IS architecture document.** It describes the system exactly as
-> implemented in the repository at the current HEAD and as deployed in Azure
-> (`rg-phoenixai-demo`, `southeastasia`) at the time of writing. It is part of the source code
+> implemented in the repository at the current HEAD. The current customer deployment target is
+> `rg-phoenixai-bfgs-demo` in `eastus2`, with all workload resources including Azure AI owned by
+> that environment. It is part of the source code
 > and MUST remain synchronized with the implementation (see
 > [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `1.3.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.0.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -36,8 +37,8 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | --- | --- |
 | Application runtime | Next.js 14 (App Router), React 18, TypeScript 5, standalone Node server (`node server.js`) — **Implemented** |
 | Major portals | Experience selector landing, Original HCP + Community portals, and an additive **Phoenix AI v2.0** experience (`/v2/*`, feature-flag gated), PWA + EN/BM — **Implemented** |
-| Hosting | Azure App Service (Linux, P1v3), `southeastasia` — **Implemented** |
-| AI processing | Azure OpenAI (Microsoft Foundry) `gpt-4o` via `lib/ai` provider, managed identity — **Implemented** |
+| Hosting | Azure Container Apps Consumption, `eastus2`; image in Azure Container Registry Basic — **Implemented** |
+| AI processing | Environment-owned Azure AI Services S0 account with `gpt-4o` via `lib/ai`, managed identity — **Implemented** |
 | Data handling | Azure PostgreSQL Flexible Server via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
 | Authentication | Server-verified **demo** login by default; Microsoft Entra ID **opt-in** placeholder — **Mock/demo + Optional** |
 | Storage | Azure Blob provider present + infra provisioned; no UI workflow persists files — **Configured but unused** |
@@ -74,9 +75,10 @@ flowchart TB
         Telemetry["Telemetry Layer (lib/telemetry) — ACTIVE"]
     end
 
-    subgraph AZURE["Microsoft Azure (rg-phoenixai-demo)"]
-        AppService["Azure App Service (Linux, P1v3) — ACTIVE"]
-        Foundry["Microsoft Foundry / Azure OpenAI gpt-4o — ACTIVE"]
+    subgraph AZURE["Microsoft Azure (rg-phoenixai-bfgs-demo, eastus2)"]
+        ContainerApp["Azure Container Apps (Consumption) — ACTIVE"]
+        ACR["Azure Container Registry (Basic) — ACTIVE"]
+        Foundry["Environment-owned Azure AI Services gpt-4o — ACTIVE"]
         PostgreSQL["Azure Database for PostgreSQL Flexible Server — ACTIVE"]
         Blob["Azure Blob Storage (private clinical-uploads) — OPTIONAL"]
         KV["Azure Key Vault — ACTIVE"]
@@ -117,18 +119,20 @@ flowchart TB
     Storage -.->|"managed identity (not wired to UI)"| Blob
     Auth -.->|"AUTH_MODE=entra (opt-in)"| KV
 
-    Next --> AppService
-    AppService --> Insights
+    Next --> ContainerApp
+    ACR -->|"managed-identity image pull"| ContainerApp
+    ContainerApp --> Insights
     Telemetry --> Insights
     Insights --> Logs
     Alerts --> Insights
-    KV --> AppService
+    KV -->|"Key Vault secret reference"| ContainerApp
     MI --> Foundry
     MI --> Blob
 
     GitHub --> Actions
     Actions -->|"OIDC"| Bicep
-    Actions -->|"OIDC"| AppService
+    Actions -->|"OIDC / remote image build"| ACR
+    Actions -->|"OIDC / Bicep"| ContainerApp
 ```
 
 Companion diagrams:
@@ -170,7 +174,7 @@ Companion diagrams:
 | Element | Location | Status |
 | --- | --- | --- |
 | AI provider factory | `lib/ai/ai-provider.ts` → `getAiProvider()` returns `AzureFoundryProvider` (single provider; abstraction retained) | Implemented |
-| Model endpoint | Azure OpenAI / Foundry, `gpt-4o`, api-version `2024-10-21` | Implemented |
+| Model endpoint | Environment-owned Azure AI Services, `gpt-4o` `2024-11-20` Global Standard, api-version `2024-10-21` | Implemented |
 | Model selection (purpose-specific) | `lib/ai/model-config.ts` — `AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT` / `AZURE_AI_CHAT_MODEL_DEPLOYMENT` (default to `AZURE_AI_MODEL_DEPLOYMENT`) | Implemented |
 | Credential | `lib/ai/azure-credential.ts` (`DefaultAzureCredential`, key fallback) | Implemented |
 | OpenAI-compatible mapping | `lib/ai/openai-compatible.ts` | Implemented |
@@ -244,9 +248,10 @@ restores the original single-pass call.
 | GitHub repository | remote `origin` | Implemented |
 | GitHub Actions | `.github/workflows/{ci,deploy-demo,deploy-dev,infrastructure,db-migrate}.yml` | Implemented |
 | OIDC federation | workflows | Implemented |
-| Bicep IaC (13 files) | `infra/main.bicep`, `infra/main.bicepparam`, `infra/modules/*` | Implemented |
-| Azure App Service | `app-phoenixai-yun55ezsi4yoq` | Implemented |
-| Deployment slots | — | **Not implemented** (single production slot) |
+| Bicep IaC | `infra/main.bicep`, `infra/main.bicepparam`, `infra/modules/*` | Implemented |
+| Azure Container Apps | `ca-phoenixai-<environment-token>` (deployment output) | Implemented |
+| Azure Container Registry remote build | `acrphx<environment-token>` / `phoenixai:<deployment-tag>` | Implemented |
+| Revisions | Single active revision; readiness gates traffic | Implemented |
 
 ---
 

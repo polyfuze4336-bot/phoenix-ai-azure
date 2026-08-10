@@ -1078,3 +1078,43 @@ with available capacity. No application UI or behaviour changed — only deploym
   file is git-ignored to prevent any secret from entering version control.
 - **Environment note.** All commits from this migration remain on the local `migration/azure-port`
   branch and have not been pushed.
+
+### Step 25 - Deploy to the BFG Solutions customer subscription
+
+This step deploys the governed Phoenix AI Container Apps architecture to the customer-owned
+`BFG Solutions-JDNAINexus` subscription in the dedicated `rg-phoenixai-bfgs-demo` resource group.
+It supersedes the earlier App Service environment described in Step 24 for this customer deployment;
+no visible UX, prompt, clinical workflow, API contract, or Responsible AI control changed.
+
+- **Quota-driven hosting.** The subscription's App Service regional worker quota is zero, so the
+  documented architecture version 2.0.0 uses Azure Container Apps Consumption (0.5 vCPU / 1 GiB,
+  scale 0-3), a Basic ACR, and a user-assigned managed identity. ADR-0007 and
+  `CHANGE-20260809-container-apps-hosting.md` govern the replacement.
+- **Customer-owned services.** The deployment created a customer-owned Azure AI Services account
+  with `gpt-4o` `2024-11-20`, PostgreSQL Flexible Server 16, private Blob Storage, Key Vault,
+  Application Insights, Log Analytics, alerts, ACR, and the Container App in East US 2. Four
+  resource-scoped runtime roles were verified: Cognitive Services OpenAI User, Storage Blob Data
+  Contributor, Key Vault Secrets User, and AcrPull.
+- **Deployment mechanics.** Subscription deployment `phoenixai-bfgs-20260809` succeeded. ACR built
+  the standalone Node 22 image from a clean Git context. The Docker runtime flattens the traced
+  `/app/app` subtree to `/app`, matching `node server.js`; image
+  `phoenixai:retry4-20260810-a83bb80` has digest
+  `sha256:fe5031beba308b7e477ccb28a1eeca2289b23bd1ca904b01772a33eee13584c3`.
+  Container App revision `ca-phoenixai-oaprp7dte7bw2--0000002` is Healthy and receives 100% traffic.
+- **Data deployment.** Prisma migrations `20260806120000_init` and
+  `20260807090000_analysis_records` were applied with `prisma migrate deploy`; no reset, drop, or
+  down migration ran. The temporary exact-IP PostgreSQL migration firewall rule was removed.
+- **Live verification.** Liveness and readiness return 200; readiness confirms Azure AI identity,
+  PostgreSQL, and the private `clinical-uploads` container. Managed-identity text streaming and the
+  valid-image vision SSE pipeline both return 200. HCP history returns 200 without inserting a
+  synthetic clinical record. The public landing, Community, and HCP Playwright journeys pass against
+  the live site. Representative original/v2 routes return 200, and the deployed Phoenix logo hash
+  exactly matches `dfb40a3ef32007ceef3c06f11a48d6b1794178d240d74e716f34e6f4917d8241`.
+- **Operations verification.** Privacy-safe `community_chat_requested` and
+  `hcp_analysis_requested` events reached Application Insights, and both failed-request and
+  response-time alerts are enabled. Representative HTML contains no Abacus, AWS, localhost,
+  server-only setting names, database URL, or instrumentation-key material.
+- **Live URL.** <https://ca-phoenixai-oaprp7dte7bw2.braveflower-8e754aba.eastus2.azurecontainerapps.io>
+- **Known limitation.** The preserved dependency baseline reports 35 `npm audit` findings,
+  including a Next.js 14.2.28 security warning. Remediation is intentionally deferred to a separate
+  behavior-sensitive change with the full architecture, RAI, and parity regression gates.

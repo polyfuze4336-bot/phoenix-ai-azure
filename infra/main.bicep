@@ -1,4 +1,4 @@
-metadata description = 'Phoenix AI — Azure infrastructure (parity demo). Creates the resource group and provisions App Service (Linux Node), PostgreSQL Flexible Server, Blob Storage, Key Vault, Application Insights, Log Analytics and a managed identity, and connects to an EXISTING Microsoft Foundry model deployment.'
+metadata description = 'Phoenix AI Azure infrastructure. Creates the resource group and provisions Azure Container Apps, ACR, Azure AI Services with gpt-4o, PostgreSQL, Blob Storage, Key Vault, Application Insights, Log Analytics and a managed identity.'
 
 targetScope = 'subscription'
 
@@ -6,11 +6,11 @@ targetScope = 'subscription'
 // Core parameters
 // ---------------------------------------------------------------------------
 
-@description('Azure region for the new resources. Defaults to the region of the reused Foundry account.')
+@description('Azure region for all environment-owned resources.')
 param location string = 'eastus2'
 
 @description('Name of the resource group to create.')
-param resourceGroupName string = 'rg-phoenixai-demo'
+param resourceGroupName string = 'rg-phoenixai-bfgs-demo'
 
 @description('Short prefix used in resource names.')
 param namePrefix string = 'phoenixai'
@@ -22,17 +22,18 @@ param owner string = ''
 param costCentre string = ''
 
 // ---------------------------------------------------------------------------
-// Reused Microsoft Foundry / Azure OpenAI (NOT created here)
+// Environment-owned Microsoft Foundry / Azure AI Services
 // ---------------------------------------------------------------------------
 
-@description('Resource group of the existing Foundry / Azure OpenAI account to reuse.')
-param foundryResourceGroupName string = 'rg-aisgemini-dev'
-
-@description('Name of the existing Foundry / Azure OpenAI account to reuse.')
-param foundryAccountName string = 'aif-yfjw6y'
-
-@description('Existing vision-capable model deployment name on the Foundry account.')
+@description('Vision-capable model deployment name on the environment-owned Azure AI account.')
 param foundryModelDeployment string = 'gpt-4o'
+
+@description('Pinned gpt-4o model version used by the parity baseline.')
+param foundryModelVersion string = '2024-11-20'
+
+@description('Global Standard model capacity in thousands of tokens per minute.')
+@minValue(1)
+param foundryModelCapacity int = 10
 
 @description('Azure OpenAI API version used by the app.')
 param aiApiVersion string = '2024-10-21'
@@ -62,14 +63,19 @@ param postgresDatabaseName string = 'phoenix'
 ])
 param authMode string = 'demo'
 
-@description('App Service plan SKU name (default B1 Basic; use F1 in quota-constrained sandboxes).')
-param appServicePlanSkuName string = 'B1'
+@description('Immutable tag of the Phoenix AI image built in this environment ACR.')
+param containerImageTag string = 'latest'
 
-@description('App Service plan SKU tier (default Basic; use Free with F1).')
-param appServicePlanSkuTier string = 'Basic'
+@description('Deploy the Container App after its image has been built in ACR. Set false during bootstrap.')
+param deployContainerApp bool = true
 
-@description('Keep the app warm. Automatically disabled on the Free tier, which does not support it.')
-param appServiceAlwaysOn bool = true
+@description('Minimum Container App replicas. Zero enables scale-to-zero for the demo.')
+@minValue(0)
+param containerMinReplicas int = 0
+
+@description('Maximum Container App replicas.')
+@minValue(1)
+param containerMaxReplicas int = 3
 
 @description('Optional email address for operational alerts. Empty creates the action group with no receivers.')
 param alertEmailAddress string = ''
@@ -93,11 +99,13 @@ var names = {
   logAnalytics: 'log-${namePrefix}-${resourceToken}'
   appInsights: 'appi-${namePrefix}-${resourceToken}'
   managedIdentity: 'id-${namePrefix}-${resourceToken}'
+  foundry: 'aif-${namePrefix}-${resourceToken}'
   keyVault: 'kv-phx-${take(resourceToken, 17)}'
   storage: 'stphx${take(resourceToken, 19)}'
   postgres: 'psql-${namePrefix}-${resourceToken}'
-  plan: 'plan-${namePrefix}-${resourceToken}'
-  app: 'app-${namePrefix}-${resourceToken}'
+  containerRegistry: 'acrphx${take(resourceToken, 18)}'
+  containerEnvironment: 'cae-${namePrefix}-${resourceToken}'
+  containerApp: 'ca-${namePrefix}-${resourceToken}'
 }
 
 // Database connection string stored as a Key Vault secret and consumed via a Key Vault reference.
@@ -193,14 +201,19 @@ module keyVault 'modules/key-vault.bicep' = {
 }
 
 // ---------------------------------------------------------------------------
-// Reused Foundry model connection (cross-resource-group RBAC + endpoint)
+// Environment-owned Azure AI account, model deployment, RBAC + endpoint
 // ---------------------------------------------------------------------------
 
 module foundryConnection 'modules/foundry-connection.bicep' = {
   name: 'foundryConnection'
-  scope: resourceGroup(foundryResourceGroupName)
+  scope: rg
   params: {
-    foundryAccountName: foundryAccountName
+    name: names.foundry
+    location: location
+    tags: tags
+    modelDeploymentName: foundryModelDeployment
+    modelVersion: foundryModelVersion
+    modelCapacity: foundryModelCapacity
     principalId: managedIdentity.outputs.principalId
   }
 }
@@ -209,38 +222,24 @@ module foundryConnection 'modules/foundry-connection.bicep' = {
 // Compute
 // ---------------------------------------------------------------------------
 
-module appServicePlan 'modules/app-service-plan.bicep' = {
-  name: 'appServicePlan'
+module containerRegistry 'modules/container-registry.bicep' = {
+  name: 'containerRegistry'
   scope: rg
   params: {
-    name: names.plan
+    name: names.containerRegistry
     location: location
     tags: tags
-    skuName: appServicePlanSkuName
-    skuTier: appServicePlanSkuTier
   }
 }
 
-module appService 'modules/app-service.bicep' = {
-  name: 'appService'
+module containerEnvironment 'modules/container-app-environment.bicep' = {
+  name: 'containerEnvironment'
   scope: rg
   params: {
-    name: names.app
+    name: names.containerEnvironment
     location: location
     tags: tags
-    appServicePlanId: appServicePlan.outputs.id
-    managedIdentityId: managedIdentity.outputs.id
-    managedIdentityClientId: managedIdentity.outputs.clientId
-    appInsightsConnectionString: appInsights.outputs.connectionString
-    aiEndpoint: foundryConnection.outputs.endpoint
-    aiModelDeployment: foundryModelDeployment
-    aiApiVersion: aiApiVersion
-    storageBlobEndpoint: storage.outputs.blobEndpoint
-    storageContainerName: storage.outputs.containerName
-    databaseUrlSecretUri: keyVault.outputs.databaseUrlSecretUri
-    authMode: authMode
-    alwaysOn: appServicePlanSkuTier == 'Free' ? false : appServiceAlwaysOn
-    logAnalyticsWorkspaceId: logAnalytics.outputs.id
+    logAnalyticsWorkspaceName: logAnalytics.outputs.name
   }
 }
 
@@ -255,8 +254,36 @@ module roleAssignments 'modules/role-assignments.bicep' = {
     principalId: managedIdentity.outputs.principalId
     keyVaultName: keyVault.outputs.name
     storageAccountName: storage.outputs.name
-    appInsightsName: appInsights.outputs.name
+    containerRegistryName: containerRegistry.outputs.name
   }
+}
+
+module containerApp 'modules/container-app.bicep' = if (deployContainerApp) {
+  name: 'containerApp'
+  scope: rg
+  params: {
+    name: names.containerApp
+    location: location
+    tags: tags
+    environmentId: containerEnvironment.outputs.id
+    containerImage: '${containerRegistry.outputs.loginServer}/phoenixai:${containerImageTag}'
+    registryServer: containerRegistry.outputs.loginServer
+    managedIdentityId: managedIdentity.outputs.id
+    managedIdentityClientId: managedIdentity.outputs.clientId
+    appInsightsConnectionString: appInsights.outputs.connectionString
+    aiEndpoint: foundryConnection.outputs.endpoint
+    aiModelDeployment: foundryModelDeployment
+    aiApiVersion: aiApiVersion
+    storageBlobEndpoint: storage.outputs.blobEndpoint
+    storageContainerName: storage.outputs.containerName
+    databaseUrlSecretUri: keyVault.outputs.databaseUrlSecretUri
+    authMode: authMode
+    minReplicas: containerMinReplicas
+    maxReplicas: containerMaxReplicas
+  }
+  dependsOn: [
+    roleAssignments
+  ]
 }
 
 // ---------------------------------------------------------------------------
@@ -268,7 +295,7 @@ module alerts 'modules/alerts.bicep' = {
   scope: rg
   params: {
     tags: tags
-    appServiceId: appService.outputs.id
+    appInsightsId: appInsights.outputs.id
     alertEmailAddress: alertEmailAddress
   }
 }
@@ -279,9 +306,12 @@ module alerts 'modules/alerts.bicep' = {
 
 output resourceGroupName string = rg.name
 output location string = location
-output appServiceName string = appService.outputs.name
-output appServiceUrl string = appService.outputs.url
-output appServiceDefaultHostname string = appService.outputs.defaultHostname
+output containerAppName string = deployContainerApp ? containerApp!.outputs.name : ''
+output containerAppUrl string = deployContainerApp ? containerApp!.outputs.url : ''
+output containerAppFqdn string = deployContainerApp ? containerApp!.outputs.fqdn : ''
+output containerRegistryName string = containerRegistry.outputs.name
+output containerRegistryLoginServer string = containerRegistry.outputs.loginServer
+output containerEnvironmentName string = containerEnvironment.outputs.name
 output managedIdentityClientId string = managedIdentity.outputs.clientId
 output managedIdentityPrincipalId string = managedIdentity.outputs.principalId
 output keyVaultName string = keyVault.outputs.name
@@ -290,5 +320,6 @@ output storageBlobEndpoint string = storage.outputs.blobEndpoint
 output postgresFqdn string = postgres.outputs.fqdn
 output logAnalyticsWorkspaceId string = logAnalytics.outputs.id
 output appInsightsName string = appInsights.outputs.name
+output foundryAccountName string = foundryConnection.outputs.accountName
 output foundryEndpoint string = foundryConnection.outputs.endpoint
 output foundryModelDeployment string = foundryModelDeployment

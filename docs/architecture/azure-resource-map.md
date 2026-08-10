@@ -4,49 +4,47 @@
 > **No secrets, connection strings, keys, or credentials appear in this file.**
 > Keep synchronized with [component-inventory.md](./component-inventory.md) and the Bicep under `infra/`.
 >
-> **Phoenix AI v2.0 (`/v2/*`, ADR-0004) introduces NO new Azure resources.** It ships inside the
-> existing Next.js standalone bundle on the same App Service and reuses the same Foundry/Azure OpenAI,
+> **Phoenix AI v2.0 (`/v2/*`, ADR-0004) introduces NO additional Azure resources.** It ships inside the
+> existing Next.js standalone bundle in the same Container App and reuses the same environment-owned Azure AI,
 > Application Insights, Key Vault, and Managed Identity resources. The Azure footprint below is unchanged.
 
 ## Environment
 
 | Property | Value |
 | --- | --- |
-| Subscription | `ME-MngEnvMCAP682563-mkhalib-1` |
-| Primary resource group | `rg-phoenixai-demo` |
-| Region | `southeastasia` |
-| Naming token | `yun55ezsi4yoq` |
-| Live URL | https://app-phoenixai-yun55ezsi4yoq.azurewebsites.net |
+| Subscription | `BFG Solutions-JDNAINexus` (`376a2984-f8d4-46e3-a1cb-90f58274d2dc`) |
+| Primary resource group | `rg-phoenixai-bfgs-demo` |
+| Region | `eastus2` |
+| Naming token | Deterministic `uniqueString(subscription().id, resourceGroupName)` deployment output |
+| Live URL | `https://ca-phoenixai-<token>.<container-apps-domain>` (resolved after deployment) |
 | IaC root | [`infra/main.bicep`](../../infra/main.bicep) · [`infra/main.bicepparam`](../../infra/main.bicepparam) |
 
-## Resource mapping (rg-phoenixai-demo)
+## Resource mapping (rg-phoenixai-bfgs-demo)
 
 | Logical Component | Azure Service | Resource Name | IaC Module | Application Component | Environment |
 | --- | --- | --- | --- | --- | --- |
-| Web runtime | App Service (Linux, P1v3) | `app-phoenixai-yun55ezsi4yoq` | `infra/modules/app-service.bicep` | APP-NEXT / INFRA-APPSERVICE | demo |
-| Compute plan | App Service Plan | `plan-phoenixai-yun55ezsi4yoq` | `infra/modules/app-service-plan.bicep` | INFRA-PLAN | demo |
-| Relational database | PostgreSQL Flexible Server | `psql-phoenixai-yun55ezsi4yoq` | `infra/modules/postgresql.bicep` | DB-POSTGRES | demo |
-| File storage | Storage Account (Blob) | `stphxyun55ezsi4yoq` (container `clinical-uploads`) | `infra/modules/storage.bicep` | STORAGE-BLOB (OPTIONAL) | demo |
-| Secret store | Key Vault | `kv-phx-yun55ezsi4yoq` | `infra/modules/key-vault.bicep` | INFRA-KV | demo |
-| Workload identity | User-assigned Managed Identity | `id-phoenixai-yun55ezsi4yoq` | `infra/modules/managed-identity.bicep` | INFRA-MI | demo |
-| Log store | Log Analytics Workspace | `log-phoenixai-yun55ezsi4yoq` | `infra/modules/log-analytics.bicep` | INFRA-LAW | demo |
-| Telemetry | Application Insights | `appi-phoenixai-yun55ezsi4yoq` | `infra/modules/application-insights.bicep` | OBS-APPINSIGHTS | demo |
-| Alerting | Metric Alert (HTTP 5xx) | `alert-phoenixai-http5xx` | `infra/modules/alerts.bicep` | INFRA-ALERTS | demo |
+| Web runtime | Azure Container Apps Consumption | `ca-phoenixai-<token>` | `infra/modules/container-app.bicep` | APP-NEXT / INFRA-CONTAINERAPP | bfgs-demo |
+| Runtime environment | Container Apps managed environment | `cae-phoenixai-<token>` | `infra/modules/container-app-environment.bicep` | INFRA-ACA-ENV | bfgs-demo |
+| Image registry | Azure Container Registry Basic | `acrphx<token>` | `infra/modules/container-registry.bicep` | INFRA-ACR | bfgs-demo |
+| Retired web runtime source | Not deployed | — | `infra/modules/app-service.bicep` | INFRA-APPSERVICE (DEPRECATED) | none |
+| Retired compute-plan source | Not deployed | — | `infra/modules/app-service-plan.bicep` | INFRA-PLAN (DEPRECATED) | none |
+| AI model | Azure AI Services S0 | `aif-phoenixai-<token>` (`gpt-4o` 2024-11-20 GlobalStandard) | `infra/modules/foundry-connection.bicep` | AZ-FOUNDRY | bfgs-demo |
+| Relational database | PostgreSQL Flexible Server | `psql-phoenixai-<token>` | `infra/modules/postgresql.bicep` | DB-POSTGRES | bfgs-demo |
+| File storage | Storage Account (Blob) | `stphx<token>` (container `clinical-uploads`) | `infra/modules/storage.bicep` | STORAGE-BLOB (OPTIONAL) | bfgs-demo |
+| Secret store | Key Vault | `kv-phx-<token>` | `infra/modules/key-vault.bicep` | INFRA-KV | bfgs-demo |
+| Workload identity | User-assigned Managed Identity | `id-phoenixai-<token>` | `infra/modules/managed-identity.bicep` | INFRA-MI | bfgs-demo |
+| Log store | Log Analytics Workspace | `log-phoenixai-<token>` | `infra/modules/log-analytics.bicep` | INFRA-LAW | bfgs-demo |
+| Telemetry | Application Insights | `appi-phoenixai-<token>` | `infra/modules/application-insights.bicep` | OBS-APPINSIGHTS | bfgs-demo |
+| Alerting | Metric Alert (failed requests) | `alert-phoenixai-failed-requests` | `infra/modules/alerts.bicep` | INFRA-ALERTS | demo |
 | Alerting | Metric Alert (response time) | `alert-phoenixai-response-time` | `infra/modules/alerts.bicep` | INFRA-ALERTS | demo |
 | Alerting | Action Group | `ag-phoenixai-ops` | `infra/modules/alerts.bicep` | INFRA-ALERTS | demo |
-| RBAC | Role assignments (MI → AOAI/Storage/KV) | (scoped assignments) | `infra/modules/role-assignments.bicep` | INFRA-ROLES | demo |
-
-## External resource (consumed, not owned by this RG)
-
-| Logical Component | Azure Service | Resource Name | Resource Group / Region | Application Component | Wiring |
-| --- | --- | --- | --- | --- | --- |
-| AI model | Microsoft Foundry / Azure OpenAI | `aif-yfjw6y` (deployments: `gpt-4o`, `text-embedding-3-small`; api `2024-10-21`) | `rg-aisgemini-dev` / `eastus2` | AZ-FOUNDRY | `infra/modules/foundry-connection.bicep` + managed identity |
+| RBAC | Role assignments (MI → AI/ACR/Storage/KV) | (scoped assignments) | `infra/modules/role-assignments.bicep`, `container-registry.bicep` | INFRA-ROLES | demo |
 
 ## Notes
 
-- **DATABASE_URL** is a direct App Service application setting (MCAPS forces Key Vault public
-  network access `Disabled`), not a Key Vault reference. It is never reproduced in this document.
+- **DATABASE_URL** is stored in Key Vault and consumed through a Container Apps Key Vault-backed secret.
+  It is never reproduced in this document.
 - Blob Storage is provisioned and reachable (readiness `blob-storage=ok`) but **no UI workflow
   persists files** — see [current-architecture.md §4](./current-architecture.md#4-source-vs-deployment).
-- The application authenticates to Foundry and Storage using the **user-assigned managed
-  identity** (`id-phoenixai-yun55ezsi4yoq`); no keys are stored in application settings.
+- The application authenticates to Azure AI and Storage using the **user-assigned managed
+  identity** (`id-phoenixai-<token>`); no keys are stored in application settings.

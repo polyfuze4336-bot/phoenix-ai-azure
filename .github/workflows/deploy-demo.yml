@@ -24,9 +24,7 @@ concurrency:
 env:
   AZURE_LOCATION: eastus2
   DEPLOY_NAME: phoenixai-demo-${{ github.run_number }}
-  # Standard tier so the App Service plan supports the staging deployment slot.
-  PLAN_SKU_NAME: S1
-  PLAN_SKU_TIER: Standard
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   deploy:
@@ -62,10 +60,10 @@ jobs:
             --location "${AZURE_LOCATION}" \
             --template-file infra/main.bicep \
             --parameters infra/main.bicepparam \
-            --parameters appServicePlanSkuName="${PLAN_SKU_NAME}" appServicePlanSkuTier="${PLAN_SKU_TIER}" authMode=demo
+            --parameters containerImageTag="${IMAGE_TAG}" authMode=demo
 
-      # 4. Deploy infrastructure and capture outputs.
-      - name: Deploy infrastructure
+      # 4. Bootstrap dependencies first so ACR exists before the image build.
+      - name: Bootstrap infrastructure
         env:
           PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
         run: |
@@ -74,12 +72,31 @@ jobs:
             --location "${AZURE_LOCATION}" \
             --template-file infra/main.bicep \
             --parameters infra/main.bicepparam \
-            --parameters appServicePlanSkuName="${PLAN_SKU_NAME}" appServicePlanSkuTier="${PLAN_SKU_TIER}" authMode=demo
+            --parameters deployContainerApp=false containerImageTag="${IMAGE_TAG}" authMode=demo
           RG=$(az deployment sub show --name "${DEPLOY_NAME}" --query properties.outputs.resourceGroupName.value -o tsv)
-          APP=$(az deployment sub show --name "${DEPLOY_NAME}" --query properties.outputs.appServiceName.value -o tsv)
+          ACR=$(az deployment sub show --name "${DEPLOY_NAME}" --query properties.outputs.containerRegistryName.value -o tsv)
           echo "RG=${RG}" >> "$GITHUB_ENV"
+          echo "ACR=${ACR}" >> "$GITHUB_ENV"
+
+      # 5. Build in Azure because no local Docker engine is required.
+      - name: Build immutable image in ACR
+        run: az acr build --registry "${ACR}" --image "phoenixai:${IMAGE_TAG}" --file Dockerfile nextjs_space
+
+      # 6. Create or update the Container App with the image that now exists.
+      - name: Deploy Container App revision
+        env:
+          PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
+        run: |
+          az deployment sub create \
+            --name "${DEPLOY_NAME}" \
+            --location "${AZURE_LOCATION}" \
+            --template-file infra/main.bicep \
+            --parameters infra/main.bicepparam \
+            --parameters deployContainerApp=true containerImageTag="${IMAGE_TAG}" authMode=demo
+          APP=$(az deployment sub show --name "${DEPLOY_NAME}" --query properties.outputs.containerAppName.value -o tsv)
+          APP_URL=$(az deployment sub show --name "${DEPLOY_NAME}" --query properties.outputs.containerAppUrl.value -o tsv)
           echo "APP=${APP}" >> "$GITHUB_ENV"
-          echo "STAGING_URL=https://${APP}-staging.azurewebsites.net" >> "$GITHUB_ENV"
+          echo "APP_URL=${APP_URL}" >> "$GITHUB_ENV"
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -92,34 +109,7 @@ jobs:
         working-directory: nextjs_space
         run: npm ci --legacy-peer-deps
 
-      # 5. Build the application (standalone) and package the App Service bundle.
-      - name: Build application (standalone)
-        working-directory: nextjs_space
-        env:
-          NEXT_OUTPUT_MODE: standalone
-        run: |
-          export NEXTAUTH_URL="https://${APP}.azurewebsites.net"
-          npm run db:generate
-          npm run build
-
-      - name: Package deployment bundle
-        working-directory: nextjs_space
-        run: |
-          set -euo pipefail
-          rm -rf deploy && mkdir deploy
-          # Standalone root holds node_modules + traced files + the app subdir.
-          cp -r .next/standalone/. deploy/
-          # Flatten the app subdir to the bundle root so `node server.js` runs at wwwroot.
-          cp -r deploy/nextjs_space/. deploy/
-          rm -rf deploy/nextjs_space
-          # Static assets are not included in the standalone output.
-          mkdir -p deploy/.next
-          cp -r .next/static deploy/.next/static
-          # Public assets.
-          if [ -d public ]; then cp -r public deploy/public; fi
-          (cd deploy && zip -qr ../deploy.zip .)
-
-      # 6. Run database migration safely (non-destructive; skipped if no DB configured).
+      # 7. Run database migration safely (non-destructive; skipped if no DB configured).
       - name: Run database migration (safe)
         working-directory: nextjs_space
         env:
@@ -134,46 +124,28 @@ jobs:
           npm run db:migrate:deploy
           npm run db:migrate:status
 
-      # 7. Deploy to the App Service STAGING slot.
-      - name: Ensure staging slot exists
-        run: az webapp deployment slot create -g "${RG}" -n "${APP}" --slot staging 2>/dev/null || echo "staging slot already present."
-
-      - name: Deploy to staging slot
+      # 8. Verify the active Container App revision.
+      - name: Health check
         run: |
-          az webapp deploy \
-            --resource-group "${RG}" \
-            --name "${APP}" \
-            --slot staging \
-            --type zip \
-            --src-path nextjs_space/deploy.zip \
-            --async false
-
-      # 8. Run health check against the staging slot.
-      - name: Health check (staging)
-        run: |
-          URL="${STAGING_URL}/api/health/live"
+          URL="${APP_URL}/api/health/live"
           for i in $(seq 1 30); do
             code=$(curl -s -o /dev/null -w "%{http_code}" "${URL}" || true)
-            if [ "${code}" = "200" ]; then echo "Staging is healthy."; exit 0; fi
+            if [ "${code}" = "200" ]; then echo "Container App is healthy."; exit 0; fi
             echo "Attempt ${i}: HTTP ${code} — retrying in 10s"; sleep 10
           done
-          echo "Staging health check failed." >&2
+          echo "Container App health check failed." >&2
           exit 1
 
       - name: Install Playwright browser (Chromium)
         working-directory: nextjs_space
         run: npx playwright install --with-deps chromium
 
-      # 9. Run smoke tests against staging.
-      - name: Smoke tests (staging)
+      # 9. Run smoke tests against the deployed revision.
+      - name: Smoke tests
         working-directory: nextjs_space
-        run: PLAYWRIGHT_BASE_URL="${STAGING_URL}" npm run test:smoke
+        run: PLAYWRIGHT_BASE_URL="${APP_URL}" npm run test:smoke
 
-      # 10. Run critical HCP + community user journeys against staging.
-      - name: Critical journeys (staging)
+      # 10. Run critical HCP + community user journeys.
+      - name: Critical journeys
         working-directory: nextjs_space
-        run: PLAYWRIGHT_BASE_URL="${STAGING_URL}" npm run test:journeys
-
-      # 11. Promote — swap staging into production only after all tests passed.
-      - name: Swap staging into production
-        run: az webapp deployment slot swap -g "${RG}" -n "${APP}" --slot staging --target-slot production
+        run: PLAYWRIGHT_BASE_URL="${APP_URL}" npm run test:journeys

@@ -99,4 +99,5 @@ jobs:
             --name phoenixai-infra-${{ github.run_number }} \
             --location ${{ env.AZURE_LOCATION }} \
             --template-file ${{ env.TEMPLATE }} \
-            --parameters ${{ env.PARAMETERS }}
+            --parameters ${{ env.PARAMETERS }} \
+            --parameters deployContainerApp=false

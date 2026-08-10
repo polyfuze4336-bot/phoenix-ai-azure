@@ -1,5 +1,5 @@
 %% Phoenix AI — Current (AS-IS) high-level architecture
-%% Source of truth: repository at HEAD + live Azure environment (rg-phoenixai-demo, southeastasia).
+%% Source of truth: repository at HEAD + current customer environment (rg-phoenixai-bfgs-demo, eastus2).
 %% Annotations: ACTIVE = implemented & in use, DEMO = mock/fictional, OPTIONAL = configured but not wired to UI,
 %% LEGACY = retained-for-parity/not runtime, PLANNED = not implemented.
 flowchart TB
@@ -24,9 +24,10 @@ flowchart TB
         Telemetry["Telemetry Layer (lib/telemetry) — ACTIVE"]
     end
 
-    subgraph AZURE["Microsoft Azure (rg-phoenixai-demo)"]
-        AppService["Azure App Service (Linux, P1v3) — ACTIVE"]
-        Foundry["Microsoft Foundry / Azure OpenAI gpt-4o — ACTIVE"]
+    subgraph AZURE["Microsoft Azure (rg-phoenixai-bfgs-demo, eastus2)"]
+        ContainerApp["Azure Container Apps (Consumption) — ACTIVE"]
+        ACR["Azure Container Registry (Basic) — ACTIVE"]
+        Foundry["Environment-owned Azure AI Services gpt-4o — ACTIVE"]
         PostgreSQL["Azure Database for PostgreSQL Flexible Server — ACTIVE"]
         Blob["Azure Blob Storage (private clinical-uploads) — OPTIONAL"]
         KV["Azure Key Vault — ACTIVE"]
@@ -39,7 +40,7 @@ flowchart TB
     subgraph DEVOPS["Engineering"]
         GitHub["GitHub Repository — ACTIVE"]
         Actions["GitHub Actions (OIDC) — ACTIVE"]
-        Bicep["Bicep IaC (13 files) — ACTIVE"]
+        Bicep["Bicep IaC — ACTIVE"]
     end
 
     Users --> Landing
@@ -67,15 +68,17 @@ flowchart TB
     Storage -.->|"managed identity (not wired to UI)"| Blob
     Auth -.->|"AUTH_MODE=entra (opt-in)"| KV
 
-    Next --> AppService
-    AppService --> Insights
+    Next --> ContainerApp
+    ACR -->|"managed-identity image pull"| ContainerApp
+    ContainerApp --> Insights
     Telemetry --> Insights
     Insights --> Logs
     Alerts --> Insights
-    KV --> AppService
+    KV -->|"Key Vault secret reference"| ContainerApp
     MI --> Foundry
     MI --> Blob
 
     GitHub --> Actions
     Actions -->|"OIDC"| Bicep
-    Actions -->|"OIDC"| AppService
+    Actions -->|"OIDC / remote image build"| ACR
+    Actions -->|"OIDC / Bicep"| ContainerApp
