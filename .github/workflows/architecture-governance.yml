@@ -87,6 +87,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/mmd-out
+          printf '%s\n' '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > /tmp/puppeteer-config.json
           shopt -s nullglob
           FILES=(docs/architecture/**/*.mmd docs/architecture/*.mmd)
           if [ ${#FILES[@]} -eq 0 ]; then
@@ -95,7 +96,7 @@ jobs:
           fi
           for f in "${FILES[@]}"; do
             echo "Validating $f"
-            mmdc --input "$f" --output "/tmp/mmd-out/$(basename "$f").svg"
+            mmdc --puppeteerConfigFile /tmp/puppeteer-config.json --input "$f" --output "/tmp/mmd-out/$(basename "$f").svg"
           done
           echo "All Mermaid diagrams valid."
 
