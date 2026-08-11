@@ -59,7 +59,7 @@ flowchart TB
     subgraph CLIENT["Client Experience"]
         Landing["Experience Selector Landing — ACTIVE"]
         HCP["Original HCP Portal: chat, analysis, TBSA, Parkland, guidelines, history — ACTIVE"]
-        Community["Original Community Portal: chat, image-check, assessment, articles, first-aid — ACTIVE"]
+        Community["Original Community Portal: chat, assessment, articles, first-aid — ACTIVE"]
         V2["Phoenix AI v2.0 Experience (/v2/*): HCP workspace + Community portal — ACTIVE (flag-gated)"]
         PWA["PWA / Mobile + EN/BM toggle — ACTIVE"]
     end
@@ -150,7 +150,7 @@ Companion diagrams:
 | --- | --- | --- |
 | Experience selector landing (routes to Original portals or v2) | `app/page.tsx`, `app/_components/experience-selector-client.tsx` (degrades to `app/_components/landing-client.tsx` when v2 disabled) | Implemented |
 | HCP portal (chat, analysis, TBSA, Parkland, guidelines, history) | `app/hcp/*` | Implemented |
-| Community portal (chat, image-check, assessment, articles, first-aid) | `app/community/*` | Implemented |
+| Community portal (chat, assessment, articles, first-aid) | `app/community/*` | Implemented |
 | **Phoenix AI v2.0 experience** — additive, isolated, feature-flag gated; reuses the same API contracts and Azure services (ADR-0004) | `app/v2/*`, `components/v2/*`, `lib/v2/*` | Implemented |
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |
 | English / Bahasa Malaysia | `components/language-provider.tsx`, `components/language-toggle.tsx`, `lib/i18n.ts` | Implemented |

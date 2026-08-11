@@ -1,14 +1,13 @@
 'use client';
 
 import { useLanguage } from '@/components/language-provider';
-import { Heart, ClipboardCheck, Camera, MessageCircle, Phone, AlertTriangle } from 'lucide-react';
+import { Heart, ClipboardCheck, MessageCircle, Phone, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 const quickActions = [
   { href: '/community/first-aid', icon: Heart, labelKey: 'community.firstaid_title', descKey: 'community.firstaid_desc', color: 'from-red-500 to-red-600' },
   { href: '/community/assessment', icon: ClipboardCheck, labelKey: 'community.assessment_title', descKey: 'community.assessment_desc', color: 'from-orange-500 to-amber-500' },
-  { href: '/community/image-check', icon: Camera, labelKey: 'community.imagecheck_title', descKey: 'community.imagecheck_desc', color: 'from-[#0F9B8E] to-teal-600' },
   { href: '/community/chat', icon: MessageCircle, labelKey: 'community.chat', descKey: 'community.welcome_desc', color: 'from-blue-500 to-blue-600' },
 ];
 
