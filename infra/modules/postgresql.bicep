@@ -31,7 +31,7 @@ param skuTier string = 'Burstable'
 param storageSizeGB int = 32
 
 @description('PostgreSQL major version.')
-param postgresVersion string = '16'
+param postgresVersion string = '15'
 
 @description('Initial application database name.')
 param databaseName string = 'phoenix'

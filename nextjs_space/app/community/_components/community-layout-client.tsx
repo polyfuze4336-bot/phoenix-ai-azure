@@ -3,7 +3,7 @@
 import { useLanguage } from '@/components/language-provider';
 import { LanguageToggleDark } from '@/components/language-toggle';
 import { PhoenixLogo } from '@/components/phoenix-logo';
-import { Home, Heart, ClipboardCheck, Camera, BookOpen, MessageCircle, ArrowLeft, Menu, X } from 'lucide-react';
+import { Home, Heart, ClipboardCheck, BookOpen, MessageCircle, ArrowLeft, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, ReactNode } from 'react';
@@ -12,7 +12,6 @@ const navItems = [
   { href: '/community', icon: Home, labelKey: 'community.home' },
   { href: '/community/first-aid', icon: Heart, labelKey: 'community.firstaid' },
   { href: '/community/assessment', icon: ClipboardCheck, labelKey: 'community.assessment' },
-  { href: '/community/image-check', icon: Camera, labelKey: 'community.imagecheck' },
   { href: '/community/articles', icon: BookOpen, labelKey: 'community.articles' },
   { href: '/community/chat', icon: MessageCircle, labelKey: 'community.chat' },
 ];

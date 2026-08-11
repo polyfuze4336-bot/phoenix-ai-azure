@@ -37,6 +37,9 @@ param foundryModelDeployment string = 'gpt-4o'
 @description('Azure OpenAI API version used by the app.')
 param aiApiVersion string = '2024-10-21'
 
+@description('Enable reuse of an existing Foundry / Azure OpenAI account. Set to true to grant the app access to an existing account; defaults to false to allow deployments without Foundry.')
+param enableFoundryConnection bool = false
+
 // ---------------------------------------------------------------------------
 // PostgreSQL
 // ---------------------------------------------------------------------------
@@ -196,7 +199,7 @@ module keyVault 'modules/key-vault.bicep' = {
 // Reused Foundry model connection (cross-resource-group RBAC + endpoint)
 // ---------------------------------------------------------------------------
 
-module foundryConnection 'modules/foundry-connection.bicep' = {
+module foundryConnection 'modules/foundry-connection.bicep' = if (enableFoundryConnection) {
   name: 'foundryConnection'
   scope: resourceGroup(foundryResourceGroupName)
   params: {
@@ -232,7 +235,9 @@ module appService 'modules/app-service.bicep' = {
     managedIdentityId: managedIdentity.outputs.id
     managedIdentityClientId: managedIdentity.outputs.clientId
     appInsightsConnectionString: appInsights.outputs.connectionString
-    aiEndpoint: foundryConnection.outputs.endpoint
+    // Pass the Foundry endpoint if the reuse flag is enabled; otherwise pass
+    // an empty string so the app deploys without AI integration.
+    aiEndpoint: enableFoundryConnection ? foundryConnection.outputs.endpoint : ''
     aiModelDeployment: foundryModelDeployment
     aiApiVersion: aiApiVersion
     storageBlobEndpoint: storage.outputs.blobEndpoint
@@ -290,5 +295,5 @@ output storageBlobEndpoint string = storage.outputs.blobEndpoint
 output postgresFqdn string = postgres.outputs.fqdn
 output logAnalyticsWorkspaceId string = logAnalytics.outputs.id
 output appInsightsName string = appInsights.outputs.name
-output foundryEndpoint string = foundryConnection.outputs.endpoint
+output foundryEndpoint string = enableFoundryConnection ? foundryConnection.outputs.endpoint : ''
 output foundryModelDeployment string = foundryModelDeployment
