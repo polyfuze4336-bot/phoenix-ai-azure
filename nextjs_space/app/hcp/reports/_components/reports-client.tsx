@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { FileText, Printer, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { DemoBadge } from '@/components/demo-badge';
-import type { DemoCase } from '@/lib/demo-data';
-import { caseTypeLabel, formatDate, statusStyles, severityStyles } from '@/lib/format';
+import { DemoBadge } from '@/components/v2/demo-badge';
+import type { DemoCase } from '@/lib/v2/demo-data';
+import { caseTypeLabel, formatDate, statusStyles, severityStyles } from '@/lib/v2/format';
 
 function ReportView({ c }: { c: DemoCase }) {
   const status = statusStyles(c.status);

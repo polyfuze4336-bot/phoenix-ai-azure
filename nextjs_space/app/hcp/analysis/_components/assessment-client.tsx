@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 // import { StructuredAnalysis, type StructuredAnalysisData } from './structured-analysis';
-import { AnalysisInfoPanel, AssuranceStatusLine } from '@/components/analysis-info-panel';
+import { AnalysisInfoPanel, AssuranceStatusLine } from '@/components/v2/analysis-info-panel';
 import type { AnalysisMetadata } from '@/lib/ai/analysis/metadata';
 
 interface AnalysisResult {
@@ -314,7 +314,7 @@ export function AssessmentClient() {
           {!analyzing && result ? (
             <>
               {result.meta ? <AssuranceStatusLine meta={result.meta} /> : null}
-              {/* StructuredAnalysis component not yet available; using fallback rendering */}
+              {/* StructuredAnalysis component not yet available */}
               {/* {result.structured ? (
                 <StructuredAnalysis data={result.structured} onRefine={refineAnalysis} refining={refining} />
               ) : ( */}

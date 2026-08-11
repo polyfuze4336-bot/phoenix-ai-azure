@@ -8,12 +8,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { DemoBadge, SyntheticDataNote } from '@/components/demo-badge';
-import { ClinicalReviewPanel } from '@/components/clinical-review-panel';
-import type { DemoCase } from '@/lib/demo-data';
+import { DemoBadge, SyntheticDataNote } from '@/components/v2/demo-badge';
+import { ClinicalReviewPanel } from '@/components/v2/clinical-review-panel';
+import type { DemoCase } from '@/lib/v2/demo-data';
 import {
   caseTypeLabel, formatDate, statusStyles, priorityStyles, severityStyles, confidenceLabel,
-} from '@/lib/format';
+} from '@/lib/v2/format';
 
 function Fact({ icon: Icon, label, value }: { icon: typeof MapPin; label: string; value: string }) {
   return (
@@ -38,7 +38,7 @@ export function CaseDetailClient({ c }: { c: DemoCase }) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button asChild variant="ghost" size="sm">
-          <Link href="/hcp/cases">
+          <Link href="/v2/hcp/cases">
             <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to cases
           </Link>
         </Button>
@@ -84,14 +84,14 @@ export function CaseDetailClient({ c }: { c: DemoCase }) {
               <p className="mt-2 text-sm text-muted-foreground">{c.summary}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline">
-                  <Link href="/hcp/analysis"><FileText className="mr-1.5 h-4 w-4" /> New assessment</Link>
+                  <Link href="/v2/hcp/analysis"><FileText className="mr-1.5 h-4 w-4" /> New assessment</Link>
                 </Button>
                 <Button asChild size="sm" variant="outline">
-                  <Link href="/hcp/chat"><MessageSquarePlus className="mr-1.5 h-4 w-4" /> Ask AI assistant</Link>
+                  <Link href="/v2/hcp/chat"><MessageSquarePlus className="mr-1.5 h-4 w-4" /> Ask AI assistant</Link>
                 </Button>
                 {c.tbsaPercent ? (
                   <Button asChild size="sm" variant="outline">
-                    <Link href="/hcp/calculators">Fluid calculator</Link>
+                    <Link href="/v2/hcp/calculators">Fluid calculator</Link>
                   </Button>
                 ) : null}
               </div>

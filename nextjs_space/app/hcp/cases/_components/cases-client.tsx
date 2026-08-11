@@ -4,10 +4,10 @@ import { useMemo, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { CaseCard } from '@/components/case-card';
-import { SyntheticDataNote } from '@/components/demo-badge';
-import type { DemoCase, CaseStatus, CaseType } from '@/lib/demo-data';
-import { caseTypeLabel } from '@/lib/format';
+import { CaseCard } from '@/components/v2/case-card';
+import { SyntheticDataNote } from '@/components/v2/demo-badge';
+import type { DemoCase, CaseStatus, CaseType } from '@/lib/v2/demo-data';
+import { caseTypeLabel } from '@/lib/v2/format';
 
 const STATUS_FILTERS: Array<{ key: CaseStatus | 'ALL'; label: string }> = [
   { key: 'ALL', label: 'All' },

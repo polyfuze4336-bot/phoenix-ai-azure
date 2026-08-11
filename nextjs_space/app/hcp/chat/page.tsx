@@ -1,5 +1,13 @@
-import { HcpChatClient } from './_components/hcp-chat-client';
+import type { Metadata } from 'next';
+import { PhoenixV2Shell } from '@/components/v2/phoenix-v2-shell';
+import { ChatClient } from './_components/chat-client';
 
-export default function HcpChatPage() {
-  return <HcpChatClient />;
+export const metadata: Metadata = { title: 'AI Assistant · Phoenix AI v2.0' };
+
+export default function V2ChatPage() {
+  return (
+    <PhoenixV2Shell variant="hcp" title="AI Assistant" subtitle="Clinical questions on burn &amp; wound care">
+      <ChatClient />
+    </PhoenixV2Shell>
+  );
 }

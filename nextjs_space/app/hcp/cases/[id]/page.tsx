@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { PhoenixShell } from '@/components/phoenix-v2-shell';
+import { PhoenixV2Shell } from '@/components/v2/phoenix-v2-shell';
 import { CaseDetailClient } from './_components/case-detail-client';
-import { getDemoCaseById, getDemoCases } from '@/lib/demo-data';
-import { isFeatureEnabled } from '@/lib/feature-flags';
+import { getDemoCaseById, getDemoCases } from '@/lib/v2/demo-data';
+import { isFeatureEnabled } from '@/lib/v2/feature-flags';
 
 export function generateStaticParams() {
   return getDemoCases().map((c) => ({ id: c.id }));
@@ -16,8 +16,8 @@ export default function V2CaseDetailPage({ params }: { params: { id: string } })
   const c = getDemoCaseById(params.id);
   if (!c) notFound();
   return (
-    <PhoenixShell variant="hcp" title={c.alias} subtitle="Case detail">
+    <PhoenixV2Shell variant="hcp" title={c.alias} subtitle="Case detail">
       <CaseDetailClient c={c} />
-    </PhoenixShell>
+    </PhoenixV2Shell>
   );
 }

@@ -1,17 +1,17 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Flame, FolderKanban, Gauge, TrendingUp } from 'lucide-react';
-import { PhoenixShell } from '@/components/phoenix-v2-shell';
-import { StatCard } from '@/components/stat-card';
-import { SectionHeading } from '@/components/section-heading';
-import { SyntheticDataNote } from '@/components/demo-badge';
-import { MiniBarChart, ColumnChart } from '@/components/mini-bar-chart';
-import { DonutChart } from '@/components/donut-chart';
+import { PhoenixV2Shell } from '@/components/v2/phoenix-v2-shell';
+import { StatCard } from '@/components/v2/stat-card';
+import { SectionHeading } from '@/components/v2/section-heading';
+import { SyntheticDataNote } from '@/components/v2/demo-badge';
+import { MiniBarChart, ColumnChart } from '@/components/v2/mini-bar-chart';
+import { DonutChart } from '@/components/v2/donut-chart';
 import {
   getDashboardStats, getCaseTypeDistribution, getSeverityDistribution,
   getStatusDistribution, getWeeklyVolume,
-} from '@/lib/demo-data';
-import { isFeatureEnabled } from '@/lib/feature-flags';
+} from '@/lib/v2/demo-data';
+import { isFeatureEnabled } from '@/lib/v2/feature-flags';
 
 export const metadata: Metadata = { title: 'Insights · Phoenix AI v2.0' };
 
@@ -24,7 +24,7 @@ export default function V2InsightsPage() {
   const weekly = getWeeklyVolume();
 
   return (
-    <PhoenixShell variant="hcp" title="Insights" subtitle="Operational analytics (synthetic)">
+    <PhoenixV2Shell variant="hcp" title="Insights" subtitle="Operational analytics (synthetic)">
       <div className="space-y-8">
         <section>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
@@ -65,6 +65,6 @@ export default function V2InsightsPage() {
           activity, outcomes, or diagnostic performance.
         </p>
       </div>
-    </PhoenixShell>
+    </PhoenixV2Shell>
   );
 }
