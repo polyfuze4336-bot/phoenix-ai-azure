@@ -50,8 +50,17 @@ Thumbs.db
 deploy/
 azd-env-name
 
-# Test artifacts
-/test-results/
-/playwright-report/
-/playwright/.cache/
+# Compiled Bicep + release parameter files (regenerable build artifacts; params may hold secrets)
+infra/main.json
+infra/params.release.json
+
+# Test artifacts (Playwright). The visual baseline under tests/visual/baseline/ IS committed.
+test-results/
+playwright-report/
+playwright/.cache/
+blob-report/
 coverage/
+
+# Responsible AI evaluation summary (transient CI artifact — do NOT commit)
+nextjs_space/scripts/rai-evaluation-summary.json
+nextjs_space/scripts/rai-evaluation-summary.md

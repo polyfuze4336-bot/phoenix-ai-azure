@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from './language-provider';
+import { PhoenixLogo } from './phoenix-logo';
 import { Download, X, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -121,9 +121,7 @@ export function PwaInstallPrompt() {
               </div>
             ) : (
               <div className="p-4 flex items-center gap-4">
-                <div className="relative w-12 h-12 shrink-0">
-                  <Image src="/logo.png" alt="Phoenix AI" fill className="object-contain" />
-                </div>
+                <PhoenixLogo className="w-12 h-12 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-display font-bold text-gray-900 text-sm">{txt.title}</h3>
                   <p className="text-xs text-gray-500 mt-0.5">{txt.desc}</p>

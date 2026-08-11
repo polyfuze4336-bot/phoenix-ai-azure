@@ -1,0 +1,90 @@
+%% Phoenix AI — Current (AS-IS) high-level architecture
+%% Source of truth: repository at HEAD + current customer environment (rg-phoenixai-bfgs-demo, eastus2).
+%% Annotations: ACTIVE = implemented & in use, DEMO = mock/fictional, OPTIONAL = configured but not wired to UI,
+%% LEGACY = retained-for-parity/not runtime, PLANNED = not implemented.
+flowchart TB
+    Users["Users (Clinicians & Public)"]
+    Operators["BFG Solutions Entra group (3 members)\nDemo RG Owner — ACTIVE"]
+
+    subgraph CLIENT["Client Experience"]
+        Landing["Experience Selector Landing — ACTIVE"]
+        HCP["Original HCP Portal: chat, analysis, TBSA, Parkland, guidelines, history — ACTIVE"]
+        Community["Original Community Portal: chat, image-check, assessment, articles, first-aid — ACTIVE"]
+        V2["Phoenix AI v2.0 Experience (/v2/*): HCP workspace + Community portal — ACTIVE (flag-gated)"]
+        PWA["PWA / Mobile + EN/BM toggle — ACTIVE"]
+    end
+
+    subgraph APP["Phoenix AI Application (Next.js 14 App Router)"]
+        Next["Next.js Server (standalone) — ACTIVE"]
+        MW["middleware.ts route protection — ACTIVE"]
+        API["API Routes (15) — ACTIVE"]
+        Auth["Auth Layer: demo default — DEMO / Entra — OPTIONAL"]
+        AIProvider["AI Provider Layer (lib/ai) — ACTIVE"]
+        Data["Data Access Layer (lib/db, Prisma) — ACTIVE"]
+        Storage["Storage Provider Layer (lib/storage) — OPTIONAL"]
+        Telemetry["Telemetry Layer (lib/telemetry) — ACTIVE"]
+    end
+
+    subgraph AZURE["Microsoft Azure (rg-phoenixai-bfgs-demo, eastus2)"]
+        ContainerApp["Azure Container Apps (Consumption) — ACTIVE"]
+        ACR["Azure Container Registry (Basic) — ACTIVE"]
+        Foundry["Environment-owned Azure AI Services gpt-4o — ACTIVE"]
+        PostgreSQL["Azure Database for PostgreSQL Flexible Server — ACTIVE"]
+        Blob["Azure Blob Storage (private clinical-uploads) — OPTIONAL"]
+        KV["Azure Key Vault — ACTIVE"]
+        MI["User-assigned Managed Identity — ACTIVE"]
+        Insights["Application Insights — ACTIVE"]
+        Logs["Log Analytics — ACTIVE"]
+        Alerts["Metric Alerts + Action Group — ACTIVE"]
+        ARM["Azure Resource Manager\nRG-scoped operator RBAC — ACTIVE"]
+    end
+
+    subgraph DEVOPS["Engineering"]
+        GitHub["GitHub Repository — ACTIVE"]
+        Actions["GitHub Actions (OIDC) — ACTIVE"]
+        Bicep["Bicep IaC — ACTIVE"]
+    end
+
+    Users --> Landing
+    Users --> HCP
+    Users --> Community
+    Users --> V2
+    Users --> PWA
+    Operators -->|"Owner on rg-phoenixai-bfgs-demo only"| ARM
+
+    Landing --> Next
+    HCP --> Next
+    Community --> Next
+    V2 --> Next
+    PWA --> Next
+
+    Next --> MW
+    MW --> API
+    API --> Auth
+    API --> AIProvider
+    API --> Data
+    API --> Storage
+    Next --> Telemetry
+
+    AIProvider -->|"managed identity"| Foundry
+    Data -->|"sslmode=require"| PostgreSQL
+    Storage -.->|"managed identity (not wired to UI)"| Blob
+    Auth -.->|"AUTH_MODE=entra (opt-in)"| KV
+
+    Next --> ContainerApp
+    ACR -->|"managed-identity image pull"| ContainerApp
+    ContainerApp --> Insights
+    Telemetry --> Insights
+    Insights --> Logs
+    Alerts --> Insights
+    KV -->|"Key Vault secret reference"| ContainerApp
+    MI --> Foundry
+    MI --> Blob
+    ARM -.->|"control plane"| ContainerApp
+    ARM -.->|"control plane"| Foundry
+    ARM -.->|"control plane"| PostgreSQL
+
+    GitHub --> Actions
+    Actions -->|"OIDC"| Bicep
+    Actions -->|"OIDC / remote image build"| ACR
+    Actions -->|"OIDC / Bicep"| ContainerApp

@@ -2,8 +2,8 @@
 
 import { useLanguage } from '@/components/language-provider';
 import { LanguageToggleDark } from '@/components/language-toggle';
+import { PhoenixLogo } from '@/components/phoenix-logo';
 import { Home, Heart, ClipboardCheck, Camera, BookOpen, MessageCircle, ArrowLeft, Menu, X } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, ReactNode } from 'react';
@@ -28,9 +28,7 @@ export function CommunityLayoutClient({ children }: { children: ReactNode }) {
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 fixed top-0 left-0 h-full z-40">
         <div className="p-4 border-b border-gray-100">
           <Link href="/" className="flex items-center gap-3">
-            <div className="relative w-9 h-9">
-              <Image src="/logo.png" alt="Phoenix AI" fill className="object-contain" />
-            </div>
+            <PhoenixLogo className="w-9 h-9" />
             <div>
               <span className="font-display text-base font-bold text-gray-900">Phoenix AI</span>
               <p className="text-[10px] text-[#0F9B8E] font-medium">{t('community.portal')}</p>
@@ -66,7 +64,7 @@ export function CommunityLayoutClient({ children }: { children: ReactNode }) {
       <aside className={`fixed top-0 left-0 h-full w-64 bg-white z-50 transform transition-transform lg:hidden ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-4 border-b flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="relative w-8 h-8"><Image src="/logo.png" alt="Phoenix AI" fill className="object-contain" /></div>
+            <PhoenixLogo className="w-8 h-8" />
             <span className="font-display text-sm font-bold">Phoenix AI</span>
           </Link>
           <button onClick={() => setMobileOpen(false)}><X className="w-5 h-5" /></button>
@@ -95,9 +93,7 @@ export function CommunityLayoutClient({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-3">
               <button className="lg:hidden" onClick={() => setMobileOpen(true)}><Menu className="w-6 h-6 text-gray-600" /></button>
               <div className="lg:hidden flex items-center gap-2">
-                <div className="relative w-7 h-7">
-                  <Image src="/logo.png" alt="Phoenix AI" fill className="object-contain" />
-                </div>
+                <PhoenixLogo className="w-7 h-7" />
                 <span className="font-display text-sm font-bold text-gray-800">Phoenix AI</span>
               </div>
             </div>

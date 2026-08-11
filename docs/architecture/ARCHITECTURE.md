@@ -29,7 +29,7 @@ flowchart LR
     User([Clinician / Community user])
     subgraph Azure
       direction LR
-      App[Azure App Service - Linux, Node 22<br/>or Azure Container Apps<br/>Next.js 14 app]
+      App[Azure Container Apps Consumption<br/>Node 22, Next.js 14 standalone]
       AOAI[Azure OpenAI<br/>vision chat deployment]
       KV[Azure Key Vault<br/>secrets]
       AI[Application Insights<br/>optional telemetry]
@@ -42,12 +42,12 @@ flowchart LR
 
 ### Components
 
-- **Hosting** — Azure App Service (Linux, Node 22) or Azure Container Apps for the Next.js app.
+- **Hosting** — Azure Container Apps Consumption (Node 22) for the standalone Next.js app.
   The app's API routes proxy the LLM server-side, so the model key is never exposed to the browser.
 - **AI** — Azure OpenAI, a vision-capable chat-completions deployment, replacing the Abacus.AI
   endpoint. Request/response shape and Server-Sent-Events streaming are preserved.
-- **Secrets** — Azure Key Vault; the app reads configuration from App Service settings and
-  authenticates to Key Vault via **managed identity** (no secrets in source or images).
+- **Secrets** — Azure Key Vault; Container Apps resolves Key Vault-backed secrets through
+  **managed identity** (no secrets in source or images).
 - **Telemetry (optional)** — Application Insights for request/error monitoring.
 
 ## Non-negotiables
@@ -58,6 +58,6 @@ flowchart LR
 
 ## Open decisions
 
-- **Hosting choice** (App Service vs Container Apps) — to be finalised at the deployment step.
+- **Hosting choice** — Azure Container Apps Consumption (ADR-0007).
 - **Azure OpenAI resource** — reuse an existing account/deployment vs provision new (pending user input).
 - **Model mapping** — source uses `gpt-5.4-mini` (vision); Azure target model/deployment name TBD.

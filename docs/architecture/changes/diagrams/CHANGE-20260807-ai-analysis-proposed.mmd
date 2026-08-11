@@ -1,0 +1,61 @@
+%% Phoenix AI — PROPOSED multi-stage burn/wound image-analysis pipeline
+%% Change record: CHANGE-20260807-improve-ai-analysis-accuracy.md
+%% Status: PROPOSED (not yet implemented). This diagram is non-authoritative until
+%% the change is marked IMPLEMENTED and current-ai-architecture.mmd is updated.
+flowchart TB
+    subgraph Client["Client (HCP / Community)"]
+        UP["Image upload (base64) + optional patient context"]
+        REFINE["REFINE ANALYSIS: answer follow-up questions (no re-upload)"]
+        UI["Structured result UI (sections + Why? + confidence-by-category)"]
+    end
+
+    subgraph Route["/api/analyze-wound (orchestrator)"]
+        ORCH["Pipeline orchestrator\n(feature-flagged: single-pass | staged)"]
+        MODELSEL["Model selector\nAZURE_AI_ANALYSIS_MODEL_DEPLOYMENT\n(fallback AZURE_AI_MODEL_DEPLOYMENT)"]
+    end
+
+    subgraph Pipeline["Staged analysis pipeline (lib/ai/analysis)"]
+        S1["STAGE 1 — Visual observation\nprompts/wound-visual-observation.ts\n(describe only, no diagnosis)"]
+        S2["STAGE 2 — Clinical interpretation\nprompts/wound-clinical-interpretation.ts\n(category, mechanism, depth w/ evidence)"]
+        S3["STAGE 3 — Quantification\nprompts/wound-quantification.ts\n(visual_extent vs measured_dimensions; TBSA range)"]
+        S4["STAGE 4 — Management & referral\nprompts/wound-management.ts\n(location-aware, hand-burn logic)"]
+        S5["STAGE 5 — Consistency / safety critic\nprompts/wound-analysis-critic.ts\n(contradictions, overclaims, false precision)"]
+    end
+
+    subgraph Deterministic["Deterministic app code (NOT the model)"]
+        CALC["lib/clinical/parkland.ts + tbsa.ts\nParkland only if weight present; else 'weight required'"]
+        QUALITY["Analysis-quality status\nHIGH / MODERATE / LOW / INSUFFICIENT"]
+    end
+
+    subgraph Model["Azure AI (Microsoft Foundry, managed identity)"]
+        ANALYSIS["High-accuracy multimodal analysis deployment"]
+    end
+
+    subgraph Contract["Structured output + validation"]
+        SCHEMA["lib/ai/schemas/burn-wound-analysis.ts\n(Zod; observation vs interpretation; field-level confidence;\nmissing_information; limitations; red_flags)"]
+        GUIDE["lib/clinical-guidelines/* -> guideline_basis (no invented citations)"]
+    end
+
+    UP --> ORCH
+    REFINE --> ORCH
+    ORCH --> MODELSEL --> ANALYSIS
+    ORCH --> S1 --> S2 --> S3 --> S4 --> S5
+    S1 -. image .-> ANALYSIS
+    S2 -. stage-1 findings .-> ANALYSIS
+    S3 -. findings .-> ANALYSIS
+    S4 -. findings .-> ANALYSIS
+    S5 -. draft result .-> ANALYSIS
+    S3 --> CALC
+    S4 --> CALC
+    S5 --> SCHEMA
+    CALC --> SCHEMA
+    QUALITY --> SCHEMA
+    GUIDE --> S4
+    SCHEMA --> UI
+    SCHEMA -->|"recommended_follow_up_questions"| REFINE
+
+    subgraph Eval["Evaluation (offline, non-production)"]
+        DS["tests/evaluation/burn-wound/ (synthetic / de-identified)"]
+        SCORE["evaluate.ts weighted scoring vs baseline"]
+    end
+    ANALYSIS -. offline eval .-> DS --> SCORE

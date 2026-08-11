@@ -1,0 +1,40 @@
+%% Phoenix AI — Current customer deployment architecture
+%% All workload resources are owned by rg-phoenixai-bfgs-demo in eastus2.
+%% Resource names use the deterministic Bicep environment token resolved during deployment.
+flowchart LR
+    DEV["Developer"]
+    OPS["Entra Security Group\nBFG Solutions (3 current members)"]
+    GH["GitHub Repository"]
+    GHA["GitHub Actions"]
+
+    subgraph AZURE["Azure Resource Group: rg-phoenixai-bfgs-demo (eastus2)"]
+        APP["Azure Container App\nca-phoenixai-<token> (Consumption)"]
+        ENV["Container Apps Environment\ncae-phoenixai-<token>"]
+        ACR["Azure Container Registry Basic\nacrphx<token>"]
+        PG["Azure PostgreSQL Flexible Server\npsql-phoenixai-<token>"]
+        BLOB["Azure Blob Storage\nstphx<token> (clinical-uploads)"]
+        KV["Azure Key Vault\nkv-phx-<token>"]
+        MI["User-assigned Managed Identity\nid-phoenixai-<token>"]
+        AI["Azure AI Services S0\naif-phoenixai-<token>\ngpt-4o 2024-11-20 GlobalStandard"]
+        AIAPP["Application Insights\nappi-phoenixai-<token>"]
+        LAW["Log Analytics\nlog-phoenixai-<token>"]
+        ALERTS["Metric Alerts + Action Group\nag-phoenixai-ops"]
+    end
+
+    DEV --> GH
+    OPS -->|"Owner (demo RG scope only)"| AZURE
+    GH --> GHA
+    GHA -->|"OIDC federation"| AZURE
+    GHA -->|"ACR remote build"| ACR
+    GHA -->|"Bicep deployment"| APP
+
+    ENV --> APP
+    ACR -->|"AcrPull via managed identity"| APP
+    MI --> APP
+    APP -->|"managed identity"| AI
+    APP -->|"sslmode=require"| PG
+    APP -.->|"managed identity (optional, not wired)"| BLOB
+    APP -->|"Key Vault secret reference"| KV
+    APP --> AIAPP
+    AIAPP --> LAW
+    ALERTS --> AIAPP

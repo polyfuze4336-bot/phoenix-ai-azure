@@ -1,0 +1,100 @@
+%% Phoenix AI — Current (AS-IS) AI architecture
+%% Shows the actual AI provider abstraction (lib/ai), prompt separation, streaming,
+%% multimodal image input, and structured-output validation.
+flowchart TB
+    subgraph Interfaces["Client Interfaces"]
+        HCPUI["HCP Interface\n(chat + wound analysis)"]
+        COMMUI["Community Interface\n(chat + image check)"]
+    end
+
+    subgraph Routes["Next.js API Routes"]
+        RHCPCHAT["/api/hcp-chat"]
+        RHCPAN["/api/analyze-wound"]
+        RCOMCHAT["/api/community-chat"]
+        RCOMAN["/api/community-analyze"]
+    end
+
+    subgraph Prompts["Prompt Layer (lib/ai/prompts)"]
+        PHCPCHAT["hcp-chat\n(clinical, detailed)"]
+        PHCPAN["hcp-wound-analysis\n(single-pass fallback)"]
+        PCOMCHAT["community-chat\n(plain-language, safe)"]
+        PCOMAN["community-wound-analysis\n(simplified guidance)"]
+        subgraph StagedPrompts["Staged analysis prompts"]
+            PS1["wound-visual-observation"]
+            PS2["wound-clinical-interpretation"]
+            PS3["wound-management"]
+            PS4["wound-analysis-critic"]
+        end
+    end
+
+    subgraph Pipeline["Staged Analysis Pipeline (lib/ai/analysis)"]
+        ORCH["runAnalysisPipeline\n(flag AI_ANALYSIS_PIPELINE=staged, default)"]
+        DETCALC["Deterministic calc\nlib/clinical/parkland + tbsa\n(no assumed weight)"]
+        SCHEMA["schemas/burn-wound-analysis\n(obs vs interp, confidence, gaps)"]
+        MODELSEL["model-config\nAZURE_AI_ANALYSIS_MODEL_DEPLOYMENT"]
+    end
+
+    subgraph Provider["AI Provider Abstraction (lib/ai)"]
+        FACTORY["getAiProvider()"]
+        AZPROV["AzureFoundryProvider"]
+        CRED["azure-credential\n(DefaultAzureCredential)"]
+        OAICOMPAT["openai-compatible mapping"]
+        VALIN["validation/image-input"]
+        VALOUT["validation/wound-analysis-schema\n(+ flat back-compat adapter)"]
+        STREAM["streaming/sse + collect + text-stream"]
+        TEL["ai/telemetry"]
+    end
+
+    subgraph Azure["Azure AI"]
+        FOUNDRY["Microsoft Foundry / Azure OpenAI"]
+        MODEL["gpt-4o deployment (vision + text)\napi-version 2024-10-21"]
+    end
+
+    APPINS["Application Insights"]
+
+    ASSURE["AI Assurance layer\nlib/rai/controls.ts + /v2/hcp/ai-assurance\n(see current-ai-assurance.mmd)"]
+
+    HCPUI --> RHCPCHAT
+    HCPUI --> RHCPAN
+    COMMUI --> RCOMCHAT
+    COMMUI --> RCOMAN
+
+    RHCPCHAT --> PHCPCHAT --> FACTORY
+    RHCPAN --> ORCH
+    ORCH --> PS1 --> FACTORY
+    ORCH --> PS2 --> FACTORY
+    ORCH --> PS3 --> FACTORY
+    ORCH --> PS4 --> FACTORY
+    ORCH --> DETCALC
+    ORCH --> SCHEMA
+    ORCH --> MODELSEL
+    MODELSEL --> AZPROV
+    RHCPAN -.->|"AI_ANALYSIS_PIPELINE=single"| PHCPAN --> FACTORY
+    RCOMCHAT --> PCOMCHAT --> FACTORY
+    RCOMAN --> PCOMAN --> FACTORY
+
+    RHCPAN --> VALIN
+    RCOMAN --> VALIN
+    VALIN --> FACTORY
+
+    FACTORY --> AZPROV
+    AZPROV --> CRED
+    AZPROV --> OAICOMPAT
+    OAICOMPAT -->|"managed identity token"| FOUNDRY
+    FOUNDRY --> MODEL
+
+    MODEL --> STREAM
+    STREAM --> HCPUI
+    STREAM --> COMMUI
+
+    SCHEMA --> VALOUT
+    MODEL --> VALOUT
+    VALOUT --> HCPUI
+    VALOUT --> COMMUI
+
+    AZPROV --> TEL
+    TEL --> APPINS
+
+    SCHEMA -.->|"controls surfaced"| ASSURE
+    VALOUT -.->|"controls surfaced"| ASSURE
+    TEL -.->|"controls surfaced"| ASSURE

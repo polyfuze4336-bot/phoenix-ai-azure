@@ -17,6 +17,7 @@ export const translations: Record<string, Record<Lang, string>> = {
   'hcp.parkland': { en: 'Parkland Formula', bm: 'Formula Parkland' },
   'hcp.guidelines': { en: 'Guidelines', bm: 'Garis Panduan' },
   'hcp.chat': { en: 'Specialist Chat', bm: 'Sembang Pakar' },
+  'hcp.history': { en: 'Analysis History', bm: 'Sejarah Analisis' },
   'hcp.portal': { en: 'HCP Portal', bm: 'Portal HCP' },
 
   // Community Navigation

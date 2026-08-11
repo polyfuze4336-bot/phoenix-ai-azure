@@ -1,12 +1,24 @@
 name: CI
 
-# Build-verification for the Phoenix AI Azure migration.
-# Installs dependencies and runs the Next.js production build. No secrets required
-# (the build does not call the LLM; runtime config is supplied on Azure).
+# Continuous integration for the Phoenix AI Azure migration.
+#
+# Runs the full quality gate on every push / pull request:
+#   - Lock-file installation (npm ci --legacy-peer-deps)
+#   - Lint
+#   - Type check
+#   - Unit tests
+#   - Integration tests
+#   - Next.js production build (standalone)
+#   - Bicep lint + build (infra/)
+#   - Dependency vulnerability report (npm audit)
+#   - Playwright smoke test (public landing journey)
+#
+# No secrets are required: the build and smoke tests do not call the LLM; runtime
+# configuration is supplied on Azure at deploy time.
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'migration/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -14,9 +26,13 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-    name: Install & build
+  app:
+    name: Lint, type-check, test & build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -35,9 +51,101 @@ jobs:
           cache: npm
           cache-dependency-path: nextjs_space/package-lock.json
 
-      - name: Install dependencies
+      - name: Install dependencies (lock file)
         # Pre-existing dev-only peer conflict (eslint 9 vs @typescript-eslint/parser 7).
         run: npm ci --legacy-peer-deps
 
-      - name: Build (next build)
+      - name: Generate Prisma client
+        # Type-check and tests reference the generated @prisma/client types.
+        run: npm run db:generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: Build (next build, standalone)
         run: npm run build
+
+      - name: Install Playwright browser (Chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright smoke test
+        run: npm run test:smoke
+
+  bicep:
+    name: Bicep lint & build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bicep lint
+        run: az bicep build --file infra/main.bicep --stdout > /dev/null
+
+      - name: Bicep build (compile to ARM)
+        run: az bicep build --file infra/main.bicep
+
+  security:
+    name: Dependency vulnerability report
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nextjs_space
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: nextjs_space/package-lock.json
+
+      - name: Install dependencies (lock file)
+        run: npm ci --legacy-peer-deps
+
+      - name: Audit (report only — does not fail the build)
+        # Known dev-tooling advisories exist; surface them as a report without
+        # blocking. Production runtime dependencies are reviewed separately.
+        run: |
+          npm audit --json > audit-report.json || true
+          npm audit || true
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: nextjs_space/audit-report.json
+          if-no-files-found: warn
+
+  db-validate:
+    name: Validate DB migrations (offline)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nextjs_space
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: nextjs_space/package-lock.json
+
+      - name: Install dependencies (lock file)
+        run: npm ci --legacy-peer-deps
+
+      - name: Validate migrations (offline)
+        run: npm run db:migrate:validate

@@ -47,9 +47,77 @@ visible UX and **document the assumption** in `docs/migration/MIGRATION.md`.
 - At the end of every migration step: run checks, report added/modified/deleted files, report
   tests, list unresolved issues, commit, and update `docs/migration/MIGRATION.md`.
 
+## ARCHITECTURE-FIRST CHANGE POLICY (mandatory)
+
+**NO MATERIAL CHANGE MAY BE IMPLEMENTED UNTIL THE CURRENT ARCHITECTURE IS UNDERSTOOD, DOCUMENTED
+AND IMPACT-ASSESSED. Architecture documentation is part of the source code and must remain
+synchronized with implementation.**
+
+Before implementing any change that touches components, integrations, data/identity/storage/
+observability strategy, or the Azure resource footprint, follow these steps in order:
+
+1. **Understand** the current architecture — read
+   [`docs/architecture/current-architecture.md`](../docs/architecture/current-architecture.md)
+   and the relevant diagram(s) in `docs/architecture/diagrams/`.
+2. **Locate** the affected components/integrations by their stable IDs in
+   [`component-inventory.md`](../docs/architecture/component-inventory.md) and
+   [`integration-inventory.md`](../docs/architecture/integration-inventory.md).
+3. **Assess impact** — determine the impact level (NONE / LOW / MEDIUM / HIGH / MAJOR) and whether
+   a new [ADR](../docs/architecture/decisions/README.md) is required.
+4. **Document first** — update `current-architecture.md`, the affected `.mmd` diagrams, the
+   inventories, and `azure-resource-map.md` in the SAME change. Bump
+   [`ARCHITECTURE_VERSION`](../docs/architecture/ARCHITECTURE_VERSION) and add an entry to
+   [`ARCHITECTURE_CHANGELOG.md`](../docs/architecture/ARCHITECTURE_CHANGELOG.md).
+5. **Record** — add a `docs/architecture/changes/CHANGE-YYYYMMDD-*.md` record for
+   architecture-impacting changes; add/accept an ADR when the decision is significant.
+6. **Implement** the code change, keeping it consistent with the documented architecture.
+7. **Validate** — run typecheck, build, tests, Mermaid validation, and
+   `scripts/validate-architecture`. **STOP if documentation lags implementation** — do not open a
+   PR until docs and code agree.
+
+End every architecture-impacting task with an **Architecture Review** block: impact level,
+version before/after, files reviewed/changed, ADR reference, change record, and validation
+PASS/FAIL. The `architecture-governance` CI workflow enforces docs-sync on pull requests.
+
+## RESPONSIBLE AI CHANGE POLICY (mandatory)
+
+**AI behaviour is a governed surface. No change to AI behaviour, prompts, models, confidence/limitation
+handling, human oversight, transparency, telemetry, or any Responsible AI control may be implemented
+without keeping the RAI control register and its documentation/evidence synchronized.**
+
+When a change touches AI behaviour or a Responsible AI control, follow these steps in order:
+
+1. **Understand** — read [`docs/rai/README.md`](../docs/rai/README.md) and the relevant document
+   (e.g. `clinical-safety.md`, `human-oversight.md`, `transparency.md`, `fairness-and-skin-tone.md`).
+2. **Locate** the affected control(s) by their stable IDs in the single source of truth
+   [`nextjs_space/lib/rai/controls.ts`](../nextjs_space/lib/rai/controls.ts) and in
+   [`docs/rai/rai-implementation-inventory.md`](../docs/rai/rai-implementation-inventory.md).
+3. **Assess honestly** — set the control status to **Active**, **Partial** or **Planned** based on what
+   the code actually does. Never mark a control Active if it is only documented.
+4. **Evidence** — every Active/Partial control must point to real code and, where practical, a test.
+   Add or update tests under `nextjs_space/tests/rai/` and keep `npm run test:rai` green.
+5. **Document** — update the affected `docs/rai/*` file(s), the control matrix, and
+   `known-limitations.md` / `rai-roadmap.md` if a limitation or plan changed.
+6. **Never fabricate assurance** — no cartoon shields, gamified trust scores, fake certifications, or
+   claims like "100% safe", "bias free", "hallucination free", "clinically certified" or "regulatory
+   approved" unless independently evidenced. Keep AI-generated labelling and limitations truthful and
+   visible.
+7. **Implement** the change consistent with the documented, evidenced control.
+8. **Validate** — run `npm run test:rai` (and the evaluation harness if analysis behaviour changed);
+   confirm the in-product AI Assurance page (`/v2/hcp/ai-assurance`) still reflects reality.
+
+End every RAI-impacting task with a **Responsible AI Review** block: controls added/changed (by ID),
+status before/after, evidence (code + tests), any new limitation, and validation PASS/FAIL. The
+Pull Request template's **Responsible AI Impact** section enforces this on pull requests.
+
 ## Key paths
 
 - App source: `nextjs_space/`
 - Migration audit trail: `docs/migration/MIGRATION.md`
-- Target architecture: `docs/architecture/ARCHITECTURE.md`
+- **Authoritative current architecture: `docs/architecture/current-architecture.md`**
+- Component / integration inventories: `docs/architecture/component-inventory.md`,
+  `docs/architecture/integration-inventory.md`
+- Architecture decisions: `docs/architecture/decisions/`
+- Target architecture (design intent): `docs/architecture/ARCHITECTURE.md`
 - Test strategy: `docs/testing/TEST-STRATEGY.md`
+- **Responsible AI controls & evidence: `docs/rai/` (source of truth `nextjs_space/lib/rai/controls.ts`)**

@@ -2,8 +2,8 @@
 
 import { useLanguage } from '@/components/language-provider';
 import { LanguageToggleDark } from '@/components/language-toggle';
-import { LayoutDashboard, Brain, Calculator, Droplets, BookOpen, MessageSquare, ArrowLeft, Menu, X, LogOut, User } from 'lucide-react';
-import Image from 'next/image';
+import { PhoenixLogo } from '@/components/phoenix-logo';
+import { LayoutDashboard, Brain, Calculator, Droplets, BookOpen, MessageSquare, History, ArrowLeft, Menu, X, LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, ReactNode, useCallback } from 'react';
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/hcp/parkland', icon: Droplets, labelKey: 'hcp.parkland', shortKey: 'hcp.parkland' },
   { href: '/hcp/guidelines', icon: BookOpen, labelKey: 'hcp.guidelines', shortKey: 'hcp.guidelines' },
   { href: '/hcp/chat', icon: MessageSquare, labelKey: 'hcp.chat', shortKey: 'hcp.chat' },
+  { href: '/hcp/history', icon: History, labelKey: 'hcp.history', shortKey: 'hcp.history' },
 ];
 
 interface HcpUser {
@@ -30,16 +31,55 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<HcpUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [serverSession, setServerSession] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem('hcp_auth');
-      if (stored) {
-        try { setUser(JSON.parse(stored)); } catch { setUser(null); }
+    let cancelled = false;
+
+    async function resolveSession() {
+      // Demo mode (parity): session identity is held client-side.
+      if (typeof window !== 'undefined') {
+        const stored = sessionStorage.getItem('hcp_auth');
+        if (stored) {
+          try {
+            if (!cancelled) {
+              setUser(JSON.parse(stored));
+              setAuthChecked(true);
+            }
+            return;
+          } catch {
+            /* fall through to server session check */
+          }
+        }
       }
-      setAuthChecked(true);
+
+      // Entra mode: identity comes from the server-validated session cookie.
+      // (Access is already enforced by middleware; this only fetches display info.)
+      try {
+        const res = await fetch('/api/auth/session', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.authenticated && data?.user && !cancelled) {
+            setUser({ name: data.user.name, role: data.user.role, email: data.user.email });
+            setServerSession(true);
+            setAuthChecked(true);
+            return;
+          }
+        }
+      } catch {
+        /* no server session */
+      }
+
+      if (!cancelled) {
+        setAuthChecked(true);
+      }
     }
+
+    void resolveSession();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -52,16 +92,21 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('hcp_auth');
     }
+    // Entra mode: end the server session (and federated sign-out) via the route.
+    if (serverSession) {
+      window.location.href = '/api/auth/logout';
+      return;
+    }
     setUser(null);
     router.replace('/hcp-login');
-  }, [router]);
+  }, [router, serverSession]);
 
   // Show nothing while checking auth
   if (!authChecked || !user) {
     return (
       <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center gap-3">
-          <div className="relative w-12 h-12"><Image src="/logo.png" alt="Phoenix AI" fill className="object-contain" /></div>
+          <PhoenixLogo className="w-12 h-12" />
           <p className="text-sm text-gray-400">Loading...</p>
         </div>
       </div>
@@ -74,9 +119,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 fixed top-0 left-0 h-full z-40">
         <div className="p-4 border-b border-gray-100">
           <Link href="/" className="flex items-center gap-3">
-            <div className="relative w-9 h-9">
-              <Image src="/logo.png" alt="Phoenix AI" fill className="object-contain" />
-            </div>
+            <PhoenixLogo className="w-9 h-9" />
             <div>
               <span className="font-display text-base font-bold text-gray-900">Phoenix AI</span>
               <p className="text-[10px] text-[#8B0000] font-medium">{t('hcp.portal')}</p>
@@ -120,7 +163,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
       }`}>
         <div className="p-4 border-b flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="relative w-8 h-8"><Image src="/logo.png" alt="Phoenix AI" fill className="object-contain" /></div>
+            <PhoenixLogo className="w-8 h-8" />
             <span className="font-display text-sm font-bold">Phoenix AI</span>
           </Link>
           <button onClick={() => setMobileOpen(false)}><X className="w-5 h-5" /></button>
@@ -160,9 +203,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
                 <Menu className="w-6 h-6 text-gray-600" />
               </button>
               <div className="lg:hidden flex items-center gap-2">
-                <div className="relative w-7 h-7">
-                  <Image src="/logo.png" alt="Phoenix AI" fill className="object-contain" />
-                </div>
+                <PhoenixLogo className="w-7 h-7" />
                 <span className="font-display text-sm font-bold text-gray-800">Phoenix AI</span>
               </div>
             </div>

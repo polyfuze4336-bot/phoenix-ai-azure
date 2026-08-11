@@ -1,0 +1,6 @@
+# Evaluation data — do NOT commit real patient images or PHI.
+images/
+fixtures/*.jpg
+fixtures/*.jpeg
+fixtures/*.png
+last-run.json

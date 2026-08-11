@@ -1,0 +1,71 @@
+%% Phoenix AI — PROPOSED dual-experience architecture (v2.0 + preserved Original)
+%% Change: CHANGE-20260807-phoenix-v2-experience
+flowchart TB
+    Users["Users (Clinicians & Public)"]
+
+    Root["/ — Experience Selector (redesigned)\nOriginal Phoenix logo + brand preserved"]
+
+    subgraph ORIGINAL["Original Experience (v1) — UNCHANGED"]
+        OHCP["/hcp/* — HCP portal (analysis, chat, TBSA, Parkland, guidelines, history)"]
+        OCOMM["/community/* — Community portal"]
+        OLOGIN["/hcp-login"]
+    end
+
+    subgraph V2["Phoenix AI v2.0 (/v2/*) — NEW, additive"]
+        V2Land["/v2 — v2 landing"]
+        subgraph V2SHELL["PhoenixV2Shell (nav rail + top bar + mobile nav)"]
+            V2HCP["/v2/hcp — Clinical dashboard"]
+            V2CASES["/v2/hcp/cases + /v2/hcp/cases/[id]"]
+            V2ANALYSIS["/v2/hcp/analysis — guided assessment"]
+            V2CHAT["/v2/hcp/chat — AI assistant"]
+            V2GUIDE["/v2/hcp/guidelines"]
+            V2CALC["/v2/hcp/calculators (TBSA + Parkland)"]
+            V2REP["/v2/hcp/reports"]
+            V2INS["/v2/hcp/insights"]
+            V2COMM["/v2/community/* (assessment, chat, first-aid, image-check, education)"]
+        end
+    end
+
+    subgraph SHARED["Shared application layer (reused, not duplicated)"]
+        AIProvider["AI Provider (lib/ai) + staged analysis pipeline"]
+        Clinical["lib/clinical (Parkland/TBSA — deterministic)"]
+        DemoData["lib/v2/demo-data (synthetic, labelled)"]
+        Flags["lib/v2/feature-flags"]
+        Auth["Auth (demo default / Entra opt-in)"]
+        Data["Data access (lib/db, Prisma)"]
+        Telemetry["Telemetry (lib/telemetry)"]
+    end
+
+    subgraph AZURE["Microsoft Azure (rg-phoenixai-demo) — REUSED, no new resources"]
+        AppService["Azure App Service (Linux, P1v3)"]
+        Foundry["Microsoft Foundry / Azure OpenAI gpt-4o"]
+        PostgreSQL["Azure PostgreSQL Flexible Server"]
+        Blob["Azure Blob Storage (optional)"]
+        KV["Key Vault"]
+        MI["Managed Identity"]
+        Insights["Application Insights"]
+    end
+
+    Users --> Root
+    Root --> ORIGINAL
+    Root --> V2Land
+    V2Land --> V2SHELL
+
+    OHCP --> AIProvider
+    OHCP --> Clinical
+    V2HCP --> DemoData
+    V2ANALYSIS --> AIProvider
+    V2CALC --> Clinical
+    V2CHAT --> AIProvider
+    V2CASES --> DemoData
+    V2INS --> DemoData
+    V2COMM --> AIProvider
+
+    V2SHELL --> Flags
+    AIProvider -->|"managed identity"| Foundry
+    Data --> PostgreSQL
+    AIProvider --> AppService
+    Telemetry --> Insights
+    MI --> Foundry
+    MI --> Blob
+    KV --> AppService
