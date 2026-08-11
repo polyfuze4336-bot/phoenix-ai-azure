@@ -505,6 +505,23 @@ export function AnalysisClient() {
               {result?.structured && (
                 <StructuredAnalysis data={result.structured} onRefine={refineAnalysis} refining={refining} />
               )}
+
+              {/* Data Protection Notice */}
+              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-4 mt-8">
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="text-sm text-blue-900 space-y-1.5">
+                    <p className="font-semibold">Data Protection Notice</p>
+                    <p className="text-xs leading-relaxed text-blue-800">
+                      All patient data and images are protected in accordance with the laws and governance of Malaysia under the Ministry of Health (KKM), including the Personal Data Protection Act 2010 (PDPA) and relevant medical confidentiality regulations. This analysis is confidential and intended for authorized healthcare professionals only.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           )}
 
