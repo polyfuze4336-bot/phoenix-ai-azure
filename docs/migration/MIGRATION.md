@@ -1137,3 +1137,15 @@ tenant's 42 users; this is not represented as an all-tenant-users grant.
   zero subscription-scoped `Owner` assignments. Members can create, change, delete, and delegate
   access to resources in the Phoenix AI demo RG only. Future access is governed by membership in
   the `BFG Solutions` group.
+
+### Step 27 - Enable all GitHub Actions workflow permissions
+
+Per operator instruction ("enable all permissions"), every repository workflow now explicitly uses
+`permissions: write-all` so workflow jobs can proceed with full `GITHUB_TOKEN` scope.
+
+- **Files changed.** `.github/workflows/{ci,architecture-governance,deploy-dev,deploy-demo,infrastructure,db-migrate}.yml`
+- **Architecture governance.** Architecture version `2.1.0 -> 2.2.0`; updated
+  `current-architecture.md`, `component-inventory.md`, `integration-inventory.md`,
+  `ARCHITECTURE_VERSION`, `ARCHITECTURE_CHANGELOG.md`, and
+  `changes/CHANGE-20260811-workflow-permissions-write-all.md`. Impact level LOW; no ADR required.
+- **Verification.** Workflow YAML parses locally and architecture drift validation passes.

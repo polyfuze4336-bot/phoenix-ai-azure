@@ -27,10 +27,8 @@ on:
         type: boolean
         default: false
 
-# OIDC token + repo read. No client secrets are used anywhere in this workflow.
-permissions:
-  id-token: write
-  contents: read
+# All workflow permissions are enabled by request.
+permissions: write-all
 
 concurrency:
   group: infra-${{ github.ref }}

@@ -13,9 +13,7 @@ name: Deploy (Demo)
 on:
   workflow_dispatch:
 
-permissions:
-  id-token: write
-  contents: read
+permissions: write-all
 
 concurrency:
   group: deploy-demo

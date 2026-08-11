@@ -15,9 +15,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  id-token: write
-  contents: read
+permissions: write-all
 
 concurrency:
   group: deploy-dev

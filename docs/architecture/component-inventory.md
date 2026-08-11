@@ -85,7 +85,7 @@
 | OPS-DEMO-OWNER-RBAC | Demo operator RBAC | Operations | Azure RBAC | `docs/architecture/changes/CHANGE-20260810-demo-rg-owner-access.md` | Grants `BFG Solutions` group Owner on the dedicated demo RG only | INT-DEMO-OPERATORS-ARM | ACTIVE | BFG Solutions subscription owner |
 | INFRA-FOUNDRY-CONN | Azure AI resource + connection | Infra | Bicep | `infra/modules/foundry-connection.bicep` | Provisions environment-owned AI account, gpt-4o deployment, and inference RBAC | INFRA-MI | ACTIVE | Phoenix AI team |
 | AZ-FOUNDRY | Microsoft Foundry / Azure AI Services | Owned Azure | Azure AI Services | Environment-owned `gpt-4o` deployment | INFRA-MI | ACTIVE | Phoenix AI team |
-| DEVOPS-GHA | GitHub Actions | DevOps | GitHub Actions + OIDC | `.github/workflows/*` | CI/CD | — | ACTIVE | Phoenix AI team |
+| DEVOPS-GHA | GitHub Actions | DevOps | GitHub Actions + OIDC | `.github/workflows/*` | CI/CD (`permissions: write-all`) | — | ACTIVE | Phoenix AI team |
 | INFRA-BICEP | Bicep IaC root | DevOps | Bicep | `infra/main.bicep`, `main.bicepparam` | Environment definition | INFRA-* modules | ACTIVE | Phoenix AI team |
 | GOV-CI | Architecture governance CI | DevOps | GitHub Actions | `.github/workflows/architecture-governance.yml` | Enforce docs sync + Mermaid validation | — | ACTIVE | Phoenix AI team |
 | GOV-VALIDATE | Architecture drift script | DevOps | Node/TypeScript | `nextjs_space/scripts/validate-architecture.mjs` | Lightweight drift detection | — | ACTIVE | Phoenix AI team |

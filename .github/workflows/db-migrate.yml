@@ -13,8 +13,7 @@ name: Database migrate (deploy)
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: write-all
 
 jobs:
   migrate:

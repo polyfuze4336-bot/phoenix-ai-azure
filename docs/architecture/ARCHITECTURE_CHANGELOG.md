@@ -16,6 +16,20 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.2.0] — 2026-08-11
+
+### Changed
+- **GitHub Actions permission posture** — all repository workflows now explicitly set
+  `permissions: write-all` (`ci.yml`, `architecture-governance.yml`, `deploy-dev.yml`,
+  `deploy-demo.yml`, `infrastructure.yml`, `db-migrate.yml`) so each job can proceed with full
+  `GITHUB_TOKEN` permissions.
+
+### Unchanged
+- Deployment topology, Azure resources, OIDC federation usage, runtime application behaviour,
+  API contracts, and Responsible AI controls are unchanged.
+- No ADR is required for this operational CI/CD permission reconfiguration. See
+  [CHANGE-20260811](./changes/CHANGE-20260811-workflow-permissions-write-all.md).
+
 ## [2.1.0] — 2026-08-10
 
 ### Changed

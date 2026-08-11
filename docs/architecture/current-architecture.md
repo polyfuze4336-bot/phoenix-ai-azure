@@ -249,6 +249,7 @@ restores the original single-pass call.
 | --- | --- | --- |
 | GitHub repository | remote `origin` | Implemented |
 | GitHub Actions | `.github/workflows/{ci,deploy-demo,deploy-dev,infrastructure,db-migrate}.yml` | Implemented |
+| Workflow token permissions | workflows | `permissions: write-all` enabled |
 | OIDC federation | workflows | Implemented |
 | Bicep IaC | `infra/main.bicep`, `infra/main.bicepparam`, `infra/modules/*` | Implemented |
 | Azure Container Apps | `ca-phoenixai-<environment-token>` (deployment output) | Implemented |
