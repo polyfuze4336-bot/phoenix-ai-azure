@@ -23,8 +23,10 @@ concurrency:
 
 env:
   AZURE_LOCATION: eastus2
+  RESOURCE_GROUP: rg-phoenixai-bfgs-demo
   DEPLOY_NAME: phoenixai-demo-${{ github.run_number }}
   IMAGE_TAG: ${{ github.sha }}
+  FULL_INFRASTRUCTURE: false
 
 jobs:
   deploy:
@@ -52,6 +54,7 @@ jobs:
 
       # 3. Run Azure what-if (read-only preview).
       - name: What-if (subscription scope)
+        if: env.FULL_INFRASTRUCTURE == 'true'
         env:
           PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
         run: |
@@ -64,6 +67,7 @@ jobs:
 
       # 4. Bootstrap dependencies first so ACR exists before the image build.
       - name: Bootstrap infrastructure
+        if: env.FULL_INFRASTRUCTURE == 'true'
         env:
           PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
         run: |
@@ -78,12 +82,31 @@ jobs:
           echo "RG=${RG}" >> "$GITHUB_ENV"
           echo "ACR=${ACR}" >> "$GITHUB_ENV"
 
+      - name: Discover existing deployment resources
+        if: env.FULL_INFRASTRUCTURE != 'true'
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+          ACR=$(az acr list --resource-group "${RESOURCE_GROUP}" --query "[?starts_with(name, 'acrphx')].name | [0]" -o tsv)
+          APP=$(az containerapp list --resource-group "${RESOURCE_GROUP}" --query "[?starts_with(name, 'ca-phoenixai-')].name | [0]" -o tsv)
+          if [ -z "${ACR}" ] || [ -z "${APP}" ]; then
+            echo "Existing Phoenix AI ACR or Container App was not found in ${RESOURCE_GROUP}." >&2
+            exit 1
+          fi
+          ACR_LOGIN_SERVER=$(az acr show --resource-group "${RESOURCE_GROUP}" --name "${ACR}" --query loginServer -o tsv)
+          APP_FQDN=$(az containerapp show --resource-group "${RESOURCE_GROUP}" --name "${APP}" --query properties.configuration.ingress.fqdn -o tsv)
+          echo "RG=${RESOURCE_GROUP}" >> "$GITHUB_ENV"
+          echo "ACR=${ACR}" >> "$GITHUB_ENV"
+          echo "ACR_LOGIN_SERVER=${ACR_LOGIN_SERVER}" >> "$GITHUB_ENV"
+          echo "APP=${APP}" >> "$GITHUB_ENV"
+          echo "APP_URL=https://${APP_FQDN}" >> "$GITHUB_ENV"
+
       # 5. Build in Azure because no local Docker engine is required.
       - name: Build immutable image in ACR
-        run: az acr build --registry "${ACR}" --image "phoenixai:${IMAGE_TAG}" --file Dockerfile nextjs_space
+        run: az acr build --registry "${ACR}" --image "phoenixai:${IMAGE_TAG}" --file nextjs_space/Dockerfile nextjs_space
 
       # 6. Create or update the Container App with the image that now exists.
       - name: Deploy Container App revision
+        if: env.FULL_INFRASTRUCTURE == 'true'
         env:
           PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
         run: |
@@ -97,6 +120,14 @@ jobs:
           APP_URL=$(az deployment sub show --name "${DEPLOY_NAME}" --query properties.outputs.containerAppUrl.value -o tsv)
           echo "APP=${APP}" >> "$GITHUB_ENV"
           echo "APP_URL=${APP_URL}" >> "$GITHUB_ENV"
+
+      - name: Roll out image to existing Container App
+        if: env.FULL_INFRASTRUCTURE != 'true'
+        run: |
+          az containerapp update \
+            --resource-group "${RG}" \
+            --name "${APP}" \
+            --image "${ACR_LOGIN_SERVER}/phoenixai:${IMAGE_TAG}"
 
       - name: Use Node.js
         uses: actions/setup-node@v4
