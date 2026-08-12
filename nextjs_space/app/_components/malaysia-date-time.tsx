@@ -8,6 +8,10 @@ const formatter = new Intl.DateTimeFormat('en-MY', {
   timeStyle: 'medium',
 });
 
+export function formatMalaysiaDateTime(date: Date): string {
+  return formatter.format(date);
+}
+
 export function MalaysiaDateTime() {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
@@ -26,7 +30,7 @@ export function MalaysiaDateTime() {
 
   return (
     <time dateTime={currentTime.toISOString()} suppressHydrationWarning>
-      Malaysia time: {formatter.format(currentTime)}
+      Malaysia time: {formatMalaysiaDateTime(currentTime)}
     </time>
   );
 }

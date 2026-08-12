@@ -1183,3 +1183,27 @@ Demo remains manual-dispatch only; Development retains push-to-`main` and manual
 - **Validation.** Both environments report zero protection rules and no deployment branch policy;
   workflow diagnostics, architecture drift, seven Mermaid diagrams, typecheck, production build,
   104 unit tests, 22 RAI tests, and 14 integration tests all pass.
+
+### Step 29 - Display Malaysia date and time on the main page
+
+This step adds a discreet, live Malaysia date/time label to both variants of the root landing page:
+the experience selector and the Original-only fallback. It preserves the Phoenix AI logo, branding,
+routes, portal choices, clinical terminology, responsive layout, and existing behavior.
+
+- **Architecture impact.** NONE. The change is contained within the existing `UI-LANDING`
+  component and browser-to-app delivery path (`INT-BROWSER-APP`). It adds no component,
+  integration, API, data flow, identity, storage, observability dependency, Azure resource, or
+  deployment-topology change. Architecture version remains `2.2.1`; no ADR, architecture change
+  record, inventory update, resource-map update, or diagram change is required.
+- **Implementation assumption.** "Timestamp" means the viewer's current date and time displayed in
+  Malaysia's `Asia/Kuala_Lumpur` time zone, using the established `en-MY` locale. The clock is
+  client-side only and does not become a clinical record, audit timestamp, or server-time claim.
+- **Responsible AI impact.** NONE. No AI behavior, prompt, model, safety rule, transparency surface,
+  telemetry, clinical oversight mechanism, RAI control, evidence, or limitation changes.
+- **Deployment impact.** NONE. The application continues to build as a standalone Next.js image in
+  ACR and run on Azure Container Apps through the existing Bicep deployment. The known PostgreSQL
+  major-version drift is not touched.
+- **Validation.** Node 22 typecheck, production build (74 pages), 105 unit tests, 22 RAI tests,
+  14 integration tests, architecture drift validation, and all five current architecture Mermaid
+  diagrams pass. The focused timestamp test verifies that `2026-08-12T09:41:59Z` renders as
+  `12 Aug 2026, 5:41:59 pm` in Malaysia time.
