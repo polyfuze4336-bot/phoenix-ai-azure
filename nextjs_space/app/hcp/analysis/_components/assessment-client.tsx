@@ -21,6 +21,7 @@ interface AnalysisResult {
   severity: string;
   confidence: string;
   tbsaRange: string;
+  tbsaClassification?: string;  // Major/Minor classification for TBSA
   isBurn: boolean;
   meta?: AnalysisMetadata;
   [k: string]: unknown;
@@ -65,15 +66,14 @@ export function AssessmentClient() {
   const [weightKg, setWeightKg] = useState('');
   const [mechanism, setMechanism] = useState('');
   const [site, setSite] = useState('');
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [refining, setRefining] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const lastBase64 = useRef('');
-  const lastMime = useRef('image/jpeg');
+  const lastImages = useRef<Array<{ data: string; mimeType: string }>>([]);
 
   const patientContext = useCallback(() => {
     const w = parseFloat(weightKg);
@@ -85,36 +85,74 @@ export function AssessmentClient() {
     return ctx.weightKg || ctx.mechanism || ctx.anatomicalSite ? ctx : undefined;
   }, [weightKg, mechanism, site]);
 
-  const handleFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
+  const handleFiles = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setImageFiles(files);
     setResult(null);
     setError(null);
-    const reader = new FileReader();
-    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    
+    // Load previews for all files
+    const previews: string[] = [];
+    let loaded = 0;
+    
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        previews.push(ev.target?.result as string);
+        loaded++;
+        if (loaded === files.length) {
+          setImagePreviews(previews);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   }, []);
 
+  const removeImage = useCallback((index: number) => {
+    const newFiles = imageFiles.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    setImageFiles(newFiles);
+    setImagePreviews(newPreviews);
+    if (newFiles.length === 0) {
+      setResult(null);
+      setError(null);
+    }
+  }, [imageFiles, imagePreviews]);
+
   const runAnalysis = useCallback(async () => {
-    if (!imageFile) return;
+    if (imageFiles.length === 0) return;
     setAnalyzing(true);
     setError(null);
     setStep(4);
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve((reader.result as string)?.split(',')[1] ?? '');
-        reader.onerror = reject;
-        reader.readAsDataURL(imageFile);
-      });
-      const mime = imageFile.type || 'image/jpeg';
-      lastBase64.current = base64;
-      lastMime.current = mime;
+      // Convert all files to base64
+      const images = await Promise.all(
+        imageFiles.map(
+          (file) =>
+            new Promise<{ data: string; mimeType: string }>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const base64 = (reader.result as string)?.split(',')[1] ?? '';
+                resolve({ data: base64, mimeType: file.type || 'image/jpeg' });
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            }),
+        ),
+      );
+      
+      lastImages.current = images;
+      
       const response = await fetch('/api/analyze-wound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext() }),
+        body: JSON.stringify({
+          images: imageFiles.length > 1 ? images : undefined,
+          image: imageFiles.length === 1 ? images[0].data : undefined,
+          mimeType: imageFiles.length === 1 ? images[0].mimeType : undefined,
+          patient: patientContext(),
+        }),
       });
       if (!response.ok) throw new Error('Analysis failed. Please try again.');
       const completed = await readAnalysisStream(response);
@@ -125,11 +163,11 @@ export function AssessmentClient() {
     } finally {
       setAnalyzing(false);
     }
-  }, [imageFile, patientContext]);
+  }, [imageFiles, patientContext]);
 
   const refineAnalysis = useCallback(
     async (answers: string) => {
-      if (!lastBase64.current || !result?.structured) return;
+      if (lastImages.current.length === 0 || !result?.structured) return;
       setRefining(true);
       setError(null);
       try {
@@ -137,8 +175,9 @@ export function AssessmentClient() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            image: lastBase64.current,
-            mimeType: lastMime.current,
+            images: lastImages.current.length > 1 ? lastImages.current : undefined,
+            image: lastImages.current.length === 1 ? lastImages.current[0].data : undefined,
+            mimeType: lastImages.current.length === 1 ? lastImages.current[0].mimeType : undefined,
             patient: patientContext(),
             priorAnalysis: result.structured,
             refineAnswers: answers,
@@ -158,8 +197,8 @@ export function AssessmentClient() {
 
   const reset = useCallback(() => {
     setStep(1);
-    setImagePreview(null);
-    setImageFile(null);
+    setImageFiles([]);
+    setImagePreviews([]);
     setResult(null);
     setError(null);
   }, []);
@@ -234,12 +273,32 @@ export function AssessmentClient() {
       {step === 2 ? (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-5 rounded-xl border bg-card p-5 md:p-6">
           <div>
-            <h3 className="font-display text-lg font-bold tracking-tight">Wound image</h3>
-            <p className="text-sm text-muted-foreground">Upload a clear, well-lit photo. Include a scale reference (e.g. ruler) if possible.</p>
+            <h3 className="font-display text-lg font-bold tracking-tight">Wound images</h3>
+            <p className="text-sm text-muted-foreground">Upload one or more clear, well-lit photos. Include a scale reference (e.g. ruler) if possible. Multiple images will be analyzed together.</p>
           </div>
-          {imagePreview ? (
-            <div className="relative mx-auto aspect-video w-full max-w-md overflow-hidden rounded-lg border">
-              <Image src={imagePreview} alt="Selected wound" fill className="object-contain" />
+          {imagePreviews.length > 0 ? (
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-muted-foreground">{imagePreviews.length} image{imagePreviews.length !== 1 ? 's' : ''} selected</p>
+              <div className={cn('grid gap-3', imagePreviews.length === 1 ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-3')}>
+                {imagePreviews.map((preview, idx) => (
+                  <div key={idx} className="relative group">
+                    <div className="relative aspect-video overflow-hidden rounded-lg border">
+                      <Image src={preview} alt={`Selected wound ${idx + 1}`} fill className="object-cover" />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeImage(idx)}
+                      className="absolute top-2 right-2 rounded-full bg-red-600 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                      title={`Remove image ${idx + 1}`}
+                    >
+                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    <p className="mt-1.5 text-xs text-muted-foreground text-center">Image {idx + 1}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <button
@@ -248,20 +307,22 @@ export function AssessmentClient() {
               className="flex w-full flex-col items-center rounded-xl border-2 border-dashed p-10 text-center transition-colors hover:border-primary/40 hover:bg-primary/5"
             >
               <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
-              <p className="font-medium text-foreground">Click to upload an image</p>
-              <p className="mt-1 text-xs text-muted-foreground">JPEG or PNG — max 10MB</p>
+              <p className="font-medium text-foreground">Click to upload images</p>
+              <p className="mt-1 text-xs text-muted-foreground">JPEG or PNG — up to 10MB each, multiple images supported</p>
             </button>
           )}
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFiles} className="hidden" />
           <div className="flex justify-between">
             <Button variant="ghost" onClick={() => setStep(1)}>
               <ChevronLeft className="mr-1 h-4 w-4" /> Back
             </Button>
             <div className="flex gap-2">
-              {imagePreview ? (
-                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>Replace</Button>
+              {imagePreviews.length > 0 ? (
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                  {imagePreviews.length === 1 ? 'Replace' : 'Change'}
+                </Button>
               ) : null}
-              <Button onClick={() => setStep(3)} disabled={!imagePreview}>
+              <Button onClick={() => setStep(3)} disabled={imagePreviews.length === 0}>
                 Continue <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
@@ -274,11 +335,18 @@ export function AssessmentClient() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-5 rounded-xl border bg-card p-5 md:p-6">
           <div>
             <h3 className="font-display text-lg font-bold tracking-tight">Pre-analysis quality check</h3>
-            <p className="text-sm text-muted-foreground">Confirm the image before running the AI assessment. The AI also re-checks quality and gates its confidence accordingly.</p>
+            <p className="text-sm text-muted-foreground">Review {imagePreviews.length} image{imagePreviews.length !== 1 ? 's' : ''} before running the AI assessment. The AI also re-checks quality and gates its confidence accordingly.</p>
           </div>
-          {imagePreview ? (
-            <div className="relative mx-auto aspect-video w-full max-w-md overflow-hidden rounded-lg border">
-              <Image src={imagePreview} alt="Selected wound" fill className="object-contain" />
+          {imagePreviews.length > 0 ? (
+            <div className={cn('grid gap-3', imagePreviews.length === 1 ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-3')}>
+              {imagePreviews.map((preview, idx) => (
+                <div key={idx} className="space-y-1">
+                  <div className="relative aspect-video overflow-hidden rounded-lg border">
+                    <Image src={preview} alt={`Selected wound ${idx + 1}`} fill className="object-cover" />
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">Image {idx + 1}</p>
+                </div>
+              ))}
             </div>
           ) : null}
           <ul className="space-y-2 text-sm">
@@ -293,7 +361,7 @@ export function AssessmentClient() {
             <Button variant="ghost" onClick={() => setStep(2)}>
               <ChevronLeft className="mr-1 h-4 w-4" /> Back
             </Button>
-            <Button onClick={runAnalysis} disabled={!imageFile}>
+            <Button onClick={runAnalysis} disabled={imageFiles.length === 0}>
               <Sparkles className="mr-1.5 h-4 w-4" /> Run AI assessment
             </Button>
           </div>
@@ -306,8 +374,8 @@ export function AssessmentClient() {
           {analyzing ? (
             <div className="flex flex-col items-center justify-center rounded-xl border bg-card p-12 text-center">
               <Loader2 className="mb-4 h-10 w-10 animate-spin text-primary" />
-              <p className="font-display text-lg font-bold tracking-tight">Analysing image…</p>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">Running the staged pipeline: visual observation, clinical interpretation, management guidance, and a consistency check.</p>
+              <p className="font-display text-lg font-bold tracking-tight">Analysing {imagePreviews.length} image{imagePreviews.length !== 1 ? 's' : ''}…</p>
+              <p className="mt-1 max-w-sm text-sm text-muted-foreground">Running the staged pipeline: visual observation, clinical interpretation, management guidance, and a consistency check. TBSA will be aggregated from all images.</p>
             </div>
           ) : null}
 
@@ -325,6 +393,9 @@ export function AssessmentClient() {
                     <div><dt className="text-muted-foreground">Type</dt><dd className="font-medium">{result.woundType}</dd></div>
                     <div><dt className="text-muted-foreground">Severity</dt><dd className="font-medium">{result.severity}</dd></div>
                     <div><dt className="text-muted-foreground">Confidence</dt><dd className="font-medium">{result.confidence}</dd></div>
+                    {result.tbsaClassification && result.tbsaClassification !== 'N/A' ? (
+                      <div><dt className="text-muted-foreground">TBSA Classification</dt><dd className="font-medium text-orange-600">{result.tbsaClassification}</dd></div>
+                    ) : null}
                   </dl>
                 </div>
               {/* )} */}

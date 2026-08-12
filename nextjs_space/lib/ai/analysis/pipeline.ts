@@ -240,6 +240,17 @@ function assemble(args: {
     interpretation.tbsaMethod = 'N/A';
   }
 
+  // --- Compute TBSA classification (Major >= 15%, Minor <= 15%).
+  if (interpretation.isBurn && interpretation.tbsaEstimate != null && interpretation.tbsaEstimate > 0) {
+    const isMajor = interpretation.tbsaEstimate >= 15;
+    const rationale = `${interpretation.tbsaEstimate}% TBSA = ${isMajor ? 'Major burn' : 'Minor burn'} (${isMajor ? '>=' : '<'}15% threshold)`;
+    interpretation.tbsaClassification = {
+      isMajor,
+      isMinor: !isMajor,  // If not major, it's minor
+      rationale,
+    };
+  }
+
   // --- Image-quality gating: cap confidence when the image is not adequate.
   const issues = observation.imageQualityIssues ?? [];
   const inadequate = !observation.imageQualityAdequate;

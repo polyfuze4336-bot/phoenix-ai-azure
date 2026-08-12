@@ -44,7 +44,7 @@ const boolField = z
   }, z.boolean())
   .catch(false);
 
-/** HCP clinical wound-analysis result (22 fields rendered by the HCP client). */
+/** HCP clinical wound-analysis result (24 fields + TBSA classification rendered by the HCP client). */
 export const hcpWoundAnalysisSchema = z.object({
   fitzpatrickType: strField(),
   fitzpatrickNote: strField(),
@@ -61,6 +61,7 @@ export const hcpWoundAnalysisSchema = z.object({
   tbsaRange: strField(),
   tbsaBodyRegions: strField(),
   tbsaMethod: strField(),
+  tbsaClassification: strField('N/A'), // 'Major (>=15%)', 'Minor (<=15%)', or 'N/A' if not a burn
   isBurn: boolField,
   parklandFluid: strField(),
   firstAid: strField(),
@@ -115,6 +116,7 @@ export const HCP_ASSESSMENT_UNAVAILABLE: HcpWoundAnalysis = {
   tbsaRange: 'N/A',
   tbsaBodyRegions: 'N/A',
   tbsaMethod: 'N/A',
+  tbsaClassification: 'N/A',
   isBurn: false,
   parklandFluid: 'N/A',
   firstAid: 'N/A',

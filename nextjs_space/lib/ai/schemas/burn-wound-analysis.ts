@@ -96,6 +96,22 @@ export type VisualObservation = z.infer<typeof visualObservationSchema>;
 
 /* --------------------------------------- stage 2: interpretation + quantify */
 
+/** TBSA classification based on percentage. */
+export const tbsaClassificationSchema = z.object({
+  isMajor: z.preprocess((v) => {
+    if (typeof v === 'boolean') return v;
+    if (typeof v === 'string') return ['true', 'yes', '1'].includes(v.toLowerCase());
+    return false;
+  }, z.boolean()),
+  isMinor: z.preprocess((v) => {
+    if (typeof v === 'boolean') return v;
+    if (typeof v === 'string') return ['true', 'yes', '1'].includes(v.toLowerCase());
+    return false;
+  }, z.boolean()),
+  rationale: str(), // e.g. "15.5% TBSA = Major burn"
+});
+export type TbsaClassification = z.infer<typeof tbsaClassificationSchema>;
+
 export const interpretationSchema = z.object({
   woundCategory: clinicalFieldLoose,
   woundType: str(),
@@ -116,6 +132,7 @@ export const interpretationSchema = z.object({
   tbsaBodyRegions: str(),
   tbsaAssumptions: strArray,
   tbsaLimitations: strArray,
+  tbsaClassification: tbsaClassificationSchema.optional(),  // Major (>=15%) or Minor (<=15%) burn classification
   reportedFitzpatrickType: str('unknown'), // only if supplied in context; else 'unknown'
   skinToneInterpretationNote: str(),
 });
@@ -190,6 +207,20 @@ export type BurnWoundAnalysis = z.infer<typeof burnWoundAnalysisSchema>;
 /* --------------------------------------------- flat back-compat adapter (v1) */
 
 /**
+ * Classify a TBSA percentage as Major (>=15%) or Minor (<=15%) burn.
+ * Used by the flat HCP result and display logic.
+ */
+export function classifyTbsa(tbsaPercent: number | null): { isMajor: boolean; isMinor: boolean; label: string } {
+  if (tbsaPercent === null || tbsaPercent === undefined || tbsaPercent <= 0) {
+    return { isMajor: false, isMinor: false, label: 'N/A' };
+  }
+  const isMajor = tbsaPercent >= 15;
+  const isMinor = tbsaPercent <= 15;
+  const label = isMajor ? `Major (${tbsaPercent}% TBSA)` : `Minor (${tbsaPercent}% TBSA)`;
+  return { isMajor, isMinor, label };
+}
+
+/**
  * Map the rich structure to the existing 22-field HCP result so the current
  * SSE contract and HCP client render unchanged during rollout. The rich object
  * travels alongside under `result.structured` for the enhanced UI.
@@ -204,6 +235,8 @@ export function toFlatHcpAnalysis(a: BurnWoundAnalysis): HcpWoundAnalysis {
     i.reportedFitzpatrickType && i.reportedFitzpatrickType.toLowerCase() !== 'unknown'
       ? i.reportedFitzpatrickType
       : `Not reliably determinable from a photograph (observed skin tone: ${a.observation.observedSkinTone || 'unclear'})`;
+
+  const tbsaClassification = i.isBurn ? classifyTbsa(i.tbsaEstimate) : { isMajor: false, isMinor: false, label: 'N/A' };
 
   return {
     fitzpatrickType: fitz,
@@ -224,6 +257,7 @@ export function toFlatHcpAnalysis(a: BurnWoundAnalysis): HcpWoundAnalysis {
     tbsaRange: i.tbsaRange || 'N/A',
     tbsaBodyRegions: i.tbsaBodyRegions || 'N/A',
     tbsaMethod: i.tbsaMethod || 'N/A',
+    tbsaClassification: tbsaClassification.label,
     isBurn: i.isBurn,
     parklandFluid: a.parkland.summary || 'N/A',
     firstAid: a.management.firstAid || 'N/A',
