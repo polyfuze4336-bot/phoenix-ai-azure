@@ -1,4 +1,3 @@
-import { DM_Sans, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 import { ChunkLoadErrorHandler } from '@/components/chunk-load-error-handler'
@@ -9,10 +8,6 @@ import { TelemetryProvider } from '@/components/telemetry-provider'
 import { getSiteUrl } from '@/lib/config/environment'
 
 export const dynamic = 'force-dynamic';
-
-const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-sans' })
-const jakartaSans = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-display' })
-const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
 
 export const metadata = {
   title: 'Phoenix AI — Burn & Wound Care Assessment Tool',
@@ -57,7 +52,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Phoenix AI" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
-      <body className={`${dmSans.variable} ${jakartaSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+      <body className="font-sans antialiased">
         <LanguageProvider>
           {children}
           <PwaInstallPrompt />

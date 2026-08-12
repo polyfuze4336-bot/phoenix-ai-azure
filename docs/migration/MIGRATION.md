@@ -1210,3 +1210,17 @@ Demo remains manual-dispatch only; Development retains push-to-`main` and manual
 - Deployment path remains unchanged: the Azure hosted Development app updates via
   `.github/workflows/deploy-dev.yml` on pushes to `main` (or manual dispatch), and Demo updates via
   manual dispatch of `.github/workflows/deploy-demo.yml`.
+
+### Step 31 - Unblock build/install for Azure-hosted updates in restricted networks
+- Fixed `npm run build` failure caused by `next/font/google` network fetches to `fonts.googleapis.com`
+  by removing the runtime Google-font loader in `app/layout.tsx` and defining equivalent
+  font-family variables (`--font-sans`, `--font-display`, `--font-mono`) directly in
+  `app/globals.css`. This preserves the existing typography hierarchy while allowing offline-safe
+  builds.
+- Updated `nextjs_space/package-lock.json` to use public `https://registry.npmjs.org/` tarball URLs
+  instead of `ms-feed-*.pkgs.visualstudio.com`, preventing lockfile installs from failing in
+  environments where that host is not resolvable.
+- **Assumption documented:** in egress-restricted build environments, exact Google-hosted webfont
+  binaries may be unavailable at build time; preserving font hierarchy and fallback stacks is accepted
+  for faithful parity while maintaining deployment reliability.
+- **Verification:** `npm ci --legacy-peer-deps` ✅; `npm run build` ✅ 21/21 routes.
