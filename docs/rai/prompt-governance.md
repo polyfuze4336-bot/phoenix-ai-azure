@@ -34,6 +34,9 @@ asserts that the prompts:
 
 These tests prevent a future prompt edit from silently dropping a safety guardrail.
 
+Multi-image prompt tests also require image-by-image anatomical coverage and state that probable
+duplicate views are corroborative evidence, never additive TBSA (**RAI-TRANS-006**).
+
 ## What is never exposed
 Prompt **text**, system prompts and model chain-of-thought are never shown to end users — only the
 version identifiers above.

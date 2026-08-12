@@ -356,7 +356,9 @@ function GovernanceCard({ title, rows }: { title: string; rows: [string, string]
 
 const KNOWN_LIMITATIONS = [
   'Confidence values reflect model self-report and image-quality gating, not validated diagnostic accuracy.',
-  'A single photograph cannot establish depth progression, infection, pain or sensation with certainty.',
+  'Photographs cannot establish depth progression, infection, pain or sensation with certainty.',
+  'Multi-image duplicate recognition is model-assisted, not geometric registration; clinicians must verify that repeated views were not double-counted.',
+  'Photographic TBSA may miss obscured or unphotographed burns and must be confirmed with examination and the Lund & Browder calculator.',
   'Clinical guidance draws on curated general references that are not yet version-pinned citations.',
   'The evaluation harness measures structural behaviour (completeness, safety, referral appropriateness), not diagnostic correctness against clinician ground truth.',
   'A formal accessibility (WCAG) audit has not yet been completed.',

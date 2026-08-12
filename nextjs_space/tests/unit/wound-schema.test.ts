@@ -23,9 +23,14 @@ test('hcpWoundAnalysisSchema: parses a complete valid object', () => {
     woundEdges: 'Defined',
     confidence: 'High',
     tbsaEstimate: '12',
+    tbsaClassification: 'Minor',
     tbsaRange: '10-15',
     tbsaBodyRegions: 'Arm',
     tbsaMethod: 'Rule of nines',
+    imageCount: '2',
+    distinctAnatomicalRegions: 'Left arm',
+    probableDuplicateViews: 'Images 1 and 2',
+    multiImageAggregationNote: 'Duplicate views are non-additive.',
     isBurn: true,
     parklandFluid: '3000 ml',
     firstAid: 'Cool with water',
@@ -36,12 +41,16 @@ test('hcpWoundAnalysisSchema: parses a complete valid object', () => {
   });
   assert.equal(parsed.woundType, 'Thermal');
   assert.equal(parsed.isBurn, true);
+  assert.equal(parsed.tbsaClassification, 'Minor');
+  assert.equal(parsed.imageCount, '2');
 });
 
 test('hcpWoundAnalysisSchema: missing fields fall back to defaults (N/A, 0, false)', () => {
   const parsed = hcpWoundAnalysisSchema.parse({ woundType: 'Burn' });
   assert.equal(parsed.woundCategory, 'N/A');
   assert.equal(parsed.tbsaEstimate, '0');
+  assert.equal(parsed.tbsaClassification, 'Unavailable');
+  assert.equal(parsed.imageCount, '1');
   assert.equal(parsed.isBurn, false);
 });
 

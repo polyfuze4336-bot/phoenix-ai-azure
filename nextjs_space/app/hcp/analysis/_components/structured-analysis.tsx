@@ -8,7 +8,7 @@ import { ChevronDown, ShieldAlert, HelpCircle, Info, ClipboardList, Gauge, Loade
  * the existing flat result cards — it surfaces observation-vs-interpretation
  * evidence ("Why this assessment?"), field-level confidence, missing
  * information, red flags, limitations, and a REFINE flow that answers the
- * pipeline's follow-up questions WITHOUT re-uploading the image.
+ * pipeline's follow-up questions WITHOUT re-uploading the images.
  *
  * This component only renders when `data` (result.structured) is present, so
  * the legacy single-pass path and its UI are untouched.
@@ -24,7 +24,16 @@ interface Field {
 export interface StructuredAnalysisData {
   analysisQuality: 'HIGH' | 'MODERATE' | 'LOW' | 'INSUFFICIENT';
   imageQuality: { adequate: boolean; issues: string[]; note: string };
-  observation: { observedSkinTone: string; anatomicalLocation: string; visibleFindings: string[]; scalePresent: boolean };
+  observation: {
+    observedSkinTone: string;
+    anatomicalLocation: string;
+    visibleFindings: string[];
+    scalePresent: boolean;
+    imageCount?: number;
+    distinctAnatomicalRegions?: string[];
+    probableDuplicateViews?: string[];
+    multiImageAggregationNote?: string;
+  };
   interpretation: {
     woundCategory: Field;
     burnDepth: Field;
@@ -38,6 +47,8 @@ export interface StructuredAnalysisData {
     skinToneInterpretationNote: string;
     measuredDimensions: string;
     visualExtent: string;
+    tbsaEstimate?: number | null;
+    tbsaClassification?: 'Minor' | 'Major' | 'Unavailable';
     tbsaAssumptions: string[];
     tbsaLimitations: string[];
   };

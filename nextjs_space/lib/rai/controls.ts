@@ -105,13 +105,25 @@ export const RAI_CONTROLS: RaiControl[] = [
     userVisible: true,
   },
   {
+    id: 'RAI-TRANS-006',
+    title: 'Multi-view coverage and duplicate disclosure',
+    principle: 'transparency',
+    layer: 'input',
+    status: 'partial',
+    description:
+      'Multi-image assessments disclose distinct anatomical coverage and probable duplicate views; repeated views are corroborative rather than additive. Duplicate recognition is model-assisted, not geometric registration.',
+    evidence: ['lib/ai/analysis/pipeline.ts', 'lib/ai/prompts/wound-visual-observation.ts'],
+    tests: ['tests/rai/rai-safety.test.ts'],
+    userVisible: true,
+  },
+  {
     id: 'RAI-PRIV-006',
     title: 'Request size limits',
     principle: 'privacySecurity',
     layer: 'input',
     status: 'active',
     description:
-      'Request bodies are size-checked (configurable via AZURE_AI_MAX_IMAGE_MB) to bound resource use and reject malformed payloads.',
+      'Request bodies, per-image size and aggregate multi-image size are bounded (AZURE_AI_MAX_IMAGE_MB / AZURE_AI_MAX_TOTAL_IMAGE_MB) to limit resource use and reject malformed payloads.',
     evidence: ['lib/ai/validation/image-input.ts'],
     tests: ['tests/unit/image-input.test.ts'],
     userVisible: false,
@@ -185,6 +197,18 @@ export const RAI_CONTROLS: RaiControl[] = [
       'Total body surface area is computed with an age-adjusted Lund & Browder chart rather than free-form model estimation when regional inputs are provided.',
     evidence: ['lib/clinical/tbsa.ts'],
     tests: ['tests/unit/tbsa.test.ts'],
+    userVisible: true,
+  },
+  {
+    id: 'RAI-SAFE-013',
+    title: 'Bounded photographic TBSA classification',
+    principle: 'reliabilitySafety',
+    layer: 'analysis',
+    status: 'active',
+    description:
+      'The aggregate model-reported photographic TBSA is clamped to 0-100% and classified deterministically as Minor below 15% or Major at/above 15%; it remains an estimate requiring clinician confirmation.',
+    evidence: ['lib/clinical/tbsa.ts', 'lib/ai/analysis/pipeline.ts'],
+    tests: ['tests/unit/tbsa.test.ts', 'tests/rai/rai-safety.test.ts'],
     userVisible: true,
   },
   {

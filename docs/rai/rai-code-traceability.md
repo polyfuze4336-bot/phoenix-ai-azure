@@ -24,7 +24,7 @@ and `tests`).
 ## Pre-existing implementation (surfaced, not created here)
 | Path | Controls |
 | --- | --- |
-| `lib/ai/analysis/pipeline.ts` | RAI-SAFE-002/005/006/007/008/009/011, RAI-FAIR-001, RAI-REL-001, RAI-TRANS-002 |
+| `lib/ai/analysis/pipeline.ts` | RAI-SAFE-002/005/006/007/008/009/011/013, RAI-FAIR-001, RAI-REL-001, RAI-TRANS-002/006 |
 | `lib/ai/schemas/burn-wound-analysis.ts` | RAI-SAFE-004, RAI-TRANS-001 |
 | `lib/ai/validation/image-input.ts` | RAI-SAFE-001, RAI-PRIV-006 |
 | `lib/ai/validation/wound-analysis-schema.ts` | RAI-SAFE-003/010 |

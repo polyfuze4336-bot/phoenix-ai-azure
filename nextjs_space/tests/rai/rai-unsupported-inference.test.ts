@@ -8,7 +8,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { WOUND_VISUAL_OBSERVATION_PROMPT } from '../../lib/ai/prompts/wound-visual-observation';
+import { HCP_WOUND_ANALYSIS_SYSTEM_PROMPT } from '../../lib/ai/prompts/hcp-wound-analysis';
 import { WOUND_CLINICAL_INTERPRETATION_PROMPT } from '../../lib/ai/prompts/wound-clinical-interpretation';
+import { WOUND_VISUAL_OBSERVATION_PROMPT } from '../../lib/ai/prompts/wound-visual-observation';
 
 test('RAI-FAIR-001: the visual prompt forbids assigning Fitzpatrick from a photo', () => {
   const p = WOUND_VISUAL_OBSERVATION_PROMPT.toLowerCase();
@@ -31,4 +33,11 @@ test('RAI-SAFE-007: the interpretation prompt forbids invented measurements', ()
 test('RAI-SAFE-006: the interpretation prompt defers fluid resuscitation to deterministic calc', () => {
   const p = WOUND_CLINICAL_INTERPRETATION_PROMPT.toLowerCase();
   assert.match(p, /do not compute fluid resuscitation/i);
+});
+
+test('RAI-TRANS-006: multi-image prompts make duplicate views non-additive', () => {
+  assert.match(WOUND_VISUAL_OBSERVATION_PROMPT, /duplicate views are corroborative evidence only/i);
+  assert.match(WOUND_CLINICAL_INTERPRETATION_PROMPT, /must not be added again/i);
+  assert.match(WOUND_CLINICAL_INTERPRETATION_PROMPT, /do not claim pixel overlay or geometric registration/i);
+  assert.match(HCP_WOUND_ANALYSIS_SYSTEM_PROMPT, /must not be added again/i);
 });

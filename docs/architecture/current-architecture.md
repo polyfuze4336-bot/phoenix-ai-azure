@@ -7,7 +7,7 @@
 > and MUST remain synchronized with the implementation (see
 > [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.3.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.4.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -38,7 +38,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Application runtime | Next.js 14 (App Router), React 18, TypeScript 5, standalone Node server (`node server.js`) — **Implemented** |
 | Major portals | Experience selector landing, Original HCP + Community portals, and an additive **Phoenix AI v2.0** experience (`/v2/*`, feature-flag gated), PWA + EN/BM — **Implemented** |
 | Hosting | Azure Container Apps Consumption, `eastus2`; image in Azure Container Registry Basic — **Implemented** |
-| AI processing | Environment-owned Azure AI Services S0 account with `gpt-4o` via `lib/ai`, managed identity — **Implemented** |
+| AI processing | Environment-owned Azure AI Services S0 account with `gpt-4o` via `lib/ai`, managed identity; HCP analysis accepts 1-5 jointly assessed images with non-additive duplicate views — **Implemented** |
 | Data handling | Azure PostgreSQL Flexible Server via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
 | Authentication | Server-verified **demo** login by default; Microsoft Entra ID **opt-in** placeholder — **Mock/demo + Optional** |
 | Storage | Azure Blob provider present + infra provisioned; no UI workflow persists files — **Configured but unused** |
@@ -188,7 +188,7 @@ Companion diagrams:
 | Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — no assumed patient weight | Implemented |
 | Rich analysis schema + adapter | `lib/ai/schemas/burn-wound-analysis.ts` (observation vs interpretation, field confidence, gaps) + flat back-compat adapter | Implemented |
 | Streaming | `lib/ai/streaming/{sse,collect,text-stream}.ts` | Implemented |
-| Image analysis (multimodal) | `lib/ai/validation/image-input.ts` + vision model | Implemented |
+| Image analysis (multimodal) | `lib/ai/validation/image-input.ts` + vision model; bounded 1-5 images, jointly interpreted with duplicate views non-additive | Implemented |
 | Structured response validation | `lib/ai/validation/wound-analysis-schema.ts` (Zod, 22-field contract) | Implemented |
 | Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
 | AI telemetry | `lib/ai/telemetry.ts` | Implemented |
@@ -203,6 +203,12 @@ burns are escalated. The rich result is mapped back to the existing 22-field con
 client and SSE envelope are unchanged) and the full structure travels under `result.structured`
 for the enhanced UI and the REFINE (second-pass) flow. Setting `AI_ANALYSIS_PIPELINE=single`
 restores the original single-pass call.
+
+The HCP route accepts the legacy single image or a bounded collection of up to five images. Joint
+observation/interpretation identifies distinct anatomical coverage and probable duplicate views;
+duplicates improve evidence quality but are not summed. The aggregate photographic TBSA remains an
+AI estimate, is clamped to `0-100%`, and is classified deterministically as Minor (`<15%`) or Major
+(`>=15%`). Clinicians must confirm coverage and TBSA with examination and the Lund & Browder tool.
 
 ### 3.4 Data Layer
 

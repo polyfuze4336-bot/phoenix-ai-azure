@@ -39,6 +39,25 @@ export interface TbsaBreakdown {
   total: number;
 }
 
+export type PhotographicTbsaClassification = 'Minor' | 'Major' | 'Unavailable';
+
+export interface PhotographicTbsaResult {
+  estimate: number | null;
+  classification: PhotographicTbsaClassification;
+}
+
+/**
+ * Bound an AI-reported photographic TBSA and classify it deterministically.
+ * Exactly 15% is Major; Minor is strictly below 15%.
+ */
+export function classifyPhotographicTbsa(value: number | null): PhotographicTbsaResult {
+  if (value == null || !Number.isFinite(value)) {
+    return { estimate: null, classification: 'Unavailable' };
+  }
+  const estimate = round1(Math.min(100, Math.max(0, value)));
+  return { estimate, classification: estimate >= 15 ? 'Major' : 'Minor' };
+}
+
 // Lund & Browder age-variable areas (½ of the region; doubled where paired).
 export const VARIABLE_AREAS = {
   head: { label: 'A = ½ OF HEAD', '0': 9.5, '1': 8.5, '5': 6.5, '10': 5.5, '15': 4.5, 'adult': 3.5 },

@@ -73,6 +73,44 @@ test('RAI-SAFE-011: a non-burn cannot carry a TBSA value', () => {
   assert.equal(a.interpretation.tbsaEstimate, null);
 });
 
+test('RAI-SAFE-013: photographic TBSA is bounded and classified deterministically', () => {
+  const minor = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 14.9 }),
+    management: baseManagement(),
+    critic,
+  });
+  assert.equal(minor.interpretation.tbsaClassification, 'Minor');
+
+  const major = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 15 }),
+    management: baseManagement(),
+    critic,
+  });
+  assert.equal(major.interpretation.tbsaClassification, 'Major');
+
+  const bounded = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 110 }),
+    management: baseManagement(),
+    critic,
+  });
+  assert.equal(bounded.interpretation.tbsaEstimate, 100);
+});
+
+test('RAI-TRANS-006: multi-view limitations disclose non-registration and double-count risk', () => {
+  const a = assembleAnalysis({
+    observation: baseObservation({ imageCount: 2, probableDuplicateViews: ['images 1 and 2'] }),
+    interpretation: baseInterpretation(),
+    management: baseManagement(),
+    critic,
+    imageCount: 2,
+  });
+  assert.ok(a.limitations.some((limitation) => /not geometric registration/i.test(limitation)));
+  assert.ok(a.limitations.some((limitation) => /double-counted/i.test(limitation)));
+});
+
 test('RAI-TRANS-002: limitations and missing information are always present arrays', () => {
   const a = assembleAnalysis({
     observation: baseObservation(),

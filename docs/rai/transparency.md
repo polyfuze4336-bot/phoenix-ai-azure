@@ -24,6 +24,10 @@ Every assessment lists what could not be determined, what information is missing
 follow-up questions (**RAI-TRANS-002**), rendered by
 [`app/hcp/analysis/_components/structured-analysis.tsx`](../../nextjs_space/app/hcp/analysis/_components/structured-analysis.tsx).
 
+For multi-image assessment, the result also discloses image count, distinct anatomical regions,
+probable duplicate views, and the aggregation rule. Duplicate detection is model-assisted and is not
+presented as guaranteed image registration (**RAI-TRANS-006**).
+
 ## Analysis metadata
 The "Analysis Information" panel exposes a non-sensitive traceability record: analysis id, timestamp,
 model deployment name, pipeline mode/version, prompt versions, schema version, image-quality band,

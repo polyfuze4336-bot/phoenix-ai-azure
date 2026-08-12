@@ -8,7 +8,11 @@ import {
   checkRequestBodySize,
   approxBase64Bytes,
   maxImageRequestBytes,
+  maxImageCollectionRequestBytes,
+  checkImageCollectionRequestBodySize,
   ALLOWED_IMAGE_MIME_TYPES,
+  MAX_ANALYSIS_IMAGES,
+  validateImageCollection,
 } from '../../lib/ai/validation/image-input';
 
 const tinyBase64 = 'aGVsbG8='; // "hello"
@@ -73,4 +77,49 @@ test('checkRequestBodySize: rejects over-limit Content-Length, passes null/valid
   assert.equal(checkRequestBodySize(null).ok, true);
   assert.equal(checkRequestBodySize('1024').ok, true);
   assert.equal(checkRequestBodySize('not-a-number').ok, true);
+});
+
+test('checkImageCollectionRequestBodySize: uses a larger aggregate ceiling only for HCP collections', () => {
+  assert.ok(maxImageCollectionRequestBytes() > maxImageRequestBytes());
+  const betweenLimits = String(maxImageRequestBytes() + 1);
+  assert.equal(checkRequestBodySize(betweenLimits).ok, false);
+  assert.equal(checkImageCollectionRequestBodySize(betweenLimits).ok, true);
+  assert.equal(checkImageCollectionRequestBodySize(String(maxImageCollectionRequestBytes() + 1)).ok, false);
+});
+
+test('validateImageCollection: accepts and normalizes one to five images', () => {
+  const result = validateImageCollection([
+    { image: `data:image/png;base64,${tinyBase64}`, mimeType: 'image/png' },
+    { image: tinyBase64, mimeType: 'image/jpeg' },
+  ]);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.images.length, 2);
+    assert.equal(result.images[0].image, tinyBase64);
+    assert.equal(result.totalBytes, 10);
+  }
+});
+
+test('validateImageCollection: rejects empty and over-limit collections', () => {
+  assert.equal(validateImageCollection([]).ok, false);
+  const tooMany = Array.from({ length: MAX_ANALYSIS_IMAGES + 1 }, () => ({ image: tinyBase64 }));
+  const result = validateImageCollection(tooMany);
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.match(result.error, /maximum of 5/i);
+});
+
+test('validateImageCollection: enforces a combined decoded-size limit', () => {
+  const saved = process.env.AZURE_AI_MAX_TOTAL_IMAGE_MB;
+  process.env.AZURE_AI_MAX_TOTAL_IMAGE_MB = '0.00001';
+  try {
+    const result = validateImageCollection([
+      { image: 'A'.repeat(12), mimeType: 'image/png' },
+      { image: 'A'.repeat(12), mimeType: 'image/png' },
+    ]);
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.match(result.error, /combined images are too large/i);
+  } finally {
+    if (saved === undefined) delete process.env.AZURE_AI_MAX_TOTAL_IMAGE_MB;
+    else process.env.AZURE_AI_MAX_TOTAL_IMAGE_MB = saved;
+  }
 });

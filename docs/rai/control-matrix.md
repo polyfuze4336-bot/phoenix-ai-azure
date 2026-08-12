@@ -8,12 +8,14 @@ Status: **Active** (implemented + evidenced) · **Partial** · **Planned**.
 | --- | --- | --- | --- | --- |
 | RAI-SAFE-001 | Image input validation | Reliability & Safety | Input | Active |
 | RAI-SAFE-002 | Image-quality gating | Reliability & Safety | Input | Active |
+| RAI-TRANS-006 | Multi-view coverage and duplicate disclosure | Transparency | Input | Partial |
 | RAI-PRIV-006 | Request size limits | Privacy & Security | Input | Active |
 | RAI-SAFE-004 | Observation vs interpretation | Transparency | Analysis | Active |
 | RAI-FAIR-001 | Skin tone described, not inferred | Fairness | Analysis | Active |
 | RAI-FAIR-002 | No demographic inference | Fairness | Analysis | Active |
 | RAI-SAFE-006 | Weight-gated Parkland | Reliability & Safety | Analysis | Active |
 | RAI-SAFE-011 | Deterministic TBSA | Reliability & Safety | Analysis | Active |
+| RAI-SAFE-013 | Bounded photographic TBSA classification | Reliability & Safety | Analysis | Active |
 | RAI-SAFE-007 | No fabricated measurements | Reliability & Safety | Analysis | Active |
 | RAI-TRANS-005 | Guideline basis disclosure | Transparency | Analysis | Partial |
 | RAI-SAFE-003 | Schema-validated output | Reliability & Safety | Output | Active |

@@ -36,6 +36,7 @@ export default defineConfig({
     env: {
       NEXTAUTH_URL: 'http://localhost:3000',
       AZURE_AI_MAX_IMAGE_MB: '1',
+      AZURE_AI_MAX_TOTAL_IMAGE_MB: '1',
     },
   },
 });

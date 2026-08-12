@@ -27,6 +27,8 @@ Honest staging. **Implemented** items are in the product today; **Next** and **F
 ## Future (aspirational, requires governed data / approvals)
 - Quantitative fairness benchmark across skin tones with a governed, consented, labelled dataset.
 - Prospective clinical validation against clinician ground truth.
+- Evaluated geometric registration / overlap detection for calibrated multi-view clinical imaging;
+  current duplicate-view recognition is model-assisted and disclosed as Partial (`RAI-TRANS-006`).
 - Additional community languages.
 
 > These Next/Future items must not be presented to users as existing features.

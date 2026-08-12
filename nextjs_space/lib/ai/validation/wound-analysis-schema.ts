@@ -44,7 +44,7 @@ const boolField = z
   }, z.boolean())
   .catch(false);
 
-/** HCP clinical wound-analysis result (22 fields rendered by the HCP client). */
+/** HCP clinical wound-analysis result rendered by the HCP clients. */
 export const hcpWoundAnalysisSchema = z.object({
   fitzpatrickType: strField(),
   fitzpatrickNote: strField(),
@@ -58,9 +58,14 @@ export const hcpWoundAnalysisSchema = z.object({
   woundEdges: strField(),
   confidence: strField(),
   tbsaEstimate: strField('0'),
+  tbsaClassification: strField('Unavailable'),
   tbsaRange: strField(),
   tbsaBodyRegions: strField(),
   tbsaMethod: strField(),
+  imageCount: strField('1'),
+  distinctAnatomicalRegions: strField(),
+  probableDuplicateViews: strField('None identified'),
+  multiImageAggregationNote: strField(),
   isBurn: boolField,
   parklandFluid: strField(),
   firstAid: strField(),
@@ -112,9 +117,14 @@ export const HCP_ASSESSMENT_UNAVAILABLE: HcpWoundAnalysis = {
   woundEdges: 'N/A',
   confidence: 'N/A',
   tbsaEstimate: '0',
+  tbsaClassification: 'Unavailable',
   tbsaRange: 'N/A',
   tbsaBodyRegions: 'N/A',
   tbsaMethod: 'N/A',
+  imageCount: '1',
+  distinctAnatomicalRegions: 'N/A',
+  probableDuplicateViews: 'None identified',
+  multiImageAggregationNote: 'N/A',
   isBurn: false,
   parklandFluid: 'N/A',
   firstAid: 'N/A',

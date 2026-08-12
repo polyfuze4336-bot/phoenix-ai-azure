@@ -141,6 +141,46 @@ test('non-burn cannot carry a TBSA value', () => {
   assert.equal(a.parkland.indicated, 'no');
 });
 
+test('photographic TBSA is clamped and exactly 15% is classified Major', () => {
+  const atBoundary = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 15 }),
+    management: baseManagement(),
+    critic,
+  });
+  assert.equal(atBoundary.interpretation.tbsaEstimate, 15);
+  assert.equal(atBoundary.interpretation.tbsaClassification, 'Major');
+
+  const overLimit = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 140 }),
+    management: baseManagement(),
+    critic,
+  });
+  assert.equal(overLimit.interpretation.tbsaEstimate, 100);
+});
+
+test('multi-image analysis discloses duplicate-view and coverage limitations', () => {
+  const a = assembleAnalysis({
+    observation: baseObservation({
+      imageCount: 3,
+      distinctAnatomicalRegions: ['left arm', 'anterior trunk'],
+      probableDuplicateViews: ['images 1 and 2: same left arm region'],
+      multiImageAggregationNote: 'Images 1 and 2 corroborate one region; image 3 is distinct.',
+    }),
+    interpretation: baseInterpretation({ tbsaEstimate: 14.9 }),
+    management: baseManagement(),
+    critic,
+    imageCount: 3,
+  });
+  assert.equal(a.interpretation.tbsaClassification, 'Minor');
+  assert.ok(a.limitations.some((limitation) => /not geometric registration/i.test(limitation)));
+  const flat = toFlatHcpAnalysis(a);
+  assert.equal(flat.imageCount, '3');
+  assert.equal(flat.tbsaClassification, 'Minor');
+  assert.match(flat.probableDuplicateViews, /images 1 and 2/i);
+});
+
 test('missing weight for a burn is surfaced as missing information', () => {
   const a = assembleAnalysis({ observation: baseObservation(), interpretation: baseInterpretation(), management: baseManagement(), critic });
   assert.ok(a.missingInformation.some((m) => /weight/i.test(m)));

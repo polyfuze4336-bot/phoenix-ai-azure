@@ -10,6 +10,10 @@ set of deterministic safety rules run after every analysis.
   [`tests/rai/rai-safety.test.ts`](../../nextjs_space/tests/rai/rai-safety.test.ts).
 - **TBSA** — Lund & Browder age-adjusted chart
   ([`lib/clinical/tbsa.ts`](../../nextjs_space/lib/clinical/tbsa.ts), **RAI-SAFE-011**).
+- **Photographic TBSA output guard** — the model-reported aggregate is bounded to `0-100%` and
+   classified in application code as Minor (`<15%`) or Major (`>=15%`) (**RAI-SAFE-013**). This
+   deterministic guard does not make the underlying photographic estimate deterministic or
+   clinically validated.
 
 ## Deterministic safety rules (in `assembleAnalysis`)
 Implemented in [`lib/ai/analysis/pipeline.ts`](../../nextjs_space/lib/ai/analysis/pipeline.ts) and
@@ -25,6 +29,9 @@ covered by the RAI + unit tests:
 6. **Automated consistency review** flags contradictions, unsupported claims and false precision
    (**RAI-SAFE-005**).
 7. **Bounded execution** — each stage runs under a timeout (**RAI-REL-001**).
+8. **Multi-view non-additivity** — probable duplicate views are disclosed and instructed to be
+   corroborative, not additive (**RAI-TRANS-006**, Partial after implementation because recognition
+   remains model-assisted).
 
 ## Safe failure
 If the model or validation fails, the app returns an explicit, clearly-labelled
@@ -33,6 +40,7 @@ a result (**RAI-SAFE-010**,
 [`lib/ai/validation/wound-analysis-schema.ts`](../../nextjs_space/lib/ai/validation/wound-analysis-schema.ts)).
 
 ## Boundaries
-A single photograph cannot establish depth progression, infection, pain or sensation with certainty.
-These limits are disclosed per assessment (see [transparency.md](./transparency.md)) and in
+Photographs cannot establish depth progression, infection, pain or sensation with certainty.
+Multiple views cannot guarantee geometric registration or complete body coverage. These limits are
+disclosed per assessment (see [transparency.md](./transparency.md)) and in
 [known-limitations.md](./known-limitations.md).

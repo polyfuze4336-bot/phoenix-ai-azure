@@ -14,13 +14,15 @@ flowchart TB
     end
 
     subgraph HCPAnalysis["HCP Wound Analysis"]
-        U2["User"] --> IMG2["Image upload (base64)"]
+        U2["User"] --> IMG2["1-5 image uploads (ephemeral base64)"]
         IMG2 --> R2["/api/analyze-wound"]
         R2 --> V2["Image validation (lib/ai/validation/image-input)"]
-        V2 --> AP2["AI Provider (multimodal)"]
+        V2 --> D2["Joint coverage + probable duplicate-view assessment"]
+        D2 --> AP2["AI Provider (multimodal)"]
         AP2 --> F2["Microsoft Foundry (gpt-4o vision)"]
         F2 --> SV2["Structured response validation (wound-analysis-schema)"]
-        SV2 --> UI2["HCP Result Panel"]
+        SV2 --> G2["Deterministic TBSA clamp + Minor/Major band"]
+        G2 --> UI2["HCP Result Panel"]
         R2 -.->|"OPTIONAL: persist AnalysisRecord"| DB2["PostgreSQL (lib/analysis/history)"]
         R2 -.->|"OPTIONAL: not wired"| BLOB2["Azure Blob Storage"]
     end

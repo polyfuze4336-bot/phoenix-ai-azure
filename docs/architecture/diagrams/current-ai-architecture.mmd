@@ -3,7 +3,7 @@
 %% multimodal image input, and structured-output validation.
 flowchart TB
     subgraph Interfaces["Client Interfaces"]
-        HCPUI["HCP Interface\n(chat + wound analysis)"]
+        HCPUI["HCP Interface\n(chat + 1-5 image wound analysis)"]
         COMMUI["Community Interface\n(chat + image check)"]
     end
 
@@ -29,7 +29,8 @@ flowchart TB
 
     subgraph Pipeline["Staged Analysis Pipeline (lib/ai/analysis)"]
         ORCH["runAnalysisPipeline\n(flag AI_ANALYSIS_PIPELINE=staged, default)"]
-        DETCALC["Deterministic calc\nlib/clinical/parkland + tbsa\n(no assumed weight)"]
+        DETCALC["Deterministic calc\nParkland + TBSA bounds/15% band\n(no assumed weight)"]
+        MULTIVIEW["Multi-view coverage\nprobable duplicates non-additive"]
         SCHEMA["schemas/burn-wound-analysis\n(obs vs interp, confidence, gaps)"]
         MODELSEL["model-config\nAZURE_AI_ANALYSIS_MODEL_DEPLOYMENT"]
     end
@@ -66,6 +67,7 @@ flowchart TB
     ORCH --> PS3 --> FACTORY
     ORCH --> PS4 --> FACTORY
     ORCH --> DETCALC
+    ORCH --> MULTIVIEW
     ORCH --> SCHEMA
     ORCH --> MODELSEL
     MODELSEL --> AZPROV

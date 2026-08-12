@@ -16,6 +16,27 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.4.0] — 2026-08-12
+
+### Changed
+- **Multi-image HCP burn assessment** — the existing HCP analysis API and staged vision pipeline
+  accept one to five images from the same assessment. Multiple views of the same anatomical region
+  are corroborative and must not be added more than once; distinct regions contribute to one
+  aggregate AI-estimated TBSA.
+- **Deterministic TBSA output guard** — model-reported aggregate TBSA is clamped to `0-100%` and
+  classified in application code as Minor (`<15%`) or Major (`>=15%`). The boundary resolves the
+  otherwise overlapping `<=15%` / `>=15%` requirement by assigning exactly 15% to Major.
+- Both Original and v2 HCP upload surfaces support bounded multi-image selection and display the
+  aggregate estimate, classification, coverage/deduplication note, and limitations.
+
+### Boundaries
+- Photographic TBSA remains an AI estimate requiring clinician review; duplicate-view recognition
+  is model-assisted and cannot guarantee geometric image registration. The deterministic Lund &
+  Browder calculator remains the authoritative clinician-entered calculation surface.
+- No Azure resource, database schema, deployment topology, model deployment, or credential change.
+  See [ADR-0008](./decisions/ADR-0008-multi-image-tbsa-assessment.md) and
+  [CHANGE-20260812](./changes/CHANGE-20260812-multi-image-tbsa-assessment.md).
+
 ## [2.3.0] — 2026-08-12
 
 ### Changed

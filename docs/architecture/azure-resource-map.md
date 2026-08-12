@@ -7,6 +7,10 @@
 > **Phoenix AI v2.0 (`/v2/*`, ADR-0004) introduces NO additional Azure resources.** It ships inside the
 > existing Next.js standalone bundle in the same Container App and reuses the same environment-owned Azure AI,
 > Application Insights, Key Vault, and Managed Identity resources. The Azure footprint below is unchanged.
+>
+> **Multi-image HCP analysis (ADR-0008) introduces NO additional Azure resources.** Up to five
+> ephemeral image parts use the existing Container App and Azure AI integration; no image collection
+> is added to PostgreSQL or Blob Storage.
 
 ## Environment
 

@@ -5,7 +5,7 @@
  * separates OBSERVATION (what is visible) from INTERPRETATION (what it may mean),
  * attaches FIELD-LEVEL CONFIDENCE, and records MISSING INFORMATION, LIMITATIONS,
  * RED FLAGS and CONSISTENCY/SAFETY CHECKS so the UI can be honest about what the
- * model can and cannot conclude from a single photograph.
+ * model can and cannot conclude from one or more photographs.
  *
  * The pipeline maps this structure back to the existing 22-field
  * `hcpWoundAnalysisSchema` (see `toFlatHcpAnalysis`) so the /api/analyze-wound
@@ -91,6 +91,10 @@ export const visualObservationSchema = z.object({
   visibleFindings: strArray, // colour, surface, blistering, borders, discharge
   scalePresent: boolLoose, // is a ruler/coin/reference visible?
   notes: str(),
+  imageCount: z.number().int().min(1).max(5).catch(1).optional(),
+  distinctAnatomicalRegions: strArray.optional(),
+  probableDuplicateViews: strArray.optional(),
+  multiImageAggregationNote: str().optional(),
 });
 export type VisualObservation = z.infer<typeof visualObservationSchema>;
 
@@ -111,6 +115,7 @@ export const interpretationSchema = z.object({
   visualExtent: str(), // qualitative, e.g. "small area on dorsal hand"
   measuredDimensions: str('unavailable'), // 'unavailable' unless a scale reference is present
   tbsaEstimate: numOrNull, // percent, null when not a burn / cannot estimate
+  tbsaClassification: z.enum(['Minor', 'Major', 'Unavailable']).catch('Unavailable'),
   tbsaRange: str(),
   tbsaMethod: str(),
   tbsaBodyRegions: str(),
@@ -166,7 +171,7 @@ export const analysisQuality = z
 export type AnalysisQuality = z.infer<typeof analysisQuality>;
 
 export const burnWoundAnalysisSchema = z.object({
-  schemaVersion: z.literal('2.0').catch('2.0'),
+  schemaVersion: z.literal('2.1').catch('2.1'),
   analysisQuality,
   imageQuality: z.object({
     adequate: boolLoose,
@@ -221,9 +226,14 @@ export function toFlatHcpAnalysis(a: BurnWoundAnalysis): HcpWoundAnalysis {
     woundEdges: withBasis(i.edgesAndPeriwound) || 'N/A',
     confidence: a.overallConfidence || a.analysisQuality,
     tbsaEstimate: i.tbsaEstimate != null ? String(i.tbsaEstimate) : '0',
+    tbsaClassification: i.tbsaClassification,
     tbsaRange: i.tbsaRange || 'N/A',
     tbsaBodyRegions: i.tbsaBodyRegions || 'N/A',
     tbsaMethod: i.tbsaMethod || 'N/A',
+    imageCount: String(a.observation.imageCount ?? 1),
+    distinctAnatomicalRegions: (a.observation.distinctAnatomicalRegions ?? []).join(', ') || 'N/A',
+    probableDuplicateViews: (a.observation.probableDuplicateViews ?? []).join('; ') || 'None identified',
+    multiImageAggregationNote: a.observation.multiImageAggregationNote || 'Single-image assessment.',
     isBurn: i.isBurn,
     parklandFluid: a.parkland.summary || 'N/A',
     firstAid: a.management.firstAid || 'N/A',

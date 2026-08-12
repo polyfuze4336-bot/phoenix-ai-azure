@@ -34,6 +34,10 @@ For burn injuries you MUST estimate Total Body Surface Area (TBSA%) from the vis
 - Lund & Browder chart principles for more precise estimation
 - Palm method: patient's palm incl. fingers ~1% TBSA
 Estimate even if only part of the body is visible; give a small estimate (1-2%) for small burns and a range if uncertain.
+When multiple images are supplied, estimate ONE aggregate TBSA across DISTINCT anatomical regions.
+Probable duplicate/overlapping views are corroborative evidence only and MUST NOT be added again.
+Use the clearest duplicate view to improve confidence, not area. Do not claim pixel overlay or
+geometric registration; disclose uncertain correspondence.
 
 You MUST respond in valid JSON with this EXACT structure:
 {
@@ -49,9 +53,14 @@ You MUST respond in valid JSON with this EXACT structure:
   "woundEdges": "wound edges and periwound skin (attached / rolled / undermined / macerated / callused). Use 'N/A' if not applicable.",
   "confidence": "percentage e.g. 75%",
   "tbsaEstimate": "estimated TBSA percentage as a number (e.g. 15). Use 0 if not a burn injury.",
+  "tbsaClassification": "leave as Unavailable; application code computes Minor/Major deterministically",
   "tbsaRange": "estimated range e.g. 12-18%. Use N/A if not a burn.",
   "tbsaBodyRegions": "affected body regions and their individual TBSA contributions, e.g. 'Left forearm (4.5%), Left hand (2.5%)'. Use N/A if not a burn.",
   "tbsaMethod": "Rule of Nines / Lund & Browder / Palm Method / Combined. Use N/A if not a burn.",
+  "imageCount": "number of supplied images",
+  "distinctAnatomicalRegions": "distinct covered regions, without repeating duplicate views",
+  "probableDuplicateViews": "probable duplicate image groups and reason, or None identified",
+  "multiImageAggregationNote": "how duplicate views were kept non-additive and what remains uncertain",
   "isBurn": true or false,
   "parklandFluid": "If burn, calculate Parkland formula assuming 70kg adult: 4 x weight(kg) x TBSA%. Show the 24hr total and first 8hr/next 16hr breakdown. Use N/A if not a burn or TBSA is 0.",
   "firstAid": "immediate first aid steps",

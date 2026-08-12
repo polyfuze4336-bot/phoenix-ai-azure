@@ -18,10 +18,18 @@ export const ALLOWED_IMAGE_MIME_TYPES = [
 ] as const;
 
 const DEFAULT_MAX_IMAGE_MB = 10;
+const DEFAULT_MAX_TOTAL_IMAGE_MB = 25;
+export const MAX_ANALYSIS_IMAGES = 5;
 
 function maxImageBytes(): number {
   const configured = Number.parseFloat(process.env.AZURE_AI_MAX_IMAGE_MB ?? '');
   const mb = Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_MAX_IMAGE_MB;
+  return Math.floor(mb * 1024 * 1024);
+}
+
+function maxTotalImageBytes(): number {
+  const configured = Number.parseFloat(process.env.AZURE_AI_MAX_TOTAL_IMAGE_MB ?? '');
+  const mb = Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_MAX_TOTAL_IMAGE_MB;
   return Math.floor(mb * 1024 * 1024);
 }
 
@@ -44,6 +52,11 @@ export function maxImageRequestBytes(): number {
   return Math.floor(maxImageBytes() * 1.5) + 4096;
 }
 
+/** Upper bound for the HCP route's bounded multi-image JSON envelope. */
+export function maxImageCollectionRequestBytes(): number {
+  return Math.floor(maxTotalImageBytes() * 1.5) + 16_384;
+}
+
 export interface BodySizeCheck {
   ok: boolean;
   error?: string;
@@ -63,13 +76,27 @@ export function checkRequestBodySize(contentLength: string | null): BodySizeChec
   return { ok: true };
 }
 
+/** Reject an HCP multi-image request whose declared body exceeds the aggregate limit. */
+export function checkImageCollectionRequestBodySize(contentLength: string | null): BodySizeCheck {
+  const declared = Number.parseInt(contentLength ?? '', 10);
+  if (Number.isFinite(declared) && declared > maxImageCollectionRequestBytes()) {
+    const limitMb = (maxImageCollectionRequestBytes() / (1024 * 1024)).toFixed(0);
+    return { ok: false, error: `Request body too large. Maximum combined upload is about ${limitMb} MB.` };
+  }
+  return { ok: true };
+}
+
 export interface ImageInput {
   image?: unknown;
   mimeType?: unknown;
 }
 
 export type ImageValidationResult =
-  | { ok: true; mimeType: string; bytes: number }
+  | { ok: true; image: string; mimeType: string; bytes: number }
+  | { ok: false; error: string };
+
+export type ImageCollectionValidationResult =
+  | { ok: true; images: Array<{ image: string; mimeType: string; bytes: number }>; totalBytes: number }
   | { ok: false; error: string };
 
 /** Validate a base64 image payload + optional MIME type. */
@@ -102,5 +129,35 @@ export function validateImageInput(input: ImageInput): ImageValidationResult {
     return { ok: false, error: `Image is too large. Maximum size is ${limitMb} MB.` };
   }
 
-  return { ok: true, mimeType: resolvedMime, bytes };
+  return { ok: true, image: base64, mimeType: resolvedMime, bytes };
+}
+
+/** Validate and normalize a bounded collection of images for one HCP assessment. */
+export function validateImageCollection(inputs: unknown): ImageCollectionValidationResult {
+  if (!Array.isArray(inputs) || inputs.length === 0) {
+    return { ok: false, error: 'At least one image is required.' };
+  }
+  if (inputs.length > MAX_ANALYSIS_IMAGES) {
+    return { ok: false, error: `A maximum of ${MAX_ANALYSIS_IMAGES} images may be analyzed together.` };
+  }
+
+  const images: Array<{ image: string; mimeType: string; bytes: number }> = [];
+  let totalBytes = 0;
+  for (const input of inputs) {
+    if (!input || typeof input !== 'object') {
+      return { ok: false, error: 'Each image must include image data and a MIME type.' };
+    }
+    const validation = validateImageInput(input as ImageInput);
+    if (!validation.ok) return validation;
+    images.push(validation);
+    totalBytes += validation.bytes;
+  }
+
+  const limit = maxTotalImageBytes();
+  if (totalBytes > limit) {
+    const limitMb = (limit / (1024 * 1024)).toFixed(0);
+    return { ok: false, error: `Combined images are too large. Maximum total size is ${limitMb} MB.` };
+  }
+
+  return { ok: true, images, totalBytes };
 }

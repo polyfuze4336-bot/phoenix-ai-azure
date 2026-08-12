@@ -39,6 +39,7 @@ Trivial changes (copy edits, dependency patch bumps, non-structural refactors) d
 | [ADR-0005](./ADR-0005-ai-assurance-layer.md) | Responsible AI assurance layer from a code-based control register | Accepted | 2026-08-07 |
 | [ADR-0006](./ADR-0006-customer-owned-azure-ai.md) | Provision a customer-owned Azure AI account per environment | Accepted | 2026-08-09 |
 | [ADR-0007](./ADR-0007-use-azure-container-apps.md) | Host Phoenix AI on Azure Container Apps Consumption | Accepted | 2026-08-09 |
+| [ADR-0008](./ADR-0008-multi-image-tbsa-assessment.md) | Multi-image TBSA assessment with non-additive duplicate views | Accepted | 2026-08-12 |
 
 ## Template
 

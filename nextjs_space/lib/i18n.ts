@@ -46,7 +46,7 @@ export const translations: Record<string, Record<Lang, string>> = {
   'analysis.title': { en: 'AI Wound & Burn Analysis', bm: 'Analisis Luka & Kelecuran AI' },
   'analysis.upload': { en: 'Upload Image', bm: 'Muat Naik Imej' },
   'analysis.camera': { en: 'Use Camera', bm: 'Guna Kamera' },
-  'analysis.analyze': { en: 'Analyze Image', bm: 'Analisis Imej' },
+  'analysis.analyze': { en: 'Analyze Images', bm: 'Analisis Imej' },
   'analysis.analyzing': { en: 'Analyzing...', bm: 'Menganalisis...' },
   'analysis.results': { en: 'Analysis Results', bm: 'Keputusan Analisis' },
   'analysis.wound_type': { en: 'Wound/Burn Type', bm: 'Jenis Luka/Kelecuran' },

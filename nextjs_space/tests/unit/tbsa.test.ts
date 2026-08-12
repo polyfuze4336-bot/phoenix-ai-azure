@@ -11,6 +11,7 @@ import {
   round1,
   computeTbsaBreakdown,
   REGION_KEYS,
+  classifyPhotographicTbsa,
   type Counts,
 } from '../../lib/clinical/tbsa';
 
@@ -48,6 +49,14 @@ test('getSeverity: banding boundaries', () => {
   assert.equal(getSeverity(20.1).label, 'Major (20-40%)');
   assert.equal(getSeverity(40).label, 'Major (20-40%)');
   assert.equal(getSeverity(40.1).label, 'Critical (>40%)');
+});
+
+test('classifyPhotographicTbsa: clamps values and makes exactly 15% Major', () => {
+  assert.deepEqual(classifyPhotographicTbsa(null), { estimate: null, classification: 'Unavailable' });
+  assert.deepEqual(classifyPhotographicTbsa(-2), { estimate: 0, classification: 'Minor' });
+  assert.deepEqual(classifyPhotographicTbsa(14.94), { estimate: 14.9, classification: 'Minor' });
+  assert.deepEqual(classifyPhotographicTbsa(15), { estimate: 15, classification: 'Major' });
+  assert.deepEqual(classifyPhotographicTbsa(125), { estimate: 100, classification: 'Major' });
 });
 
 test('formatFraction: whole numbers and quarters', () => {

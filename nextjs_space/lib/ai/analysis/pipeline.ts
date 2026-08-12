@@ -23,6 +23,7 @@ import { getAnalysisModelDeployment } from '../model-config';
 import { collectCompletion, parseJsonObject } from '../streaming/collect';
 import type { AiMessage } from '../types';
 import { calculateResuscitation } from '@/lib/clinical/parkland';
+import { classifyPhotographicTbsa } from '@/lib/clinical/tbsa';
 import {
   burnWoundAnalysisSchema,
   criticSchema,
@@ -51,7 +52,7 @@ export interface PatientContext {
 }
 
 export interface PipelineInput {
-  imageDataUrl: string; // data:<mime>;base64,....
+  imageDataUrls: string[]; // 1-5 data:<mime>;base64,... images
   patient?: PatientContext;
   /** Prior analysis + clinician answers for a REFINE pass (second pass). */
   refine?: { priorAnalysis: BurnWoundAnalysis; answers: string };
@@ -139,20 +140,24 @@ function computeParkland(isBurn: boolean, tbsa: number | null, weightKg?: number
 /* --------------------------------------------------------------- orchestrator */
 
 export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWoundAnalysis> {
-  const { imageDataUrl, patient, refine, correlationId } = input;
+  const { imageDataUrls, patient, refine, correlationId } = input;
   const ctx = contextBlock(patient);
+  const imageParts: AiMessage['content'] = imageDataUrls.map((url) => ({ type: 'image_url' as const, image_url: { url } }));
 
   // Stage 1 — Visual observation (vision).
   const obsRaw = await runStage(
     WOUND_VISUAL_OBSERVATION_PROMPT,
     [
-      { type: 'text', text: `${ctx}\nDescribe what is visible in this image.` },
-      { type: 'image_url', image_url: { url: imageDataUrl } },
+      { type: 'text', text: `${ctx}\nReview all ${imageDataUrls.length} supplied image(s). Describe each view, distinct anatomical coverage, and probable duplicate/overlapping views.` },
+      ...imageParts,
     ],
     correlationId,
     'analyze-wound:observation',
   );
-  const observation: VisualObservation = visualObservationSchema.parse(obsRaw ?? {});
+  const observation: VisualObservation = {
+    ...visualObservationSchema.parse(obsRaw ?? {}),
+    imageCount: imageDataUrls.length,
+  };
 
   // Stage 2 — Clinical interpretation + quantification (vision, grounded in stage 1).
   const priorNote = refine
@@ -165,7 +170,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
         type: 'text',
         text: `${ctx}\nObservations from the observation stage:\n${JSON.stringify(observation)}${priorNote}\nInterpret this wound.`,
       },
-      { type: 'image_url', image_url: { url: imageDataUrl } },
+      ...imageParts,
     ],
     correlationId,
     'analyze-wound:interpretation',
@@ -191,7 +196,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
   );
   const critic = criticSchema.parse(criticRaw ?? { pass: true, issues: [], recommendedCorrections: [] });
 
-  return assemble({ observation, interpretation, management, critic, patient });
+  return assemble({ observation, interpretation, management, critic, patient, imageCount: imageDataUrls.length });
 }
 
 /* ------------------------------------------------- deterministic assembly */
@@ -208,6 +213,7 @@ export function assembleAnalysis(args: {
   management: Management;
   critic: { pass: boolean; issues: string[]; recommendedCorrections: string[] };
   patient?: PatientContext;
+  imageCount?: number;
 }): BurnWoundAnalysis {
   return assemble(args);
 }
@@ -218,6 +224,7 @@ function assemble(args: {
   management: Management;
   critic: { pass: boolean; issues: string[]; recommendedCorrections: string[] };
   patient?: PatientContext;
+  imageCount?: number;
 }): BurnWoundAnalysis {
   const { observation, patient } = args;
   const interpretation = { ...args.interpretation };
@@ -239,6 +246,11 @@ function assemble(args: {
     interpretation.tbsaRange = 'N/A';
     interpretation.tbsaMethod = 'N/A';
   }
+
+  // --- Deterministic guard: clamp photographic estimate and own the 15% band.
+  const photographicTbsa = classifyPhotographicTbsa(interpretation.isBurn ? interpretation.tbsaEstimate : null);
+  interpretation.tbsaEstimate = photographicTbsa.estimate;
+  interpretation.tbsaClassification = photographicTbsa.classification;
 
   // --- Image-quality gating: cap confidence when the image is not adequate.
   const issues = observation.imageQualityIssues ?? [];
@@ -300,7 +312,13 @@ function assemble(args: {
   if (interpretation.infectionSigns.confidence !== 'insufficient') followUpQuestions.push('Are there systemic signs of infection (fever, spreading redness, increasing pain, purulent discharge)?');
 
   const limitations: string[] = [
-    'This assessment is based solely on a single photograph and cannot replace hands-on clinical examination.',
+    `This assessment is based on ${args.imageCount ?? observation.imageCount ?? 1} photograph(s) and cannot replace hands-on clinical examination.`,
+    ...((args.imageCount ?? observation.imageCount ?? 1) > 1
+      ? ['Duplicate-view recognition is model-assisted, not geometric registration. Confirm that repeated views were not double-counted and all distinct burn regions were included.']
+      : []),
+    ...(interpretation.isBurn
+      ? ['Photographic TBSA is an estimate of visible coverage. Confirm with clinical examination and the Lund & Browder calculator.']
+      : []),
     ...(inadequate ? ['Image quality limits reliability: ' + (observation.imageQualityNote || issues.join(', ')) + '.'] : []),
     ...(interpretation.tbsaLimitations ?? []),
   ];
@@ -309,7 +327,7 @@ function assemble(args: {
     analysisQuality === 'HIGH' ? 'High' : analysisQuality === 'MODERATE' ? 'Moderate' : analysisQuality === 'LOW' ? 'Low' : 'Insufficient';
 
   const candidate = {
-    schemaVersion: '2.0' as const,
+    schemaVersion: '2.1' as const,
     analysisQuality,
     imageQuality: { adequate: observation.imageQualityAdequate, issues, note: observation.imageQualityNote },
     observation,

@@ -20,9 +20,14 @@ interface AnalysisResult {
   woundEdges: string;
   confidence: string;
   tbsaEstimate: string;
+  tbsaClassification: string;
   tbsaRange: string;
   tbsaBodyRegions: string;
   tbsaMethod: string;
+  imageCount: string;
+  distinctAnatomicalRegions: string;
+  probableDuplicateViews: string;
+  multiImageAggregationNote: string;
   isBurn: boolean;
   parklandFluid: string;
   firstAid: string;
@@ -38,6 +43,23 @@ interface AnalysisResult {
 interface PatientContext {
   weightKg?: number;
   mechanism?: string;
+}
+
+interface SelectedImage {
+  file: File;
+  preview: string;
+}
+
+function readFile(file: File): Promise<{ image: string; mimeType: string; preview: string }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const preview = String(reader.result ?? '');
+      resolve({ image: preview.split(',')[1] ?? '', mimeType: file.type || 'image/jpeg', preview });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 /**
@@ -68,8 +90,7 @@ async function saveAnalysisToHistory(result: AnalysisResult, image: string, mime
 
 export function AnalysisClient() {
   const { t } = useLanguage();
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
@@ -77,8 +98,7 @@ export function AnalysisClient() {
   const [refining, setRefining] = useState(false);
   const [weightKg, setWeightKg] = useState('');
   const [mechanism, setMechanism] = useState('');
-  const lastBase64Ref = useRef<string>('');
-  const lastMimeRef = useRef<string>('image/jpeg');
+  const lastImagesRef = useRef<Array<{ image: string; mimeType: string }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -118,16 +138,19 @@ export function AnalysisClient() {
     return null;
   }, []);
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e?.target?.files?.[0];
-    if (!file) return;
-    setImageFile(file);
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    if (files.length === 0) return;
+    if (selectedImages.length + files.length > 5) {
+      setError('A maximum of 5 images may be analyzed together.');
+      return;
+    }
+    const images = await Promise.all(files.map(async (file) => ({ file, preview: (await readFile(file)).preview })));
+    setSelectedImages((current) => [...current, ...images]);
     setResult(null);
     setError(null);
-    const reader = new FileReader();
-    reader.onload = (ev: any) => setImagePreview(ev?.target?.result as string);
-    reader.readAsDataURL(file);
-  }, []);
+  }, [selectedImages.length]);
 
   const startCamera = useCallback(async () => {
     try {
@@ -158,33 +181,25 @@ export function AnalysisClient() {
     const ctx = canvas?.getContext('2d');
     ctx?.drawImage(videoRef.current, 0, 0);
     const dataUrl = canvas?.toDataURL('image/jpeg', 0.8);
-    setImagePreview(dataUrl);
     canvas?.toBlob((blob: any) => {
-      if (blob) setImageFile(new File([blob], 'capture.jpg', { type: 'image/jpeg' }));
+      if (blob) setSelectedImages([{ file: new File([blob], 'capture.jpg', { type: 'image/jpeg' }), preview: dataUrl }]);
     }, 'image/jpeg', 0.8);
     stopCamera();
   }, [stopCamera]);
 
   const analyzeImage = useCallback(async () => {
-    if (!imageFile) return;
+    if (selectedImages.length === 0) return;
     setAnalyzing(true);
     setError(null);
     try {
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve((reader?.result as string)?.split(',')?.[1] ?? '');
-        reader.onerror = reject;
-        reader.readAsDataURL(imageFile);
-      });
-
-      const mime = imageFile?.type ?? 'image/jpeg';
-      lastBase64Ref.current = base64;
-      lastMimeRef.current = mime;
+      const images = await Promise.all(selectedImages.map(({ file }) => readFile(file)));
+      const payloadImages = images.map(({ image, mimeType }) => ({ image, mimeType }));
+      lastImagesRef.current = payloadImages;
 
       const response = await fetch('/api/analyze-wound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext() }),
+        body: JSON.stringify({ images: payloadImages, patient: patientContext() }),
       });
 
       if (!response?.ok) throw new Error('Analysis failed');
@@ -192,18 +207,18 @@ export function AnalysisClient() {
       const completed = await readAnalysisStream(response);
       if (completed) {
         setResult(completed);
-        void saveAnalysisToHistory(completed, base64, mime);
+        void saveAnalysisToHistory(completed, payloadImages[0].image, payloadImages[0].mimeType);
       }
     } catch (err: any) {
       setError(err?.message ?? 'Analysis failed');
     } finally {
       setAnalyzing(false);
     }
-  }, [imageFile, patientContext, readAnalysisStream]);
+  }, [selectedImages, patientContext, readAnalysisStream]);
 
   /** Second pass: re-run the pipeline with clinician answers, no re-upload. */
   const refineAnalysis = useCallback(async (answers: string) => {
-    if (!lastBase64Ref.current || !result?.structured) return;
+    if (lastImagesRef.current.length === 0 || !result?.structured) return;
     setRefining(true);
     setError(null);
     try {
@@ -211,8 +226,7 @@ export function AnalysisClient() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image: lastBase64Ref.current,
-          mimeType: lastMimeRef.current,
+          images: lastImagesRef.current,
           patient: patientContext(),
           priorAnalysis: result.structured,
           refineAnswers: answers,
@@ -222,7 +236,7 @@ export function AnalysisClient() {
       const completed = await readAnalysisStream(response);
       if (completed) {
         setResult(completed);
-        void saveAnalysisToHistory(completed, lastBase64Ref.current, lastMimeRef.current);
+        void saveAnalysisToHistory(completed, lastImagesRef.current[0].image, lastImagesRef.current[0].mimeType);
       }
     } catch (err: any) {
       setError(err?.message ?? 'Refine failed');
@@ -232,10 +246,14 @@ export function AnalysisClient() {
   }, [result, patientContext, readAnalysisStream]);
 
   const clearImage = useCallback(() => {
-    setImagePreview(null);
-    setImageFile(null);
+    setSelectedImages([]);
     setResult(null);
     setError(null);
+  }, []);
+
+  const removeImage = useCallback((index: number) => {
+    setSelectedImages((current) => current.filter((_, imageIndex) => imageIndex !== index));
+    setResult(null);
   }, []);
 
   const severityColor = (s: string) => {
@@ -250,7 +268,7 @@ export function AnalysisClient() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{t('analysis.title')}</h1>
-        <p className="text-sm text-gray-500 mt-1">Upload or capture a wound/burn image for AI-powered clinical assessment</p>
+        <p className="text-sm text-gray-500 mt-1">Upload up to five wound/burn views for one AI-assisted clinical assessment</p>
       </div>
 
       {/* Disclaimer */}
@@ -262,17 +280,17 @@ export function AnalysisClient() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Upload Section */}
         <div className="space-y-4">
-          {!imagePreview && !cameraActive && (
+          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileSelect} className="hidden" />
+          {selectedImages.length === 0 && !cameraActive && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
               <div
                 onClick={() => fileInputRef?.current?.click?.()}
                 className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-[#8B0000]/40 hover:bg-[#8B0000]/5 transition-all"
               >
                 <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="font-medium text-gray-600">{t('analysis.upload')}</p>
-                <p className="text-xs text-gray-400 mt-1">JPEG, PNG — max 10MB</p>
+                <p className="font-medium text-gray-600">Upload wound/burn images</p>
+                <p className="text-xs text-gray-400 mt-1">1-5 JPEG or PNG images — max 10MB each</p>
               </div>
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
               <button
                 onClick={startCamera}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#0F9B8E] text-white rounded-xl font-medium hover:bg-[#0e8a7e] transition-colors"
@@ -295,15 +313,27 @@ export function AnalysisClient() {
             </div>
           )}
 
-          {imagePreview && (
+          {selectedImages.length > 0 && (
             <div className="space-y-3">
-              <div className="relative rounded-xl overflow-hidden bg-gray-100">
-                <div className="relative aspect-video">
-                  <Image src={imagePreview} alt="Wound image" fill className="object-contain" />
+              <div className="grid grid-cols-2 gap-2">
+                {selectedImages.map((image, index) => (
+                  <div key={`${image.file.name}-${index}`} className="relative overflow-hidden rounded-xl bg-gray-100">
+                    <div className="relative aspect-video">
+                      <Image src={image.preview} alt={`Wound image ${index + 1}`} fill className="object-contain" />
+                    </div>
+                    <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white">View {index + 1}</span>
+                    <button onClick={() => removeImage(index)} aria-label={`Remove image ${index + 1}`} className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-gray-500">{selectedImages.length}/5 images selected. Repeated views improve evidence but are not added twice.</p>
+                <div className="flex shrink-0 gap-2">
+                  {selectedImages.length < 5 && <button onClick={() => fileInputRef.current?.click()} className="text-xs font-medium text-[#8B0000]">Add</button>}
+                  <button onClick={clearImage} className="text-xs text-gray-500">Clear</button>
                 </div>
-                <button onClick={clearImage} className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70">
-                  <X className="w-4 h-4" />
-                </button>
               </div>
               {/* Optional patient context — improves accuracy; nothing is assumed when blank. */}
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
@@ -434,8 +464,16 @@ export function AnalysisClient() {
                   </h3>
                   <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-orange-200 overflow-hidden">
                     <div className="p-4 bg-gradient-to-r from-[#8B0000] to-[#a01010] flex items-center justify-between">
-                      <span className="text-white font-medium text-sm">Estimated TBSA</span>
-                      <span className="text-white font-bold text-2xl">{result?.tbsaEstimate ?? '0'}%</span>
+                      <div>
+                        <span className="text-white font-medium text-sm block">Estimated aggregate TBSA</span>
+                        <span className="text-xs text-white/75">AI photographic estimate · clinician confirmation required</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-white font-bold text-2xl block">{result?.tbsaEstimate ?? '0'}%</span>
+                        <span className="inline-flex rounded-full bg-white/15 px-2 py-0.5 text-xs font-semibold text-white">
+                          {result?.tbsaClassification ?? 'Unavailable'} burn
+                        </span>
+                      </div>
                     </div>
                     <div className="divide-y divide-orange-100">
                       <div className="p-4 flex items-center justify-between">
@@ -449,6 +487,21 @@ export function AnalysisClient() {
                       <div className="p-4 flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-600">Estimation Method</span>
                         <span className="text-xs font-medium px-2 py-1 bg-orange-100 text-orange-700 rounded-full">{result?.tbsaMethod ?? 'N/A'}</span>
+                      </div>
+                      <div className="p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-600">Images assessed</span>
+                          <span className="text-sm font-semibold text-gray-900">{result?.imageCount ?? '1'}</span>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-600 block">Distinct anatomical coverage</span>
+                          <p className="text-sm text-gray-800">{result?.distinctAnatomicalRegions ?? 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-600 block">Probable duplicate views</span>
+                          <p className="text-sm text-gray-800">{result?.probableDuplicateViews ?? 'None identified'}</p>
+                        </div>
+                        <p className="text-xs text-gray-500">{result?.multiImageAggregationNote ?? 'Repeated views are corroborative and are not added twice.'}</p>
                       </div>
                     </div>
                   </div>
@@ -528,7 +581,7 @@ export function AnalysisClient() {
           {!result && !analyzing && (
             <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
               <Brain className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-              <p className="text-sm text-gray-400">Upload an image to begin AI analysis</p>
+              <p className="text-sm text-gray-400">Upload one or more images to begin AI analysis</p>
             </div>
           )}
 

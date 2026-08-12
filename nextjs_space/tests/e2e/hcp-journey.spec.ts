@@ -9,7 +9,7 @@ import {
 /**
  * HCP journey (verbatim steps):
  *  1. Load /hcp-login.        2. Use demo doctor login.   3. Reach /hcp.
- *  4. Navigate to analysis.   5. Upload a valid image.    6. Request AI assessment.
+ *  4. Navigate to analysis.   5. Upload two valid views.  6. Request AI assessment.
  *  7. Confirm loading state.  8. Confirm structured result.
  *  9. Navigate to chat.      10. Send a clinical question. 11. Confirm streaming response.
  * 12. Navigate to TBSA.      13. Complete a TBSA calculation.
@@ -46,12 +46,13 @@ test('hcp journey', async ({ page }) => {
   await navTo(page, '/hcp/analysis', /\/hcp\/analysis$/);
   await expect(page.getByRole('heading', { name: /AI Wound & Burn Analysis/i })).toBeVisible();
 
-  // 5. Upload a valid image (hidden file input).
-  await page.locator('input[type="file"]').setInputFiles({
-    name: 'wound.png',
-    mimeType: 'image/png',
-    buffer: TINY_PNG,
-  });
+  // 5. Upload two views (identical fixture bytes intentionally exercise duplicate-view handling).
+  await page.locator('input[type="file"]').setInputFiles([
+    { name: 'wound-view-1.png', mimeType: 'image/png', buffer: TINY_PNG },
+    { name: 'wound-view-2.png', mimeType: 'image/png', buffer: TINY_PNG },
+  ]);
+  await expect(page.getByText('View 1')).toBeVisible();
+  await expect(page.getByText('View 2')).toBeVisible();
   const analyzeBtn = page.getByRole('button', { name: /Analyze Image/i });
   await expect(analyzeBtn).toBeVisible();
 

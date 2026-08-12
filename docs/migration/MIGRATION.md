@@ -1234,3 +1234,25 @@ existing deployment topology without making an unreviewed database major-version
   migration readiness, liveness, smoke tests, and critical journeys passed. Full Bicep mutation was
   skipped, leaving PostgreSQL unchanged. A browser assertion against the public URL confirmed the
   visible `Malaysia time:` timestamp after client hydration.
+
+### Step 31 - Add multi-image aggregate TBSA to HCP analysis
+
+This governed AI change extends the existing HCP analysis flow to accept up to five images and
+return one deduplicated photographic TBSA estimate across distinct visible regions. Probable repeated
+views improve evidence quality but are not added again.
+
+- **Threshold assumption.** The requested `major >=15%` and `minor <=15%` overlap at 15%. Exactly
+  15% is classified Major; Minor is strictly below 15%.
+- **Architecture impact.** HIGH, version `2.3.0` -> `2.4.0`; see ADR-0008 and the synchronized
+  architecture change record. Existing APIs/components/integrations are extended; Azure resources,
+  PostgreSQL, ACR, Container Apps topology, and deployment identity are unchanged.
+- **Responsible AI impact.** Adds Active `RAI-SAFE-013` and Partial `RAI-TRANS-006`, plus
+  LIM-009/010.
+  Duplicate recognition is never described as guaranteed registration, and photographic TBSA remains
+  decision-support requiring clinician confirmation.
+- **Implementation status.** `RAI-SAFE-013` is Active with deterministic tests; `RAI-TRANS-006` is
+  Partial because anatomical duplicate recognition remains model-assisted. Node 22 typecheck,
+  112 unit tests, 25 RAI tests, 14 integration tests, production build (74 pages), 14 API tests,
+  both critical journeys, focused browser interaction, architecture drift, and five Mermaid diagrams
+  pass. The rubric-only evaluation harness skipped four unscorable cases because no consented images
+  or fixtures were available; no diagnostic-accuracy claim is made.
