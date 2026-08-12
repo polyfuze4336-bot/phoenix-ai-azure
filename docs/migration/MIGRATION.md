@@ -1011,8 +1011,8 @@ identifiers (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) and 
   critical **HCP + community** user journeys against staging, and (11) **swap staging into
   production only after all tests pass**. The deploy plan requests the **Standard (S1)** plan SKU so
   the staging slot is available. Development deploys on push to `main` / manual dispatch; **Demo** is
-  manual-dispatch only and runs under the **Demo** GitHub Environment, which should be configured with
-  **required reviewers** so a human approves before provisioning or promotion.
+  manual-dispatch only and runs under the **Demo** GitHub Environment. The current rapid-prototype
+  policy uses no required reviewers; see Step 28.
 - **Supporting change:** `playwright.e2e.config.ts` now honours an optional `PLAYWRIGHT_BASE_URL`
   (when set, the same journey specs run against the deployed staging URL and the local web server is
   not started); new `test:smoke` and `test:journeys` npm scripts select the smoke and critical-journey
@@ -1158,7 +1158,7 @@ AI behavior, prompts, models, clinical controls, and Responsible AI control stat
   identifiers plus `PG_ADMIN_PASSWORD` and `DATABASE_URL`. Existing database values were piped from
   Key Vault without printing or writing them to the repository; temporary vault read access was
   removed and independently verified at zero assignments. Demo remains manual-dispatch only.
-  Required-reviewer protection is pending designation of the authorized human approver.
+  Architecture version 2.2.1 subsequently adopts a reviewer-free rapid-prototype policy.
 - **Validation.** Architecture drift and both changed Mermaid diagrams pass. Initial run
   `31586147959` exposed GitHub's immutable-ID subject format and failed only at OIDC matching. After
   updating both federated credentials, run `31586321978` passed OIDC login, Bicep validation, and
@@ -1166,3 +1166,20 @@ AI behavior, prompts, models, clinical controls, and Responsible AI control stat
   drift: Bicep requests PostgreSQL 15, the live server is 16, and the current Azure API permits 17
   or 18. No image build or Container App rollout occurred. Resolving that mismatch is deferred to a
   separately governed PostgreSQL version decision to avoid an unreviewed major-version upgrade.
+
+### Step 28 - Remove deployment reviewer gates for rapid prototyping
+
+This step aligns repository guidance with the existing GitHub environment configuration. `Demo`
+and `Development` have no required reviewers, protection rules, or deployment branch policies.
+Demo remains manual-dispatch only; Development retains push-to-`main` and manual triggers.
+
+- **Scope.** Workflow comments and current documentation no longer instruct maintainers to add a
+  Demo reviewer. OIDC federated subjects, Azure role assignments, environment secrets, validation
+  steps, and deployment commands are unchanged.
+- **Architecture governance.** Architecture version 2.2.1 records a LOW-impact policy
+  clarification. No topology or diagram changes and no ADR are required.
+- **Responsible AI impact.** NONE. This changes deployment waiting behavior only and does not alter
+  AI behavior, prompts, models, clinical oversight, transparency, telemetry, or RAI controls.
+- **Validation.** Both environments report zero protection rules and no deployment branch policy;
+  workflow diagnostics, architecture drift, seven Mermaid diagrams, typecheck, production build,
+  104 unit tests, 22 RAI tests, and 14 integration tests all pass.

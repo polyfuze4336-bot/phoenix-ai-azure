@@ -16,6 +16,21 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.2.1] — 2026-08-12
+
+### Changed
+- **Rapid-prototype deployment policy** — the `Demo` and `Development` GitHub environments use no
+  required reviewers or environment protection rules. Demo remains manual-dispatch only, while
+  Development continues to deploy from `main` and by manual dispatch.
+- OIDC subject restrictions, Azure RBAC scopes, workflow validation, and application behavior are
+  unchanged. See
+  [CHANGE-20260812](./changes/CHANGE-20260812-rapid-prototype-deployment-policy.md).
+
+### Boundaries
+- This reviewer-free policy is intentional for rapid prototyping and is not a production approval
+  model. Production use requires a separate governance review.
+- Responsible AI controls are unchanged; this policy only removes a deployment approval wait state.
+
 ## [2.2.0] — 2026-08-12
 
 ### Changed
@@ -30,8 +45,8 @@ reference the relevant ADR and change record.
 
 ### Boundaries
 - The deployment principal cannot delegate access outside the Phoenix AI demo resource group.
-- Human BFGS accounts are not pipeline credentials. Demo is manual-dispatch only; required-reviewer
-  protection remains pending until the repository owner designates the human approver.
+- Human BFGS accounts are not pipeline credentials. Demo is manual-dispatch only; reviewer-free
+  rapid-prototype policy is recorded in architecture version 2.2.1.
 - Application behavior and Responsible AI controls are unchanged. No ADR is required because this
   completes the OIDC design already selected by the deployment architecture. See
   [CHANGE-20260812](./changes/CHANGE-20260812-github-oidc-deployment-identity.md).

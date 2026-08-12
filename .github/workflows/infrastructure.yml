@@ -5,8 +5,8 @@ name: Infrastructure
 # Authenticates to Azure with GitHub OIDC (federated credentials) — NO stored
 # Azure client secrets. Pull requests that touch infra/ run lint + build +
 # what-if (all read-only). Actual deployment runs only on manual dispatch and is
-# gated behind a GitHub Environment (Development or Demo), so the Demo environment
-# can require reviewer approval.
+# scoped to the selected reviewer-free GitHub Environment (Development or Demo)
+# for rapid prototyping.
 
 on:
   pull_request:

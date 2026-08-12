@@ -56,3 +56,5 @@
 - GitHub Actions uses a dedicated OIDC workload identity rather than a human account. Its
   subscription `Contributor` role supports the subscription-scoped Bicep deployment; its ability
   to create role assignments is limited to `rg-phoenixai-bfgs-demo`.
+- The `Demo` and `Development` GitHub environments intentionally have no required reviewers or
+  protection rules for rapid prototyping. Demo deployment still requires manual dispatch.

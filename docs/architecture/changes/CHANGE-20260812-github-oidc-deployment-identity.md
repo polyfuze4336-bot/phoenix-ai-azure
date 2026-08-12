@@ -33,8 +33,8 @@ issues immutable-ID subjects for this repository:
 - `Role Based Access Control Administrator` is assigned only on
   `rg-phoenixai-bfgs-demo`, allowing Bicep to manage workload identities without delegating access
   elsewhere in the subscription.
-- Demo remains manual-dispatch only. Required-reviewer protection is pending because the repository
-  does not identify which available collaborator is the authorized human approver.
+- Demo remains manual-dispatch only. Architecture version 2.2.1 subsequently adopts a reviewer-free
+  rapid-prototype policy for both GitHub environments.
 
 ## Responsible AI impact
 
@@ -54,5 +54,6 @@ limitations, telemetry content, clinical oversight, or any Responsible AI contro
   The later infrastructure bootstrap failed on a pre-existing PostgreSQL version mismatch: source
   requests 15, the live server is 16, and the current Azure API accepts 17 or 18. PostgreSQL
   remediation is a separate governed change because it may require a major-version upgrade.
-- PENDING: configure a required human reviewer for the `Demo` GitHub environment after the
-  repository owner designates the approver.
+- SUPERSEDED: the earlier reviewer recommendation was removed by
+  `CHANGE-20260812-rapid-prototype-deployment-policy.md`; both environments are intentionally
+  reviewer-free for rapid prototyping.
