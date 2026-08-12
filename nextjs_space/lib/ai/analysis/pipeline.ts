@@ -51,7 +51,7 @@ export interface PatientContext {
 }
 
 export interface PipelineInput {
-  imageDataUrl: string; // data:<mime>;base64,....
+  imageDataUrls: string[]; // data:<mime>;base64,....
   patient?: PatientContext;
   /** Prior analysis + clinician answers for a REFINE pass (second pass). */
   refine?: { priorAnalysis: BurnWoundAnalysis; answers: string };
@@ -139,15 +139,22 @@ function computeParkland(isBurn: boolean, tbsa: number | null, weightKg?: number
 /* --------------------------------------------------------------- orchestrator */
 
 export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWoundAnalysis> {
-  const { imageDataUrl, patient, refine, correlationId } = input;
+  const { imageDataUrls, patient, refine, correlationId } = input;
+  if (!Array.isArray(imageDataUrls) || imageDataUrls.length === 0) {
+    throw new Error('At least one image is required for analysis.');
+  }
+  const imageContext =
+    imageDataUrls.length > 1
+      ? `Multiple images are provided (${imageDataUrls.length}) for the same case. Consolidate observations across views, use overlap/duplicate views to improve boundary confidence, and never double-count overlapping regions when estimating TBSA.`
+      : 'A single image is provided for this case.';
   const ctx = contextBlock(patient);
 
   // Stage 1 — Visual observation (vision).
   const obsRaw = await runStage(
     WOUND_VISUAL_OBSERVATION_PROMPT,
     [
-      { type: 'text', text: `${ctx}\nDescribe what is visible in this image.` },
-      { type: 'image_url', image_url: { url: imageDataUrl } },
+      { type: 'text', text: `${ctx}\n${imageContext}\nDescribe only what is visible in the provided image(s).` },
+      ...imageDataUrls.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
     ],
     correlationId,
     'analyze-wound:observation',
@@ -163,9 +170,9 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
     [
       {
         type: 'text',
-        text: `${ctx}\nObservations from the observation stage:\n${JSON.stringify(observation)}${priorNote}\nInterpret this wound.`,
+        text: `${ctx}\n${imageContext}\nObservations from the observation stage:\n${JSON.stringify(observation)}${priorNote}\nInterpret this wound.`,
       },
-      { type: 'image_url', image_url: { url: imageDataUrl } },
+      ...imageDataUrls.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
     ],
     correlationId,
     'analyze-wound:interpretation',

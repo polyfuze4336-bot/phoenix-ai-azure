@@ -18,6 +18,8 @@ import { runAnalysisPipeline, type PatientContext } from '@/lib/ai/analysis/pipe
 import { toFlatHcpAnalysis } from '@/lib/ai/schemas/burn-wound-analysis';
 import { buildAnalysisMetadata } from '@/lib/ai/analysis/metadata';
 
+const MAX_ANALYSIS_IMAGES = 6;
+
 /** Coerce an untrusted patient-context object into the typed shape (no invented values). */
 function readPatientContext(raw: unknown): PatientContext | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
@@ -36,40 +38,63 @@ function readPatientContext(raw: unknown): PatientContext | undefined {
 
 export async function POST(request: NextRequest) {
   try {
-    const bodySize = checkRequestBodySize(request.headers.get('content-length'));
+    const bodySize = checkRequestBodySize(request.headers.get('content-length'), MAX_ANALYSIS_IMAGES);
     if (!bodySize.ok) {
       return new Response(JSON.stringify({ error: bodySize.error }), { status: 413 });
     }
 
     const body = await request.json();
-    const { image, mimeType } = body ?? {};
+    const rawImages = Array.isArray(body?.images)
+      ? body.images
+      : [{ image: body?.image, mimeType: body?.mimeType }];
 
-    const validation = validateImageInput({ image, mimeType });
-    if (!validation.ok) {
-      return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
+    if (!rawImages.length) {
+      return new Response(JSON.stringify({ error: 'No image provided' }), { status: 400 });
+    }
+    if (rawImages.length > MAX_ANALYSIS_IMAGES) {
+      return new Response(
+        JSON.stringify({ error: `Too many images. Maximum allowed is ${MAX_ANALYSIS_IMAGES}.` }),
+        { status: 400 },
+      );
+    }
+
+    const validatedImages: Array<{ base64: string; mimeType: string }> = [];
+    for (const entry of rawImages) {
+      const image = entry && typeof entry === 'object' ? (entry as Record<string, unknown>).image : undefined;
+      const mimeType =
+        entry && typeof entry === 'object' ? (entry as Record<string, unknown>).mimeType : undefined;
+      const validation = validateImageInput({ image, mimeType });
+      if (!validation.ok) {
+        return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
+      }
+      const base64Raw = typeof image === 'string' ? image : '';
+      const base64 = base64Raw.includes(',') ? base64Raw.slice(base64Raw.indexOf(',') + 1) : base64Raw;
+      validatedImages.push({ base64, mimeType: validation.mimeType });
     }
 
     const correlationId = getOrCreateCorrelationId(request.headers);
     const patient = readPatientContext(body?.patient);
     const refineAnswers = typeof body?.refineAnswers === 'string' ? body.refineAnswers : undefined;
     const priorAnalysis = body?.priorAnalysis && typeof body.priorAnalysis === 'object' ? body.priorAnalysis : undefined;
+    const imageDataUrls = validatedImages.map(
+      ({ base64, mimeType }) => `data:${mimeType};base64,${base64}`,
+    );
     // Privacy-safe marker: an HCP image-analysis request started. No image bytes,
     // base64 or clinical text are recorded — only the correlation ID + flags.
     const pipelineMode = getAnalysisPipelineMode();
     trackEvent('hcp_analysis_requested', {
       correlationId,
-      hasImage: true,
+      hasImage: imageDataUrls.length > 0,
+      imageCount: imageDataUrls.length,
       pipeline: pipelineMode,
       refine: Boolean(refineAnswers),
     });
-
-    const imageDataUrl = `data:${validation.mimeType};base64,${image}`;
 
     // --- Staged pipeline (default): multi-stage, evidence-gated, deterministic calc.
     if (pipelineMode === 'staged') {
       try {
         const rich = await runAnalysisPipeline({
-          imageDataUrl,
+          imageDataUrls,
           patient,
           correlationId,
           refine: refineAnswers && priorAnalysis ? { priorAnalysis, answers: refineAnswers } : undefined,
@@ -100,8 +125,14 @@ export async function POST(request: NextRequest) {
       {
         role: 'user',
         content: [
-          { type: 'text', text: 'Please analyze this wound/burn image and provide a structured clinical assessment in JSON format.' },
-          { type: 'image_url', image_url: { url: imageDataUrl } },
+          {
+            type: 'text',
+            text:
+              imageDataUrls.length > 1
+                ? 'Please analyze these wound/burn images of the same patient and provide a structured clinical assessment in JSON format. Consolidate findings across views and do not double-count overlapping/duplicate views when estimating TBSA.'
+                : 'Please analyze this wound/burn image and provide a structured clinical assessment in JSON format.',
+          },
+          ...imageDataUrls.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
         ],
       },
     ];

@@ -40,8 +40,9 @@ export function approxBase64Bytes(base64: string): number {
  * decoded image ceiling. This lets a route reject an oversized upload from the
  * Content-Length header BEFORE buffering the whole body into memory.
  */
-export function maxImageRequestBytes(): number {
-  return Math.floor(maxImageBytes() * 1.5) + 4096;
+export function maxImageRequestBytes(imageCount = 1): number {
+  const count = Number.isFinite(imageCount) && imageCount > 0 ? Math.floor(imageCount) : 1;
+  return Math.floor(maxImageBytes() * 1.5 * count) + 4096;
 }
 
 export interface BodySizeCheck {
@@ -54,10 +55,11 @@ export interface BodySizeCheck {
  * A missing/unparseable Content-Length passes here (the decoded-size check in
  * validateImageInput remains the authoritative guard after parsing).
  */
-export function checkRequestBodySize(contentLength: string | null): BodySizeCheck {
+export function checkRequestBodySize(contentLength: string | null, imageCount = 1): BodySizeCheck {
   const declared = Number.parseInt(contentLength ?? '', 10);
-  if (Number.isFinite(declared) && declared > maxImageRequestBytes()) {
-    const limitMb = (maxImageRequestBytes() / (1024 * 1024)).toFixed(0);
+  const requestLimit = maxImageRequestBytes(imageCount);
+  if (Number.isFinite(declared) && declared > requestLimit) {
+    const limitMb = (requestLimit / (1024 * 1024)).toFixed(0);
     return { ok: false, error: `Request body too large. Maximum upload is about ${limitMb} MB.` };
   }
   return { ok: true };

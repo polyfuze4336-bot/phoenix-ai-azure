@@ -7,7 +7,7 @@
 > and MUST remain synchronized with the implementation (see
 > [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.0.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.2.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -184,17 +184,19 @@ Companion diagrams:
 | Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — no assumed patient weight | Implemented |
 | Rich analysis schema + adapter | `lib/ai/schemas/burn-wound-analysis.ts` (observation vs interpretation, field confidence, gaps) + flat back-compat adapter | Implemented |
 | Streaming | `lib/ai/streaming/{sse,collect,text-stream}.ts` | Implemented |
-| Image analysis (multimodal) | `lib/ai/validation/image-input.ts` + vision model | Implemented |
+| Image analysis (multimodal) | `lib/ai/validation/image-input.ts` + vision model; accepts one or more HCP images per assessment | Implemented |
 | Structured response validation | `lib/ai/validation/wound-analysis-schema.ts` (Zod, 22-field contract) | Implemented |
 | Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
 | AI telemetry | `lib/ai/telemetry.ts` | Implemented |
 
-**Wound image analysis flow (`/api/analyze-wound`).** The default `staged` pipeline runs four
+**Wound image analysis flow (`/api/analyze-wound`).** The route accepts a single image (legacy) or
+an image array (`images[]`) for the same case. The default `staged` pipeline runs four
 sequential model stages — visual observation → clinical interpretation + quantification →
 management & referral → consistency/safety critic — then applies deterministic post-processing:
 Parkland is computed in app code from a supplied weight (never an assumed 70 kg), Fitzpatrick is
 reported only when the clinician supplies it (otherwise `unknown`), measurements are `unavailable`
-without a visible scale reference, confidence is capped on poor-quality images, and special-site
+without a visible scale reference, TBSA is consolidated across multi-image views with overlap-aware
+deduplication guidance, confidence is capped on poor-quality images, and special-site
 burns are escalated. The rich result is mapped back to the existing 22-field contract (so the
 client and SSE envelope are unchanged) and the full structure travels under `result.structured`
 for the enhanced UI and the REFINE (second-pass) flow. Setting `AI_ANALYSIS_PIPELINE=single`

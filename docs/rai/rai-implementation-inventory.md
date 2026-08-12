@@ -16,7 +16,7 @@ Control IDs are stable and match [`lib/rai/controls.ts`](../../nextjs_space/lib/
 | RAI-SAFE-008 | Special-site escalation | Reliability & Safety | High-risk sites never routine | `lib/ai/analysis/pipeline.ts` | Yes | `tests/rai/rai-safety.test.ts` | Implemented |
 | RAI-SAFE-009 | Confidence capping | Reliability & Safety | Confidence bounded by image quality | `lib/ai/analysis/pipeline.ts` | Yes | `tests/rai/rai-safety.test.ts` | Implemented |
 | RAI-SAFE-010 | Safe-failure state | Reliability & Safety | Labelled unavailable result, disclaimer preserved | `lib/ai/validation/wound-analysis-schema.ts` | Yes | `tests/unit/ai-parsing.test.ts` | Implemented |
-| RAI-SAFE-011 | Deterministic TBSA | Reliability & Safety | Lund & Browder age-adjusted | `lib/clinical/tbsa.ts` | Yes | `tests/unit/tbsa.test.ts` | Implemented |
+| RAI-SAFE-011 | Deterministic TBSA | Reliability & Safety | Lund & Browder age-adjusted support + overlap-aware multi-image TBSA consolidation guidance | `lib/clinical/tbsa.ts`, `lib/ai/prompts/wound-clinical-interpretation.ts`, `app/api/analyze-wound/route.ts`, `app/hcp/analysis/_components/analysis-client.tsx` | Yes | `tests/unit/tbsa.test.ts` | Implemented |
 | RAI-SAFE-012 | Clinician refinement loop | Reliability & Safety | Second-pass with human answers, no re-upload | `app/api/analyze-wound/route.ts` | Yes | — | Implemented |
 | RAI-REL-001 | Bounded stage execution | Reliability & Safety | Per-stage timeouts | `lib/ai/analysis/pipeline.ts` | No | — | Implemented |
 | RAI-FAIR-001 | Skin tone described, not inferred | Fairness | Fitzpatrick forced unknown unless supplied | `lib/ai/prompts/wound-clinical-interpretation.ts`, `lib/ai/analysis/pipeline.ts` | Yes | `tests/rai/rai-unsupported-inference.test.ts` | Implemented |

@@ -16,6 +16,22 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.2.0] — 2026-08-12
+
+### Changed
+- **HCP analysis image input** — `/api/analyze-wound` now accepts one or more case images (`images[]`)
+  in addition to the legacy single-image payload. Multi-image assessments are consolidated within the
+  existing analysis pipeline and API contract.
+- **TBSA synthesis behavior** — staged analysis now carries explicit overlap-aware guidance when
+  multiple views are supplied so overlapping/duplicate frames are not double-counted in total TBSA
+  estimation.
+
+### Unchanged
+- No new Azure resources, runtime integrations, identity/data/storage topology, or branding changes.
+- Existing route path, SSE envelope shape, and Responsible AI control IDs remain in place.
+- No ADR is required for this backward-compatible extension within existing components.
+  See [CHANGE-20260812](./changes/CHANGE-20260812-hcp-multi-image-tbsa.md).
+
 ## [2.1.0] — 2026-08-10
 
 ### Changed

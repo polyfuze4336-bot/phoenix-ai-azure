@@ -182,8 +182,13 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'analysis',
     status: 'active',
     description:
-      'Total body surface area is computed with an age-adjusted Lund & Browder chart rather than free-form model estimation when regional inputs are provided.',
-    evidence: ['lib/clinical/tbsa.ts'],
+      'TBSA is surfaced with deterministic clinical support (Lund & Browder calculator) and, for multi-image HCP assessments, prompts require overlap-aware consolidation so duplicate views are not double-counted.',
+    evidence: [
+      'lib/clinical/tbsa.ts',
+      'lib/ai/prompts/wound-clinical-interpretation.ts',
+      'app/api/analyze-wound/route.ts',
+      'app/hcp/analysis/_components/analysis-client.tsx',
+    ],
     tests: ['tests/unit/tbsa.test.ts'],
     userVisible: true,
   },

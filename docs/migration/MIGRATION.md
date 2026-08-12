@@ -1137,3 +1137,15 @@ tenant's 42 users; this is not represented as an all-tenant-users grant.
   zero subscription-scoped `Owner` assignments. Members can create, change, delete, and delegate
   access to resources in the Phoenix AI demo RG only. Future access is governed by membership in
   the `BFG Solutions` group.
+### Step 2026-08-12 — HCP multi-image analysis + TBSA classification
+- Extended the Original HCP analysis uploader to accept multiple wound images in one assessment run
+  (while preserving legacy single-image behavior and existing UI branding).
+- Updated `/api/analyze-wound` to support an `images[]` payload and pass multiple image parts through
+  both staged and single-pass analysis paths.
+- Updated staged prompts/pipeline context to consolidate overlapping or duplicate views for one case
+  and avoid double-counting when estimating total TBSA.
+- Added a TBSA subcomponent in the HCP analysis results that labels burns as **Major (>=15% TBSA)**
+  or **Minor (<15% TBSA)**.
+- Updated architecture docs (`current-architecture.md`, inventories, AI diagram), bumped architecture
+  version to `2.2.0`, added changelog entry, and recorded
+  `docs/architecture/changes/CHANGE-20260812-hcp-multi-image-tbsa.md`.

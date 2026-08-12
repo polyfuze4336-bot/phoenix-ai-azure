@@ -9,7 +9,7 @@ flowchart TB
 
     subgraph Routes["Next.js API Routes"]
         RHCPCHAT["/api/hcp-chat"]
-        RHCPAN["/api/analyze-wound"]
+        RHCPAN["/api/analyze-wound\n(single image + images[])"]
         RCOMCHAT["/api/community-chat"]
         RCOMAN["/api/community-analyze"]
     end
@@ -39,7 +39,7 @@ flowchart TB
         AZPROV["AzureFoundryProvider"]
         CRED["azure-credential\n(DefaultAzureCredential)"]
         OAICOMPAT["openai-compatible mapping"]
-        VALIN["validation/image-input"]
+        VALIN["validation/image-input\n(single + multi-image validation)"]
         VALOUT["validation/wound-analysis-schema\n(+ flat back-compat adapter)"]
         STREAM["streaming/sse + collect + text-stream"]
         TEL["ai/telemetry"]

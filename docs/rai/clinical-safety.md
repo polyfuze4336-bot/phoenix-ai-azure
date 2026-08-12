@@ -9,7 +9,8 @@ set of deterministic safety rules run after every analysis.
   Verified by [`tests/unit/parkland.test.ts`](../../nextjs_space/tests/unit/parkland.test.ts) and
   [`tests/rai/rai-safety.test.ts`](../../nextjs_space/tests/rai/rai-safety.test.ts).
 - **TBSA** — Lund & Browder age-adjusted chart
-  ([`lib/clinical/tbsa.ts`](../../nextjs_space/lib/clinical/tbsa.ts), **RAI-SAFE-011**).
+  ([`lib/clinical/tbsa.ts`](../../nextjs_space/lib/clinical/tbsa.ts), **RAI-SAFE-011**), with
+  overlap-aware consolidation guidance when multiple images are provided for one case.
 
 ## Deterministic safety rules (in `assembleAnalysis`)
 Implemented in [`lib/ai/analysis/pipeline.ts`](../../nextjs_space/lib/ai/analysis/pipeline.ts) and
@@ -33,6 +34,6 @@ a result (**RAI-SAFE-010**,
 [`lib/ai/validation/wound-analysis-schema.ts`](../../nextjs_space/lib/ai/validation/wound-analysis-schema.ts)).
 
 ## Boundaries
-A single photograph cannot establish depth progression, infection, pain or sensation with certainty.
+A single photograph (or multiple photographs without full clinical context) cannot establish depth progression, infection, pain or sensation with certainty.
 These limits are disclosed per assessment (see [transparency.md](./transparency.md)) and in
 [known-limitations.md](./known-limitations.md).

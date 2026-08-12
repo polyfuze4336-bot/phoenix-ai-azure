@@ -74,3 +74,11 @@ test('checkRequestBodySize: rejects over-limit Content-Length, passes null/valid
   assert.equal(checkRequestBodySize('1024').ok, true);
   assert.equal(checkRequestBodySize('not-a-number').ok, true);
 });
+
+test('checkRequestBodySize: supports multi-image envelope limits', () => {
+  const overSingle = String(maxImageRequestBytes() + 1);
+  assert.equal(checkRequestBodySize(overSingle, 2).ok, true);
+
+  const overDouble = String(maxImageRequestBytes(2) + 1);
+  assert.equal(checkRequestBodySize(overDouble, 2).ok, false);
+});

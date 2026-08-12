@@ -68,8 +68,8 @@ async function saveAnalysisToHistory(result: AnalysisResult, image: string, mime
 
 export function AnalysisClient() {
   const { t } = useLanguage();
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
@@ -77,8 +77,7 @@ export function AnalysisClient() {
   const [refining, setRefining] = useState(false);
   const [weightKg, setWeightKg] = useState('');
   const [mechanism, setMechanism] = useState('');
-  const lastBase64Ref = useRef<string>('');
-  const lastMimeRef = useRef<string>('image/jpeg');
+  const lastImagesRef = useRef<Array<{ image: string; mimeType: string }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -118,16 +117,26 @@ export function AnalysisClient() {
     return null;
   }, []);
 
+  const readFileAsDataUrl = useCallback((file: File): Promise<string> => {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader?.result as string) || '');
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e?.target?.files?.[0];
-    if (!file) return;
-    setImageFile(file);
+    const files = Array.from(e?.target?.files ?? []);
+    if (!files.length) return;
+    setImageFiles((prev) => [...prev, ...files]);
     setResult(null);
     setError(null);
-    const reader = new FileReader();
-    reader.onload = (ev: any) => setImagePreview(ev?.target?.result as string);
-    reader.readAsDataURL(file);
-  }, []);
+    void Promise.all(files.map((file) => readFileAsDataUrl(file))).then((dataUrls) => {
+      setImagePreviews((prev) => [...prev, ...dataUrls.filter(Boolean)]);
+    });
+    if (e?.target) e.target.value = '';
+  }, [readFileAsDataUrl]);
 
   const startCamera = useCallback(async () => {
     try {
@@ -158,33 +167,32 @@ export function AnalysisClient() {
     const ctx = canvas?.getContext('2d');
     ctx?.drawImage(videoRef.current, 0, 0);
     const dataUrl = canvas?.toDataURL('image/jpeg', 0.8);
-    setImagePreview(dataUrl);
+    if (dataUrl) setImagePreviews((prev) => [...prev, dataUrl]);
     canvas?.toBlob((blob: any) => {
-      if (blob) setImageFile(new File([blob], 'capture.jpg', { type: 'image/jpeg' }));
+      if (blob) setImageFiles((prev) => [...prev, new File([blob], 'capture.jpg', { type: 'image/jpeg' })]);
     }, 'image/jpeg', 0.8);
     stopCamera();
   }, [stopCamera]);
 
   const analyzeImage = useCallback(async () => {
-    if (!imageFile) return;
+    if (!imageFiles.length) return;
     setAnalyzing(true);
     setError(null);
     try {
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve((reader?.result as string)?.split(',')?.[1] ?? '');
-        reader.onerror = reject;
-        reader.readAsDataURL(imageFile);
-      });
-
-      const mime = imageFile?.type ?? 'image/jpeg';
-      lastBase64Ref.current = base64;
-      lastMimeRef.current = mime;
+      const prepared = await Promise.all(
+        imageFiles.map(async (file) => {
+          const dataUrl = await readFileAsDataUrl(file);
+          const base64 = dataUrl?.split(',')?.[1] ?? '';
+          const mimeType = file?.type ?? 'image/jpeg';
+          return { image: base64, mimeType };
+        }),
+      );
+      lastImagesRef.current = prepared;
 
       const response = await fetch('/api/analyze-wound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext() }),
+        body: JSON.stringify({ images: prepared, patient: patientContext() }),
       });
 
       if (!response?.ok) throw new Error('Analysis failed');
@@ -192,18 +200,20 @@ export function AnalysisClient() {
       const completed = await readAnalysisStream(response);
       if (completed) {
         setResult(completed);
-        void saveAnalysisToHistory(completed, base64, mime);
+        if (prepared[0]) {
+          void saveAnalysisToHistory(completed, prepared[0].image, prepared[0].mimeType);
+        }
       }
     } catch (err: any) {
       setError(err?.message ?? 'Analysis failed');
     } finally {
       setAnalyzing(false);
     }
-  }, [imageFile, patientContext, readAnalysisStream]);
+  }, [imageFiles, patientContext, readAnalysisStream, readFileAsDataUrl]);
 
   /** Second pass: re-run the pipeline with clinician answers, no re-upload. */
   const refineAnalysis = useCallback(async (answers: string) => {
-    if (!lastBase64Ref.current || !result?.structured) return;
+    if (!lastImagesRef.current.length || !result?.structured) return;
     setRefining(true);
     setError(null);
     try {
@@ -211,8 +221,7 @@ export function AnalysisClient() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image: lastBase64Ref.current,
-          mimeType: lastMimeRef.current,
+          images: lastImagesRef.current,
           patient: patientContext(),
           priorAnalysis: result.structured,
           refineAnswers: answers,
@@ -222,7 +231,13 @@ export function AnalysisClient() {
       const completed = await readAnalysisStream(response);
       if (completed) {
         setResult(completed);
-        void saveAnalysisToHistory(completed, lastBase64Ref.current, lastMimeRef.current);
+        if (lastImagesRef.current[0]) {
+          void saveAnalysisToHistory(
+            completed,
+            lastImagesRef.current[0].image,
+            lastImagesRef.current[0].mimeType,
+          );
+        }
       }
     } catch (err: any) {
       setError(err?.message ?? 'Refine failed');
@@ -231,9 +246,10 @@ export function AnalysisClient() {
     }
   }, [result, patientContext, readAnalysisStream]);
 
-  const clearImage = useCallback(() => {
-    setImagePreview(null);
-    setImageFile(null);
+  const clearImages = useCallback(() => {
+    setImagePreviews([]);
+    setImageFiles([]);
+    lastImagesRef.current = [];
     setResult(null);
     setError(null);
   }, []);
@@ -262,7 +278,8 @@ export function AnalysisClient() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Upload Section */}
         <div className="space-y-4">
-          {!imagePreview && !cameraActive && (
+          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileSelect} className="hidden" />
+          {imagePreviews.length === 0 && !cameraActive && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
               <div
                 onClick={() => fileInputRef?.current?.click?.()}
@@ -272,7 +289,6 @@ export function AnalysisClient() {
                 <p className="font-medium text-gray-600">{t('analysis.upload')}</p>
                 <p className="text-xs text-gray-400 mt-1">JPEG, PNG — max 10MB</p>
               </div>
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
               <button
                 onClick={startCamera}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#0F9B8E] text-white rounded-xl font-medium hover:bg-[#0e8a7e] transition-colors"
@@ -295,16 +311,28 @@ export function AnalysisClient() {
             </div>
           )}
 
-          {imagePreview && (
+          {imagePreviews.length > 0 && (
             <div className="space-y-3">
               <div className="relative rounded-xl overflow-hidden bg-gray-100">
                 <div className="relative aspect-video">
-                  <Image src={imagePreview} alt="Wound image" fill className="object-contain" />
+                  <Image src={imagePreviews[0]} alt="Wound image" fill className="object-contain" />
                 </div>
-                <button onClick={clearImage} className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70">
+                <button onClick={clearImages} className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70">
                   <X className="w-4 h-4" />
                 </button>
               </div>
+              {imagePreviews.length > 1 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-500">Selected images: {imagePreviews.length}</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {imagePreviews.map((preview, idx) => (
+                      <div key={idx} className="relative aspect-square rounded-md overflow-hidden border border-gray-200 bg-gray-100">
+                        <Image src={preview} alt={`Wound image ${idx + 1}`} fill className="object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* Optional patient context — improves accuracy; nothing is assumed when blank. */}
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
                 <p className="text-xs font-semibold text-gray-500">Patient details (optional — improves accuracy)</p>
@@ -334,6 +362,12 @@ export function AnalysisClient() {
                 </div>
                 <p className="text-[11px] text-gray-400">Weight enables an accurate Parkland calculation. No weight is assumed if left blank.</p>
               </div>
+              <button
+                onClick={() => fileInputRef?.current?.click?.()}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              >
+                <Upload className="w-4 h-4" /> Add another image
+              </button>
               <button
                 onClick={analyzeImage}
                 disabled={analyzing}
@@ -441,6 +475,12 @@ export function AnalysisClient() {
                       <div className="p-4 flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-600">TBSA Range</span>
                         <span className="text-sm font-semibold text-gray-900">{result?.tbsaRange ?? 'N/A'}</span>
+                      </div>
+                      <div className="p-4 flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-600">Burn Classification</span>
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[#8B0000]/10 text-[#8B0000]">
+                          {parseFloat(result?.tbsaEstimate ?? '0') >= 15 ? 'Major burn (≥15% TBSA)' : 'Minor burn (<15% TBSA)'}
+                        </span>
                       </div>
                       <div className="p-4">
                         <span className="text-sm font-medium text-gray-600 block mb-1">Affected Body Regions</span>
