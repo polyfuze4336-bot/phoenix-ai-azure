@@ -16,6 +16,24 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.4.0] — 2026-08-12
+
+### Changed
+- **Demo deployment trigger policy** — `.github/workflows/deploy-demo.yml` now deploys
+  automatically on pushes to `main` in addition to supporting manual dispatch.
+- **Mainline deployment automation** — both `deploy-dev.yml` and `deploy-demo.yml` now follow the
+  same trigger model: push-to-`main` plus `workflow_dispatch`.
+
+### Boundaries
+- OIDC identity (`github-phoenixai-deploy`), immutable subject restrictions, and Azure RBAC scopes
+  are unchanged.
+- Deployment mechanics (Bicep validation, ACR remote build, Container Apps rollout, health checks,
+  smoke tests, critical journeys) are unchanged.
+- No new Azure resources, runtime integrations, API contracts, UI behavior, branding, or
+  Responsible AI controls changed.
+- No ADR is required for this deployment-trigger policy update.
+- See [CHANGE-20260812-main-auto-deploy-policy.md](./changes/CHANGE-20260812-main-auto-deploy-policy.md).
+
 ## [2.3.1] — 2026-08-12
 
 ### Changed

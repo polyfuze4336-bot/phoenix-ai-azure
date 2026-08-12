@@ -3,12 +3,14 @@ name: Deploy (Demo)
 # End-to-end deployment of Phoenix AI to the Demo environment.
 #
 # Identical flow to Deploy (Development) but targets the reviewer-free Demo GitHub
-# Environment for rapid prototyping. Runs manually only.
+# Environment for rapid prototyping. Runs on push-to-main and manual dispatch.
 #
 # Authenticates with GitHub OIDC (federated credentials) — NO stored Azure client
 # secrets.
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

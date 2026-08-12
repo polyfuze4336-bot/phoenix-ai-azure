@@ -7,7 +7,7 @@
 > and MUST remain synchronized with the implementation (see
 > [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.3.1`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.4.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -43,7 +43,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Authentication | Server-verified **demo** login by default; Microsoft Entra ID **opt-in** placeholder — **Mock/demo + Optional** |
 | Storage | Azure Blob provider present + infra provisioned; no UI workflow persists files — **Configured but unused** |
 | Monitoring | Application Insights + Log Analytics + health probes + metric alerts — **Implemented** |
-| Deployment | GitHub Actions + dedicated Entra workload identity (environment-bound OIDC) + Bicep IaC; Demo is manual-dispatch and reviewer-free for rapid prototyping — **Implemented** |
+| Deployment | GitHub Actions + dedicated Entra workload identity (environment-bound OIDC) + Bicep IaC; Demo and Development auto-deploy on `main` and also support manual dispatch, reviewer-free for rapid prototyping — **Implemented** |
 
 ---
 
@@ -131,7 +131,7 @@ flowchart TB
     MI --> Blob
 
     GitHub --> Actions
-    Actions -->|"Demo / Development OIDC"| DeployIdentity
+    Actions -->|"Demo / Development OIDC\npush-to-main + manual dispatch"| DeployIdentity
     DeployIdentity -->|"subscription Contributor"| Bicep
     Actions -->|"OIDC / remote image build"| ACR
     Actions -->|"OIDC / Bicep"| ContainerApp
@@ -253,7 +253,7 @@ restores the original single-pass call.
 | Element | Location | Status |
 | --- | --- | --- |
 | GitHub repository | remote `origin` | Implemented |
-| GitHub Actions | `.github/workflows/{ci,deploy-demo,deploy-dev,infrastructure,db-migrate}.yml` | Implemented |
+| GitHub Actions | `.github/workflows/{ci,deploy-demo,deploy-dev,infrastructure,db-migrate}.yml` | Implemented (Demo + Development deploy on `main` pushes and `workflow_dispatch`) |
 | OIDC federation | Entra app/service principal `github-phoenixai-deploy`; GitHub environments `Demo` and `Development` | Implemented; no client secret |
 | Bicep IaC | `infra/main.bicep`, `infra/main.bicepparam`, `infra/modules/*` | Implemented |
 | Azure Container Apps | `ca-phoenixai-<environment-token>` (deployment output) | Implemented |

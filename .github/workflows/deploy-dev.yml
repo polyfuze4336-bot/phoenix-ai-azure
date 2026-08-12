@@ -8,7 +8,7 @@ name: Deploy (Development)
 # rolls it out to Azure Container Apps, and verifies health and critical journeys.
 #
 # GitHub Environment: Development. Demo and Development are reviewer-free for
-# rapid prototyping; Demo remains manual-dispatch only.
+# rapid prototyping; both support push-to-main and manual dispatch.
 
 on:
   push:

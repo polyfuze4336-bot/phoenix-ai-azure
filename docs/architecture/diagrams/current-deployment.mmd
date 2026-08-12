@@ -24,7 +24,7 @@ flowchart LR
 
     DEV --> GH
     OPS -->|"Owner (demo RG scope only)"| AZURE
-    GH --> GHA
+    GH -->|"push to main / manual dispatch"| GHA
     GHA -->|"Demo / Development OIDC"| DEPLOY_ID
     DEPLOY_ID -->|"subscription Contributor\nRBAC Admin on demo RG only"| AZURE
     GHA -->|"ACR remote build"| ACR

@@ -57,4 +57,5 @@
   subscription `Contributor` role supports the subscription-scoped Bicep deployment; its ability
   to create role assignments is limited to `rg-phoenixai-bfgs-demo`.
 - The `Demo` and `Development` GitHub environments intentionally have no required reviewers or
-  protection rules for rapid prototyping. Demo deployment still requires manual dispatch.
+  protection rules for rapid prototyping. Both environments deploy on pushes to `main` and also
+  support manual dispatch.

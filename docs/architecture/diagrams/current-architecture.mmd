@@ -52,7 +52,7 @@ flowchart TB
     Users --> V2
     Users --> PWA
     Operators -->|"Owner on rg-phoenixai-bfgs-demo only"| ARM
-    Actions -->|"Demo / Development OIDC"| DeployIdentity
+    Actions -->|"Demo / Development OIDC\npush-to-main + manual dispatch"| DeployIdentity
     DeployIdentity -->|"subscription Contributor\nRBAC Admin on demo RG only"| ARM
 
     Landing --> Next

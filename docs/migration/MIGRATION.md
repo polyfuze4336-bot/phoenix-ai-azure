@@ -1224,3 +1224,15 @@ Demo remains manual-dispatch only; Development retains push-to-`main` and manual
   binaries may be unavailable at build time; preserving font hierarchy and fallback stacks is accepted
   for faithful parity while maintaining deployment reliability.
 - **Verification:** `npm ci --legacy-peer-deps` ✅; `npm run build` ✅ 21/21 routes.
+
+### Step 32 - Automate Demo deployments from `main`
+- Updated `.github/workflows/deploy-demo.yml` to trigger on pushes to `main` in addition to
+  `workflow_dispatch`, so both Demo and Development deployment workflows now auto-run from
+  mainline updates.
+- Updated architecture governance artifacts to keep implementation and docs synchronized:
+  `current-architecture.md`, component/integration inventories, `azure-resource-map.md`, deployment
+  and system diagrams, `ARCHITECTURE_VERSION` (`2.4.0`), `ARCHITECTURE_CHANGELOG.md`, and
+  change record `docs/architecture/changes/CHANGE-20260812-main-auto-deploy-policy.md`.
+- **Responsible AI impact:** NONE. Deployment trigger automation does not change AI behavior or controls.
+- **Validation:** architecture drift check, Mermaid parsing, and workflow YAML validation; no
+  deployment command logic was changed.
