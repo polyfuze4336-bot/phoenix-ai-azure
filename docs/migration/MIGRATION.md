@@ -1229,3 +1229,8 @@ existing deployment topology without making an unreviewed database major-version
 - **Pre-deployment validation.** Both workflows pass `actionlint`; Node 22 typecheck, 105 unit
   tests, 22 RAI tests, 14 integration tests, production build (74 pages), Bicep compile/lint,
   architecture drift, and all five architecture Mermaid diagrams pass.
+- **Azure deployment.** Demo run `31589837441` successfully built commit `f55efa2` in the existing
+  ACR and promoted it as an application-only Container App revision. Image verification, safe
+  migration readiness, liveness, smoke tests, and critical journeys passed. Full Bicep mutation was
+  skipped, leaving PostgreSQL unchanged. A browser assertion against the public URL confirmed the
+  visible `Malaysia time:` timestamp after client hydration.

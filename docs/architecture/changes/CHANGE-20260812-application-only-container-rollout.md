@@ -5,7 +5,7 @@
 - **Related ADR:** None; the Azure Container Apps + ACR topology selected by ADR-0007 is unchanged
 - **Architecture version:** 2.2.1 -> 2.3.0
 - **Impact level:** MEDIUM
-- **Status:** IMPLEMENTED; Azure rollout pending
+- **Status:** COMPLETE
 
 ## Summary
 
@@ -59,4 +59,10 @@ transparency, telemetry content, clinical oversight, or RAI control status.
 - PASS: Node 22 typecheck; 105 unit, 22 RAI, and 14 integration tests; production build (74 pages).
 - PASS: Bicep compile/lint, architecture drift validation, and all five architecture Mermaid
 	diagrams.
-- PENDING: successful ACR build, Container App revision health, smoke tests, and critical journeys.
+- PASS: Demo run `31589837441` used OIDC to resolve the existing ACR and Container App, built the
+	immutable image for commit `f55efa2`, updated only the Container App revision, and passed image
+	verification, database migration readiness, liveness, smoke tests, and critical HCP/community
+	journeys. Full Bicep what-if/bootstrap/deployment steps were skipped, so PostgreSQL resources were
+	not reconciled or major-version upgraded.
+- PASS: a post-deployment Playwright assertion against the public Azure URL confirmed the live root
+	page visibly renders the client-side `Malaysia time:` timestamp.
