@@ -16,6 +16,41 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.2.0] — 2026-08-12
+
+### Changed
+- **HCP wound-analysis API** — `POST /api/analyze-wound` extended to accept multiple images in a
+  single analysis request. The endpoint now supports both legacy single-image format
+  (`{image, mimeType}`) and new multi-image format (`{images: [{data, mimeType}, ...]}`) for
+  backward compatibility.
+- **TBSA subcomponent classification** — analysis result now includes deterministic TBSA
+  classification (Major ≥15%, Minor ≤15%). This classification is computed post-analysis and
+  stored in the interpretation object.
+- **Multi-image TBSA aggregation** — when multiple images are provided, each is analyzed
+  independently, TBSA estimates are summed (non-overlapping areas, capped at 100%), and the
+  aggregated TBSA is classified. Per-image quality scores are recorded; overall result quality is
+  the minimum across all images.
+- **HCP assessment UI** — `app/hcp/analysis/_components/assessment-client.tsx` updated to support
+  multi-image upload with per-image preview gallery. Users can remove individual images before
+  analysis. Step 4 now displays aggregated TBSA classification and per-image result breakdown.
+- **Analysis schema & validation** — `burn-wound-analysis.ts` extended with
+  `tbsaClassificationSchema` containing `{isMajor, isMinor, rationale}`. HCP result schema
+  (`wound-analysis-schema.ts`) adds `tbsaClassification: string` field for flat backward-compatible
+  response. Pipeline assembly deterministically computes classification post-analysis.
+
+### Boundaries
+- No new Azure integrations or resources. Existing `INT-APP-FOUNDRY` is used (multiple sequential
+  vision calls per image within a single analysis).
+- Request/response contract is backward-compatible: legacy single-image clients continue to work
+  unchanged. Multi-image is opt-in via new `images` array parameter.
+- All existing RAI controls (`RAI-SAFE-001` through `RAI-ACCT-005`) remain active; image quality
+  gating, confidence capping, and observation-vs-interpretation separation apply to each image
+  independently and to the aggregated result.
+- Multi-image limitation added to analysis limitations array: "TBSA from photos assumes consistent
+  scale and lighting; multiple images ≠ clinical tracing" (see `docs/rai/known-limitations.md`).
+- See [CHANGE-20260812-tbsa-multi-image.md](./changes/CHANGE-20260812-tbsa-multi-image.md) for
+  detailed change record and test evidence.
+
 ## [2.1.0] — 2026-08-10
 
 ### Changed

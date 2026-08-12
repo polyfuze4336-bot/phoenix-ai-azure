@@ -185,7 +185,7 @@ Companion diagrams:
 | Rich analysis schema + adapter | `lib/ai/schemas/burn-wound-analysis.ts` (observation vs interpretation, field confidence, gaps) + flat back-compat adapter | Implemented |
 | Streaming | `lib/ai/streaming/{sse,collect,text-stream}.ts` | Implemented |
 | Image analysis (multimodal) | `lib/ai/validation/image-input.ts` + vision model | Implemented |
-| Structured response validation | `lib/ai/validation/wound-analysis-schema.ts` (Zod, 22-field contract) | Implemented |
+| Structured response validation | `lib/ai/validation/wound-analysis-schema.ts` (Zod, 24-field contract with TBSA classification) | Implemented |
 | Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
 | AI telemetry | `lib/ai/telemetry.ts` | Implemented |
 
@@ -195,10 +195,13 @@ management & referral → consistency/safety critic — then applies determinist
 Parkland is computed in app code from a supplied weight (never an assumed 70 kg), Fitzpatrick is
 reported only when the clinician supplies it (otherwise `unknown`), measurements are `unavailable`
 without a visible scale reference, confidence is capped on poor-quality images, and special-site
-burns are escalated. The rich result is mapped back to the existing 22-field contract (so the
+burns are escalated. TBSA subcomponent classification is computed deterministically (Major ≥15%,
+Minor <15%). The endpoint accepts both legacy single-image format and new multi-image format
+(multiple images analyzed independently, TBSA aggregated via sum-capped-at-100%, overall quality
+= minimum across images). The rich result is mapped back to the existing 22-field contract (so the
 client and SSE envelope are unchanged) and the full structure travels under `result.structured`
 for the enhanced UI and the REFINE (second-pass) flow. Setting `AI_ANALYSIS_PIPELINE=single`
-restores the original single-pass call.
+restores the original single-pass call and rejects multi-image requests.
 
 ### 3.4 Data Layer
 

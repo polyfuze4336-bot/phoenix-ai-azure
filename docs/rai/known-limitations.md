@@ -12,6 +12,7 @@ Documented, honestly. Each has a stable ID and is surfaced on the AI Assurance p
 | LIM-006 | A formal **WCAG accessibility** audit has not yet been completed (RAI-INCL-002 is Partial). |
 | LIM-007 | Image measurements require a visible scale reference; without one, dimensions are withheld rather than estimated. |
 | LIM-008 | AI-assisted output is **decision-support only** and must be confirmed by a qualified clinician. |
+| LIM-009 | When multiple wound images are provided for multi-image analysis, TBSA is aggregated by summing estimated percentages, **assuming non-overlapping regions**. If images capture overlapping areas, the aggregate TBSA will be overstated. No automated de-duplication or overlap detection is performed. |
 
 These limitations are not defects to hide — they define the responsible scope of the tool. See
 [rai-roadmap.md](./rai-roadmap.md) for what is planned.

@@ -10,7 +10,7 @@
 | Component ID | Component | Type | Technology | Location | Purpose | Dependencies | Status | Owner |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | UI-LANDING | Landing / experience selector | UI | Next.js/React | `app/_components`, `app/page.tsx` | Public entry, brand; selects Original vs v2 experience (degrades to Original-only when v2 flag off) | APP-NEXT, LIB-V2 | ACTIVE | Phoenix AI team |
-| UI-HCP | HCP portal | UI | Next.js/React | `app/hcp/*` | Clinician chat, analysis, TBSA, Parkland, guidelines, history | APP-NEXT, AUTH-DEMO, API-* | ACTIVE | Phoenix AI team |
+| UI-HCP | HCP portal | UI | Next.js/React | `app/hcp/*` | Clinician chat, analysis (multi-image upload supported), TBSA+classification, Parkland, guidelines, history | APP-NEXT, AUTH-DEMO, API-* | ACTIVE | Phoenix AI team |
 | UI-COMMUNITY | Community portal | UI | Next.js/React | `app/community/*` | Public chat, assessment, articles, first-aid | APP-NEXT, API-* | ACTIVE | Phoenix AI team |
 | UI-V2-HCP | Phoenix AI v2.0 HCP workspace | UI | Next.js/React | `app/v2/hcp/*` | Enhanced clinician experience (dashboard, cases, assessment, chat, calculators, guidelines, reports, insights); reuses existing API contracts | APP-NEXT, UI-V2-SHELL, LIB-V2, API-HCP-CHAT, API-HCP-ANALYSIS, CLINICAL-PARKLAND | ACTIVE | Phoenix AI team |
 | UI-V2-COMMUNITY | Phoenix AI v2.0 community portal | UI | Next.js/React | `app/v2/community/*` | Enhanced public experience (home, self-assessment, chat, first-aid, education); reuses existing API contracts | APP-NEXT, UI-V2-SHELL, LIB-V2, API-COMMUNITY-CHAT | ACTIVE | Phoenix AI team |
@@ -21,7 +21,7 @@
 | APP-MIDDLEWARE | Route-protection middleware | App | Next.js middleware | `middleware.ts` | Guard HCP routes/APIs | AUTH-SESSION | ACTIVE | Phoenix AI team |
 | APP-INSTRUMENTATION | Startup instrumentation | App | Next.js instrumentation hook | `instrumentation.ts` | Env validation + telemetry init | CFG-ENV, OBS-APPINSIGHTS | ACTIVE | Phoenix AI team |
 | API-HCP-CHAT | HCP chat route | API | Next.js route handler | `app/api/hcp-chat/route.ts` | HCP clinical chat | AI-PROVIDER, PROMPT-HCP-CHAT | ACTIVE | Phoenix AI team |
-| API-HCP-ANALYSIS | HCP wound analysis route | API | Next.js route handler | `app/api/analyze-wound/route.ts` | Multimodal wound/burn assessment (staged pipeline default; single-pass fallback) | AI-ANALYSIS-PIPELINE, AI-MODEL-SELECTOR, AI-PROVIDER, AI-VALIDATION, PROMPT-HCP-ANALYSIS | ACTIVE | Phoenix AI team |
+| API-HCP-ANALYSIS | HCP wound analysis route | API | Next.js route handler | `app/api/analyze-wound/route.ts` | Multimodal wound/burn assessment (staged pipeline default; single-pass fallback); supports single or multi-image analysis with TBSA aggregation and Major/Minor classification | AI-ANALYSIS-PIPELINE, AI-MODEL-SELECTOR, AI-PROVIDER, AI-VALIDATION, PROMPT-HCP-ANALYSIS | ACTIVE | Phoenix AI team |
 | API-COMMUNITY-CHAT | Community chat route | API | Next.js route handler | `app/api/community-chat/route.ts` | Public plain-language chat | AI-PROVIDER, PROMPT-COMMUNITY-CHAT | ACTIVE | Phoenix AI team |
 | API-COMMUNITY-ANALYSIS | Community image-check route | API | Next.js route handler | `app/api/community-analyze/route.ts` | Simplified image guidance (REMOVED) | AI-PROVIDER, AI-VALIDATION, PROMPT-COMMUNITY-ANALYSIS | DEPRECATED | Phoenix AI team |
 | API-AUTH-LOGIN | Demo login route | API | Next.js route handler | `app/api/auth/login/route.ts` | Server-verified demo login | AUTH-DEMO, AUTH-SESSION | ACTIVE | Phoenix AI team |
