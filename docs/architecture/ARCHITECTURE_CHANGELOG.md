@@ -16,6 +16,24 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.3.0] — 2026-08-12
+
+### Changed
+- **Application-only Container Apps rollout** — Demo and Development deployments default to
+  resolving the existing ACR and Container App, remotely building an immutable image in ACR, and
+  updating only the Container App revision. Full subscription-scoped Bicep reconciliation remains
+  available as an explicit workflow option for reviewed infrastructure changes.
+- The application-only path bypasses the known PostgreSQL declaration drift (Bicep requests 15;
+  live server is 16; the current Azure API accepts 17/18) without changing the database server,
+  schema, credentials, or major version.
+
+### Boundaries
+- Hosting remains Azure Container Apps Consumption with private ACR image delivery; App Service,
+  Kudu, and ZIP deployment remain deprecated and unused.
+- OIDC identity, RBAC scopes, runtime configuration, routes, visible UX, AI behavior, and
+  Responsible AI controls are unchanged. See
+  [CHANGE-20260812](./changes/CHANGE-20260812-application-only-container-rollout.md).
+
 ## [2.2.1] — 2026-08-12
 
 ### Changed

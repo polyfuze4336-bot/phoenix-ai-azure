@@ -1207,3 +1207,25 @@ routes, portal choices, clinical terminology, responsive layout, and existing be
   14 integration tests, architecture drift validation, and all five current architecture Mermaid
   diagrams pass. The focused timestamp test verifies that `2026-08-12T09:41:59Z` renders as
   `12 Aug 2026, 5:41:59 pm` in Malaysia time.
+
+### Step 30 - Add an application-only Container Apps rollout
+
+The existing end-to-end workflows are blocked before image build because full Bicep bootstrap
+reconciles a PostgreSQL declaration that requests version 15 against a live version 16 server while
+the current Azure API accepts 17/18. This step adds a default application-only path that uses the
+existing deployment topology without making an unreviewed database major-version change.
+
+- **Deployment behavior.** Demo and Development resolve the existing ACR and Container App, build
+  `phoenixai:<git-sha>` remotely in ACR, update the Container App image, and retain health, smoke,
+  and critical-journey gates. Full Bicep reconciliation remains explicit for reviewed infrastructure
+  changes.
+- **Architecture impact.** MEDIUM, version `2.2.1` -> `2.3.0`. `DEVOPS-GHA`,
+  `INT-GHA-AZURE`, and `INT-DEPLOY-ACR` are extended; Azure resources and topology are unchanged.
+  No ADR is required because ADR-0007's Container Apps + ACR decision is preserved.
+- **Responsible AI impact.** NONE. AI behavior, prompts, models, safety, transparency, telemetry,
+  clinical oversight, and RAI controls are unchanged.
+- **Database boundary.** The application-only path submits no Bicep deployment and does not alter
+  PostgreSQL version, configuration, schema, credentials, or data.
+- **Pre-deployment validation.** Both workflows pass `actionlint`; Node 22 typecheck, 105 unit
+  tests, 22 RAI tests, 14 integration tests, production build (74 pages), Bicep compile/lint,
+  architecture drift, and all five architecture Mermaid diagrams pass.

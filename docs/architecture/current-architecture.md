@@ -7,7 +7,7 @@
 > and MUST remain synchronized with the implementation (see
 > [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.2.1`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.3.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -43,7 +43,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Authentication | Server-verified **demo** login by default; Microsoft Entra ID **opt-in** placeholder — **Mock/demo + Optional** |
 | Storage | Azure Blob provider present + infra provisioned; no UI workflow persists files — **Configured but unused** |
 | Monitoring | Application Insights + Log Analytics + health probes + metric alerts — **Implemented** |
-| Deployment | GitHub Actions + dedicated Entra workload identity (environment-bound OIDC) + Bicep IaC; Demo is manual-dispatch and reviewer-free for rapid prototyping — **Implemented** |
+| Deployment | GitHub Actions + dedicated Entra workload identity (environment-bound OIDC); application changes default to an existing-resource ACR build + Container App revision update, while full Bicep reconciliation is explicit; Demo is manual-dispatch and reviewer-free for rapid prototyping — **Implemented** |
 
 ---
 
@@ -134,7 +134,9 @@ flowchart TB
     Actions -->|"Demo / Development OIDC"| DeployIdentity
     DeployIdentity -->|"subscription Contributor"| Bicep
     Actions -->|"OIDC / remote image build"| ACR
-    Actions -->|"OIDC / Bicep"| ContainerApp
+    Actions -->|"application-only revision update (default)"| ContainerApp
+    Actions -->|"full Bicep reconciliation (explicit)"| Bicep
+    Bicep --> ContainerApp
 ```
 
 Companion diagrams:
@@ -251,8 +253,9 @@ restores the original single-pass call.
 | Element | Location | Status |
 | --- | --- | --- |
 | GitHub repository | remote `origin` | Implemented |
-| GitHub Actions | `.github/workflows/{ci,deploy-demo,deploy-dev,infrastructure,db-migrate}.yml` | Implemented |
+| GitHub Actions | `.github/workflows/{ci,deploy-demo,deploy-dev,infrastructure,db-migrate}.yml`; Demo/Development default to application-only ACR build + existing Container App revision update, with full Bicep reconciliation explicit | Implemented |
 | OIDC federation | Entra app/service principal `github-phoenixai-deploy`; GitHub environments `Demo` and `Development` | Implemented; no client secret |
+| Application-only rollout | Resolve existing `INFRA-ACR` / `INFRA-CONTAINERAPP`, build `phoenixai:<git-sha>` remotely, update the Container App image, then run health and journey gates | Implemented; default deployment mode; no infrastructure mutation |
 | Bicep IaC | `infra/main.bicep`, `infra/main.bicepparam`, `infra/modules/*` | Implemented |
 | Azure Container Apps | `ca-phoenixai-<environment-token>` (deployment output) | Implemented |
 | Azure Container Registry remote build | `acrphx<environment-token>` / `phoenixai:<deployment-tag>` | Implemented |

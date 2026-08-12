@@ -28,7 +28,8 @@ flowchart LR
     GHA -->|"Demo / Development OIDC"| DEPLOY_ID
     DEPLOY_ID -->|"subscription Contributor\nRBAC Admin on demo RG only"| AZURE
     GHA -->|"ACR remote build"| ACR
-    GHA -->|"Bicep deployment"| APP
+    GHA -->|"app-only revision update (default)"| APP
+    GHA -->|"full Bicep reconciliation (explicit)"| AZURE
 
     ENV --> APP
     ACR -->|"AcrPull via managed identity"| APP

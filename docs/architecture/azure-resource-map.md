@@ -58,3 +58,7 @@
   to create role assignments is limited to `rg-phoenixai-bfgs-demo`.
 - The `Demo` and `Development` GitHub environments intentionally have no required reviewers or
   protection rules for rapid prototyping. Demo deployment still requires manual dispatch.
+- Demo and Development workflows default to an application-only rollout: discover the existing ACR
+  and Container App in this resource group, build an immutable image in ACR, and update only the
+  Container App revision. Full Bicep reconciliation is an explicit option and remains required for
+  reviewed infrastructure changes. The application-only path does not alter PostgreSQL resources.

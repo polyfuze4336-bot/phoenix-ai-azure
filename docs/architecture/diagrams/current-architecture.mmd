@@ -90,4 +90,6 @@ flowchart TB
     GitHub --> Actions
     Actions -->|"OIDC"| Bicep
     Actions -->|"OIDC / remote image build"| ACR
-    Actions -->|"OIDC / Bicep"| ContainerApp
+    Actions -->|"application-only revision update (default)"| ContainerApp
+    Actions -->|"full Bicep reconciliation (explicit)"| Bicep
+    Bicep --> ContainerApp

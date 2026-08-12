@@ -10,6 +10,12 @@ name: Deploy (Demo)
 
 on:
   workflow_dispatch:
+    inputs:
+      full_infrastructure:
+        description: 'Run full Bicep reconciliation (requires reviewed PostgreSQL version alignment).'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   id-token: write
@@ -21,8 +27,10 @@ concurrency:
 
 env:
   AZURE_LOCATION: eastus2
+  RESOURCE_GROUP: rg-phoenixai-bfgs-demo
   DEPLOY_NAME: phoenixai-demo-${{ github.run_number }}
   IMAGE_TAG: ${{ github.sha }}
+  FULL_INFRASTRUCTURE: ${{ inputs.full_infrastructure }}
 
 jobs:
   deploy:
@@ -47,8 +55,9 @@ jobs:
           az bicep build --file infra/main.bicep --stdout > /dev/null
           az bicep build --file infra/main.bicep
 
-      # 3. Run Azure what-if (read-only preview).
+      # 3. Run Azure what-if only for an explicitly requested infrastructure reconciliation.
       - name: What-if (subscription scope)
+        if: env.FULL_INFRASTRUCTURE == 'true'
         env:
           PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
         run: |
@@ -59,8 +68,28 @@ jobs:
             --parameters infra/main.bicepparam \
             --parameters containerImageTag="${IMAGE_TAG}" authMode=demo
 
-      # 4. Bootstrap dependencies first so ACR exists before the image build.
+      # 4a. Resolve the existing runtime for the default application-only rollout.
+      - name: Resolve existing Container Apps resources
+        if: env.FULL_INFRASTRUCTURE != 'true'
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+          ACR=$(az acr list --resource-group "${RESOURCE_GROUP}" --query "[?starts_with(name, 'acrphx')].name | [0]" -o tsv)
+          APP=$(az containerapp list --resource-group "${RESOURCE_GROUP}" --query "[?starts_with(name, 'ca-phoenixai-')].name | [0]" -o tsv)
+          if [ -z "${ACR}" ] || [ -z "${APP}" ]; then
+            echo "Existing Phoenix AI ACR or Container App was not found in ${RESOURCE_GROUP}." >&2
+            exit 1
+          fi
+          ACR_LOGIN_SERVER=$(az acr show --resource-group "${RESOURCE_GROUP}" --name "${ACR}" --query loginServer -o tsv)
+          APP_FQDN=$(az containerapp show --resource-group "${RESOURCE_GROUP}" --name "${APP}" --query properties.configuration.ingress.fqdn -o tsv)
+          echo "RG=${RESOURCE_GROUP}" >> "$GITHUB_ENV"
+          echo "ACR=${ACR}" >> "$GITHUB_ENV"
+          echo "ACR_LOGIN_SERVER=${ACR_LOGIN_SERVER}" >> "$GITHUB_ENV"
+          echo "APP=${APP}" >> "$GITHUB_ENV"
+          echo "APP_URL=https://${APP_FQDN}" >> "$GITHUB_ENV"
+
+      # 4b. Bootstrap dependencies only for an explicit full-infrastructure run.
       - name: Bootstrap infrastructure
+        if: env.FULL_INFRASTRUCTURE == 'true'
         env:
           PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
         run: |
@@ -79,8 +108,25 @@ jobs:
       - name: Build immutable image in ACR
         run: az acr build --registry "${ACR}" --image "phoenixai:${IMAGE_TAG}" --file Dockerfile nextjs_space
 
-      # 6. Create or update the Container App with the image that now exists.
+      # 6a. Update only the existing Container App revision (default path).
+      - name: Deploy application-only Container App revision
+        if: env.FULL_INFRASTRUCTURE != 'true'
+        run: |
+          IMAGE="${ACR_LOGIN_SERVER}/phoenixai:${IMAGE_TAG}"
+          az containerapp update \
+            --resource-group "${RG}" \
+            --name "${APP}" \
+            --image "${IMAGE}" \
+            --output none
+          DEPLOYED_IMAGE=$(az containerapp show --resource-group "${RG}" --name "${APP}" --query properties.template.containers[0].image -o tsv)
+          if [ "${DEPLOYED_IMAGE}" != "${IMAGE}" ]; then
+            echo "Container App image mismatch: expected ${IMAGE}, got ${DEPLOYED_IMAGE}." >&2
+            exit 1
+          fi
+
+      # 6b. Create or update all declared resources only when explicitly requested.
       - name: Deploy Container App revision
+        if: env.FULL_INFRASTRUCTURE == 'true'
         env:
           PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
         run: |
