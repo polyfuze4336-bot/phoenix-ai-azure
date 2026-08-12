@@ -29,7 +29,7 @@
 | Retired web runtime source | Not deployed | — | `infra/modules/app-service.bicep` | INFRA-APPSERVICE (DEPRECATED) | none |
 | Retired compute-plan source | Not deployed | — | `infra/modules/app-service-plan.bicep` | INFRA-PLAN (DEPRECATED) | none |
 | AI model | Azure AI Services S0 | `aif-phoenixai-<token>` (`gpt-4o` 2024-11-20 GlobalStandard) | `infra/modules/foundry-connection.bicep` | AZ-FOUNDRY | bfgs-demo |
-| Relational database | PostgreSQL Flexible Server (default major version 16) | `psql-phoenixai-<token>` | `infra/modules/postgresql.bicep` | DB-POSTGRES | bfgs-demo |
+| Relational database | PostgreSQL Flexible Server (default major version 17) | `psql-phoenixai-<token>` | `infra/modules/postgresql.bicep` | DB-POSTGRES | bfgs-demo |
 | File storage | Storage Account (Blob) | `stphx<token>` (container `clinical-uploads`) | `infra/modules/storage.bicep` | STORAGE-BLOB (OPTIONAL) | bfgs-demo |
 | Secret store | Key Vault | `kv-phx-<token>` | `infra/modules/key-vault.bicep` | INFRA-KV | bfgs-demo |
 | Workload identity | User-assigned Managed Identity | `id-phoenixai-<token>` | `infra/modules/managed-identity.bicep` | INFRA-MI | bfgs-demo |

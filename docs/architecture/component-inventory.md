@@ -58,7 +58,7 @@
 | CLINICAL-TBSA | TBSA calculator | Lib | TypeScript | `lib/clinical/tbsa.ts` | Total body surface area | — | ACTIVE | Phoenix AI team |
 | CLINICAL-PARKLAND | Parkland calculator | Lib | TypeScript | `lib/clinical/parkland.ts` | Fluid resuscitation formula | — | ACTIVE | Phoenix AI team |
 | DB-PRISMA | Prisma data access | Lib | Prisma 6 | `lib/db.ts` | DB client | DB-POSTGRES | ACTIVE | Phoenix AI team |
-| DB-POSTGRES | PostgreSQL database | Data | Azure PostgreSQL Flexible Server (default major version 16) | infra + `DATABASE_URL` | Relational store | INFRA-MI | ACTIVE | Phoenix AI team |
+| DB-POSTGRES | PostgreSQL database | Data | Azure PostgreSQL Flexible Server (default major version 17) | infra + `DATABASE_URL` | Relational store | INFRA-MI | ACTIVE | Phoenix AI team |
 | DB-ANALYSISRECORD | Analysis history model | Data | Prisma model | `prisma/schema.prisma` | Persist HCP analyses | DB-PRISMA | ACTIVE | Phoenix AI team |
 | DB-LEGACY-MODELS | Case/ChatMessage/Article | Data | Prisma models | `prisma/schema.prisma` | Retained-for-parity models | DB-PRISMA | OPTIONAL | Phoenix AI team |
 | STORAGE-BLOB | Blob storage provider | Lib | @azure/storage-blob + identity | `lib/storage/*` | Private file storage | INFRA-MI, INFRA-STORAGE | OPTIONAL | Phoenix AI team |

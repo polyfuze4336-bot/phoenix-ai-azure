@@ -53,7 +53,7 @@ param postgresAdminPassword string
 param postgresDatabaseName string = 'phoenix'
 
 @description('PostgreSQL major version.')
-param postgresVersion string = '16'
+param postgresVersion string = '17'
 
 // ---------------------------------------------------------------------------
 // App

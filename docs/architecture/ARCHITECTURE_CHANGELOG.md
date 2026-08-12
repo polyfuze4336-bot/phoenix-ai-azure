@@ -16,6 +16,19 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.3.1] — 2026-08-12
+
+### Changed
+- **PostgreSQL major-version compatibility baseline** — IaC now defaults PostgreSQL Flexible
+  Server to version `17` because current Azure deployment validation accepts only `[17,18]` for
+  new provisioning in this environment.
+
+### Boundaries
+- Existing customer data and current runtime integrations are unchanged.
+- No new Azure resources, API contracts, UI behavior, branding, or Responsible AI controls changed.
+- No ADR is required for this compatibility correction.
+- See [CHANGE-20260812-postgresql-version-compatibility.md](./changes/CHANGE-20260812-postgresql-version-compatibility.md).
+
 ## [2.3.0] — 2026-08-12
 
 ### Changed
@@ -24,8 +37,6 @@ reference the relevant ADR and change record.
   existing analysis pipeline.
 - **TBSA synthesis behavior** — staged analysis includes overlap-aware guidance so duplicate views
   are not double-counted in total TBSA estimation.
-- **PostgreSQL major-version baseline** — IaC now defaults PostgreSQL Flexible Server to version
-  `16` so new provisioning aligns with the live customer deployment and avoids 15↔16 drift.
 
 ### Unchanged
 - No new Azure resources, runtime integrations, identity/data/storage topology, branding, or
@@ -33,8 +44,7 @@ reference the relevant ADR and change record.
 - Existing API route paths and SSE envelope shape remain in place.
 - No ADR is required for these backward-compatible changes within existing components and
   infrastructure.
-- See [CHANGE-20260812-hcp-multi-image-tbsa.md](./changes/CHANGE-20260812-hcp-multi-image-tbsa.md)
-  and [CHANGE-20260812-postgresql-16-default.md](./changes/CHANGE-20260812-postgresql-16-default.md).
+- See [CHANGE-20260812-hcp-multi-image-tbsa.md](./changes/CHANGE-20260812-hcp-multi-image-tbsa.md).
 
 ## [2.2.1] — 2026-08-12
 

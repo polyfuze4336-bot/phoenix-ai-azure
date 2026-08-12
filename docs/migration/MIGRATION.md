@@ -1196,15 +1196,17 @@ Demo remains manual-dispatch only; Development retains push-to-`main` and manual
   version to `2.3.0`, added changelog entry, and recorded
   `docs/architecture/changes/CHANGE-20260812-hcp-multi-image-tbsa.md`.
 
-### Step 30 - Align PostgreSQL default to v16 and ready promotion to `main`
+### Step 30 - Align PostgreSQL baseline to a deployable major version and ready promotion to `main`
 - Merged current branch with `origin/main` so the fix (`fix(ci): deploy workflows use existing container
   app and correct Dockerfile path`) and enhancement (`feat: add multi-image hcp analysis and tbsa
   classification`) are carried together with latest mainline governance updates.
-- Updated IaC PostgreSQL defaults to major version **16** in `infra/modules/postgresql.bicep`, surfaced
-  this as `postgresVersion` in `infra/main.bicep`, and pinned `infra/main.bicepparam` to `16` so new
-  deployments match the live customer baseline and avoid the previously documented 15↔16 mismatch.
-- Updated architecture governance artifacts: version `2.3.0`, changelog, inventories, resource map,
-  diagrams, and change record `CHANGE-20260812-postgresql-16-default.md`.
+- Confirmed from the failed Development deployment run logs that this environment currently accepts
+  only PostgreSQL major versions `[17,18]` for provisioning, so `16` is not deployable here.
+- Updated IaC PostgreSQL defaults to major version **17** in `infra/modules/postgresql.bicep`, surfaced
+  this as `postgresVersion` in `infra/main.bicep`, and pinned `infra/main.bicepparam` to `17` so new
+  deployments can proceed without version-range failures.
+- Updated architecture governance artifacts: version `2.3.1`, changelog, inventories, resource map,
+  diagrams, and change record `CHANGE-20260812-postgresql-version-compatibility.md`.
 - Deployment path remains unchanged: the Azure hosted Development app updates via
   `.github/workflows/deploy-dev.yml` on pushes to `main` (or manual dispatch), and Demo updates via
   manual dispatch of `.github/workflows/deploy-demo.yml`.
