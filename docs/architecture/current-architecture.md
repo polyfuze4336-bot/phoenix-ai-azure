@@ -7,7 +7,7 @@
 > and MUST remain synchronized with the implementation (see
 > [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.2.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.3.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -39,11 +39,11 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Major portals | Experience selector landing, Original HCP + Community portals, and an additive **Phoenix AI v2.0** experience (`/v2/*`, feature-flag gated), PWA + EN/BM — **Implemented** |
 | Hosting | Azure Container Apps Consumption, `eastus2`; image in Azure Container Registry Basic — **Implemented** |
 | AI processing | Environment-owned Azure AI Services S0 account with `gpt-4o` via `lib/ai`, managed identity — **Implemented** |
-| Data handling | Azure PostgreSQL Flexible Server via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
+| Data handling | Azure PostgreSQL Flexible Server (IaC default major version **16**) via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
 | Authentication | Server-verified **demo** login by default; Microsoft Entra ID **opt-in** placeholder — **Mock/demo + Optional** |
 | Storage | Azure Blob provider present + infra provisioned; no UI workflow persists files — **Configured but unused** |
 | Monitoring | Application Insights + Log Analytics + health probes + metric alerts — **Implemented** |
-| Deployment | GitHub Actions (OIDC) + Bicep IaC — **Implemented** |
+| Deployment | GitHub Actions + dedicated Entra workload identity (environment-bound OIDC) + Bicep IaC; Demo is manual-dispatch and reviewer-free for rapid prototyping — **Implemented** |
 
 ---
 
@@ -91,6 +91,7 @@ flowchart TB
     subgraph DEVOPS["Engineering"]
         GitHub["GitHub Repository — ACTIVE"]
         Actions["GitHub Actions (OIDC) — ACTIVE"]
+        DeployIdentity["Entra deployment principal — ACTIVE"]
         Bicep["Bicep IaC (13 files) — ACTIVE"]
     end
 
@@ -130,7 +131,8 @@ flowchart TB
     MI --> Blob
 
     GitHub --> Actions
-    Actions -->|"OIDC"| Bicep
+    Actions -->|"Demo / Development OIDC"| DeployIdentity
+    DeployIdentity -->|"subscription Contributor"| Bicep
     Actions -->|"OIDC / remote image build"| ACR
     Actions -->|"OIDC / Bicep"| ContainerApp
 ```
@@ -207,7 +209,7 @@ restores the original single-pass call.
 | Element | Location | Status |
 | --- | --- | --- |
 | Prisma client | `lib/db.ts` (auto `sslmode=require`, pool defaults) | Implemented |
-| PostgreSQL | Azure Database for PostgreSQL Flexible Server | Implemented (infra) |
+| PostgreSQL | Azure Database for PostgreSQL Flexible Server (IaC default major version **16**) | Implemented (infra) |
 | Models: `Case`, `ChatMessage`, `Article` | `prisma/schema.prisma` | Present, **not wired to UI** (parity demo content) |
 | Model: `AnalysisRecord` | `prisma/schema.prisma` | Implemented — used by HCP history |
 | Migrations + seed | `prisma/migrations/*`, `scripts/{seed,seed-data,safe-seed}.ts` | Implemented (fictional data) |
@@ -233,6 +235,7 @@ restores the original single-pass call.
 | Roles (Doctor/Nurse/Administrator) | `lib/auth/*` role mapping | Implemented (used by demo; Entra role mapping opt-in) |
 | Route protection | `middleware.ts` | Implemented |
 | Azure demo operators | Entra security group `BFG Solutions` | `Owner` on `rg-phoenixai-bfgs-demo` only; 3 current members; operational assignment outside workload Bicep |
+| GitHub deployment identity | Entra app/service principal `github-phoenixai-deploy` | OIDC only; subscription `Contributor`; `Role Based Access Control Administrator` on `rg-phoenixai-bfgs-demo` only |
 | Workload RBAC | `infra/modules/role-assignments.bicep`, `container-registry.bicep` | Resource-scoped managed-identity roles; unchanged by operator access |
 
 ### 3.7 Observability Layer
@@ -251,7 +254,7 @@ restores the original single-pass call.
 | --- | --- | --- |
 | GitHub repository | remote `origin` | Implemented |
 | GitHub Actions | `.github/workflows/{ci,deploy-demo,deploy-dev,infrastructure,db-migrate}.yml` | Implemented |
-| OIDC federation | workflows | Implemented |
+| OIDC federation | Entra app/service principal `github-phoenixai-deploy`; GitHub environments `Demo` and `Development` | Implemented; no client secret |
 | Bicep IaC | `infra/main.bicep`, `infra/main.bicepparam`, `infra/modules/*` | Implemented |
 | Azure Container Apps | `ca-phoenixai-<environment-token>` (deployment output) | Implemented |
 | Azure Container Registry remote build | `acrphx<environment-token>` / `phoenixai:<deployment-tag>` | Implemented |

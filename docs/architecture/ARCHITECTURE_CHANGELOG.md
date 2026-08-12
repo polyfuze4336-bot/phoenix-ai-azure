@@ -16,21 +16,60 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.3.0] — 2026-08-12
+
+### Changed
+- **HCP analysis image input** — `/api/analyze-wound` accepts one or more case images (`images[]`)
+  in addition to legacy single-image payloads. Multi-image assessments are consolidated inside the
+  existing analysis pipeline.
+- **TBSA synthesis behavior** — staged analysis includes overlap-aware guidance so duplicate views
+  are not double-counted in total TBSA estimation.
+- **PostgreSQL major-version baseline** — IaC now defaults PostgreSQL Flexible Server to version
+  `16` so new provisioning aligns with the live customer deployment and avoids 15↔16 drift.
+
+### Unchanged
+- No new Azure resources, runtime integrations, identity/data/storage topology, branding, or
+  Responsible AI controls.
+- Existing API route paths and SSE envelope shape remain in place.
+- No ADR is required for these backward-compatible changes within existing components and
+  infrastructure.
+- See [CHANGE-20260812-hcp-multi-image-tbsa.md](./changes/CHANGE-20260812-hcp-multi-image-tbsa.md)
+  and [CHANGE-20260812-postgresql-16-default.md](./changes/CHANGE-20260812-postgresql-16-default.md).
+
+## [2.2.1] — 2026-08-12
+
+### Changed
+- **Rapid-prototype deployment policy** — the `Demo` and `Development` GitHub environments use no
+  required reviewers or environment protection rules. Demo remains manual-dispatch only, while
+  Development continues to deploy from `main` and by manual dispatch.
+- OIDC subject restrictions, Azure RBAC scopes, workflow validation, and application behavior are
+  unchanged. See
+  [CHANGE-20260812](./changes/CHANGE-20260812-rapid-prototype-deployment-policy.md).
+
+### Boundaries
+- This reviewer-free policy is intentional for rapid prototyping and is not a production approval
+  model. Production use requires a separate governance review.
+- Responsible AI controls are unchanged; this policy only removes a deployment approval wait state.
+
 ## [2.2.0] — 2026-08-12
 
 ### Changed
-- **HCP analysis image input** — `/api/analyze-wound` now accepts one or more case images (`images[]`)
-  in addition to the legacy single-image payload. Multi-image assessments are consolidated within the
-  existing analysis pipeline and API contract.
-- **TBSA synthesis behavior** — staged analysis now carries explicit overlap-aware guidance when
-  multiple views are supplied so overlapping/duplicate frames are not double-counted in total TBSA
-  estimation.
+- **GitHub deployment identity** — a dedicated Entra app registration and service principal named
+  `github-phoenixai-deploy` authenticates GitHub Actions through environment-bound OIDC federated
+  credentials for `Demo` and `Development`. The subjects include GitHub's immutable organization
+  and repository IDs (`225331490` and `1324632738`); no Azure user password or client secret is
+  stored.
+- The principal receives `Contributor` at subscription scope because `infra/main.bicep` is a
+  subscription-scoped deployment, plus `Role Based Access Control Administrator` only on
+  `rg-phoenixai-bfgs-demo` so Bicep can manage workload role assignments inside the demo boundary.
 
-### Unchanged
-- No new Azure resources, runtime integrations, identity/data/storage topology, or branding changes.
-- Existing route path, SSE envelope shape, and Responsible AI control IDs remain in place.
-- No ADR is required for this backward-compatible extension within existing components.
-  See [CHANGE-20260812](./changes/CHANGE-20260812-hcp-multi-image-tbsa.md).
+### Boundaries
+- The deployment principal cannot delegate access outside the Phoenix AI demo resource group.
+- Human BFGS accounts are not pipeline credentials. Demo is manual-dispatch only; reviewer-free
+  rapid-prototype policy is recorded in architecture version 2.2.1.
+- Application behavior and Responsible AI controls are unchanged. No ADR is required because this
+  completes the OIDC design already selected by the deployment architecture. See
+  [CHANGE-20260812](./changes/CHANGE-20260812-github-oidc-deployment-identity.md).
 
 ## [2.1.0] — 2026-08-10
 

@@ -255,9 +255,9 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   secrets). Expanded `.github/workflows/ci.yml` to the full quality gate (lock-file install, lint,
   type check, unit + integration tests, standalone build, Bicep lint/build, `npm audit` vulnerability
   report, Playwright smoke test). Added `.github/workflows/infrastructure.yml` (OIDC infra pipeline:
-  PR what-if, gated Development/Demo deploy — supersedes and replaces `infra.yml`) and two deployment
+  PR what-if, environment-scoped Development/Demo deploy — supersedes and replaces `infra.yml`) and two deployment
   pipelines, `.github/workflows/deploy-dev.yml` (**Development**) and `.github/workflows/deploy-demo.yml`
-  (**Demo**, manual + approval-gated). Each deploy runs the eleven-step flow: OIDC auth → validate
+  (**Demo**, manual and reviewer-free under the rapid-prototype policy). Each deploy runs the eleven-step flow: OIDC auth → validate
   Bicep → what-if → deploy infrastructure → build app → safe non-destructive DB migration → deploy to
   App Service **staging** slot → health check → smoke tests → critical HCP + community journeys →
   **swap to production only after tests pass**. Supporting: `playwright.e2e.config.ts` honours

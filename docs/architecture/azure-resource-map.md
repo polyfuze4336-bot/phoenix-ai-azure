@@ -29,7 +29,7 @@
 | Retired web runtime source | Not deployed | — | `infra/modules/app-service.bicep` | INFRA-APPSERVICE (DEPRECATED) | none |
 | Retired compute-plan source | Not deployed | — | `infra/modules/app-service-plan.bicep` | INFRA-PLAN (DEPRECATED) | none |
 | AI model | Azure AI Services S0 | `aif-phoenixai-<token>` (`gpt-4o` 2024-11-20 GlobalStandard) | `infra/modules/foundry-connection.bicep` | AZ-FOUNDRY | bfgs-demo |
-| Relational database | PostgreSQL Flexible Server | `psql-phoenixai-<token>` | `infra/modules/postgresql.bicep` | DB-POSTGRES | bfgs-demo |
+| Relational database | PostgreSQL Flexible Server (default major version 16) | `psql-phoenixai-<token>` | `infra/modules/postgresql.bicep` | DB-POSTGRES | bfgs-demo |
 | File storage | Storage Account (Blob) | `stphx<token>` (container `clinical-uploads`) | `infra/modules/storage.bicep` | STORAGE-BLOB (OPTIONAL) | bfgs-demo |
 | Secret store | Key Vault | `kv-phx-<token>` | `infra/modules/key-vault.bicep` | INFRA-KV | bfgs-demo |
 | Workload identity | User-assigned Managed Identity | `id-phoenixai-<token>` | `infra/modules/managed-identity.bicep` | INFRA-MI | bfgs-demo |
@@ -40,6 +40,7 @@
 | Alerting | Action Group | `ag-phoenixai-ops` | `infra/modules/alerts.bicep` | INFRA-ALERTS | demo |
 | RBAC | Role assignments (MI → AI/ACR/Storage/KV) | (scoped assignments) | `infra/modules/role-assignments.bicep`, `container-registry.bicep` | INFRA-ROLES | demo |
 | Operator RBAC | Azure role assignment (`BFG Solutions` → `Owner`) | Scope: `rg-phoenixai-bfgs-demo` | Operational assignment; `CHANGE-20260810-demo-rg-owner-access.md` | OPS-DEMO-OWNER-RBAC | bfgs-demo |
+| Deployment identity | Entra app/service principal + federated credentials | `github-phoenixai-deploy`; GitHub environments `Demo` and `Development` | Operational assignment; `CHANGE-20260812-github-oidc-deployment-identity.md` | OPS-GHA-OIDC-RBAC / DEVOPS-GHA | bfgs-demo |
 
 ## Notes
 
@@ -52,3 +53,8 @@
 - The `BFG Solutions` security group has `Owner` only on the dedicated demo resource group. This
   covers its three current members, not all 42 tenant users, and does not elevate the group at
   subscription scope.
+- GitHub Actions uses a dedicated OIDC workload identity rather than a human account. Its
+  subscription `Contributor` role supports the subscription-scoped Bicep deployment; its ability
+  to create role assignments is limited to `rg-phoenixai-bfgs-demo`.
+- The `Demo` and `Development` GitHub environments intentionally have no required reviewers or
+  protection rules for rapid prototyping. Demo deployment still requires manual dispatch.

@@ -2,10 +2,8 @@ name: Deploy (Demo)
 
 # End-to-end deployment of Phoenix AI to the Demo environment.
 #
-# Identical flow to Deploy (Development) but targets the Demo GitHub Environment,
-# which SHOULD be protected with required reviewers (Settings > Environments >
-# Demo > Required reviewers) so a human approves before anything is provisioned or
-# promoted. Runs manually only.
+# Identical flow to Deploy (Development) but targets the reviewer-free Demo GitHub
+# Environment for rapid prototyping. Runs manually only.
 #
 # Authenticates with GitHub OIDC (federated credentials) — NO stored Azure client
 # secrets.
@@ -32,7 +30,6 @@ jobs:
   deploy:
     name: Provision, deploy & promote
     runs-on: ubuntu-latest
-    # Demo environment gate — configure required reviewers here for approval.
     environment: Demo
     steps:
       - name: Checkout

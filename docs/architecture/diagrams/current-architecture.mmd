@@ -29,7 +29,7 @@ flowchart TB
         ContainerApp["Azure Container Apps (Consumption) — ACTIVE"]
         ACR["Azure Container Registry (Basic) — ACTIVE"]
         Foundry["Environment-owned Azure AI Services gpt-4o — ACTIVE"]
-        PostgreSQL["Azure Database for PostgreSQL Flexible Server — ACTIVE"]
+        PostgreSQL["Azure Database for PostgreSQL Flexible Server (v16 default) — ACTIVE"]
         Blob["Azure Blob Storage (private clinical-uploads) — OPTIONAL"]
         KV["Azure Key Vault — ACTIVE"]
         MI["User-assigned Managed Identity — ACTIVE"]
@@ -42,6 +42,7 @@ flowchart TB
     subgraph DEVOPS["Engineering"]
         GitHub["GitHub Repository — ACTIVE"]
         Actions["GitHub Actions (OIDC) — ACTIVE"]
+        DeployIdentity["Entra deployment principal\ngithub-phoenixai-deploy — ACTIVE"]
         Bicep["Bicep IaC — ACTIVE"]
     end
 
@@ -51,6 +52,8 @@ flowchart TB
     Users --> V2
     Users --> PWA
     Operators -->|"Owner on rg-phoenixai-bfgs-demo only"| ARM
+    Actions -->|"Demo / Development OIDC"| DeployIdentity
+    DeployIdentity -->|"subscription Contributor\nRBAC Admin on demo RG only"| ARM
 
     Landing --> Next
     HCP --> Next

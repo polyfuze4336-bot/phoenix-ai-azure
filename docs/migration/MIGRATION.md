@@ -1011,8 +1011,8 @@ identifiers (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) and 
   critical **HCP + community** user journeys against staging, and (11) **swap staging into
   production only after all tests pass**. The deploy plan requests the **Standard (S1)** plan SKU so
   the staging slot is available. Development deploys on push to `main` / manual dispatch; **Demo** is
-  manual-dispatch only and runs under the **Demo** GitHub Environment, which should be configured with
-  **required reviewers** so a human approves before provisioning or promotion.
+  manual-dispatch only and runs under the **Demo** GitHub Environment. The current rapid-prototype
+  policy uses no required reviewers; see Step 28.
 - **Supporting change:** `playwright.e2e.config.ts` now honours an optional `PLAYWRIGHT_BASE_URL`
   (when set, the same journey specs run against the deployed staging URL and the local web server is
   not started); new `test:smoke` and `test:journeys` npm scripts select the smoke and critical-journey
@@ -1137,7 +1137,53 @@ tenant's 42 users; this is not represented as an all-tenant-users grant.
   zero subscription-scoped `Owner` assignments. Members can create, change, delete, and delegate
   access to resources in the Phoenix AI demo RG only. Future access is governed by membership in
   the `BFG Solutions` group.
-### Step 2026-08-12 — HCP multi-image analysis + TBSA classification
+### Step 27 - Establish GitHub-to-Azure OIDC deployment identity
+
+This step creates a dedicated, secretless workload identity for the existing GitHub Actions
+deployment workflows. It changes deployment authentication only; application behavior, visible UX,
+AI behavior, prompts, models, clinical controls, and Responsible AI control status are unchanged.
+
+- **Identity and trust.** Entra app/service principal `github-phoenixai-deploy` uses client ID
+  `77d8cf0f-162f-4ed8-8399-0f731d89f0df`. Two federated credentials trust only this repository's
+  `Demo` and `Development` GitHub environments. Their subjects use GitHub's immutable organization
+  and repository IDs (`225331490` and `1324632738`) and audience
+  `api://AzureADTokenExchange`; no client secret, certificate, Azure password, or human credential
+  is stored in GitHub.
+- **Least-privilege scopes.** The principal has `Contributor` at subscription scope because
+  `infra/main.bicep` deploys at subscription scope and creates the resource group. It has
+  `Role Based Access Control Administrator` only on `rg-phoenixai-bfgs-demo`, so it can apply the
+  workload's Bicep role assignments without delegating access elsewhere in the subscription.
+- **GitHub environments.** `Demo` and `Development` each contain the three non-secret OIDC
+  identifiers plus `PG_ADMIN_PASSWORD` and `DATABASE_URL`. Existing database values were piped from
+  Key Vault without printing or writing them to the repository; temporary vault read access was
+  removed and independently verified at zero assignments. Demo remains manual-dispatch only.
+  Architecture version 2.2.1 subsequently adopts a reviewer-free rapid-prototype policy.
+- **Validation.** Architecture drift and both changed Mermaid diagrams pass. Initial run
+  `31586147959` exposed GitHub's immutable-ID subject format and failed only at OIDC matching. After
+  updating both federated credentials, run `31586321978` passed OIDC login, Bicep validation, and
+  subscription what-if. Infrastructure bootstrap then stopped on a separate, pre-existing database
+  drift: Bicep requests PostgreSQL 15, the live server is 16, and the current Azure API permits 17
+  or 18. No image build or Container App rollout occurred. Resolving that mismatch is deferred to a
+  separately governed PostgreSQL version decision to avoid an unreviewed major-version upgrade.
+
+### Step 28 - Remove deployment reviewer gates for rapid prototyping
+
+This step aligns repository guidance with the existing GitHub environment configuration. `Demo`
+and `Development` have no required reviewers, protection rules, or deployment branch policies.
+Demo remains manual-dispatch only; Development retains push-to-`main` and manual triggers.
+
+- **Scope.** Workflow comments and current documentation no longer instruct maintainers to add a
+  Demo reviewer. OIDC federated subjects, Azure role assignments, environment secrets, validation
+  steps, and deployment commands are unchanged.
+- **Architecture governance.** Architecture version 2.2.1 records a LOW-impact policy
+  clarification. No topology or diagram changes and no ADR are required.
+- **Responsible AI impact.** NONE. This changes deployment waiting behavior only and does not alter
+  AI behavior, prompts, models, clinical oversight, transparency, telemetry, or RAI controls.
+- **Validation.** Both environments report zero protection rules and no deployment branch policy;
+  workflow diagnostics, architecture drift, seven Mermaid diagrams, typecheck, production build,
+  104 unit tests, 22 RAI tests, and 14 integration tests all pass.
+
+### Step 29 - HCP multi-image analysis + TBSA classification
 - Extended the Original HCP analysis uploader to accept multiple wound images in one assessment run
   (while preserving legacy single-image behavior and existing UI branding).
 - Updated `/api/analyze-wound` to support an `images[]` payload and pass multiple image parts through
@@ -1147,5 +1193,18 @@ tenant's 42 users; this is not represented as an all-tenant-users grant.
 - Added a TBSA subcomponent in the HCP analysis results that labels burns as **Major (>=15% TBSA)**
   or **Minor (<15% TBSA)**.
 - Updated architecture docs (`current-architecture.md`, inventories, AI diagram), bumped architecture
-  version to `2.2.0`, added changelog entry, and recorded
+  version to `2.3.0`, added changelog entry, and recorded
   `docs/architecture/changes/CHANGE-20260812-hcp-multi-image-tbsa.md`.
+
+### Step 30 - Align PostgreSQL default to v16 and ready promotion to `main`
+- Merged current branch with `origin/main` so the fix (`fix(ci): deploy workflows use existing container
+  app and correct Dockerfile path`) and enhancement (`feat: add multi-image hcp analysis and tbsa
+  classification`) are carried together with latest mainline governance updates.
+- Updated IaC PostgreSQL defaults to major version **16** in `infra/modules/postgresql.bicep`, surfaced
+  this as `postgresVersion` in `infra/main.bicep`, and pinned `infra/main.bicepparam` to `16` so new
+  deployments match the live customer baseline and avoid the previously documented 15↔16 mismatch.
+- Updated architecture governance artifacts: version `2.3.0`, changelog, inventories, resource map,
+  diagrams, and change record `CHANGE-20260812-postgresql-16-default.md`.
+- Deployment path remains unchanged: the Azure hosted Development app updates via
+  `.github/workflows/deploy-dev.yml` on pushes to `main` (or manual dispatch), and Demo updates via
+  manual dispatch of `.github/workflows/deploy-demo.yml`.

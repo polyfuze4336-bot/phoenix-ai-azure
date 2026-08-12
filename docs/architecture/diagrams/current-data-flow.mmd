@@ -21,7 +21,7 @@ flowchart TB
         AP2 --> F2["Microsoft Foundry (gpt-4o vision)"]
         F2 --> SV2["Structured response validation (wound-analysis-schema)"]
         SV2 --> UI2["HCP Result Panel"]
-        R2 -.->|"OPTIONAL: persist AnalysisRecord"| DB2["PostgreSQL (lib/analysis/history)"]
+        R2 -.->|"OPTIONAL: persist AnalysisRecord"| DB2["PostgreSQL v16 baseline (lib/analysis/history)"]
         R2 -.->|"OPTIONAL: not wired"| BLOB2["Azure Blob Storage"]
     end
 

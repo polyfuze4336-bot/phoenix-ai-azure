@@ -6,12 +6,13 @@ flowchart LR
     OPS["Entra Security Group\nBFG Solutions (3 current members)"]
     GH["GitHub Repository"]
     GHA["GitHub Actions"]
+    DEPLOY_ID["Entra workload identity\ngithub-phoenixai-deploy"]
 
     subgraph AZURE["Azure Resource Group: rg-phoenixai-bfgs-demo (eastus2)"]
         APP["Azure Container App\nca-phoenixai-<token> (Consumption)"]
         ENV["Container Apps Environment\ncae-phoenixai-<token>"]
         ACR["Azure Container Registry Basic\nacrphx<token>"]
-        PG["Azure PostgreSQL Flexible Server\npsql-phoenixai-<token>"]
+        PG["Azure PostgreSQL Flexible Server (v16 default)\npsql-phoenixai-<token>"]
         BLOB["Azure Blob Storage\nstphx<token> (clinical-uploads)"]
         KV["Azure Key Vault\nkv-phx-<token>"]
         MI["User-assigned Managed Identity\nid-phoenixai-<token>"]
@@ -24,7 +25,8 @@ flowchart LR
     DEV --> GH
     OPS -->|"Owner (demo RG scope only)"| AZURE
     GH --> GHA
-    GHA -->|"OIDC federation"| AZURE
+    GHA -->|"Demo / Development OIDC"| DEPLOY_ID
+    DEPLOY_ID -->|"subscription Contributor\nRBAC Admin on demo RG only"| AZURE
     GHA -->|"ACR remote build"| ACR
     GHA -->|"Bicep deployment"| APP
 

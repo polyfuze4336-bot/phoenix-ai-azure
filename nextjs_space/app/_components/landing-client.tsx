@@ -3,6 +3,7 @@
 import { useLanguage } from '@/components/language-provider';
 import { LanguageToggle } from '@/components/language-toggle';
 import { PhoenixLogo } from '@/components/phoenix-logo';
+import { MalaysiaDateTime } from './malaysia-date-time';
 import { Stethoscope, Users, ArrowRight, Shield, Flame, Heart, Smartphone, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -165,6 +166,7 @@ export function LandingClient() {
         <p className="text-xs md:text-sm font-medium text-gray-600">
           Department of Plastic and Reconstructive Surgery, Hospital Kuala Lumpur
         </p>
+        <p className="mt-1 text-xs text-gray-400"><MalaysiaDateTime /></p>
         <p className="text-xs text-gray-400 mt-1">© 2026 Phoenix AI — Malaysia</p>
       </footer>
     </div>

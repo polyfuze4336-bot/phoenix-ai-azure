@@ -58,7 +58,7 @@
 | CLINICAL-TBSA | TBSA calculator | Lib | TypeScript | `lib/clinical/tbsa.ts` | Total body surface area | — | ACTIVE | Phoenix AI team |
 | CLINICAL-PARKLAND | Parkland calculator | Lib | TypeScript | `lib/clinical/parkland.ts` | Fluid resuscitation formula | — | ACTIVE | Phoenix AI team |
 | DB-PRISMA | Prisma data access | Lib | Prisma 6 | `lib/db.ts` | DB client | DB-POSTGRES | ACTIVE | Phoenix AI team |
-| DB-POSTGRES | PostgreSQL database | Data | Azure PostgreSQL Flexible Server | infra + `DATABASE_URL` | Relational store | INFRA-MI | ACTIVE | Phoenix AI team |
+| DB-POSTGRES | PostgreSQL database | Data | Azure PostgreSQL Flexible Server (default major version 16) | infra + `DATABASE_URL` | Relational store | INFRA-MI | ACTIVE | Phoenix AI team |
 | DB-ANALYSISRECORD | Analysis history model | Data | Prisma model | `prisma/schema.prisma` | Persist HCP analyses | DB-PRISMA | ACTIVE | Phoenix AI team |
 | DB-LEGACY-MODELS | Case/ChatMessage/Article | Data | Prisma models | `prisma/schema.prisma` | Retained-for-parity models | DB-PRISMA | OPTIONAL | Phoenix AI team |
 | STORAGE-BLOB | Blob storage provider | Lib | @azure/storage-blob + identity | `lib/storage/*` | Private file storage | INFRA-MI, INFRA-STORAGE | OPTIONAL | Phoenix AI team |
@@ -83,9 +83,10 @@
 | INFRA-ALERTS | Alerts + action group | Infra | Bicep | `infra/modules/alerts.bicep` | 5xx + latency alerts | INFRA-APPINSIGHTS | ACTIVE | Phoenix AI team |
 | INFRA-ROLES | Role assignments | Infra | Bicep | `infra/modules/role-assignments.bicep` | RBAC for MI | INFRA-MI | ACTIVE | Phoenix AI team |
 | OPS-DEMO-OWNER-RBAC | Demo operator RBAC | Operations | Azure RBAC | `docs/architecture/changes/CHANGE-20260810-demo-rg-owner-access.md` | Grants `BFG Solutions` group Owner on the dedicated demo RG only | INT-DEMO-OPERATORS-ARM | ACTIVE | BFG Solutions subscription owner |
+| OPS-GHA-OIDC-RBAC | GitHub deployment identity | Operations | Entra workload identity + Azure RBAC | `docs/architecture/changes/CHANGE-20260812-github-oidc-deployment-identity.md` | Secretless GitHub deployment using environment-bound OIDC; subscription deployment rights with RBAC delegation limited to the demo RG | DEVOPS-GHA, INT-GHA-AZURE | ACTIVE | BFG Solutions subscription owner |
 | INFRA-FOUNDRY-CONN | Azure AI resource + connection | Infra | Bicep | `infra/modules/foundry-connection.bicep` | Provisions environment-owned AI account, gpt-4o deployment, and inference RBAC | INFRA-MI | ACTIVE | Phoenix AI team |
 | AZ-FOUNDRY | Microsoft Foundry / Azure AI Services | Owned Azure | Azure AI Services | Environment-owned `gpt-4o` deployment | INFRA-MI | ACTIVE | Phoenix AI team |
-| DEVOPS-GHA | GitHub Actions | DevOps | GitHub Actions + OIDC | `.github/workflows/*` | CI/CD | — | ACTIVE | Phoenix AI team |
+| DEVOPS-GHA | GitHub Actions | DevOps | GitHub Actions + OIDC | `.github/workflows/*` | Reviewer-free rapid-prototype CI/CD through the dedicated `github-phoenixai-deploy` workload identity; Demo remains manual-dispatch | OPS-GHA-OIDC-RBAC | ACTIVE | Phoenix AI team |
 | INFRA-BICEP | Bicep IaC root | DevOps | Bicep | `infra/main.bicep`, `main.bicepparam` | Environment definition | INFRA-* modules | ACTIVE | Phoenix AI team |
 | GOV-CI | Architecture governance CI | DevOps | GitHub Actions | `.github/workflows/architecture-governance.yml` | Enforce docs sync + Mermaid validation | — | ACTIVE | Phoenix AI team |
 | GOV-VALIDATE | Architecture drift script | DevOps | Node/TypeScript | `nextjs_space/scripts/validate-architecture.mjs` | Lightweight drift detection | — | ACTIVE | Phoenix AI team |

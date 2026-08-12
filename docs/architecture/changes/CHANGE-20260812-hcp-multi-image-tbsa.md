@@ -8,7 +8,7 @@ updated TBSA estimation behavior to consolidate overlapping/duplicate views inst
 ## Impact
 
 - **Impact level:** LOW
-- **Architecture version:** 2.1.0 → 2.2.0
+- **Architecture version:** 2.2.1 → 2.3.0
 - **ADR required:** No (backward-compatible behavior extension within existing components)
 
 ## Components / integrations

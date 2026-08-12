@@ -22,6 +22,7 @@ param postgresAdminLogin = 'phoenixadmin'
 // where a value is exported in the shell first).
 param postgresAdminPassword = readEnvironmentVariable('PG_ADMIN_PASSWORD', '')
 param postgresDatabaseName = 'phoenix'
+param postgresVersion = '16'
 
 // App
 param authMode = 'demo'

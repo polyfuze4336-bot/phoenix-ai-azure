@@ -52,6 +52,9 @@ param postgresAdminPassword string
 @description('Initial application database name.')
 param postgresDatabaseName string = 'phoenix'
 
+@description('PostgreSQL major version.')
+param postgresVersion string = '16'
+
 // ---------------------------------------------------------------------------
 // App
 // ---------------------------------------------------------------------------
@@ -173,6 +176,7 @@ module postgres 'modules/postgresql.bicep' = {
     tags: tags
     administratorLogin: postgresAdminLogin
     administratorLoginPassword: postgresAdminPassword
+    postgresVersion: postgresVersion
     databaseName: postgresDatabaseName
   }
 }
