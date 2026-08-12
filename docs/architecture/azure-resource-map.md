@@ -40,6 +40,7 @@
 | Alerting | Action Group | `ag-phoenixai-ops` | `infra/modules/alerts.bicep` | INFRA-ALERTS | demo |
 | RBAC | Role assignments (MI → AI/ACR/Storage/KV) | (scoped assignments) | `infra/modules/role-assignments.bicep`, `container-registry.bicep` | INFRA-ROLES | demo |
 | Operator RBAC | Azure role assignment (`BFG Solutions` → `Owner`) | Scope: `rg-phoenixai-bfgs-demo` | Operational assignment; `CHANGE-20260810-demo-rg-owner-access.md` | OPS-DEMO-OWNER-RBAC | bfgs-demo |
+| Deployment identity | Entra app/service principal + federated credentials | `github-phoenixai-deploy`; GitHub environments `Demo` and `Development` | Operational assignment; `CHANGE-20260812-github-oidc-deployment-identity.md` | OPS-GHA-OIDC-RBAC / DEVOPS-GHA | bfgs-demo |
 
 ## Notes
 
@@ -52,3 +53,6 @@
 - The `BFG Solutions` security group has `Owner` only on the dedicated demo resource group. This
   covers its three current members, not all 42 tenant users, and does not elevate the group at
   subscription scope.
+- GitHub Actions uses a dedicated OIDC workload identity rather than a human account. Its
+  subscription `Contributor` role supports the subscription-scoped Bicep deployment; its ability
+  to create role assignments is limited to `rg-phoenixai-bfgs-demo`.

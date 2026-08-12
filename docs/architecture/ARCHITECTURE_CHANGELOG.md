@@ -16,6 +16,26 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.2.0] — 2026-08-12
+
+### Changed
+- **GitHub deployment identity** — a dedicated Entra app registration and service principal named
+  `github-phoenixai-deploy` authenticates GitHub Actions through environment-bound OIDC federated
+  credentials for `Demo` and `Development`. The subjects include GitHub's immutable organization
+  and repository IDs (`225331490` and `1324632738`); no Azure user password or client secret is
+  stored.
+- The principal receives `Contributor` at subscription scope because `infra/main.bicep` is a
+  subscription-scoped deployment, plus `Role Based Access Control Administrator` only on
+  `rg-phoenixai-bfgs-demo` so Bicep can manage workload role assignments inside the demo boundary.
+
+### Boundaries
+- The deployment principal cannot delegate access outside the Phoenix AI demo resource group.
+- Human BFGS accounts are not pipeline credentials. Demo is manual-dispatch only; required-reviewer
+  protection remains pending until the repository owner designates the human approver.
+- Application behavior and Responsible AI controls are unchanged. No ADR is required because this
+  completes the OIDC design already selected by the deployment architecture. See
+  [CHANGE-20260812](./changes/CHANGE-20260812-github-oidc-deployment-identity.md).
+
 ## [2.1.0] — 2026-08-10
 
 ### Changed

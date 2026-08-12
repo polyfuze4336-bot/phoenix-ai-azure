@@ -1137,3 +1137,32 @@ tenant's 42 users; this is not represented as an all-tenant-users grant.
   zero subscription-scoped `Owner` assignments. Members can create, change, delete, and delegate
   access to resources in the Phoenix AI demo RG only. Future access is governed by membership in
   the `BFG Solutions` group.
+
+### Step 27 - Establish GitHub-to-Azure OIDC deployment identity
+
+This step creates a dedicated, secretless workload identity for the existing GitHub Actions
+deployment workflows. It changes deployment authentication only; application behavior, visible UX,
+AI behavior, prompts, models, clinical controls, and Responsible AI control status are unchanged.
+
+- **Identity and trust.** Entra app/service principal `github-phoenixai-deploy` uses client ID
+  `77d8cf0f-162f-4ed8-8399-0f731d89f0df`. Two federated credentials trust only this repository's
+  `Demo` and `Development` GitHub environments. Their subjects use GitHub's immutable organization
+  and repository IDs (`225331490` and `1324632738`) and audience
+  `api://AzureADTokenExchange`; no client secret, certificate, Azure password, or human credential
+  is stored in GitHub.
+- **Least-privilege scopes.** The principal has `Contributor` at subscription scope because
+  `infra/main.bicep` deploys at subscription scope and creates the resource group. It has
+  `Role Based Access Control Administrator` only on `rg-phoenixai-bfgs-demo`, so it can apply the
+  workload's Bicep role assignments without delegating access elsewhere in the subscription.
+- **GitHub environments.** `Demo` and `Development` each contain the three non-secret OIDC
+  identifiers plus `PG_ADMIN_PASSWORD` and `DATABASE_URL`. Existing database values were piped from
+  Key Vault without printing or writing them to the repository; temporary vault read access was
+  removed and independently verified at zero assignments. Demo remains manual-dispatch only.
+  Required-reviewer protection is pending designation of the authorized human approver.
+- **Validation.** Architecture drift and both changed Mermaid diagrams pass. Initial run
+  `31586147959` exposed GitHub's immutable-ID subject format and failed only at OIDC matching. After
+  updating both federated credentials, run `31586321978` passed OIDC login, Bicep validation, and
+  subscription what-if. Infrastructure bootstrap then stopped on a separate, pre-existing database
+  drift: Bicep requests PostgreSQL 15, the live server is 16, and the current Azure API permits 17
+  or 18. No image build or Container App rollout occurred. Resolving that mismatch is deferred to a
+  separately governed PostgreSQL version decision to avoid an unreviewed major-version upgrade.

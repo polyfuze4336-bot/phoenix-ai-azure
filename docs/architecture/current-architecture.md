@@ -43,7 +43,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Authentication | Server-verified **demo** login by default; Microsoft Entra ID **opt-in** placeholder — **Mock/demo + Optional** |
 | Storage | Azure Blob provider present + infra provisioned; no UI workflow persists files — **Configured but unused** |
 | Monitoring | Application Insights + Log Analytics + health probes + metric alerts — **Implemented** |
-| Deployment | GitHub Actions (OIDC) + Bicep IaC — **Implemented** |
+| Deployment | GitHub Actions + dedicated Entra workload identity (environment-bound OIDC) + Bicep IaC — **Implemented** |
 
 ---
 
@@ -91,6 +91,7 @@ flowchart TB
     subgraph DEVOPS["Engineering"]
         GitHub["GitHub Repository — ACTIVE"]
         Actions["GitHub Actions (OIDC) — ACTIVE"]
+        DeployIdentity["Entra deployment principal — ACTIVE"]
         Bicep["Bicep IaC (13 files) — ACTIVE"]
     end
 
@@ -130,7 +131,8 @@ flowchart TB
     MI --> Blob
 
     GitHub --> Actions
-    Actions -->|"OIDC"| Bicep
+    Actions -->|"Demo / Development OIDC"| DeployIdentity
+    DeployIdentity -->|"subscription Contributor"| Bicep
     Actions -->|"OIDC / remote image build"| ACR
     Actions -->|"OIDC / Bicep"| ContainerApp
 ```
@@ -231,6 +233,7 @@ restores the original single-pass call.
 | Roles (Doctor/Nurse/Administrator) | `lib/auth/*` role mapping | Implemented (used by demo; Entra role mapping opt-in) |
 | Route protection | `middleware.ts` | Implemented |
 | Azure demo operators | Entra security group `BFG Solutions` | `Owner` on `rg-phoenixai-bfgs-demo` only; 3 current members; operational assignment outside workload Bicep |
+| GitHub deployment identity | Entra app/service principal `github-phoenixai-deploy` | OIDC only; subscription `Contributor`; `Role Based Access Control Administrator` on `rg-phoenixai-bfgs-demo` only |
 | Workload RBAC | `infra/modules/role-assignments.bicep`, `container-registry.bicep` | Resource-scoped managed-identity roles; unchanged by operator access |
 
 ### 3.7 Observability Layer
@@ -249,7 +252,7 @@ restores the original single-pass call.
 | --- | --- | --- |
 | GitHub repository | remote `origin` | Implemented |
 | GitHub Actions | `.github/workflows/{ci,deploy-demo,deploy-dev,infrastructure,db-migrate}.yml` | Implemented |
-| OIDC federation | workflows | Implemented |
+| OIDC federation | Entra app/service principal `github-phoenixai-deploy`; GitHub environments `Demo` and `Development` | Implemented; no client secret |
 | Bicep IaC | `infra/main.bicep`, `infra/main.bicepparam`, `infra/modules/*` | Implemented |
 | Azure Container Apps | `ca-phoenixai-<environment-token>` (deployment output) | Implemented |
 | Azure Container Registry remote build | `acrphx<environment-token>` / `phoenixai:<deployment-tag>` | Implemented |
