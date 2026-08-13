@@ -41,6 +41,7 @@ export function baseInterpretation(over: Partial<Interpretation> = {}): Interpre
     visualExtent: 'small area',
     measuredDimensions: '5 x 4 cm',
     tbsaEstimate: 5,
+    tbsaSeverityClass: 'N/A',
     tbsaRange: '4-6%',
     tbsaMethod: 'Palm method',
     tbsaBodyRegions: 'Left forearm',

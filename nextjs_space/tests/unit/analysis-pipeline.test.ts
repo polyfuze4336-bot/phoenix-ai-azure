@@ -45,6 +45,7 @@ function baseInterpretation(over: Partial<Interpretation> = {}): Interpretation 
     visualExtent: 'small area',
     measuredDimensions: '5 x 4 cm',
     tbsaEstimate: 5,
+    tbsaSeverityClass: 'N/A',
     tbsaRange: '4-6%',
     tbsaMethod: 'Palm method',
     tbsaBodyRegions: 'Left forearm',
@@ -138,7 +139,26 @@ test('non-burn cannot carry a TBSA value', () => {
     critic,
   });
   assert.equal(a.interpretation.tbsaEstimate, null);
+  assert.equal(a.interpretation.tbsaSeverityClass, 'N/A');
   assert.equal(a.parkland.indicated, 'no');
+});
+
+test('TBSA severity class is deterministic at 15% threshold', () => {
+  const minor = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 14 }),
+    management: baseManagement(),
+    critic,
+  });
+  assert.equal(minor.interpretation.tbsaSeverityClass, 'Minor burn (<15% TBSA)');
+
+  const major = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 15 }),
+    management: baseManagement(),
+    critic,
+  });
+  assert.equal(major.interpretation.tbsaSeverityClass, 'Major burn (>=15% TBSA)');
 });
 
 test('missing weight for a burn is surfaced as missing information', () => {
@@ -153,6 +173,7 @@ test('flat adapter maps the rich structure back to the 22-field contract', () =>
   assert.equal(flat.isBurn, true);
   assert.equal(flat.woundType, 'Scald');
   assert.equal(typeof flat.tbsaEstimate, 'string');
+  assert.equal(flat.tbsaClassification, 'Minor burn (<15% TBSA)');
   assert.ok(flat.parklandFluid.length > 0);
   // A clinician-supplied Fitzpatrick type is carried into the flat field.
   assert.match(flat.fitzpatrickType, /Type V/);

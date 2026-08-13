@@ -1,7 +1,7 @@
 %% Phoenix AI — Current (AS-IS) data-flow diagram
 %% Reflects actual API routes and the AI provider layer at HEAD.
 %% Blob Storage is shown as OPTIONAL because no current workflow persists user files
-%% (wound/burn images are read client-side via FileReader and sent as ephemeral base64).
+%% (wound/burn images are read client-side via FileReader and sent as ephemeral base64 payloads).
 flowchart TB
     subgraph HCPChat["HCP Chat"]
         U1["User"] --> UI1["HCP Chat UI"]
@@ -14,10 +14,10 @@ flowchart TB
     end
 
     subgraph HCPAnalysis["HCP Wound Analysis"]
-        U2["User"] --> IMG2["Image upload (base64)"]
+        U2["User"] --> IMG2["Image upload (base64, one-or-many)"]
         IMG2 --> R2["/api/analyze-wound"]
         R2 --> V2["Image validation (lib/ai/validation/image-input)"]
-        V2 --> AP2["AI Provider (multimodal)"]
+        V2 --> AP2["AI Provider (multimodal, consolidated TBSA)"]
         AP2 --> F2["Microsoft Foundry (gpt-4o vision)"]
         F2 --> SV2["Structured response validation (wound-analysis-schema)"]
         SV2 --> UI2["HCP Result Panel"]

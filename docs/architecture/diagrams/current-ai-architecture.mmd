@@ -1,6 +1,6 @@
 %% Phoenix AI — Current (AS-IS) AI architecture
 %% Shows the actual AI provider abstraction (lib/ai), prompt separation, streaming,
-%% multimodal image input, and structured-output validation.
+%% multimodal one-or-many image input, and structured-output validation.
 flowchart TB
     subgraph Interfaces["Client Interfaces"]
         HCPUI["HCP Interface\n(chat + wound analysis)"]
@@ -9,7 +9,7 @@ flowchart TB
 
     subgraph Routes["Next.js API Routes"]
         RHCPCHAT["/api/hcp-chat"]
-        RHCPAN["/api/analyze-wound"]
+        RHCPAN["/api/analyze-wound\n(single or multi-image HCP input)"]
         RCOMCHAT["/api/community-chat"]
         RCOMAN["/api/community-analyze"]
     end
@@ -28,7 +28,7 @@ flowchart TB
     end
 
     subgraph Pipeline["Staged Analysis Pipeline (lib/ai/analysis)"]
-        ORCH["runAnalysisPipeline\n(flag AI_ANALYSIS_PIPELINE=staged, default)"]
+        ORCH["runAnalysisPipeline\n(flag AI_ANALYSIS_PIPELINE=staged, default)\n(overlap-aware total TBSA consolidation)"]
         DETCALC["Deterministic calc\nlib/clinical/parkland + tbsa\n(no assumed weight)"]
         SCHEMA["schemas/burn-wound-analysis\n(obs vs interp, confidence, gaps)"]
         MODELSEL["model-config\nAZURE_AI_ANALYSIS_MODEL_DEPLOYMENT"]
