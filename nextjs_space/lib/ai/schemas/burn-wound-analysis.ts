@@ -111,6 +111,7 @@ export const interpretationSchema = z.object({
   visualExtent: str(), // qualitative, e.g. "small area on dorsal hand"
   measuredDimensions: str('unavailable'), // 'unavailable' unless a scale reference is present
   tbsaEstimate: numOrNull, // percent, null when not a burn / cannot estimate
+  tbsaSeverityClass: str('N/A'), // deterministic: major (>=15%) / minor (<15%) / N/A
   tbsaRange: str(),
   tbsaMethod: str(),
   tbsaBodyRegions: str(),
@@ -221,6 +222,7 @@ export function toFlatHcpAnalysis(a: BurnWoundAnalysis): HcpWoundAnalysis {
     woundEdges: withBasis(i.edgesAndPeriwound) || 'N/A',
     confidence: a.overallConfidence || a.analysisQuality,
     tbsaEstimate: i.tbsaEstimate != null ? String(i.tbsaEstimate) : '0',
+    tbsaClassification: i.tbsaSeverityClass || 'N/A',
     tbsaRange: i.tbsaRange || 'N/A',
     tbsaBodyRegions: i.tbsaBodyRegions || 'N/A',
     tbsaMethod: i.tbsaMethod || 'N/A',

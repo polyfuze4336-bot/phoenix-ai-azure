@@ -20,6 +20,8 @@ interface AnalysisResult {
   burnDegree: string;
   severity: string;
   confidence: string;
+  tbsaEstimate?: string;
+  tbsaClassification?: string;
   tbsaRange: string;
   isBurn: boolean;
   structured?: StructuredAnalysisData;
@@ -66,15 +68,15 @@ export function V2AssessmentClient() {
   const [weightKg, setWeightKg] = useState('');
   const [mechanism, setMechanism] = useState('');
   const [site, setSite] = useState('');
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [refining, setRefining] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const lastBase64 = useRef('');
-  const lastMime = useRef('image/jpeg');
+  const lastBase64 = useRef<string[]>([]);
+  const lastMime = useRef<string[]>([]);
 
   const patientContext = useCallback(() => {
     const w = parseFloat(weightKg);
@@ -87,35 +89,49 @@ export function V2AssessmentClient() {
   }, [weightKg, mechanism, site]);
 
   const handleFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
+    const files = Array.from(e.target.files ?? []).slice(0, 6);
+    if (files.length === 0) return;
+    setImageFiles(files);
     setResult(null);
     setError(null);
-    const reader = new FileReader();
-    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    Promise.all(
+      files.map(
+        (file) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => resolve(ev.target?.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          }),
+      ),
+    )
+      .then((previews) => setImagePreviews(previews))
+      .catch(() => setError('Failed to read selected image(s).'));
   }, []);
 
   const runAnalysis = useCallback(async () => {
-    if (!imageFile) return;
+    if (imageFiles.length === 0) return;
     setAnalyzing(true);
     setError(null);
     setStep(4);
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve((reader.result as string)?.split(',')[1] ?? '');
-        reader.onerror = reject;
-        reader.readAsDataURL(imageFile);
-      });
-      const mime = imageFile.type || 'image/jpeg';
-      lastBase64.current = base64;
-      lastMime.current = mime;
+      const prepared = await Promise.all(
+        imageFiles.map(async (file) => {
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve((reader.result as string)?.split(',')[1] ?? '');
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          return { image: base64, mimeType: file.type || 'image/jpeg' };
+        }),
+      );
+      lastBase64.current = prepared.map((p) => p.image);
+      lastMime.current = prepared.map((p) => p.mimeType);
       const response = await fetch('/api/analyze-wound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext() }),
+        body: JSON.stringify({ images: prepared, patient: patientContext() }),
       });
       if (!response.ok) throw new Error('Analysis failed. Please try again.');
       const completed = await readAnalysisStream(response);
@@ -126,11 +142,11 @@ export function V2AssessmentClient() {
     } finally {
       setAnalyzing(false);
     }
-  }, [imageFile, patientContext]);
+  }, [imageFiles, patientContext]);
 
   const refineAnalysis = useCallback(
     async (answers: string) => {
-      if (!lastBase64.current || !result?.structured) return;
+      if (lastBase64.current.length === 0 || !result?.structured) return;
       setRefining(true);
       setError(null);
       try {
@@ -138,8 +154,10 @@ export function V2AssessmentClient() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            image: lastBase64.current,
-            mimeType: lastMime.current,
+            images: lastBase64.current.map((image, index) => ({
+              image,
+              mimeType: lastMime.current[index] ?? 'image/jpeg',
+            })),
             patient: patientContext(),
             priorAnalysis: result.structured,
             refineAnswers: answers,
@@ -159,8 +177,8 @@ export function V2AssessmentClient() {
 
   const reset = useCallback(() => {
     setStep(1);
-    setImagePreview(null);
-    setImageFile(null);
+    setImagePreviews([]);
+    setImageFiles([]);
     setResult(null);
     setError(null);
   }, []);
@@ -238,9 +256,9 @@ export function V2AssessmentClient() {
             <h3 className="font-display text-lg font-bold tracking-tight">Wound image</h3>
             <p className="text-sm text-muted-foreground">Upload a clear, well-lit photo. Include a scale reference (e.g. ruler) if possible.</p>
           </div>
-          {imagePreview ? (
+          {imagePreviews.length > 0 ? (
             <div className="relative mx-auto aspect-video w-full max-w-md overflow-hidden rounded-lg border">
-              <Image src={imagePreview} alt="Selected wound" fill className="object-contain" />
+              <Image src={imagePreviews[0]} alt="Selected wound" fill className="object-contain" />
             </div>
           ) : (
             <button
@@ -250,19 +268,22 @@ export function V2AssessmentClient() {
             >
               <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
               <p className="font-medium text-foreground">Click to upload an image</p>
-              <p className="mt-1 text-xs text-muted-foreground">JPEG or PNG — max 10MB</p>
+              <p className="mt-1 text-xs text-muted-foreground">JPEG or PNG — up to 6 images, max 10MB each</p>
             </button>
           )}
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFile} className="hidden" />
+          {imagePreviews.length > 1 ? (
+            <p className="text-xs text-muted-foreground">Selected images: {imagePreviews.length}</p>
+          ) : null}
           <div className="flex justify-between">
             <Button variant="ghost" onClick={() => setStep(1)}>
               <ChevronLeft className="mr-1 h-4 w-4" /> Back
             </Button>
             <div className="flex gap-2">
-              {imagePreview ? (
+              {imagePreviews.length > 0 ? (
                 <Button variant="outline" onClick={() => fileInputRef.current?.click()}>Replace</Button>
               ) : null}
-              <Button onClick={() => setStep(3)} disabled={!imagePreview}>
+              <Button onClick={() => setStep(3)} disabled={imagePreviews.length === 0}>
                 Continue <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
@@ -277,9 +298,9 @@ export function V2AssessmentClient() {
             <h3 className="font-display text-lg font-bold tracking-tight">Pre-analysis quality check</h3>
             <p className="text-sm text-muted-foreground">Confirm the image before running the AI assessment. The AI also re-checks quality and gates its confidence accordingly.</p>
           </div>
-          {imagePreview ? (
+          {imagePreviews.length > 0 ? (
             <div className="relative mx-auto aspect-video w-full max-w-md overflow-hidden rounded-lg border">
-              <Image src={imagePreview} alt="Selected wound" fill className="object-contain" />
+              <Image src={imagePreviews[0]} alt="Selected wound" fill className="object-contain" />
             </div>
           ) : null}
           <ul className="space-y-2 text-sm">
@@ -294,7 +315,7 @@ export function V2AssessmentClient() {
             <Button variant="ghost" onClick={() => setStep(2)}>
               <ChevronLeft className="mr-1 h-4 w-4" /> Back
             </Button>
-            <Button onClick={runAnalysis} disabled={!imageFile}>
+            <Button onClick={runAnalysis} disabled={imageFiles.length === 0}>
               <Sparkles className="mr-1.5 h-4 w-4" /> Run AI assessment
             </Button>
           </div>

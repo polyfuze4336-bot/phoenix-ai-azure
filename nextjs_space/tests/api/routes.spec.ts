@@ -79,6 +79,16 @@ test('POST /api/analyze-wound reaches a terminal response for a valid image', as
   expectTerminalResponse(res.status());
 });
 
+test('POST /api/analyze-wound reaches a terminal response for valid multi-image input', async ({ request }) => {
+  const res = await postJson(request, '/api/analyze-wound', {
+    images: [
+      { image: TINY_PNG_B64, mimeType: 'image/png' },
+      { image: TINY_PNG_B64, mimeType: 'image/png' },
+    ],
+  });
+  expectTerminalResponse(res.status());
+});
+
 // --- /api/community-analyze --------------------------------------------------
 
 test('POST /api/community-analyze rejects a missing image with 400', async ({ request }) => {

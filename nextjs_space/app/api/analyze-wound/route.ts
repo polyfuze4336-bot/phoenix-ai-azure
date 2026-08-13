@@ -9,7 +9,7 @@ import { AiMessage } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
 import { createStructuredSseResponse, createResultSseResponse } from '@/lib/ai/streaming/sse';
 import { parseHcpWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
-import { validateImageInput, checkRequestBodySize } from '@/lib/ai/validation/image-input';
+import { validateImageBatchInput, checkRequestBodySize } from '@/lib/ai/validation/image-input';
 import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
 import { trackEvent } from '@/lib/telemetry/server';
 import { HCP_WOUND_ANALYSIS_SYSTEM_PROMPT } from '@/lib/ai/prompts/hcp-wound-analysis';
@@ -17,6 +17,8 @@ import { getAnalysisModelDeployment, getAnalysisPipelineMode } from '@/lib/ai/mo
 import { runAnalysisPipeline, type PatientContext } from '@/lib/ai/analysis/pipeline';
 import { toFlatHcpAnalysis } from '@/lib/ai/schemas/burn-wound-analysis';
 import { buildAnalysisMetadata } from '@/lib/ai/analysis/metadata';
+
+const MAX_ANALYSIS_IMAGES = 6;
 
 /** Coerce an untrusted patient-context object into the typed shape (no invented values). */
 function readPatientContext(raw: unknown): PatientContext | undefined {
@@ -36,15 +38,16 @@ function readPatientContext(raw: unknown): PatientContext | undefined {
 
 export async function POST(request: NextRequest) {
   try {
-    const bodySize = checkRequestBodySize(request.headers.get('content-length'));
+    const bodySize = checkRequestBodySize(request.headers.get('content-length'), MAX_ANALYSIS_IMAGES);
     if (!bodySize.ok) {
       return new Response(JSON.stringify({ error: bodySize.error }), { status: 413 });
     }
 
     const body = await request.json();
-    const { image, mimeType } = body ?? {};
-
-    const validation = validateImageInput({ image, mimeType });
+    const payloads = Array.isArray(body?.images) && body.images.length > 0
+      ? body.images
+      : [{ image: body?.image, mimeType: body?.mimeType }];
+    const validation = validateImageBatchInput(payloads, { maxImages: MAX_ANALYSIS_IMAGES });
     if (!validation.ok) {
       return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
     }
@@ -59,17 +62,18 @@ export async function POST(request: NextRequest) {
     trackEvent('hcp_analysis_requested', {
       correlationId,
       hasImage: true,
+      imageCount: validation.images.length,
       pipeline: pipelineMode,
       refine: Boolean(refineAnswers),
     });
 
-    const imageDataUrl = `data:${validation.mimeType};base64,${image}`;
+    const imageDataUrls = validation.images.map((img) => `data:${img.mimeType};base64,${img.base64}`);
 
     // --- Staged pipeline (default): multi-stage, evidence-gated, deterministic calc.
     if (pipelineMode === 'staged') {
       try {
         const rich = await runAnalysisPipeline({
-          imageDataUrl,
+          imageDataUrls,
           patient,
           correlationId,
           refine: refineAnswers && priorAnalysis ? { priorAnalysis, answers: refineAnswers } : undefined,
@@ -100,8 +104,14 @@ export async function POST(request: NextRequest) {
       {
         role: 'user',
         content: [
-          { type: 'text', text: 'Please analyze this wound/burn image and provide a structured clinical assessment in JSON format.' },
-          { type: 'image_url', image_url: { url: imageDataUrl } },
+          {
+            type: 'text',
+            text:
+              imageDataUrls.length > 1
+                ? 'Please analyze these wound/burn images together as one case and provide a structured clinical assessment in JSON format. Consolidate overlap/duplicate views when estimating total TBSA.'
+                : 'Please analyze this wound/burn image and provide a structured clinical assessment in JSON format.',
+          },
+          ...imageDataUrls.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
         ],
       },
     ];

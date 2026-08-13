@@ -51,7 +51,7 @@ export interface PatientContext {
 }
 
 export interface PipelineInput {
-  imageDataUrl: string; // data:<mime>;base64,....
+  imageDataUrls: string[]; // data:<mime>;base64,.... (one or more images)
   patient?: PatientContext;
   /** Prior analysis + clinician answers for a REFINE pass (second pass). */
   refine?: { priorAnalysis: BurnWoundAnalysis; answers: string };
@@ -139,15 +139,24 @@ function computeParkland(isBurn: boolean, tbsa: number | null, weightKg?: number
 /* --------------------------------------------------------------- orchestrator */
 
 export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWoundAnalysis> {
-  const { imageDataUrl, patient, refine, correlationId } = input;
+  const { imageDataUrls, patient, refine, correlationId } = input;
   const ctx = contextBlock(patient);
+  const images = imageDataUrls.filter((u) => typeof u === 'string' && u.length > 0);
+  if (images.length === 0) {
+    throw new Error('No image data provided for analysis.');
+  }
+  const multiImageHint =
+    images.length > 1
+      ? 'Multiple images are provided for the same case. Some may overlap or be duplicate views. Consolidate them into one coherent assessment and estimate TOTAL unique TBSA across all images without double-counting overlapping regions.'
+      : 'A single image is provided for this case.';
+  const visionImages = images.map((url) => ({ type: 'image_url' as const, image_url: { url } }));
 
   // Stage 1 — Visual observation (vision).
   const obsRaw = await runStage(
     WOUND_VISUAL_OBSERVATION_PROMPT,
     [
-      { type: 'text', text: `${ctx}\nDescribe what is visible in this image.` },
-      { type: 'image_url', image_url: { url: imageDataUrl } },
+      { type: 'text', text: `${ctx}\n${multiImageHint}\nDescribe what is visible in the provided image set.` },
+      ...visionImages,
     ],
     correlationId,
     'analyze-wound:observation',
@@ -163,9 +172,9 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
     [
       {
         type: 'text',
-        text: `${ctx}\nObservations from the observation stage:\n${JSON.stringify(observation)}${priorNote}\nInterpret this wound.`,
+        text: `${ctx}\n${multiImageHint}\nObservations from the observation stage:\n${JSON.stringify(observation)}${priorNote}\nInterpret this wound.`,
       },
-      { type: 'image_url', image_url: { url: imageDataUrl } },
+      ...visionImages,
     ],
     correlationId,
     'analyze-wound:interpretation',
@@ -236,8 +245,14 @@ function assemble(args: {
   // --- Safety rule: non-burn cannot carry a TBSA value.
   if (!interpretation.isBurn) {
     interpretation.tbsaEstimate = null;
+    interpretation.tbsaSeverityClass = 'N/A';
     interpretation.tbsaRange = 'N/A';
     interpretation.tbsaMethod = 'N/A';
+  } else if (interpretation.tbsaEstimate == null || interpretation.tbsaEstimate <= 0) {
+    interpretation.tbsaSeverityClass = 'N/A';
+  } else {
+    interpretation.tbsaSeverityClass =
+      interpretation.tbsaEstimate >= 15 ? 'Major burn (>=15% TBSA)' : 'Minor burn (<15% TBSA)';
   }
 
   // --- Image-quality gating: cap confidence when the image is not adequate.
