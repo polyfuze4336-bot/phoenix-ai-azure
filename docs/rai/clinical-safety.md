@@ -33,6 +33,7 @@ a result (**RAI-SAFE-010**,
 [`lib/ai/validation/wound-analysis-schema.ts`](../../nextjs_space/lib/ai/validation/wound-analysis-schema.ts)).
 
 ## Boundaries
-A single photograph cannot establish depth progression, infection, pain or sensation with certainty.
+A one-time image submission (single photo or multi-view set) cannot establish depth progression,
+infection, pain or sensation with certainty.
 These limits are disclosed per assessment (see [transparency.md](./transparency.md)) and in
 [known-limitations.md](./known-limitations.md).

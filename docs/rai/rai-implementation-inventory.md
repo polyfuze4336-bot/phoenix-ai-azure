@@ -6,7 +6,7 @@ Control IDs are stable and match [`lib/rai/controls.ts`](../../nextjs_space/lib/
 
 | RAI ID | Capability | Principle | Implementation | Location | User Visible | Evidence (tests) | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| RAI-SAFE-001 | Image input validation | Reliability & Safety | MIME + size validation before any model call | `lib/ai/validation/image-input.ts` | No | `tests/unit/image-input.test.ts`, `tests/rai/rai-safety.test.ts` | Implemented |
+| RAI-SAFE-001 | Image input validation | Reliability & Safety | MIME + size + count validation before any model call (including multi-image HCP submissions) | `lib/ai/validation/image-input.ts` | No | `tests/unit/image-input.test.ts`, `tests/rai/rai-safety.test.ts` | Implemented |
 | RAI-SAFE-002 | Image-quality gating | Reliability & Safety | Stage-1 adequacy assessment; downstream confidence capped | `lib/ai/prompts/wound-visual-observation.ts`, `lib/ai/analysis/pipeline.ts` | Yes | `tests/unit/analysis-pipeline.test.ts` | Implemented |
 | RAI-SAFE-003 | Schema-validated output | Reliability & Safety | Zod validation; explicit unavailable state | `lib/ai/validation/wound-analysis-schema.ts` | No | `tests/unit/wound-schema.test.ts`, `tests/unit/ai-parsing.test.ts` | Implemented |
 | RAI-SAFE-004 | Observation vs interpretation | Transparency | Per-field observation/interpretation/confidence/basis | `lib/ai/schemas/burn-wound-analysis.ts` | Yes | `tests/unit/wound-schema.test.ts` | Implemented |

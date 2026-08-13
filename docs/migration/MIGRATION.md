@@ -1183,3 +1183,36 @@ Demo remains manual-dispatch only; Development retains push-to-`main` and manual
 - **Validation.** Both environments report zero protection rules and no deployment branch policy;
   workflow diagnostics, architecture drift, seven Mermaid diagrams, typecheck, production build,
   104 unit tests, 22 RAI tests, and 14 integration tests all pass.
+
+### Step 29 - Extend HCP analysis with multi-image TBSA consolidation and burn-size category
+
+This step extends the HCP analysis experience while preserving visual parity and existing route
+compatibility. Clinicians can now upload multiple wound/burn images for one case, and the staged AI
+pipeline consolidates overlapping/duplicate views to produce one total TBSA estimate. The analysis
+result now surfaces a deterministic TBSA subcomponent for burn size:
+
+- **Major burn** (`>=15% TBSA`)
+- **Minor burn** (`<15% TBSA`)
+
+- **Code changes.**
+  - `app/hcp/analysis/_components/analysis-client.tsx`: multi-image upload UI, first-image history
+    persistence, and TBSA category display.
+  - `app/v2/hcp/analysis/_components/v2-assessment-client.tsx`: multi-image upload support.
+  - `app/api/analyze-wound/route.ts`: backward-compatible request parsing (`image` or `images[]`),
+    multi-image validation, and multi-image pipeline invocation.
+  - `lib/ai/analysis/pipeline.ts`: one-or-many image stage inputs and deterministic TBSA
+    major/minor classification.
+  - `lib/ai/schemas/burn-wound-analysis.ts` + `lib/ai/validation/wound-analysis-schema.ts`:
+    TBSA classification field propagation to structured and flat outputs.
+  - `lib/ai/validation/image-input.ts`: batch validation with image-count enforcement.
+  - Prompt/version updates in `lib/ai/prompts/wound-*.ts` and `lib/ai/prompts/versions.ts`.
+- **Architecture governance.** Impact level **MEDIUM**; architecture version bumped `2.2.1 -> 2.3.0`.
+  Updated: `current-architecture.md`, `component-inventory.md`, `integration-inventory.md`,
+  `ARCHITECTURE_VERSION`, `ARCHITECTURE_CHANGELOG.md`, diagrams
+  (`current-ai-architecture.mmd`, `current-data-flow.mmd`), and change record
+  `docs/architecture/changes/CHANGE-20260813-hcp-multi-image-tbsa.md`.
+- **Responsible AI impact.** LOW (behavior extension within existing controls). Updated evidence docs:
+  `lib/rai/controls.ts`, `docs/rai/rai-implementation-inventory.md`, `docs/rai/clinical-safety.md`,
+  `docs/rai/known-limitations.md`.
+- **Validation planned in this step.** Unit tests, RAI tests, integration route tests, typecheck, build,
+  architecture validation, Mermaid validation, and secret scan on changed files.

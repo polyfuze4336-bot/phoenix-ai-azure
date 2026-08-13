@@ -84,7 +84,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'input',
     status: 'active',
     description:
-      'Uploaded images are validated for MIME type and size before any model call; oversized or unsupported payloads are rejected with an explicit error.',
+      'Uploaded image payloads (single or multiple for HCP analysis) are validated for MIME type, count and size before any model call; oversized, unsupported or excessive payloads are rejected with an explicit error.',
     evidence: ['lib/ai/validation/image-input.ts', 'app/api/analyze-wound/route.ts'],
     tests: ['tests/unit/image-input.test.ts', 'tests/rai/rai-safety.test.ts'],
     userVisible: false,

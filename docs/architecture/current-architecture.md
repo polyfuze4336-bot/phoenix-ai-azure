@@ -186,7 +186,7 @@ Companion diagrams:
 | Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — no assumed patient weight | Implemented |
 | Rich analysis schema + adapter | `lib/ai/schemas/burn-wound-analysis.ts` (observation vs interpretation, field confidence, gaps) + flat back-compat adapter | Implemented |
 | Streaming | `lib/ai/streaming/{sse,collect,text-stream}.ts` | Implemented |
-| Image analysis (multimodal) | `lib/ai/validation/image-input.ts` + vision model | Implemented |
+| Image analysis (multimodal, one-or-many images per HCP request) | `lib/ai/validation/image-input.ts` + vision model | Implemented |
 | Structured response validation | `lib/ai/validation/wound-analysis-schema.ts` (Zod, 22-field contract) | Implemented |
 | Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
 | AI telemetry | `lib/ai/telemetry.ts` | Implemented |
@@ -197,10 +197,12 @@ management & referral → consistency/safety critic — then applies determinist
 Parkland is computed in app code from a supplied weight (never an assumed 70 kg), Fitzpatrick is
 reported only when the clinician supplies it (otherwise `unknown`), measurements are `unavailable`
 without a visible scale reference, confidence is capped on poor-quality images, and special-site
-burns are escalated. The rich result is mapped back to the existing 22-field contract (so the
-client and SSE envelope are unchanged) and the full structure travels under `result.structured`
-for the enhanced UI and the REFINE (second-pass) flow. Setting `AI_ANALYSIS_PIPELINE=single`
-restores the original single-pass call.
+burns are escalated. HCP requests now accept **one or more images** for the same case; overlapping
+or duplicate views are consolidated into one total TBSA estimate (not naively summed), and TBSA is
+deterministically classified as major (`>=15%`) vs minor (`<15%`) when estimable. The rich result
+is mapped back to the existing flat contract (SSE envelope unchanged) and the full structure
+travels under `result.structured` for the enhanced UI and the REFINE (second-pass) flow. Setting
+`AI_ANALYSIS_PIPELINE=single` restores the original single-pass call.
 
 ### 3.4 Data Layer
 
@@ -220,7 +222,7 @@ restores the original single-pass call.
 | --- | --- | --- |
 | Azure Blob provider | `lib/storage/{azure-blob-provider,storage-provider,types}.ts` (managed identity, private container, SAS reads) | **Configured but unused** — no UI workflow persists files |
 | Remaining S3 code | — | **None** (removed; see [removals.md](../migration/removals.md)) |
-| Browser-based image handling | client-side `FileReader` → base64 to AI routes | Implemented |
+| Browser-based image handling | client-side `FileReader` → base64 image payload(s) to AI routes | Implemented |
 | Temporary image processing | ephemeral base64 in request body | Implemented |
 
 ### 3.6 Identity Layer

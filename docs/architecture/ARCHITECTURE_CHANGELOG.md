@@ -16,6 +16,25 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.3.0] — 2026-08-13
+
+### Changed
+- **HCP analysis input contract extension** — `/api/analyze-wound` now accepts one-or-many images
+  for a single assessment case (backward-compatible with the existing single-image request shape).
+- **Pipeline behavior extension** — staged analysis consolidates overlapping/duplicate views across
+  multi-image submissions into one total TBSA estimate for the case (not naive per-image summation).
+- **Deterministic TBSA severity component** — the post-processing layer now classifies estimable burn
+  TBSA as `Major burn (>=15% TBSA)` vs `Minor burn (<15% TBSA)` and exposes it through the existing
+  HCP analysis response/UI surfaces.
+
+### Boundaries
+- No new Azure resources or external integrations were introduced; this change remains within
+  existing `INT-BROWSER-APP` and `INT-APP-FOUNDRY` paths.
+- The single-pass fallback (`AI_ANALYSIS_PIPELINE=single`) remains available and backward compatible
+  with single-image requests.
+- Responsible AI controls remain grounded in implemented evidence and continue to disclose scope and
+  limitations. See [CHANGE-20260813](./changes/CHANGE-20260813-hcp-multi-image-tbsa.md).
+
 ## [2.2.1] — 2026-08-12
 
 ### Changed
