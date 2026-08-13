@@ -40,6 +40,7 @@ interface PatientContext {
   weightKg?: number;
   mechanism?: string;
 }
+const MAX_ANALYSIS_IMAGES = 6;
 
 /**
  * Best-effort persistence of a completed analysis (image + result) to the clinician
@@ -120,11 +121,17 @@ export function AnalysisClient() {
   }, []);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = Array.from(e?.target?.files ?? []).slice(0, 6);
-    if (selected.length === 0) return;
-    setImageFiles(selected);
+    const picked = Array.from(e?.target?.files ?? []);
+    const remaining = Math.max(0, MAX_ANALYSIS_IMAGES - imageFiles.length);
+    const selected = picked.slice(0, remaining);
+    if (selected.length === 0) {
+      setError(`You can upload up to ${MAX_ANALYSIS_IMAGES} images.`);
+      e.target.value = '';
+      return;
+    }
+    setImageFiles((prev) => [...prev, ...selected].slice(0, MAX_ANALYSIS_IMAGES));
     setResult(null);
-    setError(null);
+    setError(picked.length > selected.length ? `You can upload up to ${MAX_ANALYSIS_IMAGES} images.` : null);
     Promise.all(
       selected.map(
         (file) =>
@@ -136,9 +143,12 @@ export function AnalysisClient() {
           }),
       ),
     )
-      .then((previews) => setImagePreviews(previews))
+      .then((previews) => {
+        setImagePreviews((prev) => [...prev, ...previews].slice(0, MAX_ANALYSIS_IMAGES));
+      })
       .catch(() => setError('Failed to read selected image(s).'));
-  }, []);
+    e.target.value = '';
+  }, [imageFiles.length]);
 
   const startCamera = useCallback(async () => {
     try {
@@ -339,6 +349,14 @@ export function AnalysisClient() {
                 </div>
               )}
               <p className="text-xs text-gray-500">Selected images: {imagePreviews.length}</p>
+              {imagePreviews.length < MAX_ANALYSIS_IMAGES && (
+                <button
+                  onClick={() => fileInputRef?.current?.click?.()}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-xl font-medium hover:border-[#8B0000]/40 hover:bg-[#8B0000]/5 transition-colors"
+                >
+                  <Upload className="w-4 h-4" /> Add more images
+                </button>
+              )}
               {/* Optional patient context — improves accuracy; nothing is assumed when blank. */}
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
                 <p className="text-xs font-semibold text-gray-500">Patient details (optional — improves accuracy)</p>
