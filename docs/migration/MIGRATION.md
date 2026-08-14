@@ -1252,3 +1252,25 @@ clinical-use warning.
   claim.
 - **Validation planned in this step.** Unit, RAI, API and targeted browser tests; typecheck; build;
   architecture and Mermaid validation; code review; secret scan; CodeQL.
+
+### Step 31 - Fix development deployment workflow PostgreSQL provisioning failure
+
+This step remediates a failing GitHub Actions deployment (`Provision, deploy & promote`) caused by an
+unsupported PostgreSQL major version in infrastructure code.
+
+- **Root cause from Actions logs.**
+  - Run: `31781947070`, Job: `94709419204`.
+  - Bootstrap deployment failed with:
+    `ParameterOutOfRange: The value of the 'Version' should be in: [17,18].`
+  - The Bicep module defaulted PostgreSQL major version to `15`, which is invalid for
+    `Microsoft.DBforPostgreSQL/flexibleServers@2024-08-01`.
+- **Code changes.**
+  - `infra/modules/postgresql.bicep`: constrained `postgresVersion` to allowed values `17` and `18`,
+    and updated the default to `17`.
+- **Architecture governance.** Impact level **LOW**; architecture version bumped `2.4.0 -> 2.5.0`.
+  Added change record
+  `docs/architecture/changes/CHANGE-20260814-postgresql-supported-major-version.md` and changelog
+  entry in `docs/architecture/ARCHITECTURE_CHANGELOG.md`.
+- **Responsible AI impact.** NONE (infrastructure compatibility fix only).
+- **Validation planned in this step.** Bicep build, architecture drift check, secret scan, code review,
+  and CodeQL.
