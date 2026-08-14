@@ -40,6 +40,7 @@ Trivial changes (copy edits, dependency patch bumps, non-structural refactors) d
 | [ADR-0006](./ADR-0006-customer-owned-azure-ai.md) | Provision a customer-owned Azure AI account per environment | Accepted | 2026-08-09 |
 | [ADR-0007](./ADR-0007-use-azure-container-apps.md) | Host Phoenix AI on Azure Container Apps Consumption | Accepted | 2026-08-09 |
 | [ADR-0008](./ADR-0008-v2-default-public-entry.md) | Make v2.0 the default public entry | Accepted | 2026-08-14 |
+| [ADR-0009](./ADR-0009-authorize-retained-analysis-records.md) | Authorize access to retained analysis records | Accepted | 2026-08-14 |
 
 ## Template
 

@@ -37,6 +37,7 @@ and `tests`).
 | `lib/ai/model-config.ts` | RAI-ACCT-005 |
 | `lib/ai/language.ts`, `lib/ai/analysis/pipeline.ts` | RAI-INCL-001 |
 | `components/clinical-ai-notice.tsx` | RAI-PRIV-007, RAI-ACCT-001 |
+| `lib/auth/analysis-api-authorization.ts`, `app/api/hcp/analyses/*` | RAI-PRIV-008 |
 | `tests/evaluation/burn-wound/*` | RAI-ACCT-004 |
 
 ## Tests

@@ -31,6 +31,7 @@ that AI output is clinical decision support only.
 | API-HCP-ANALYSIS | Validates and applies `en` / `bm` in staged and single-pass modes |
 | AI-ANALYSIS-PIPELINE | Localizes narrative and deterministic clinician-facing output |
 | AI-STREAMING | Handles trailing SSE data and supplies one client completion parser |
+| APP-MIDDLEWARE / API-HCP-ANALYSES* | Retained analysis records require a verified Entra HCP session; demo auth cannot retain or read them |
 | INT-BROWSER-APP | Carries the non-sensitive language code with existing chat/image requests |
 | INT-APP-FOUNDRY | Receives the selected-language instruction with existing model requests |
 
@@ -47,6 +48,8 @@ that AI output is clinical decision support only.
 
 - `RAI-INCL-001` expands from bilingual public guidance to bilingual HCP analysis/chat output.
 - `RAI-PRIV-007` records the implemented, user-visible patient-data legal handling notice.
+- `RAI-PRIV-008` records server-authorized access to retained analysis records.
+- `RAI-SAFE-006` now gates Parkland volumes on an age-aware indication threshold as well as weight.
 - Prompt/pipeline versions are bumped and evidence/tests updated.
 - `LIM-008` remains unchanged: AI output is decision support only.
 

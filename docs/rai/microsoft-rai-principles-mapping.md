@@ -33,6 +33,7 @@ not implemented. The controls above prevent *unsupported inference*; they do not
 | RAI-PRIV-003 | Privacy-safe telemetry (blocked-key sanitisation) | `lib/telemetry/server.ts`, `tests/rai/rai-telemetry.test.ts` | Active |
 | RAI-PRIV-006 | Request size limits | `lib/ai/validation/image-input.ts` | Active |
 | RAI-PRIV-007 | Bilingual patient-data legal handling notice (obligation, not certification) | `components/clinical-ai-notice.tsx`, `tests/rai/rai-controls.test.ts` | Active |
+| RAI-PRIV-008 | Verified Entra session required for retained analysis records | `lib/auth/analysis-api-authorization.ts`, `app/api/hcp/analyses/*` | Active |
 
 ## Inclusiveness
 

@@ -187,7 +187,7 @@ Companion diagrams:
 | System prompts (HCP vs Community, validated EN/BM response instruction) | `lib/ai/prompts/{hcp-chat,hcp-wound-analysis,community-chat,community-wound-analysis}.ts`, `lib/ai/language.ts` | Implemented |
 | Staged analysis prompts | `lib/ai/prompts/{wound-visual-observation,wound-clinical-interpretation,wound-management,wound-analysis-critic}.ts` | Implemented |
 | Staged analysis pipeline | `lib/ai/analysis/pipeline.ts` (`runAnalysisPipeline`, `assembleAnalysis`) — default for `/api/analyze-wound`; preserves stable structured enums while localizing narrative EN/BM; flag `AI_ANALYSIS_PIPELINE=single` reverts | Implemented |
-| Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — no assumed patient weight | Implemented |
+| Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — Parkland is indication/age-threshold/weight gated; no assumed patient weight | Implemented |
 | Rich analysis schema + adapter | `lib/ai/schemas/burn-wound-analysis.ts` (observation vs interpretation, field confidence, gaps) + flat back-compat adapter | Implemented |
 | Streaming | `lib/ai/streaming/{sse,collect,text-stream,client-analysis}.ts` (shared original/v2 completion parser; trailing-frame safe) | Implemented |
 | Image analysis (multimodal, one-or-many images per HCP request) | `lib/ai/validation/image-input.ts` + vision model | Implemented |
@@ -304,7 +304,7 @@ workflow** in the deployed demo:
 | --- | --- | --- |
 | Blob Storage | `lib/storage/*` present | Storage account provisioned; readiness reports `blob-storage=ok`, but **no UI persists files** |
 | Entra ID auth | `lib/auth/entra-*` present | `AUTH_MODE=demo` in the demo → Entra path inactive |
-| PostgreSQL persistence | full Prisma schema | Only `AnalysisRecord` (HCP history) is read/written; other models hold parity demo content |
+| PostgreSQL persistence | full Prisma schema | A server-verified Entra HCP session can retain/read only its own `AnalysisRecord` history; demo mode does not retain/read records; other models hold parity demo content |
 
 Feature gating is driven by presence of environment variables, read centrally in
 `lib/config/environment.ts` (AI essential; DB enabled iff `DATABASE_URL`; Blob enabled iff
