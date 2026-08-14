@@ -131,6 +131,18 @@ test('special-site burn is never left on routine follow-up', () => {
   assert.notEqual(a.management.referralLevel, 'routine');
 });
 
+test('special-site escalation recognizes Bahasa Malaysia anatomical terms', () => {
+  const a = assembleAnalysis({
+    observation: baseObservation({ anatomicalLocation: 'tangan kanan' }),
+    interpretation: baseInterpretation(),
+    management: baseManagement({ referralLevel: 'routine' }),
+    critic,
+    language: 'bm',
+  });
+  assert.equal(a.management.referralLevel, 'consultation');
+  assert.match(a.management.locationConsiderations, /tapak anatomi khas/i);
+});
+
 test('non-burn cannot carry a TBSA value', () => {
   const a = assembleAnalysis({
     observation: baseObservation(),
@@ -177,4 +189,21 @@ test('flat adapter maps the rich structure back to the 22-field contract', () =>
   assert.ok(flat.parklandFluid.length > 0);
   // A clinician-supplied Fitzpatrick type is carried into the flat field.
   assert.match(flat.fitzpatrickType, /Type V/);
+});
+
+test('Bahasa Malaysia selection localizes deterministic analysis guidance', () => {
+  const a = assembleAnalysis({
+    observation: baseObservation({ imageQualityAdequate: false }),
+    interpretation: baseInterpretation(),
+    management: baseManagement(),
+    critic,
+    language: 'bm',
+  });
+  assert.match(a.parkland.summary, /berat pesakit/i);
+  assert.match(a.limitations[0], /penilaian ini/i);
+  assert.match(a.recommendedFollowUpQuestions[0], /berat pesakit/i);
+  assert.equal(a.interpretation.tbsaSeverityClass, 'Kelecuran minor (<15% TBSA)');
+
+  const flat = toFlatHcpAnalysis(a, 'bm');
+  assert.match(flat.fitzpatrickType, /Tidak dapat ditentukan/i);
 });

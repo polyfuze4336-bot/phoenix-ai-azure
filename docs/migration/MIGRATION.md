@@ -1237,7 +1237,7 @@ clinical-use warning.
 - **Reliability.** Shared client parsing consumes trailing SSE frames, reports safe API errors, and
   normalizes empty browser MIME values to a supported image type.
 - **Architecture governance.** Impact level **MEDIUM**; architecture version `2.3.0 -> 2.4.0`.
-  No ADR or Azure resource change is required. See
+  ADR-0008 records the root-entry decision; no Azure resource change is required. See
   `docs/architecture/changes/CHANGE-20260814-v2-analysis-language-safety.md`.
 - **Responsible AI impact.** `RAI-INCL-001` expands to bilingual HCP AI output and new
   `RAI-PRIV-007` records the user-visible legal handling notice. The notice is not a compliance,

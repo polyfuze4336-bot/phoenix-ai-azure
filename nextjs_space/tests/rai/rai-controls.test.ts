@@ -7,6 +7,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   RAI_CONTROLS,
   ASSURANCE_STAGES,
@@ -53,4 +54,18 @@ test('the five assurance stages are present and ordered', () => {
     ASSURANCE_STAGES.map((s) => s.layer),
     ['input', 'analysis', 'output', 'oversight', 'operations'],
   );
+});
+
+test('patient-data notice control is active and evidence contains legal and clinical boundaries', () => {
+  const control = RAI_CONTROLS.find((item) => item.id === 'RAI-PRIV-007');
+  assert.equal(control?.status, 'active');
+  assert.equal(control?.userVisible, true);
+  const source = readFileSync(
+    new URL('../../components/clinical-ai-notice.tsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(source, /Personal Data Protection Act 2010/);
+  assert.match(source, /clinical decision support only/);
+  assert.match(source, /Akta Perlindungan Data Peribadi 2010/);
+  assert.match(source, /sokongan keputusan klinikal sahaja/);
 });

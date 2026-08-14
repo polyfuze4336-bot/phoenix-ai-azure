@@ -2,7 +2,7 @@
 
 - **Date:** 2026-08-14
 - **Author:** Phoenix AI migration team
-- **Related ADR:** None; backward-compatible behavior inside the existing v2 and AI architecture
+- **Related ADR:** [ADR-0008](../decisions/ADR-0008-v2-default-public-entry.md) for root landing behavior
 - **Architecture version:** 2.3.0 -> 2.4.0
 - **Impact level:** MEDIUM
 - **Status:** COMPLETE
@@ -41,7 +41,7 @@ that AI output is clinical decision support only.
 - The notice communicates data-handling obligations; it does not claim legal certification or that
   technical controls alone establish PDPA compliance.
 - AI output remains clinical decision support requiring qualified clinician review.
-- No ADR is required because topology, provider choice and public API routes remain unchanged.
+- ADR-0008 records the root navigation decision; topology, provider choice and API routes remain unchanged.
 
 ## Responsible AI impact
 

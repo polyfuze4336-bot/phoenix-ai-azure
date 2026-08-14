@@ -153,7 +153,7 @@ Companion diagrams:
 
 | Element | Location | Status |
 | --- | --- | --- |
-| Public landing (v2.0 directly when enabled; degrades to the original landing when v2 is disabled) | `app/page.tsx`, `app/v2/_components/v2-landing-client.tsx`, `app/_components/landing-client.tsx` | Implemented |
+| Public landing (v2.0 directly when enabled; degrades to the original landing when v2 is disabled; ADR-0008) | `app/page.tsx`, `app/v2/_components/v2-landing-client.tsx`, `app/_components/landing-client.tsx` | Implemented |
 | HCP portal (chat, analysis, TBSA, Parkland, guidelines, history) | `app/hcp/*` | Implemented |
 | Community portal (chat, assessment, articles, first-aid) | `app/community/*` | Implemented |
 | **Phoenix AI v2.0 experience** — additive, isolated, feature-flag gated; reuses the same API contracts and Azure services (ADR-0004) | `app/v2/*`, `components/v2/*`, `lib/v2/*` | Implemented |

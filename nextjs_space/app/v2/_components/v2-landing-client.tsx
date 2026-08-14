@@ -102,12 +102,6 @@ export function V2LandingClient() {
               </motion.div>
             ))}
           </div>
-          <p className="mt-10 text-center text-sm text-muted-foreground">
-            Prefer the original?{' '}
-            <Link href="/" className="font-semibold text-primary hover:underline">
-              Switch experience
-            </Link>
-          </p>
         </section>
       </div>
     </MotionConfig>

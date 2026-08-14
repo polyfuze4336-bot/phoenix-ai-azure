@@ -36,7 +36,8 @@ reference the relevant ADR and change record.
 - No new Azure resource, external integration, storage path or identity mechanism is introduced.
 - Images remain ephemeral request payloads and are not persisted by the analysis workflow.
 - This is not a claim of legal compliance, clinical validation, certification or regulatory approval.
-  See [CHANGE-20260814](./changes/CHANGE-20260814-v2-analysis-language-safety.md).
+  See [ADR-0008](./decisions/ADR-0008-v2-default-public-entry.md) and
+  [CHANGE-20260814](./changes/CHANGE-20260814-v2-analysis-language-safety.md).
 
 ## [2.3.0] — 2026-08-13
 

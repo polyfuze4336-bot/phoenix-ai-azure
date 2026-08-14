@@ -19,6 +19,7 @@
 
 import { z } from 'zod';
 import type { HcpWoundAnalysis } from '../validation/wound-analysis-schema';
+import type { AiResponseLanguage } from '../language';
 
 /* ------------------------------------------------------------------ helpers */
 
@@ -195,8 +196,12 @@ export type BurnWoundAnalysis = z.infer<typeof burnWoundAnalysisSchema>;
  * SSE contract and HCP client render unchanged during rollout. The rich object
  * travels alongside under `result.structured` for the enhanced UI.
  */
-export function toFlatHcpAnalysis(a: BurnWoundAnalysis): HcpWoundAnalysis {
+export function toFlatHcpAnalysis(
+  a: BurnWoundAnalysis,
+  language: AiResponseLanguage = 'en',
+): HcpWoundAnalysis {
   const i = a.interpretation;
+  const bm = language === 'bm';
   const withBasis = (f: { interpretation: string; observation: string; basis: string[] }) => {
     const main = f.interpretation || f.observation;
     return main;
@@ -204,13 +209,17 @@ export function toFlatHcpAnalysis(a: BurnWoundAnalysis): HcpWoundAnalysis {
   const fitz =
     i.reportedFitzpatrickType && i.reportedFitzpatrickType.toLowerCase() !== 'unknown'
       ? i.reportedFitzpatrickType
-      : `Not reliably determinable from a photograph (observed skin tone: ${a.observation.observedSkinTone || 'unclear'})`;
+      : bm
+        ? `Tidak dapat ditentukan dengan pasti daripada foto (tona kulit yang diperhatikan: ${a.observation.observedSkinTone || 'tidak jelas'})`
+        : `Not reliably determinable from a photograph (observed skin tone: ${a.observation.observedSkinTone || 'unclear'})`;
 
   return {
     fitzpatrickType: fitz,
     fitzpatrickNote:
       i.skinToneInterpretationNote ||
-      'Fitzpatrick type describes UV response and cannot be reliably determined from a single image; use texture, temperature and oedema cues on darker skin.',
+      (bm
+        ? 'Jenis Fitzpatrick menerangkan tindak balas UV dan tidak dapat ditentukan dengan pasti daripada satu imej; gunakan petunjuk tekstur, suhu dan edema pada kulit lebih gelap.'
+        : 'Fitzpatrick type describes UV response and cannot be reliably determined from a single image; use texture, temperature and oedema cues on darker skin.'),
     woundCategory: withBasis(i.woundCategory) || 'N/A',
     woundType: i.woundType || 'N/A',
     burnDegree: i.isBurn ? withBasis(i.burnDepth) || 'N/A' : 'N/A',
