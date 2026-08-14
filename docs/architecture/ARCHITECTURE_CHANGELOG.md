@@ -18,6 +18,20 @@ reference the relevant ADR and change record.
 
 ## [2.4.0] — 2026-08-14
 
+## [2.5.0] — 2026-08-14
+
+### Changed
+- **PostgreSQL deployment baseline** — `infra/modules/postgresql.bicep` now uses supported Flexible
+  Server major versions only (`17` or `18`) with default `17`, replacing the previous unsupported
+  default value (`15`) that fails subscription deployments under `Microsoft.DBforPostgreSQL/flexibleServers@2024-08-01`.
+
+### Boundaries
+- No user-facing UX, route contract, model behavior, identity flow, or storage topology changed.
+- The change is an infrastructure compatibility remediation for existing deployment workflows only.
+- See [CHANGE-20260814](./changes/CHANGE-20260814-postgresql-supported-major-version.md).
+
+## [2.4.0] — 2026-08-14
+
 ### Changed
 - **v2-only public landing** — when the v2 feature is enabled, `/` now renders the Phoenix AI v2.0
   landing directly. Original portal routes remain available for compatibility but are no longer
