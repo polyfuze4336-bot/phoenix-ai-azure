@@ -77,7 +77,7 @@ jobs:
 
       # 5. Build in Azure because no local Docker engine is required.
       - name: Build immutable image in ACR
-        run: az acr build --registry "${ACR}" --image "phoenixai:${IMAGE_TAG}" --file Dockerfile nextjs_space
+        run: az acr build --registry "${ACR}" --image "phoenixai:${IMAGE_TAG}" --file nextjs_space/Dockerfile nextjs_space
 
       # 6. Create or update the Container App with the image that now exists.
       - name: Deploy Container App revision
