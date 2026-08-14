@@ -1,9 +1,9 @@
 /**
  * Phoenix AI v2.0 — feature flags.
  *
- * v2 is an ADDITIVE experience layered onto the preserved Original app (see
- * docs/architecture/decisions/ADR-0004-dual-experience-v2.md). These flags gate
- * the v2 surface so it can be rolled back instantly and data-safely.
+ * v2 is layered onto retained Original routes (ADR-0004), and is the default
+ * public entry when enabled (ADR-0008). These flags gate the v2 surface so it
+ * can be rolled back instantly and data-safely.
  *
  * Flags are read from NEXT_PUBLIC_-prefixed env vars so a single source works in
  * both server and client components (Next.js inlines NEXT_PUBLIC_* at build time).

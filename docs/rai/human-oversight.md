@@ -1,6 +1,8 @@
 # Human oversight
 
 AI output in PhoenixIQ is **decision-support only**. A qualified clinician remains the decision-maker.
+This boundary is displayed together with the patient-data handling notice on HCP analysis and chat
+surfaces in English and Bahasa Malaysia.
 
 ## Review states
 Defined in [`lib/ai/analysis/metadata.ts`](../../nextjs_space/lib/ai/analysis/metadata.ts)
@@ -27,6 +29,8 @@ clinician, not the model. This is asserted in
   deployment the same action persists to the audit record.
 - **Refinement loop** — clinicians answer the model's follow-up questions to tighten an assessment
   without re-uploading (**RAI-SAFE-012**).
+- **Clinical AI notice** — persistent wording states that analysis supports, but does not replace, a
+  qualified clinician's assessment (**RAI-ACCT-001**).
 
 ## Persistence
 Reviewed assessments can be persisted with their result, image reference and timestamp

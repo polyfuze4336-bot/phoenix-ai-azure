@@ -1,7 +1,9 @@
 'use client';
 
 import { useLanguage } from '@/components/language-provider';
-import { Upload, Camera, AlertTriangle, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette } from 'lucide-react';
+import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
+import { prepareAnalysisImages, readCompletedAnalysis } from '@/lib/ai/streaming/client-analysis';
+import { Upload, Camera, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
@@ -69,7 +71,7 @@ async function saveAnalysisToHistory(result: AnalysisResult, image: string, mime
 }
 
 export function AnalysisClient() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
@@ -94,31 +96,6 @@ export function AnalysisClient() {
     };
     return ctx.weightKg || ctx.mechanism ? ctx : undefined;
   }, [weightKg, mechanism]);
-
-  /** Read the SSE stream from /api/analyze-wound and resolve the completed result. */
-  const readAnalysisStream = useCallback(async (response: Response): Promise<AnalysisResult | null> => {
-    const reader = response?.body?.getReader();
-    const decoder = new TextDecoder();
-    let partialRead = '';
-    while (true) {
-      const { done, value } = await (reader?.read() ?? { done: true, value: undefined });
-      if (done) break;
-      partialRead += decoder?.decode(value, { stream: true }) ?? '';
-      const lines = partialRead?.split('\n') ?? [];
-      partialRead = lines?.pop() ?? '';
-      for (const line of (lines ?? [])) {
-        if (line?.startsWith('data: ')) {
-          const data = line?.slice(6);
-          if (data === '[DONE]') return null;
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed?.status === 'completed' && parsed?.result) return parsed.result as AnalysisResult;
-          } catch (e: any) { /* skip */ }
-        }
-      }
-    }
-    return null;
-  }, []);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(e?.target?.files ?? []);
@@ -191,41 +168,27 @@ export function AnalysisClient() {
     setAnalyzing(true);
     setError(null);
     try {
-      const prepared = await Promise.all(
-        imageFiles.map(async (file) => {
-          const reader = new FileReader();
-          const base64 = await new Promise<string>((resolve, reject) => {
-            reader.onload = () => resolve((reader?.result as string)?.split(',')?.[1] ?? '');
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-          return { image: base64, mimeType: file?.type ?? 'image/jpeg' };
-        }),
-      );
+      const prepared = await prepareAnalysisImages(imageFiles);
       lastBase64Ref.current = prepared.map((p) => p.image);
       lastMimeRef.current = prepared.map((p) => p.mimeType);
 
       const response = await fetch('/api/analyze-wound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images: prepared, patient: patientContext() }),
+        body: JSON.stringify({ images: prepared, patient: patientContext(), lang }),
       });
 
-      if (!response?.ok) throw new Error('Analysis failed');
-
-      const completed = await readAnalysisStream(response);
-      if (completed) {
-        setResult(completed);
-        if (prepared[0]) {
-          void saveAnalysisToHistory(completed, prepared[0].image, prepared[0].mimeType);
-        }
+      const completed = await readCompletedAnalysis<AnalysisResult>(response, lang);
+      setResult(completed);
+      if (prepared[0]) {
+        void saveAnalysisToHistory(completed, prepared[0].image, prepared[0].mimeType);
       }
     } catch (err: any) {
       setError(err?.message ?? 'Analysis failed');
     } finally {
       setAnalyzing(false);
     }
-  }, [imageFiles, patientContext, readAnalysisStream]);
+  }, [imageFiles, patientContext, lang]);
 
   /** Second pass: re-run the pipeline with clinician answers, no re-upload. */
   const refineAnalysis = useCallback(async (answers: string) => {
@@ -244,26 +207,24 @@ export function AnalysisClient() {
           patient: patientContext(),
           priorAnalysis: result.structured,
           refineAnswers: answers,
+          lang,
         }),
       });
-      if (!response?.ok) throw new Error('Refine failed');
-      const completed = await readAnalysisStream(response);
-      if (completed) {
-        setResult(completed);
-        if (lastBase64Ref.current[0]) {
-          void saveAnalysisToHistory(
-            completed,
-            lastBase64Ref.current[0],
-            lastMimeRef.current[0] ?? 'image/jpeg',
-          );
-        }
+      const completed = await readCompletedAnalysis<AnalysisResult>(response, lang);
+      setResult(completed);
+      if (lastBase64Ref.current[0]) {
+        void saveAnalysisToHistory(
+          completed,
+          lastBase64Ref.current[0],
+          lastMimeRef.current[0] ?? 'image/jpeg',
+        );
       }
     } catch (err: any) {
       setError(err?.message ?? 'Refine failed');
     } finally {
       setRefining(false);
     }
-  }, [result, patientContext, readAnalysisStream]);
+  }, [result, patientContext, lang]);
 
   const clearImage = useCallback(() => {
     setImagePreviews([]);
@@ -274,9 +235,9 @@ export function AnalysisClient() {
 
   const severityColor = (s: string) => {
     const lower = s?.toLowerCase?.() ?? '';
-    if (lower?.includes('critical')) return 'bg-red-600 text-white';
-    if (lower?.includes('severe')) return 'bg-red-500 text-white';
-    if (lower?.includes('moderate')) return 'bg-orange-500 text-white';
+    if (lower?.includes('critical') || lower?.includes('kritikal')) return 'bg-red-600 text-white';
+    if (lower?.includes('severe') || lower?.includes('teruk')) return 'bg-red-500 text-white';
+    if (lower?.includes('moderate') || lower?.includes('sederhana')) return 'bg-orange-500 text-white';
     return 'bg-green-500 text-white';
   };
 
@@ -287,11 +248,7 @@ export function AnalysisClient() {
         <p className="text-sm text-gray-500 mt-1">Upload or capture a wound/burn image for AI-powered clinical assessment</p>
       </div>
 
-      {/* Disclaimer */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-        <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
-        <p className="text-sm text-amber-800">{t('analysis.disclaimer')}</p>
-      </div>
+      <ClinicalAiNotice />
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Upload Section */}
@@ -562,22 +519,6 @@ export function AnalysisClient() {
                 <StructuredAnalysis data={result.structured} onRefine={refineAnalysis} refining={refining} />
               )}
 
-              {/* Data Protection Notice */}
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-4 mt-8">
-                <div className="flex items-start gap-3">
-                  <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="text-sm text-blue-900 space-y-1.5">
-                    <p className="font-semibold">Data Protection Notice</p>
-                    <p className="text-xs leading-relaxed text-blue-800">
-                      All patient data and images are protected in accordance with the laws and governance of Malaysia under the Ministry of Health (KKM), including the Personal Data Protection Act 2010 (PDPA) and relevant medical confidentiality regulations. This analysis is confidential and intended for authorized healthcare professionals only.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </motion.div>
           )}
 

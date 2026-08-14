@@ -17,6 +17,7 @@ import { getAnalysisModelDeployment, getAnalysisPipelineMode } from '@/lib/ai/mo
 import { runAnalysisPipeline, type PatientContext } from '@/lib/ai/analysis/pipeline';
 import { toFlatHcpAnalysis } from '@/lib/ai/schemas/burn-wound-analysis';
 import { buildAnalysisMetadata } from '@/lib/ai/analysis/metadata';
+import { normalizeAiLanguage, responseLanguageInstruction } from '@/lib/ai/language';
 
 const MAX_ANALYSIS_IMAGES = 6;
 
@@ -30,6 +31,7 @@ function readPatientContext(raw: unknown): PatientContext | undefined {
     ageGroup: typeof p.ageGroup === 'string' ? p.ageGroup : undefined,
     fitzpatrickType: typeof p.fitzpatrickType === 'string' ? p.fitzpatrickType : undefined,
     mechanism: typeof p.mechanism === 'string' ? p.mechanism : undefined,
+    anatomicalSite: typeof p.anatomicalSite === 'string' ? p.anatomicalSite : undefined,
     timeSinceInjury: typeof p.timeSinceInjury === 'string' ? p.timeSinceInjury : undefined,
     freeText: typeof p.freeText === 'string' ? p.freeText.slice(0, 2000) : undefined,
   };
@@ -54,6 +56,7 @@ export async function POST(request: NextRequest) {
 
     const correlationId = getOrCreateCorrelationId(request.headers);
     const patient = readPatientContext(body?.patient);
+    const language = normalizeAiLanguage(body?.lang);
     const refineAnswers = typeof body?.refineAnswers === 'string' ? body.refineAnswers : undefined;
     const priorAnalysis = body?.priorAnalysis && typeof body.priorAnalysis === 'object' ? body.priorAnalysis : undefined;
     // Privacy-safe marker: an HCP image-analysis request started. No image bytes,
@@ -65,6 +68,7 @@ export async function POST(request: NextRequest) {
       imageCount: validation.images.length,
       pipeline: pipelineMode,
       refine: Boolean(refineAnswers),
+      language,
     });
 
     const imageDataUrls = validation.images.map((img) => `data:${img.mimeType};base64,${img.base64}`);
@@ -76,9 +80,10 @@ export async function POST(request: NextRequest) {
           imageDataUrls,
           patient,
           correlationId,
+          language,
           refine: refineAnswers && priorAnalysis ? { priorAnalysis, answers: refineAnswers } : undefined,
         });
-        const flat = toFlatHcpAnalysis(rich);
+        const flat = toFlatHcpAnalysis(rich, language);
         const meta = buildAnalysisMetadata({
           analysisId: correlationId,
           modelDeployment: getAnalysisModelDeployment(),
@@ -100,16 +105,22 @@ export async function POST(request: NextRequest) {
 
     // --- Legacy single-pass path (AI_ANALYSIS_PIPELINE=single).
     const messages: AiMessage[] = [
-      { role: 'system', content: HCP_WOUND_ANALYSIS_SYSTEM_PROMPT },
+      {
+        role: 'system',
+        content: `${HCP_WOUND_ANALYSIS_SYSTEM_PROMPT}\n\n${responseLanguageInstruction(language, true)}`,
+      },
       {
         role: 'user',
         content: [
           {
             type: 'text',
             text:
-              imageDataUrls.length > 1
-                ? 'Please analyze these wound/burn images together as one case and provide a structured clinical assessment in JSON format. Consolidate overlap/duplicate views when estimating total TBSA.'
-                : 'Please analyze this wound/burn image and provide a structured clinical assessment in JSON format.',
+              `${
+                imageDataUrls.length > 1
+                  ? 'Please analyze these wound/burn images together as one case and provide a structured clinical assessment in JSON format. Consolidate overlap/duplicate views when estimating total TBSA.'
+                  : 'Please analyze this wound/burn image and provide a structured clinical assessment in JSON format.'
+              }\nClinician-supplied patient context: ${JSON.stringify(patient ?? {})}. ` +
+              'Do not assume or invent any patient detail that is not supplied.',
           },
           ...imageDataUrls.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
         ],
@@ -134,7 +145,7 @@ export async function POST(request: NextRequest) {
     return createStructuredSseResponse({
       upstream: upstream.body,
       processingEvent: { status: 'processing', message: 'Analyzing' },
-      buildResult: (buffer) => parseHcpWoundAnalysis(buffer),
+      buildResult: (buffer) => parseHcpWoundAnalysis(buffer, language),
       correlationId: upstream.correlationId,
     });
   } catch (error: any) {

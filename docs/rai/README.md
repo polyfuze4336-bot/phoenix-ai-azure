@@ -16,6 +16,9 @@ surfaced to clinicians in the product.
   an automated consistency review, and presents results for clinician review.
 - **Is not:** an autonomous diagnostic device, a certified medical device, or a replacement for
   clinical judgement.
+- **Data-handling boundary:** HCP surfaces warn that patient data and images must be handled under
+  Malaysia's PDPA 2010 and applicable Malaysian law. This is an obligation notice, not a compliance
+  certification.
 
 ## Contents
 

@@ -19,3 +19,8 @@ Always:
 - Include disclaimers about clinical judgment
 - Be thorough but concise
 - Format responses clearly with bullet points or numbered lists when appropriate`;
+
+export function hcpChatSystemPrompt(language: AiResponseLanguage): string {
+  return `${HCP_CHAT_SYSTEM_PROMPT}\n\n${responseLanguageInstruction(language)}`;
+}
+import { responseLanguageInstruction, type AiResponseLanguage } from '../language';

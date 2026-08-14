@@ -15,7 +15,7 @@ import { resolveAuthMode } from '@/lib/auth/auth-config';
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth/session';
 
 // Protected HCP APIs (community APIs remain public).
-const PROTECTED_API_PREFIXES = ['/api/hcp-chat', '/api/analyze-wound'];
+const PROTECTED_API_PREFIXES = ['/api/hcp-chat', '/api/analyze-wound', '/api/hcp/analyses'];
 
 function isProtectedApi(pathname: string): boolean {
   return PROTECTED_API_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -58,5 +58,11 @@ export async function middleware(req: NextRequest): Promise<Response> {
 }
 
 export const config = {
-  matcher: ['/hcp/:path*', '/hcp', '/api/hcp-chat/:path*', '/api/analyze-wound/:path*'],
+  matcher: [
+    '/hcp/:path*',
+    '/hcp',
+    '/api/hcp-chat/:path*',
+    '/api/analyze-wound/:path*',
+    '/api/hcp/analyses/:path*',
+  ],
 };

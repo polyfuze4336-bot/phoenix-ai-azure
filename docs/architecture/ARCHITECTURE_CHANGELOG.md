@@ -16,6 +16,30 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [2.4.0] — 2026-08-14
+
+### Changed
+- **v2-only public landing** — when the v2 feature is enabled, `/` now renders the Phoenix AI v2.0
+  landing directly. Original portal routes remain available for compatibility but are no longer
+  advertised from the public landing.
+- **Shared HCP analysis transport** — original and v2 assessment clients use one image preparation,
+  request and SSE completion path against `/api/analyze-wound`, including final-buffer handling and
+  safe API error messages.
+- **Bilingual HCP AI output** — HCP chat and both staged/single-pass image analysis accept the existing
+  `en` / `bm` language selection. Structured contract keys and machine enums remain stable while
+  clinician-facing narrative output follows the selected language.
+- **Shared legal/safety notice** — HCP analysis and chat surfaces display a bilingual notice requiring
+  patient-data/image handling under Malaysia's PDPA 2010 and applicable Malaysian law, and state that
+  AI output is clinical decision support only.
+
+### Boundaries
+- No new Azure resource, external integration, storage path or identity mechanism is introduced.
+- Inference images remain ephemeral in `/api/analyze-wound`; a separate original-HCP history request
+  may retain an image/result only for the verified Entra clinician. Demo auth cannot use history.
+- This is not a claim of legal compliance, clinical validation, certification or regulatory approval.
+  See [ADR-0008](./decisions/ADR-0008-v2-default-public-entry.md) and
+  [CHANGE-20260814](./changes/CHANGE-20260814-v2-analysis-language-safety.md).
+
 ## [2.3.0] — 2026-08-13
 
 ### Changed

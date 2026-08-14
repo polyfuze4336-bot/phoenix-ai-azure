@@ -5,6 +5,9 @@ import { Send, Loader2, Sparkles, AlertTriangle, User, Bot } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/components/language-provider';
+import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
+import { streamChatText } from '@/lib/ai/streaming/client-analysis';
 
 interface ChatMsg {
   role: 'user' | 'assistant';
@@ -19,6 +22,7 @@ const SUGGESTIONS = [
 ];
 
 export function V2ChatClient() {
+  const { lang } = useLanguage();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -41,50 +45,34 @@ export function V2ChatClient() {
         const response = await fetch('/api/hcp-chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: next.map((m) => ({ role: m.role, content: m.content })) }),
+          body: JSON.stringify({
+            messages: next.map((m) => ({ role: m.role, content: m.content })),
+            lang,
+          }),
         });
-        if (!response.ok) throw new Error('Chat failed');
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        let assistant = '';
-        let buffer = '';
         setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
-        if (reader) {
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() ?? '';
-            for (const line of lines) {
-              if (!line.startsWith('data: ')) continue;
-              const data = line.slice(6);
-              if (data === '[DONE]') break;
-              try {
-                const parsed = JSON.parse(data);
-                assistant += parsed?.choices?.[0]?.delta?.content ?? '';
-                setMessages((prev) => {
-                  const arr = [...prev];
-                  if (arr.length) arr[arr.length - 1] = { role: 'assistant', content: assistant };
-                  return arr;
-                });
-              } catch {
-                /* skip */
-              }
-            }
-          }
-        }
+        await streamChatText(response, lang, (assistant) => {
+          setMessages((prev) => {
+            const arr = [...prev];
+            if (arr.length) arr[arr.length - 1] = { role: 'assistant', content: assistant };
+            return arr;
+          });
+        });
       } catch {
-        setMessages((prev) => [...prev, { role: 'assistant', content: 'Sorry, an error occurred. Please try again.' }]);
+        setMessages((prev) => [...prev, {
+          role: 'assistant',
+          content: lang === 'bm' ? 'Maaf, ralat berlaku. Sila cuba lagi.' : 'Sorry, an error occurred. Please try again.',
+        }]);
       } finally {
         setLoading(false);
       }
     },
-    [input, loading, messages],
+    [input, loading, messages, lang],
   );
 
   return (
     <div className="mx-auto flex h-[calc(100vh-13rem)] max-w-3xl flex-col">
+      <ClinicalAiNotice className="mb-3" />
       <div className="flex-1 space-y-4 overflow-y-auto rounded-xl border bg-card p-4 md:p-6">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">

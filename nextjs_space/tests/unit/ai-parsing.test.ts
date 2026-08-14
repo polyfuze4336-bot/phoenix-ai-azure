@@ -9,6 +9,7 @@ import {
   parseHcpWoundAnalysis,
   parseCommunityWoundAnalysis,
   HCP_ASSESSMENT_UNAVAILABLE,
+  HCP_ASSESSMENT_UNAVAILABLE_BM,
   COMMUNITY_ASSESSMENT_UNAVAILABLE,
 } from '../../lib/ai/validation/wound-analysis-schema';
 
@@ -33,6 +34,11 @@ test('parseHcpWoundAnalysis: invalid JSON -> explicit unavailable fallback', () 
   assert.deepEqual(parseHcpWoundAnalysis('not json at all'), HCP_ASSESSMENT_UNAVAILABLE);
   assert.deepEqual(parseHcpWoundAnalysis(''), HCP_ASSESSMENT_UNAVAILABLE);
   assert.deepEqual(parseHcpWoundAnalysis('   '), HCP_ASSESSMENT_UNAVAILABLE);
+});
+
+test('parseHcpWoundAnalysis: invalid BM output uses the localized safe fallback', () => {
+  assert.deepEqual(parseHcpWoundAnalysis('not json', 'bm'), HCP_ASSESSMENT_UNAVAILABLE_BM);
+  assert.match(parseHcpWoundAnalysis('', 'bm').characteristics, /sokongan keputusan klinikal/i);
 });
 
 test('parseHcpWoundAnalysis: JSON array or non-object -> fallback', () => {

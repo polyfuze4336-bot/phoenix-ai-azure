@@ -126,6 +126,17 @@ export const HCP_ASSESSMENT_UNAVAILABLE: HcpWoundAnalysis = {
   followUp: 'N/A',
 };
 
+/** Bahasa Malaysia safe fallback for the HCP path. Schema keys remain unchanged. */
+export const HCP_ASSESSMENT_UNAVAILABLE_BM: HcpWoundAnalysis = {
+  ...HCP_ASSESSMENT_UNAVAILABLE,
+  woundType: 'Penilaian tidak dapat diselesaikan',
+  characteristics:
+    'Penilaian AI tidak dapat diselesaikan kerana model tidak mengembalikan hasil berstruktur yang sah. ' +
+    'Sila cuba semula analisis atau gunakan pertimbangan klinikal anda sendiri. Alat ini hanya menyediakan ' +
+    'sokongan keputusan klinikal dan bukan pengganti penilaian perubatan profesional.',
+  referral: 'Sila dapatkan penilaian klinikal secara bersemuka.',
+};
+
 const COMMUNITY_UNAVAILABLE_MESSAGE =
   'Sorry, we could not check your image this time. Please try again with a ' +
   'clear, well-lit photo. This is not a medical diagnosis.';
@@ -164,13 +175,18 @@ function hasMeaningfulValue(obj: Record<string, unknown>, keys: string[]): boole
  * success, or an explicit "assessment could not be completed" state (never a
  * fabricated clinical result) when the output is invalid.
  */
-export function parseHcpWoundAnalysis(buffer: string): HcpWoundAnalysis {
+export function parseHcpWoundAnalysis(
+  buffer: string,
+  language: 'en' | 'bm' = 'en',
+): HcpWoundAnalysis {
+  const unavailable =
+    language === 'bm' ? HCP_ASSESSMENT_UNAVAILABLE_BM : HCP_ASSESSMENT_UNAVAILABLE;
   const obj = tryParseObject(buffer);
   if (!obj || !hasMeaningfulValue(obj, HCP_SIGNAL_KEYS)) {
-    return HCP_ASSESSMENT_UNAVAILABLE;
+    return unavailable;
   }
   const result = hcpWoundAnalysisSchema.safeParse(obj);
-  return result.success ? result.data : HCP_ASSESSMENT_UNAVAILABLE;
+  return result.success ? result.data : unavailable;
 }
 
 /**

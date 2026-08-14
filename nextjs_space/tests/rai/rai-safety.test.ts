@@ -13,13 +13,26 @@ import { baseObservation, baseInterpretation, baseManagement, passingCritic as c
 test('RAI-SAFE-006: Parkland is never computed from an assumed weight', () => {
   const a = assembleAnalysis({
     observation: baseObservation(),
-    interpretation: baseInterpretation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 20 }),
     management: baseManagement(),
     critic,
   });
+
   assert.equal(a.parkland.requiresWeight, true);
   assert.equal(a.parkland.total24hMl, null);
   assert.doesNotMatch(a.parkland.summary, /\d[\d,]*\s?mL/i);
+});
+
+test('RAI-SAFE-006: Parkland is not recommended below the adult indication threshold', () => {
+  const a = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 10 }),
+    management: baseManagement(),
+    critic,
+    patient: { ageGroup: 'adult', weightKg: 70 },
+  });
+  assert.equal(a.parkland.indicated, 'no');
+  assert.equal(a.parkland.total24hMl, null);
 });
 
 test('RAI-SAFE-007: measured dimensions are dropped without a scale reference', () => {

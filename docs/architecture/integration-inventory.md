@@ -9,9 +9,9 @@
 
 | Integration ID | Source | Destination | Protocol | Purpose | Authentication | Data | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| INT-BROWSER-APP | Browser (client) | Next.js server (`app/`) | HTTPS | Serve UI, submit chat/image requests | Signed session cookie (demo) | UI state, chat text, ephemeral base64 image payload(s) | ACTIVE |
-| INT-APP-FOUNDRY | Next.js AI provider (`lib/ai`) | Environment-owned Microsoft Foundry / Azure AI Services account | HTTPS (OpenAI-compatible) | Chat + multimodal wound analysis (staged pipeline issues multiple sequential completions per request; deployment resolved per-purpose via `AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT` / `AZURE_AI_CHAT_MODEL_DEPLOYMENT`, default `AZURE_AI_MODEL_DEPLOYMENT`) | Managed identity (Bearer, `cognitiveservices.azure.com`) | Prompts, image content, model completions | ACTIVE |
-| INT-APP-POSTGRES | Next.js data layer (`lib/db.ts` / Prisma) | Azure PostgreSQL Flexible Server | PostgreSQL wire (TLS, `sslmode=require`) | Persist/read HCP AnalysisRecord | Direct `DATABASE_URL` credentials | Analysis records (fictional/demo) | ACTIVE |
+| INT-BROWSER-APP | Browser (client) | Next.js server (`app/`) | HTTPS | Serve UI; submit chat/image requests with validated `en`/`bm` response preference | Signed session cookie (demo) | UI state, language code, chat text, ephemeral base64 image payload(s) | ACTIVE |
+| INT-APP-FOUNDRY | Next.js AI provider (`lib/ai`) | Environment-owned Microsoft Foundry / Azure AI Services account | HTTPS (OpenAI-compatible) | Chat + multimodal wound analysis in the selected EN/BM response language (staged pipeline issues multiple sequential completions per request; deployment resolved per-purpose via `AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT` / `AZURE_AI_CHAT_MODEL_DEPLOYMENT`, default `AZURE_AI_MODEL_DEPLOYMENT`) | Managed identity (Bearer, `cognitiveservices.azure.com`) | Prompts, language instruction, image content, model completions | ACTIVE |
+| INT-APP-POSTGRES | Next.js data layer (`lib/db.ts` / Prisma) | Azure PostgreSQL Flexible Server | PostgreSQL wire (TLS, `sslmode=require`) | Persist/read HCP AnalysisRecord after server-verified Entra session authorization; unavailable in demo auth | Direct `DATABASE_URL` credentials | Authorized retained analysis records | ACTIVE |
 | INT-APP-BLOB | Next.js storage provider (`lib/storage`) | Azure Blob Storage (`stphxyun55ezsi4yoq`, `clinical-uploads`) | HTTPS (Blob REST) | File persistence capability | Managed identity | (none in current UI) | OPTIONAL |
 | INT-APP-KV | Azure Container App | Azure Key Vault (`kv-phx-<token>`) | HTTPS (Key Vault REST) | Resolve `DATABASE_URL` and optional Entra secrets through Container Apps secret references | Managed identity | Secret values exposed only as container environment variables | ACTIVE |
 | INT-APP-APPINSIGHTS | Next.js telemetry (`lib/telemetry`, browser SDK) | Application Insights (`appi-phoenixai-yun55ezsi4yoq`) | HTTPS (ingestion) | Requests, events, traces, exceptions | Instrumentation/connection string | Privacy-safe telemetry (no clinical content) | ACTIVE |
@@ -38,3 +38,7 @@
 > analysis id, model deployment name, prompt/pipeline/schema versions, image-quality band, review
 > status) over the existing `INT-BROWSER-APP` channel. No clinical content, keys or prompts are added
 > to any integration. See [ADR-0005](./decisions/ADR-0005-ai-assurance-layer.md).
+
+> **The 2026-08-14 v2 landing, bilingual HCP output and shared safety notice add no new
+> integrations.** Language remains a two-value request preference on `INT-BROWSER-APP`; PDPA and
+> decision-support wording is local UI content. Azure resource and data-flow boundaries are unchanged.

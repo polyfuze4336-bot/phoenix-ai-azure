@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
-  Upload, Check, ChevronRight, ChevronLeft, Loader2, AlertTriangle,
+  Upload, Check, ChevronRight, ChevronLeft, Loader2,
   ScanLine, ClipboardList, Sparkles, RotateCcw, ImageIcon, Scale, Flame, MapPin,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,9 @@ import { cn } from '@/lib/utils';
 import { StructuredAnalysis, type StructuredAnalysisData } from '@/app/hcp/analysis/_components/structured-analysis';
 import { AnalysisInfoPanel, AssuranceStatusLine } from '@/components/v2/analysis-info-panel';
 import type { AnalysisMetadata } from '@/lib/ai/analysis/metadata';
+import { useLanguage } from '@/components/language-provider';
+import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
+import { prepareAnalysisImages, readCompletedAnalysis } from '@/lib/ai/streaming/client-analysis';
 
 interface AnalysisResult {
   woundCategory: string;
@@ -36,34 +39,8 @@ const STEPS = [
   { id: 4, label: 'Analysis', icon: Sparkles },
 ] as const;
 
-async function readAnalysisStream(response: Response): Promise<AnalysisResult | null> {
-  const reader = response.body?.getReader();
-  if (!reader) return null;
-  const decoder = new TextDecoder();
-  let buffer = '';
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() ?? '';
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        const data = line.slice(6);
-        if (data === '[DONE]') return null;
-        try {
-          const parsed = JSON.parse(data);
-          if (parsed?.status === 'completed' && parsed?.result) return parsed.result as AnalysisResult;
-        } catch {
-          /* skip partial */
-        }
-      }
-    }
-  }
-  return null;
-}
-
 export function V2AssessmentClient() {
+  const { lang } = useLanguage();
   const [step, setStep] = useState(1);
   const [weightKg, setWeightKg] = useState('');
   const [mechanism, setMechanism] = useState('');
@@ -115,34 +92,22 @@ export function V2AssessmentClient() {
     setError(null);
     setStep(4);
     try {
-      const prepared = await Promise.all(
-        imageFiles.map(async (file) => {
-          const base64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve((reader.result as string)?.split(',')[1] ?? '');
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-          return { image: base64, mimeType: file.type || 'image/jpeg' };
-        }),
-      );
+      const prepared = await prepareAnalysisImages(imageFiles);
       lastBase64.current = prepared.map((p) => p.image);
       lastMime.current = prepared.map((p) => p.mimeType);
       const response = await fetch('/api/analyze-wound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images: prepared, patient: patientContext() }),
+        body: JSON.stringify({ images: prepared, patient: patientContext(), lang }),
       });
-      if (!response.ok) throw new Error('Analysis failed. Please try again.');
-      const completed = await readAnalysisStream(response);
-      if (completed) setResult(completed);
-      else throw new Error('The analysis did not return a result.');
+      const completed = await readCompletedAnalysis<AnalysisResult>(response, lang);
+      setResult(completed);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed.');
     } finally {
       setAnalyzing(false);
     }
-  }, [imageFiles, patientContext]);
+  }, [imageFiles, patientContext, lang]);
 
   const refineAnalysis = useCallback(
     async (answers: string) => {
@@ -161,18 +126,18 @@ export function V2AssessmentClient() {
             patient: patientContext(),
             priorAnalysis: result.structured,
             refineAnswers: answers,
+            lang,
           }),
         });
-        if (!response.ok) throw new Error('Refine failed.');
-        const completed = await readAnalysisStream(response);
-        if (completed) setResult(completed);
+        const completed = await readCompletedAnalysis<AnalysisResult>(response, lang);
+        setResult(completed);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Refine failed.');
       } finally {
         setRefining(false);
       }
     },
-    [result, patientContext],
+    [result, patientContext, lang],
   );
 
   const reset = useCallback(() => {
@@ -209,12 +174,7 @@ export function V2AssessmentClient() {
         })}
       </ol>
 
-      <div className="rounded-xl border bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-        <div className="flex items-start gap-2">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>Decision-support only. AI output does not replace clinical judgement. Do not upload identifiable patient information.</p>
-        </div>
-      </div>
+      <ClinicalAiNotice />
 
       {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>
@@ -351,23 +311,6 @@ export function V2AssessmentClient() {
               )}
               {result.meta ? <AnalysisInfoPanel meta={result.meta} /> : null}
               
-              {/* Data Protection Notice */}
-              <div className="rounded-xl border bg-gradient-to-r from-blue-50/80 to-cyan-50/80 p-4 dark:from-blue-950/30 dark:to-cyan-950/30">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-blue-600 flex items-center justify-center">
-                    <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="font-semibold text-sm text-blue-900 dark:text-blue-300">Data Protection Notice</p>
-                    <p className="text-xs leading-relaxed text-blue-800 dark:text-blue-200">
-                      All patient data and images are protected in accordance with the laws and governance of Malaysia under the Ministry of Health (KKM), including the Personal Data Protection Act 2010 (PDPA) and relevant medical confidentiality regulations. This analysis is confidential and intended for authorized healthcare professionals only.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
               <div className="flex justify-center">
                 <Button variant="outline" onClick={reset}>
                   <RotateCcw className="mr-1.5 h-4 w-4" /> Start a new assessment
