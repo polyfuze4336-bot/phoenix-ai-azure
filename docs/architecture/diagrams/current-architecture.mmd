@@ -7,11 +7,12 @@ flowchart TB
     Operators["BFG Solutions Entra group (3 members)\nDemo RG Owner — ACTIVE"]
 
     subgraph CLIENT["Client Experience"]
-        Landing["Experience Selector Landing — ACTIVE"]
-        HCP["Original HCP Portal: chat, analysis, TBSA, Parkland, guidelines, history — ACTIVE"]
-        Community["Original Community Portal: chat, image-check, assessment, articles, first-aid — ACTIVE"]
+        Landing["v2.0 Public Landing — ACTIVE"]
+        HCP["Original HCP Portal: retained direct routes — ACTIVE"]
+        Community["Original Community Portal: retained direct routes — ACTIVE"]
         V2["Phoenix AI v2.0 Experience (/v2/*): HCP workspace + Community portal — ACTIVE (flag-gated)"]
-        PWA["PWA / Mobile + EN/BM toggle — ACTIVE"]
+        PWA["PWA / Mobile + EN/BM UI and AI output — ACTIVE"]
+        Notice["Bilingual PDPA + clinical decision-support notice — ACTIVE"]
     end
 
     subgraph APP["Phoenix AI Application (Next.js 14 App Router)"]
@@ -51,6 +52,8 @@ flowchart TB
     Users --> Community
     Users --> V2
     Users --> PWA
+    HCP --> Notice
+    V2 --> Notice
     Operators -->|"Owner on rg-phoenixai-bfgs-demo only"| ARM
     Actions -->|"Demo / Development OIDC"| DeployIdentity
     DeployIdentity -->|"subscription Contributor\nRBAC Admin on demo RG only"| ARM

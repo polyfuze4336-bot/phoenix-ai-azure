@@ -12,6 +12,18 @@ Implemented in
 [`components/v2/analysis-info-panel.tsx`](../../nextjs_space/components/v2/analysis-info-panel.tsx)
 (**RAI-TRANS-003**).
 
+## Legal and clinical-use warning
+
+HCP chat and image-analysis surfaces display a bilingual notice that:
+
+- patient data and images must be authorized, de-identified where possible, and handled in accordance
+  with Malaysia's Personal Data Protection Act 2010 and other applicable Malaysian law; and
+- AI analysis is clinical decision support only, not a diagnosis or replacement for qualified
+  clinical judgement.
+
+The notice is an implemented transparency and handling control, not a claim of legal certification or
+proof that the demonstration deployment is production-ready (**RAI-PRIV-007**, **RAI-ACCT-001**).
+
 ## Confidence
 - Per-field confidence (high / moderate / low / insufficient) separates observation from
   interpretation (**RAI-TRANS-001**, **RAI-SAFE-004**).

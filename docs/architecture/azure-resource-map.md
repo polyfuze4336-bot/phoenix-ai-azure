@@ -7,6 +7,8 @@
 > **Phoenix AI v2.0 (`/v2/*`, ADR-0004) introduces NO additional Azure resources.** It ships inside the
 > existing Next.js standalone bundle in the same Container App and reuses the same environment-owned Azure AI,
 > Application Insights, Key Vault, and Managed Identity resources. The Azure footprint below is unchanged.
+> The v2-only landing, shared analysis transport, bilingual HCP AI output and legal/safety notices added
+> in architecture version 2.4.0 are application-layer changes and likewise require no Azure resource change.
 
 ## Environment
 

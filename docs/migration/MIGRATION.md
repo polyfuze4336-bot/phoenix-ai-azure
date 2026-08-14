@@ -1216,3 +1216,31 @@ result now surfaces a deterministic TBSA subcomponent for burn size:
   `docs/rai/known-limitations.md`.
 - **Validation planned in this step.** Unit tests, RAI tests, integration route tests, typecheck, build,
   architecture validation, Mermaid validation, and secret scan on changed files.
+
+### Step 30 - Make v2 the public landing and complete bilingual HCP AI handling
+
+This step removes the original experience from the enabled public landing while retaining original
+routes for compatibility. It keeps original and v2 wound analysis on one shared request/SSE path,
+propagates the existing EN/BM selection into HCP analysis and chat, and adds a shared patient-data and
+clinical-use warning.
+
+- **Visible behavior.**
+  - `/` renders the Phoenix AI v2.0 landing directly when v2 is enabled; no original/v1 entry or
+    "switch experience" link is displayed.
+  - Original and v2 HCP analysis submit the same image payload contract to `/api/analyze-wound` and
+    consume the same completed SSE event.
+  - Bahasa Malaysia selection requests BM narrative from HCP analysis and chat. Stable JSON keys and
+    machine enum values remain unchanged.
+  - HCP analysis/chat displays bilingual wording requiring authorized, preferably de-identified,
+    patient data/images to be handled under the Personal Data Protection Act 2010 and applicable
+    Malaysian law. The same notice states that output is clinical decision support only.
+- **Reliability.** Shared client parsing consumes trailing SSE frames, reports safe API errors, and
+  normalizes empty browser MIME values to a supported image type.
+- **Architecture governance.** Impact level **MEDIUM**; architecture version `2.3.0 -> 2.4.0`.
+  No ADR or Azure resource change is required. See
+  `docs/architecture/changes/CHANGE-20260814-v2-analysis-language-safety.md`.
+- **Responsible AI impact.** `RAI-INCL-001` expands to bilingual HCP AI output and new
+  `RAI-PRIV-007` records the user-visible legal handling notice. The notice is not a compliance,
+  clinical-validation or regulatory-approval claim.
+- **Validation planned in this step.** Unit, RAI, API and targeted browser tests; typecheck; build;
+  architecture and Mermaid validation; code review; secret scan; CodeQL.

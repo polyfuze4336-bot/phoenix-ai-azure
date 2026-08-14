@@ -5,8 +5,9 @@
 flowchart TB
     subgraph HCPChat["HCP Chat"]
         U1["User"] --> UI1["HCP Chat UI"]
-        UI1 --> R1["/api/hcp-chat"]
-        R1 --> P1["lib/ai prompts: hcp-chat"]
+        UI1 --> L1["EN/BM selection"]
+        L1 --> R1["/api/hcp-chat"]
+        R1 --> P1["lib/ai prompts: hcp-chat + language instruction"]
         P1 --> AP1["AI Provider (AzureFoundryProvider)"]
         AP1 --> F1["Microsoft Foundry / Azure OpenAI"]
         F1 --> S1["Streaming SSE response"]
@@ -15,12 +16,13 @@ flowchart TB
 
     subgraph HCPAnalysis["HCP Wound Analysis"]
         U2["User"] --> IMG2["Image upload (base64, one-or-many)"]
-        IMG2 --> R2["/api/analyze-wound"]
+        IMG2 --> L2["Shared original/v2 request + SSE parser\nEN/BM selection"]
+        L2 --> R2["/api/analyze-wound"]
         R2 --> V2["Image validation (lib/ai/validation/image-input)"]
         V2 --> AP2["AI Provider (multimodal, consolidated TBSA)"]
         AP2 --> F2["Microsoft Foundry (gpt-4o vision)"]
         F2 --> SV2["Structured response validation (wound-analysis-schema)"]
-        SV2 --> UI2["HCP Result Panel"]
+        SV2 --> UI2["HCP Result Panel\nbilingual PDPA + decision-support notice"]
         R2 -.->|"OPTIONAL: persist AnalysisRecord"| DB2["PostgreSQL (lib/analysis/history)"]
         R2 -.->|"OPTIONAL: not wired"| BLOB2["Azure Blob Storage"]
     end

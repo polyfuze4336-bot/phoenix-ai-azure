@@ -35,7 +35,8 @@ Control IDs are stable and match [`lib/rai/controls.ts`](../../nextjs_space/lib/
 | RAI-PRIV-002 | Server-side model calls | Privacy & Security | Browser never calls model directly | `app/api/analyze-wound/route.ts` | No | — | Implemented |
 | RAI-PRIV-003 | Privacy-safe telemetry | Privacy & Security | Blocked-key sanitisation; no clinical content | `lib/telemetry/server.ts`, `lib/ai/telemetry.ts` | No | `tests/rai/rai-telemetry.test.ts` | Implemented |
 | RAI-PRIV-006 | Request size limits | Privacy & Security | Body size checked | `lib/ai/validation/image-input.ts` | No | `tests/unit/image-input.test.ts` | Implemented |
-| RAI-INCL-001 | Bilingual public experience | Inclusiveness | EN / Bahasa Malaysia | `lib/ai/prompts/community-wound-analysis.ts`, `lib/i18n.ts` | Yes | `tests/unit/language.test.ts` | Implemented |
+| RAI-PRIV-007 | Patient-data legal handling notice | Privacy & Security | Bilingual HCP notice requires authorized/de-identified handling under PDPA 2010 and applicable Malaysian law; makes no compliance-certification claim | `components/clinical-ai-notice.tsx` | Yes | `tests/rai/rai-controls.test.ts` | Implemented |
+| RAI-INCL-001 | Bilingual AI experience | Inclusiveness | EN / Bahasa Malaysia public guidance, HCP chat and HCP analysis narratives | `lib/ai/language.ts`, `lib/ai/analysis/pipeline.ts`, `lib/i18n.ts` | Yes | `tests/unit/language.test.ts`, `tests/unit/analysis-pipeline.test.ts` | Implemented |
 | RAI-INCL-002 | Responsive, installable access | Inclusiveness | PWA + responsive; WCAG audit pending | `components/pwa-provider.tsx` | No | — | Partially Implemented |
 
 ## Not implemented / not applicable (documented honestly)

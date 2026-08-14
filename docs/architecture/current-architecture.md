@@ -7,7 +7,7 @@
 > and MUST remain synchronized with the implementation (see
 > [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.2.1`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.4.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -36,7 +36,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Concern | Current state |
 | --- | --- |
 | Application runtime | Next.js 14 (App Router), React 18, TypeScript 5, standalone Node server (`node server.js`) — **Implemented** |
-| Major portals | Experience selector landing, Original HCP + Community portals, and an additive **Phoenix AI v2.0** experience (`/v2/*`, feature-flag gated), PWA + EN/BM — **Implemented** |
+| Major portals | v2.0 public landing (when feature enabled), retained Original HCP + Community routes, and **Phoenix AI v2.0** (`/v2/*`, feature-flag gated), PWA + EN/BM UI and AI output — **Implemented** |
 | Hosting | Azure Container Apps Consumption, `eastus2`; image in Azure Container Registry Basic — **Implemented** |
 | AI processing | Environment-owned Azure AI Services S0 account with `gpt-4o` via `lib/ai`, managed identity — **Implemented** |
 | Data handling | Azure PostgreSQL Flexible Server via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
@@ -57,11 +57,12 @@ flowchart TB
     Users["Users (Clinicians & Public)"]
 
     subgraph CLIENT["Client Experience"]
-        Landing["Experience Selector Landing — ACTIVE"]
-        HCP["Original HCP Portal: chat, analysis, TBSA, Parkland, guidelines, history — ACTIVE"]
-        Community["Original Community Portal: chat, assessment, articles, first-aid — ACTIVE"]
+        Landing["v2.0 Public Landing — ACTIVE"]
+        HCP["Original HCP Portal: retained direct routes — ACTIVE"]
+        Community["Original Community Portal: retained direct routes — ACTIVE"]
         V2["Phoenix AI v2.0 Experience (/v2/*): HCP workspace + Community portal — ACTIVE (flag-gated)"]
-        PWA["PWA / Mobile + EN/BM toggle — ACTIVE"]
+        PWA["PWA / Mobile + EN/BM UI and AI output — ACTIVE"]
+        Notice["Bilingual PDPA + clinical decision-support notice — ACTIVE"]
     end
 
     subgraph APP["Phoenix AI Application (Next.js 14 App Router)"]
@@ -100,6 +101,8 @@ flowchart TB
     Users --> Community
     Users --> V2
     Users --> PWA
+    HCP --> Notice
+    V2 --> Notice
 
     Landing --> Next
     HCP --> Next
@@ -150,12 +153,13 @@ Companion diagrams:
 
 | Element | Location | Status |
 | --- | --- | --- |
-| Experience selector landing (routes to Original portals or v2) | `app/page.tsx`, `app/_components/experience-selector-client.tsx` (degrades to `app/_components/landing-client.tsx` when v2 disabled) | Implemented |
+| Public landing (v2.0 directly when enabled; degrades to the original landing when v2 is disabled) | `app/page.tsx`, `app/v2/_components/v2-landing-client.tsx`, `app/_components/landing-client.tsx` | Implemented |
 | HCP portal (chat, analysis, TBSA, Parkland, guidelines, history) | `app/hcp/*` | Implemented |
 | Community portal (chat, assessment, articles, first-aid) | `app/community/*` | Implemented |
 | **Phoenix AI v2.0 experience** — additive, isolated, feature-flag gated; reuses the same API contracts and Azure services (ADR-0004) | `app/v2/*`, `components/v2/*`, `lib/v2/*` | Implemented |
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |
-| English / Bahasa Malaysia | `components/language-provider.tsx`, `components/language-toggle.tsx`, `lib/i18n.ts` | Implemented |
+| English / Bahasa Malaysia UI + AI response selection | `components/language-provider.tsx`, `components/language-toggle.tsx`, `lib/i18n.ts`, `lib/ai/language.ts` | Implemented |
+| Patient-data and clinical decision-support notice | `components/clinical-ai-notice.tsx` | Implemented |
 | Responsive interface + theming | Tailwind + shadcn/ui, `components/theme-*` | Implemented |
 
 ### 3.2 Application Layer
@@ -180,18 +184,19 @@ Companion diagrams:
 | Model selection (purpose-specific) | `lib/ai/model-config.ts` — `AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT` / `AZURE_AI_CHAT_MODEL_DEPLOYMENT` (default to `AZURE_AI_MODEL_DEPLOYMENT`) | Implemented |
 | Credential | `lib/ai/azure-credential.ts` (`DefaultAzureCredential`, key fallback) | Implemented |
 | OpenAI-compatible mapping | `lib/ai/openai-compatible.ts` | Implemented |
-| System prompts (HCP vs Community) | `lib/ai/prompts/{hcp-chat,hcp-wound-analysis,community-chat,community-wound-analysis}.ts` | Implemented |
+| System prompts (HCP vs Community, validated EN/BM response instruction) | `lib/ai/prompts/{hcp-chat,hcp-wound-analysis,community-chat,community-wound-analysis}.ts`, `lib/ai/language.ts` | Implemented |
 | Staged analysis prompts | `lib/ai/prompts/{wound-visual-observation,wound-clinical-interpretation,wound-management,wound-analysis-critic}.ts` | Implemented |
-| Staged analysis pipeline | `lib/ai/analysis/pipeline.ts` (`runAnalysisPipeline`, `assembleAnalysis`) — default for `/api/analyze-wound`; flag `AI_ANALYSIS_PIPELINE=single` reverts | Implemented |
+| Staged analysis pipeline | `lib/ai/analysis/pipeline.ts` (`runAnalysisPipeline`, `assembleAnalysis`) — default for `/api/analyze-wound`; preserves stable structured enums while localizing narrative EN/BM; flag `AI_ANALYSIS_PIPELINE=single` reverts | Implemented |
 | Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — no assumed patient weight | Implemented |
 | Rich analysis schema + adapter | `lib/ai/schemas/burn-wound-analysis.ts` (observation vs interpretation, field confidence, gaps) + flat back-compat adapter | Implemented |
-| Streaming | `lib/ai/streaming/{sse,collect,text-stream}.ts` | Implemented |
+| Streaming | `lib/ai/streaming/{sse,collect,text-stream,client-analysis}.ts` (shared original/v2 completion parser; trailing-frame safe) | Implemented |
 | Image analysis (multimodal, one-or-many images per HCP request) | `lib/ai/validation/image-input.ts` + vision model | Implemented |
 | Structured response validation | `lib/ai/validation/wound-analysis-schema.ts` (Zod, 22-field contract) | Implemented |
 | Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
 | AI telemetry | `lib/ai/telemetry.ts` | Implemented |
 
-**Wound image analysis flow (`/api/analyze-wound`).** The default `staged` pipeline runs four
+**Wound image analysis flow (`/api/analyze-wound`).** Original and v2 clients use the same image
+preparation, request and SSE completion helper. The default `staged` pipeline runs four
 sequential model stages — visual observation → clinical interpretation + quantification →
 management & referral → consistency/safety critic — then applies deterministic post-processing:
 Parkland is computed in app code from a supplied weight (never an assumed 70 kg), Fitzpatrick is
@@ -202,7 +207,9 @@ or duplicate views are consolidated into one total TBSA estimate (not naively su
 deterministically classified as major (`>=15%`) vs minor (`<15%`) when estimable. The rich result
 is mapped back to the existing flat contract (SSE envelope unchanged) and the full structure
 travels under `result.structured` for the enhanced UI and the REFINE (second-pass) flow. Setting
-`AI_ANALYSIS_PIPELINE=single` restores the original single-pass call.
+`AI_ANALYSIS_PIPELINE=single` restores the original single-pass call. Requests carry only validated
+`en` or `bm`; narrative and deterministic guidance follow that selection while JSON keys and enum
+tokens remain stable.
 
 ### 3.4 Data Layer
 

@@ -19,6 +19,7 @@ and `tests`).
 | [`nextjs_space/app/v2/hcp/ai-assurance/_components/ai-assurance-client.tsx`](../../nextjs_space/app/v2/hcp/ai-assurance/_components/ai-assurance-client.tsx) | Assurance overview, controls, matrix, governance, limitations |
 | [`nextjs_space/components/v2/analysis-info-panel.tsx`](../../nextjs_space/components/v2/analysis-info-panel.tsx) | Assurance status line + Analysis Information panel |
 | [`nextjs_space/components/v2/clinical-review-panel.tsx`](../../nextjs_space/components/v2/clinical-review-panel.tsx) | Human-oversight review actions |
+| [`nextjs_space/components/clinical-ai-notice.tsx`](../../nextjs_space/components/clinical-ai-notice.tsx) | Bilingual PDPA/Malaysian-law handling warning + clinical decision-support limitation |
 | [`nextjs_space/lib/v2/nav.ts`](../../nextjs_space/lib/v2/nav.ts) | "AI Assurance" nav item |
 
 ## Pre-existing implementation (surfaced, not created here)
@@ -34,6 +35,8 @@ and `tests`).
 | `lib/ai/azure-credential.ts` | RAI-PRIV-001 |
 | `lib/analysis/history.ts`, `prisma/schema.prisma` | RAI-ACCT-002 |
 | `lib/ai/model-config.ts` | RAI-ACCT-005 |
+| `lib/ai/language.ts`, `lib/ai/analysis/pipeline.ts` | RAI-INCL-001 |
+| `components/clinical-ai-notice.tsx` | RAI-PRIV-007, RAI-ACCT-001 |
 | `tests/evaluation/burn-wound/*` | RAI-ACCT-004 |
 
 ## Tests
