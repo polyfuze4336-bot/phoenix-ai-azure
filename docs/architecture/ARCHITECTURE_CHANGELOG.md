@@ -34,7 +34,8 @@ reference the relevant ADR and change record.
 
 ### Boundaries
 - No new Azure resource, external integration, storage path or identity mechanism is introduced.
-- Images remain ephemeral request payloads and are not persisted by the analysis workflow.
+- Inference images remain ephemeral in `/api/analyze-wound`; a separate original-HCP history request
+  may retain an image/result only for the verified Entra clinician. Demo auth cannot use history.
 - This is not a claim of legal compliance, clinical validation, certification or regulatory approval.
   See [ADR-0008](./decisions/ADR-0008-v2-default-public-entry.md) and
   [CHANGE-20260814](./changes/CHANGE-20260814-v2-analysis-language-safety.md).

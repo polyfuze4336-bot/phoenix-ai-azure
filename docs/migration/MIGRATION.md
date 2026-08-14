@@ -1235,12 +1235,20 @@ clinical-use warning.
     patient data/images to be handled under the Personal Data Protection Act 2010 and applicable
     Malaysian law. The same notice states that output is clinical decision support only.
 - **Reliability.** Shared client parsing consumes trailing SSE frames, reports safe API errors, and
-  normalizes empty browser MIME values to a supported image type.
+  normalizes empty browser MIME values to a supported image type. Single-pass safe-failure content
+  is localized for BM. Parkland volumes are shown only when TBSA meets the age-aware indication
+  threshold and weight is supplied.
+- **Patient-record protection.** Original-HCP history create/list/detail operations now require a
+  server-verified Entra HCP session and are scoped to that clinician. Client-only demo auth can run
+  analysis but cannot retain or retrieve patient records (ADR-0009).
 - **Architecture governance.** Impact level **MEDIUM**; architecture version `2.3.0 -> 2.4.0`.
-  ADR-0008 records the root-entry decision; no Azure resource change is required. See
+  ADR-0008 records the root-entry decision and ADR-0009 records retained-record authorization; no
+  Azure resource change is required. See
   `docs/architecture/changes/CHANGE-20260814-v2-analysis-language-safety.md`.
 - **Responsible AI impact.** `RAI-INCL-001` expands to bilingual HCP AI output and new
-  `RAI-PRIV-007` records the user-visible legal handling notice. The notice is not a compliance,
-  clinical-validation or regulatory-approval claim.
+  `RAI-PRIV-007` records the user-visible legal handling notice, `RAI-PRIV-008` records
+  server-authorized retained-analysis access, and `RAI-SAFE-006` now includes an age-aware
+  indication threshold. The notice is not a compliance, clinical-validation or regulatory-approval
+  claim.
 - **Validation planned in this step.** Unit, RAI, API and targeted browser tests; typecheck; build;
   architecture and Mermaid validation; code review; secret scan; CodeQL.

@@ -6,9 +6,8 @@
  *    accessed only through short-lived user-delegation SAS URLs.
  *  - PostgreSQL (Prisma model `AnalysisRecord`) for the structured assessment.
  *
- * Demo-auth note: the clinician name/email are supplied by the (client-side) demo
- * session and are stored for display only. They are NOT a security boundary — do
- * not use them for access control.
+ * The route layer supplies identity only from a verified Entra session. Query
+ * helpers scope every read to that identity; demo auth cannot call this module.
  *
  * SERVER-ONLY. Never import from a client component.
  */
@@ -117,9 +116,13 @@ export async function saveAnalysisRecord(input: SaveAnalysisInput): Promise<{ id
 }
 
 /** Return retained analyses, newest first, for the history list. */
-export async function listAnalysisRecords(limit = 100): Promise<AnalysisRecordSummary[]> {
+export async function listAnalysisRecords(
+  clinicianEmail: string,
+  limit = 100,
+): Promise<AnalysisRecordSummary[]> {
   const rows = await withDbRetry(() =>
     prisma.analysisRecord.findMany({
+      where: { clinicianEmail },
       orderBy: { createdAt: 'desc' },
       take: Math.min(Math.max(limit, 1), 200),
       select: {
@@ -154,9 +157,12 @@ export async function listAnalysisRecords(limit = 100): Promise<AnalysisRecordSu
 }
 
 /** Return a single retained analysis with a fresh image SAS URL. */
-export async function getAnalysisRecord(id: string): Promise<AnalysisRecordDetail | null> {
+export async function getAnalysisRecord(
+  id: string,
+  clinicianEmail: string,
+): Promise<AnalysisRecordDetail | null> {
   const row = await withDbRetry(() =>
-    prisma.analysisRecord.findUnique({ where: { id } }),
+    prisma.analysisRecord.findFirst({ where: { id, clinicianEmail } }),
   );
   if (!row) return null;
 

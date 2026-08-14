@@ -1,7 +1,8 @@
 %% Phoenix AI — Current (AS-IS) data-flow diagram
 %% Reflects actual API routes and the AI provider layer at HEAD.
 %% Blob Storage is shown as OPTIONAL because no current workflow persists user files
-%% (wound/burn images are read client-side via FileReader and sent as ephemeral base64 payloads).
+%% (inference payloads are ephemeral; the original HCP client may make a separate
+%% Entra-session-authorized retention request after analysis).
 flowchart TB
     subgraph HCPChat["HCP Chat"]
         U1["User"] --> UI1["HCP Chat UI"]

@@ -165,12 +165,12 @@ export const RAI_CONTROLS: RaiControl[] = [
   },
   {
     id: 'RAI-SAFE-006',
-    title: 'Deterministic, weight-gated Parkland',
+    title: 'Deterministic, indication- and weight-gated Parkland',
     principle: 'reliabilitySafety',
     layer: 'analysis',
     status: 'active',
     description:
-      'Fluid resuscitation volumes are computed deterministically and only when a weight is supplied; the pipeline never invents a body weight.',
+      'Fluid resuscitation volumes are computed deterministically only when TBSA meets the age-aware indication threshold and weight is supplied; the pipeline never invents a body weight or recommends routine formula volumes for small burns.',
     evidence: ['lib/clinical/parkland.ts', 'lib/ai/analysis/pipeline.ts'],
     tests: ['tests/unit/parkland.test.ts', 'tests/rai/rai-safety.test.ts'],
     userVisible: true,
@@ -433,6 +433,23 @@ export const RAI_CONTROLS: RaiControl[] = [
     ],
     tests: ['tests/rai/rai-controls.test.ts'],
     userVisible: true,
+  },
+  {
+    id: 'RAI-PRIV-008',
+    title: 'Server-authorized retained analysis access',
+    principle: 'privacySecurity',
+    layer: 'operations',
+    status: 'active',
+    description:
+      'Retained analysis create, list and detail APIs require a verified Entra HCP session and scope records to that session email. Client-only demo authentication cannot retain or read patient records.',
+    evidence: [
+      'lib/auth/analysis-api-authorization.ts',
+      'app/api/hcp/analyses/route.ts',
+      'app/api/hcp/analyses/[id]/route.ts',
+      'lib/analysis/history.ts',
+    ],
+    tests: ['tests/unit/auth.test.ts'],
+    userVisible: false,
   },
   {
     id: 'RAI-ACCT-005',

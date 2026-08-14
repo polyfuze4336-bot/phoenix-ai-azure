@@ -115,9 +115,12 @@ export async function POST(request: NextRequest) {
           {
             type: 'text',
             text:
-              imageDataUrls.length > 1
-                ? 'Please analyze these wound/burn images together as one case and provide a structured clinical assessment in JSON format. Consolidate overlap/duplicate views when estimating total TBSA.'
-                : 'Please analyze this wound/burn image and provide a structured clinical assessment in JSON format.',
+              `${
+                imageDataUrls.length > 1
+                  ? 'Please analyze these wound/burn images together as one case and provide a structured clinical assessment in JSON format. Consolidate overlap/duplicate views when estimating total TBSA.'
+                  : 'Please analyze this wound/burn image and provide a structured clinical assessment in JSON format.'
+              }\nClinician-supplied patient context: ${JSON.stringify(patient ?? {})}. ` +
+              'Do not assume or invent any patient detail that is not supplied.',
           },
           ...imageDataUrls.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
         ],
@@ -142,7 +145,7 @@ export async function POST(request: NextRequest) {
     return createStructuredSseResponse({
       upstream: upstream.body,
       processingEvent: { status: 'processing', message: 'Analyzing' },
-      buildResult: (buffer) => parseHcpWoundAnalysis(buffer),
+      buildResult: (buffer) => parseHcpWoundAnalysis(buffer, language),
       correlationId: upstream.correlationId,
     });
   } catch (error: any) {

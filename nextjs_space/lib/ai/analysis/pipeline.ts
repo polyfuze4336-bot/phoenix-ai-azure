@@ -130,11 +130,25 @@ function computeParkland(
   isBurn: boolean,
   tbsa: number | null,
   weightKg: number | undefined,
+  ageGroup: PatientContext['ageGroup'] | undefined,
   language: AiResponseLanguage,
 ) {
   const bm = language === 'bm';
   if (!isBurn || !tbsa || tbsa <= 0) {
     return { indicated: 'no' as const, requiresWeight: false, summary: bm ? 'Tidak berkenaan (bukan kelecuran atau TBSA tidak dapat dianggarkan).' : 'Not applicable (not a burn or no estimable TBSA).', total24hMl: null, first8hMl: null, next16hMl: null };
+  }
+  const threshold = ageGroup === 'child' || ageGroup === 'infant' ? 10 : 20;
+  if (tbsa < threshold) {
+    return {
+      indicated: 'no' as const,
+      requiresWeight: false,
+      summary: bm
+        ? `Formula Parkland biasanya tidak ditunjukkan kerana TBSA ${tbsa}% berada di bawah ambang ${threshold}% untuk kumpulan umur ini. Gunakan penilaian klinikal dan protokol tempatan.`
+        : `The Parkland formula is not routinely indicated because ${tbsa}% TBSA is below the ${threshold}% threshold for this age group. Use clinical assessment and local protocol.`,
+      total24hMl: null,
+      first8hMl: null,
+      next16hMl: null,
+    };
   }
   if (!weightKg || weightKg <= 0) {
     return {
@@ -312,7 +326,13 @@ function assemble(args: {
   }
 
   // --- Deterministic Parkland (never from an assumed weight).
-  const parkland = computeParkland(interpretation.isBurn, interpretation.tbsaEstimate, patient?.weightKg, language);
+  const parkland = computeParkland(
+    interpretation.isBurn,
+    interpretation.tbsaEstimate,
+    patient?.weightKg,
+    patient?.ageGroup,
+    language,
+  );
 
   // --- Analysis-quality band.
   const analysisQuality: BurnWoundAnalysis['analysisQuality'] = inadequate
@@ -335,14 +355,14 @@ function assemble(args: {
 
   // --- Missing information + follow-up questions (deterministic, honest).
   const missing: string[] = [];
-  if (!patient?.weightKg && interpretation.isBurn) missing.push(bm ? 'Berat pesakit — diperlukan untuk mengira resusitasi cecair.' : 'Patient weight — required to calculate fluid resuscitation.');
+  if (!patient?.weightKg && parkland.indicated === 'uncertain') missing.push(bm ? 'Berat pesakit — diperlukan untuk mengira resusitasi cecair.' : 'Patient weight — required to calculate fluid resuscitation.');
   if (!observation.scalePresent) missing.push(bm ? 'Rujukan saiz (pembaris/syiling) — diperlukan untuk mengukur dimensi sebenar.' : 'A size reference (ruler/coin) — needed to measure real dimensions.');
   if (interpretation.isBurn && !patient?.mechanism) missing.push(bm ? 'Mekanisme kelecuran dan masa sejak kecederaan.' : 'Burn mechanism (scald/flame/chemical/electrical) and time since injury.');
   if (!patient?.freeText) missing.push(bm ? 'Sejarah berkaitan: komorbiditi, sakit, sensasi dan status tetanus.' : 'Relevant history: comorbidities (e.g. diabetes), pain, sensation, tetanus status.');
   missing.push(...(interpretation.tbsaLimitations ?? []));
 
   const followUpQuestions: string[] = [];
-  if (!patient?.weightKg && interpretation.isBurn) followUpQuestions.push(bm ? 'Berapakah berat pesakit (kg)?' : 'What is the patient\'s weight (kg)?');
+  if (!patient?.weightKg && parkland.indicated === 'uncertain') followUpQuestions.push(bm ? 'Berapakah berat pesakit (kg)?' : 'What is the patient\'s weight (kg)?');
   if (interpretation.isBurn && !patient?.mechanism) followUpQuestions.push(bm ? 'Apakah punca kelecuran dan bilakah ia berlaku?' : 'What caused the burn, and how long ago did it happen?');
   followUpQuestions.push(bm ? 'Adakah terdapat kehilangan sensasi, sakit mendalam atau pengisian semula kapilari yang berkurangan?' : 'Is there loss of sensation, deep pain, or reduced capillary refill in the affected area?');
   if (interpretation.infectionSigns.confidence !== 'insufficient') followUpQuestions.push(bm ? 'Adakah terdapat tanda jangkitan sistemik seperti demam, kemerahan merebak, kesakitan meningkat atau lelehan bernanah?' : 'Are there systemic signs of infection (fever, spreading redness, increasing pain, purulent discharge)?');

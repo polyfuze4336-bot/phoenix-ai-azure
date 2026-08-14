@@ -38,7 +38,9 @@ that AI output is clinical decision support only.
 ## Boundaries
 
 - No Azure resource, external integration, authentication or storage mechanism changes.
-- Analysis images remain ephemeral request payloads; the analysis path does not persist them.
+- `/api/analyze-wound` does not persist inference payloads. The original HCP client may separately
+  retain an image/result only through Entra-session-authorized, clinician-scoped history APIs;
+  demo auth cannot retain or retrieve records.
 - The notice communicates data-handling obligations; it does not claim legal certification or that
   technical controls alone establish PDPA compliance.
 - AI output remains clinical decision support requiring qualified clinician review.
