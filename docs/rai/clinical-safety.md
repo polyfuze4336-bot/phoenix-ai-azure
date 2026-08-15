@@ -32,6 +32,11 @@ If the model or validation fails, the app returns an explicit, clearly-labelled
 a result (**RAI-SAFE-010**,
 [`lib/ai/validation/wound-analysis-schema.ts`](../../nextjs_space/lib/ai/validation/wound-analysis-schema.ts)).
 
+Before model invocation, image input is limited to JPEG, PNG, WebP, and GIF; data URLs are
+normalized and MIME type, base64 syntax, decoded size, and file signature are checked. Unsupported
+HEIC/HEIF or malformed/mismatched payloads receive an actionable HTTP 400 and are not sent to the
+model (**RAI-SAFE-001**).
+
 ## Boundaries
 A single photograph cannot establish depth progression, infection, pain or sensation with certainty.
 These limits are disclosed per assessment (see [transparency.md](./transparency.md)) and in

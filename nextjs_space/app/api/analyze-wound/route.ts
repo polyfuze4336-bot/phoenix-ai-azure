@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       refine: Boolean(refineAnswers),
     });
 
-    const imageDataUrl = `data:${validation.mimeType};base64,${image}`;
+    const imageDataUrl = `data:${validation.mimeType};base64,${validation.base64}`;
 
     // --- Staged pipeline (default): multi-stage, evidence-gated, deterministic calc.
     if (pipelineMode === 'staged') {

@@ -16,9 +16,10 @@ flowchart TB
     end
 
     subgraph HCPAnalysis["HCP Wound Analysis"]
-        U2["User"] --> IMG2["Image upload (base64, one-or-many)"]
+        U2["User"] --> IMG2["Image upload (JPEG/PNG/WebP/GIF base64)"]
         IMG2 --> R2["/api/analyze-wound"]
-        R2 --> V2["Image validation (lib/ai/validation/image-input)"]
+        R2 --> V2["Image validation (MIME + base64 + content signature)"]
+        V2 -.->|"invalid: actionable HTTP 400"| UI2
         V2 --> AP2["AI Provider (multimodal, consolidated TBSA)"]
         AP2 --> F2["Microsoft Foundry (gpt-4o vision)"]
         F2 --> SV2["Structured response validation (wound-analysis-schema)"]
@@ -38,9 +39,10 @@ flowchart TB
     end
 
     subgraph CommImage["Community Image Check"]
-        U4["User"] --> IMG4["Image (base64)"]
+        U4["User"] --> IMG4["Image (JPEG/PNG/WebP/GIF base64)"]
         IMG4 --> R4["/api/community-analyze"]
-        R4 --> V4["Image validation"]
+        R4 --> V4["Image validation (MIME + base64 + content signature)"]
+        V4 -.->|"invalid: actionable HTTP 400"| UI4
         V4 --> AP4["AI Provider (multimodal)"]
         AP4 --> F4["Microsoft Foundry (gpt-4o vision)"]
         F4 --> SG4["Safe simplified guidance (community schema)"]

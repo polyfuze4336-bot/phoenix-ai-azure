@@ -66,6 +66,16 @@ async function saveAnalysisToHistory(result: AnalysisResult, image: string, mime
   }
 }
 
+async function responseError(response: Response, fallback: string): Promise<string> {
+  try {
+    const body = await response.json();
+    if (typeof body?.error === 'string' && body.error.trim()) return body.error;
+  } catch {
+    // Keep the existing fallback when the response is not JSON.
+  }
+  return fallback;
+}
+
 export function AnalysisClient() {
   const { t } = useLanguage();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -187,7 +197,7 @@ export function AnalysisClient() {
         body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext() }),
       });
 
-      if (!response?.ok) throw new Error('Analysis failed');
+      if (!response?.ok) throw new Error(await responseError(response, 'Analysis failed'));
 
       const completed = await readAnalysisStream(response);
       if (completed) {
@@ -218,7 +228,7 @@ export function AnalysisClient() {
           refineAnswers: answers,
         }),
       });
-      if (!response?.ok) throw new Error('Refine failed');
+      if (!response?.ok) throw new Error(await responseError(response, 'Refine failed'));
       const completed = await readAnalysisStream(response);
       if (completed) {
         setResult(completed);
@@ -272,7 +282,7 @@ export function AnalysisClient() {
                 <p className="font-medium text-gray-600">{t('analysis.upload')}</p>
                 <p className="text-xs text-gray-400 mt-1">JPEG, PNG — max 10MB</p>
               </div>
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileSelect} className="hidden" />
               <button
                 onClick={startCamera}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#0F9B8E] text-white rounded-xl font-medium hover:bg-[#0e8a7e] transition-colors"

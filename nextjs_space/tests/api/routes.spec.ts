@@ -69,6 +69,18 @@ test('POST /api/analyze-wound rejects a missing image with 400', async ({ reques
   expect(res.status()).toBe(400);
 });
 
+test('POST /api/analyze-wound rejects unsupported HEIC before model invocation', async ({ request }) => {
+  const res = await postJson(request, '/api/analyze-wound', { image: TINY_PNG_B64, mimeType: 'image/heic' });
+  expect(res.status()).toBe(400);
+  await expect(res.json()).resolves.toMatchObject({ error: expect.stringMatching(/JPEG, PNG, WebP, or GIF/) });
+});
+
+test('POST /api/analyze-wound rejects MIME/content mismatch before model invocation', async ({ request }) => {
+  const res = await postJson(request, '/api/analyze-wound', { image: TINY_PNG_B64, mimeType: 'image/jpeg' });
+  expect(res.status()).toBe(400);
+  await expect(res.json()).resolves.toMatchObject({ error: expect.stringMatching(/does not match/) });
+});
+
 test('POST /api/analyze-wound rejects an oversized body with 413', async ({ request }) => {
   const res = await postJson(request, '/api/analyze-wound', { image: OVERSIZED_B64, mimeType: 'image/png' });
   expect(res.status()).toBe(413);

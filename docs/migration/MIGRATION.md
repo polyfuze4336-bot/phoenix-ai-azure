@@ -1309,3 +1309,19 @@ AI experience without rewriting Git history or changing the deployed Azure topol
 - **Evaluation limitation.** The structural analysis harness ran in rubric-only mode but scored zero
   cases because no consented images or fixture outputs are present; all four cases were honestly
   skipped. No diagnostic-accuracy or clinical-validation claim is made.
+
+### Step 33 - Correct vision-input safe failure
+
+- **Incident.** The healthy Original-only Container App accepted an image request, but Azure AI
+  rejected the vision payload with HTTP 400 and the browser received a generic HTTP 500.
+- **Root cause.** Shared validation admitted HEIC/HEIF despite the deployed GPT-4o input contract,
+  did not validate base64/image signatures, and did not pass its normalized data-URL value to the
+  routes.
+- **Correction.** Validate and normalize JPEG, PNG, WebP, and GIF before model invocation and show
+  actionable API validation messages in the Original clients without redesigning the UI.
+- **Architecture impact.** LOW; version `3.0.0 -> 3.0.1`; no ADR or Azure resource change. See
+  `docs/architecture/changes/CHANGE-20260815-vision-input-safe-failure.md`.
+- **Responsible AI impact.** `RAI-SAFE-001` and `RAI-SAFE-010` remain Active with stronger code and
+  test evidence; no prompt, model, clinical-calculation, or output-schema change.
+- **Pre-deploy validation.** PASS: focused image validation (11), unit (107), RAI (23), integration
+  (14), production HTTP API (16), typecheck, lint, production build, and architecture synchronization.

@@ -13,8 +13,6 @@ export const ALLOWED_IMAGE_MIME_TYPES = [
   'image/png',
   'image/webp',
   'image/gif',
-  'image/heic',
-  'image/heif',
 ] as const;
 
 const DEFAULT_MAX_IMAGE_MB = 10;
@@ -69,8 +67,25 @@ export interface ImageInput {
 }
 
 export type ImageValidationResult =
-  | { ok: true; mimeType: string; bytes: number }
+  | { ok: true; mimeType: string; base64: string; bytes: number }
   | { ok: false; error: string };
+
+function hasExpectedSignature(bytes: Buffer, mimeType: string): boolean {
+  if (mimeType === 'image/jpeg') {
+    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  }
+  if (mimeType === 'image/png') {
+    return bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'));
+  }
+  if (mimeType === 'image/webp') {
+    return bytes.length >= 12 && bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP';
+  }
+  if (mimeType === 'image/gif') {
+    const signature = bytes.toString('ascii', 0, 6);
+    return signature === 'GIF87a' || signature === 'GIF89a';
+  }
+  return false;
+}
 
 /** Validate a base64 image payload + optional MIME type. */
 export function validateImageInput(input: ImageInput): ImageValidationResult {
@@ -80,21 +95,40 @@ export function validateImageInput(input: ImageInput): ImageValidationResult {
     return { ok: false, error: 'No image provided' };
   }
 
-  // Accept a data-URL or a bare base64 string; strip any data-URL prefix.
-  const base64 = image.includes(',') ? image.slice(image.indexOf(',') + 1) : image;
+  const rawImage = image.trim();
+  const dataUrl = rawImage.match(/^data:([^;,]+);base64,([\s\S]*)$/i);
+  if (rawImage.toLowerCase().startsWith('data:') && !dataUrl) {
+    return { ok: false, error: 'Image data is invalid. Please upload a JPEG, PNG, WebP, or GIF image.' };
+  }
 
-  const resolvedMime =
-    typeof mimeType === 'string' && mimeType.trim().length > 0
-      ? mimeType.trim().toLowerCase()
-      : 'image/jpeg';
+  const suppliedMime = typeof mimeType === 'string' && mimeType.trim().length > 0
+    ? mimeType.trim().toLowerCase()
+    : undefined;
+  const dataUrlMime = dataUrl?.[1]?.trim().toLowerCase();
+  if (suppliedMime && dataUrlMime && suppliedMime !== dataUrlMime) {
+    return { ok: false, error: 'Image type does not match the uploaded file.' };
+  }
+
+  const resolvedMime = suppliedMime ?? dataUrlMime ?? 'image/jpeg';
 
   if (!ALLOWED_IMAGE_MIME_TYPES.includes(resolvedMime as (typeof ALLOWED_IMAGE_MIME_TYPES)[number])) {
     return {
       ok: false,
-      error: `Unsupported image type. Allowed types: ${ALLOWED_IMAGE_MIME_TYPES.join(', ')}.`,
+      error: 'Unsupported image type. Please upload a JPEG, PNG, WebP, or GIF image.',
     };
   }
 
+  const unpaddedBase64 = (dataUrl?.[2] ?? rawImage).replace(/\s/g, '');
+  if (
+    unpaddedBase64.length === 0 ||
+    !/^[A-Za-z0-9+/]*={0,2}$/.test(unpaddedBase64) ||
+    unpaddedBase64.length % 4 === 1 ||
+    (unpaddedBase64.includes('=') && unpaddedBase64.length % 4 !== 0)
+  ) {
+    return { ok: false, error: 'Image data is invalid. Please upload a JPEG, PNG, WebP, or GIF image.' };
+  }
+
+  const base64 = unpaddedBase64.padEnd(unpaddedBase64.length + ((4 - (unpaddedBase64.length % 4)) % 4), '=');
   const bytes = approxBase64Bytes(base64);
   const limit = maxImageBytes();
   if (bytes > limit) {
@@ -102,5 +136,10 @@ export function validateImageInput(input: ImageInput): ImageValidationResult {
     return { ok: false, error: `Image is too large. Maximum size is ${limitMb} MB.` };
   }
 
-  return { ok: true, mimeType: resolvedMime, bytes };
+  const decoded = Buffer.from(base64, 'base64');
+  if (decoded.toString('base64') !== base64 || !hasExpectedSignature(decoded, resolvedMime)) {
+    return { ok: false, error: 'Image content does not match its file type. Please upload a valid JPEG, PNG, WebP, or GIF image.' };
+  }
+
+  return { ok: true, mimeType: resolvedMime, base64, bytes };
 }

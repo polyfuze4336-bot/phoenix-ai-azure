@@ -84,10 +84,10 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'input',
     status: 'active',
     description:
-      'Uploaded images are validated for MIME type and size before any model call; oversized or unsupported payloads are rejected with an explicit error.',
-    evidence: ['lib/ai/validation/image-input.ts', 'app/api/analyze-wound/route.ts'],
-    tests: ['tests/unit/image-input.test.ts', 'tests/rai/rai-safety.test.ts'],
-    userVisible: false,
+      'Uploaded JPEG, PNG, WebP, and GIF images are normalized and validated for MIME type, base64 syntax, content signature, and size before any model call; malformed, mismatched, oversized, or unsupported payloads are rejected with an explicit user-visible error.',
+    evidence: ['lib/ai/validation/image-input.ts', 'app/api/analyze-wound/route.ts', 'app/api/community-analyze/route.ts'],
+    tests: ['tests/unit/image-input.test.ts', 'tests/api/routes.spec.ts', 'tests/rai/rai-safety.test.ts'],
+    userVisible: true,
   },
   {
     id: 'RAI-SAFE-002',
@@ -270,9 +270,9 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'output',
     status: 'active',
     description:
-      'On model or validation failure the app returns a labelled unavailable state that preserves the medical disclaimer instead of guessing a clinical result.',
-    evidence: ['lib/ai/validation/wound-analysis-schema.ts'],
-    tests: ['tests/unit/ai-parsing.test.ts'],
+      'On model or validation failure the app returns a labelled unavailable state or actionable input error that preserves the medical disclaimer instead of guessing a clinical result.',
+    evidence: ['lib/ai/validation/wound-analysis-schema.ts', 'app/hcp/analysis/_components/analysis-client.tsx', 'app/community/image-check/_components/image-check-client.tsx'],
+    tests: ['tests/unit/ai-parsing.test.ts', 'tests/api/routes.spec.ts'],
     userVisible: true,
   },
   {

@@ -30,8 +30,8 @@ Original-only runtime. They are not current user-visible evidence.
 | --- | --- |
 | `lib/ai/analysis/pipeline.ts` | RAI-SAFE-002/005/006/007/008/009/011, RAI-FAIR-001, RAI-REL-001, RAI-TRANS-002 |
 | `lib/ai/schemas/burn-wound-analysis.ts` | RAI-SAFE-004, RAI-TRANS-001 |
-| `lib/ai/validation/image-input.ts` | RAI-SAFE-001, RAI-PRIV-006 |
-| `lib/ai/validation/wound-analysis-schema.ts` | RAI-SAFE-003/010 |
+| `lib/ai/validation/image-input.ts`, `app/api/analyze-wound/route.ts`, `app/api/community-analyze/route.ts` | RAI-SAFE-001, RAI-PRIV-006 |
+| `lib/ai/validation/wound-analysis-schema.ts`, Original analysis clients | RAI-SAFE-003/010 |
 | `lib/ai/prompts/*.ts` | RAI-FAIR-002, prompt guardrails |
 | `lib/clinical/parkland.ts`, `lib/clinical/tbsa.ts` | RAI-SAFE-006/011 |
 | `lib/telemetry/*.ts`, `lib/ai/telemetry.ts` | RAI-PRIV-003 |
@@ -48,3 +48,5 @@ Original-only runtime. They are not current user-visible evidence.
 | [`nextjs_space/tests/rai/rai-metadata.test.ts`](../../nextjs_space/tests/rai/rai-metadata.test.ts) | Metadata + versioning + review status |
 | [`nextjs_space/tests/rai/rai-telemetry.test.ts`](../../nextjs_space/tests/rai/rai-telemetry.test.ts) | Privacy-safe telemetry |
 | [`nextjs_space/tests/rai/rai-controls.test.ts`](../../nextjs_space/tests/rai/rai-controls.test.ts) | Control-register integrity |
+| [`nextjs_space/tests/unit/image-input.test.ts`](../../nextjs_space/tests/unit/image-input.test.ts) | Model-compatible image MIME, data-URL normalization, base64, signature, and size validation |
+| [`nextjs_space/tests/api/routes.spec.ts`](../../nextjs_space/tests/api/routes.spec.ts) | HTTP safe-failure behavior before model invocation |

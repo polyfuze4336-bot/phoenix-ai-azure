@@ -39,7 +39,7 @@ flowchart TB
         AZPROV["AzureFoundryProvider"]
         CRED["azure-credential\n(DefaultAzureCredential)"]
         OAICOMPAT["openai-compatible mapping"]
-        VALIN["validation/image-input"]
+        VALIN["validation/image-input\nJPEG/PNG/WebP/GIF + base64/signature checks\nexplicit 400 before model call"]
         VALOUT["validation/wound-analysis-schema\n(+ flat back-compat adapter)"]
         STREAM["streaming/sse + collect + text-stream"]
         TEL["ai/telemetry"]

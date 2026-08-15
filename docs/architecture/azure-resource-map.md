@@ -7,6 +7,8 @@
 > **The Original-only restoration changes no Azure resources.** It ships a restored application image
 > to the existing Container App and retains the same ACR, Azure AI, PostgreSQL, Application Insights,
 > Key Vault, and Managed Identity resources.
+> The `3.0.1` vision-input safe-failure correction is application-only and likewise changes no Azure
+> resource, SKU, network path, identity, secret, model deployment, or region.
 
 ## Environment
 

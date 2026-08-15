@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         role: 'user',
         content: [
           { type: 'text', text: 'Please check this wound/burn image and give me simple advice.' },
-          { type: 'image_url', image_url: { url: `data:${validation.mimeType};base64,${image}` } },
+          { type: 'image_url', image_url: { url: `data:${validation.mimeType};base64,${validation.base64}` } },
         ],
       },
     ];

@@ -6,7 +6,7 @@ Control IDs are stable and match [`lib/rai/controls.ts`](../../nextjs_space/lib/
 
 | RAI ID | Capability | Principle | Implementation | Location | User Visible | Evidence (tests) | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| RAI-SAFE-001 | Image input validation | Reliability & Safety | MIME + size validation before any model call | `lib/ai/validation/image-input.ts` | No | `tests/unit/image-input.test.ts`, `tests/rai/rai-safety.test.ts` | Implemented |
+| RAI-SAFE-001 | Image input validation | Reliability & Safety | Model-compatible MIME, normalized data URL/base64, content signature, and size validation before any model call | `lib/ai/validation/image-input.ts`, `app/api/analyze-wound/route.ts`, `app/api/community-analyze/route.ts` | Yes | `tests/unit/image-input.test.ts`, `tests/api/routes.spec.ts`, `tests/rai/rai-safety.test.ts` | Implemented |
 | RAI-SAFE-002 | Image-quality gating | Reliability & Safety | Stage-1 adequacy assessment; downstream confidence capped | `lib/ai/prompts/wound-visual-observation.ts`, `lib/ai/analysis/pipeline.ts` | Yes | `tests/unit/analysis-pipeline.test.ts` | Implemented |
 | RAI-SAFE-003 | Schema-validated output | Reliability & Safety | Zod validation; explicit unavailable state | `lib/ai/validation/wound-analysis-schema.ts` | No | `tests/unit/wound-schema.test.ts`, `tests/unit/ai-parsing.test.ts` | Implemented |
 | RAI-SAFE-004 | Observation vs interpretation | Transparency | Per-field observation/interpretation/confidence/basis | `lib/ai/schemas/burn-wound-analysis.ts` | Yes | `tests/unit/wound-schema.test.ts` | Implemented |
@@ -15,7 +15,7 @@ Control IDs are stable and match [`lib/rai/controls.ts`](../../nextjs_space/lib/
 | RAI-SAFE-007 | No fabricated measurements | Reliability & Safety | Dimensions stripped without a scale reference | `lib/ai/analysis/pipeline.ts` | Yes | `tests/rai/rai-safety.test.ts` | Implemented |
 | RAI-SAFE-008 | Special-site escalation | Reliability & Safety | High-risk sites never routine | `lib/ai/analysis/pipeline.ts` | Yes | `tests/rai/rai-safety.test.ts` | Implemented |
 | RAI-SAFE-009 | Confidence capping | Reliability & Safety | Confidence bounded by image quality | `lib/ai/analysis/pipeline.ts` | Yes | `tests/rai/rai-safety.test.ts` | Implemented |
-| RAI-SAFE-010 | Safe-failure state | Reliability & Safety | Labelled unavailable result, disclaimer preserved | `lib/ai/validation/wound-analysis-schema.ts` | Yes | `tests/unit/ai-parsing.test.ts` | Implemented |
+| RAI-SAFE-010 | Safe-failure state | Reliability & Safety | Labelled unavailable result or actionable input rejection; disclaimer preserved | `lib/ai/validation/wound-analysis-schema.ts`, Original analysis clients | Yes | `tests/unit/ai-parsing.test.ts`, `tests/api/routes.spec.ts` | Implemented |
 | RAI-SAFE-011 | Deterministic TBSA | Reliability & Safety | Lund & Browder age-adjusted | `lib/clinical/tbsa.ts` | Yes | `tests/unit/tbsa.test.ts` | Implemented |
 | RAI-SAFE-012 | Clinician refinement loop | Reliability & Safety | Second-pass with human answers, no re-upload | `app/api/analyze-wound/route.ts` | Yes | — | Implemented |
 | RAI-REL-001 | Bounded stage execution | Reliability & Safety | Per-stage timeouts | `lib/ai/analysis/pipeline.ts` | No | — | Implemented |

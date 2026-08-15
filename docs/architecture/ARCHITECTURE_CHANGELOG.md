@@ -16,6 +16,19 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [3.0.1] — 2026-08-15
+
+### Changed
+- **Vision input safe failure** — HCP and Community image-analysis routes validate model-compatible
+  JPEG, PNG, WebP, and GIF payloads, normalize data URLs, and reject malformed, mismatched, HEIC,
+  or HEIF input with an actionable client error before invoking Azure AI.
+- **Original client feedback** — analysis clients display the API validation message instead of
+  replacing every non-success response with the generic `Analysis failed` text.
+
+### Boundaries
+- No Azure resource, identity, model, prompt, output schema, clinical calculation, or persistence
+  change. See [CHANGE-20260815](./changes/CHANGE-20260815-vision-input-safe-failure.md).
+
 ## [3.0.0] — 2026-08-15
 
 ### Changed

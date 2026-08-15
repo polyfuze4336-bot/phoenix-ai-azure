@@ -11,7 +11,9 @@ import {
   ALLOWED_IMAGE_MIME_TYPES,
 } from '../../lib/ai/validation/image-input';
 
-const tinyBase64 = 'aGVsbG8='; // "hello"
+const tinyPngBase64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+const jpegSignatureBase64 = Buffer.from([0xff, 0xd8, 0xff, 0xe0]).toString('base64');
 
 test('validateImageInput: missing/empty image is rejected', () => {
   assert.equal(validateImageInput({}).ok, false);
@@ -21,30 +23,51 @@ test('validateImageInput: missing/empty image is rejected', () => {
 });
 
 test('validateImageInput: defaults MIME to image/jpeg', () => {
-  const result = validateImageInput({ image: tinyBase64 });
+  const result = validateImageInput({ image: jpegSignatureBase64 });
   assert.equal(result.ok, true);
   if (result.ok) assert.equal(result.mimeType, 'image/jpeg');
 });
 
-test('validateImageInput: strips a data-URL prefix before decoding', () => {
+test('validateImageInput: normalizes a data URL and uses its MIME type', () => {
   const result = validateImageInput({
-    image: `data:image/png;base64,${tinyBase64}`,
-    mimeType: 'image/png',
+    image: `data:image/png;base64,${tinyPngBase64}`,
   });
   assert.equal(result.ok, true);
-  if (result.ok) assert.equal(result.mimeType, 'image/png');
+  if (result.ok) {
+    assert.equal(result.mimeType, 'image/png');
+    assert.equal(result.base64, tinyPngBase64);
+  }
 });
 
 test('validateImageInput: disallowed MIME type is rejected', () => {
-  const result = validateImageInput({ image: tinyBase64, mimeType: 'image/tiff' });
+  const result = validateImageInput({ image: tinyPngBase64, mimeType: 'image/heic' });
   assert.equal(result.ok, false);
   if (!result.ok) assert.match(result.error, /unsupported image type/i);
 });
 
-test('validateImageInput: every allowed MIME type is accepted', () => {
-  for (const mime of ALLOWED_IMAGE_MIME_TYPES) {
-    assert.equal(validateImageInput({ image: tinyBase64, mimeType: mime }).ok, true, mime);
-  }
+test('validateImageInput: malformed base64 is rejected', () => {
+  const result = validateImageInput({ image: 'not_base64!', mimeType: 'image/png' });
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.match(result.error, /invalid/i);
+});
+
+test('validateImageInput: declared MIME must match the image signature', () => {
+  const result = validateImageInput({ image: tinyPngBase64, mimeType: 'image/jpeg' });
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.match(result.error, /does not match/i);
+});
+
+test('validateImageInput: data-URL MIME must match a supplied MIME type', () => {
+  const result = validateImageInput({
+    image: `data:image/png;base64,${tinyPngBase64}`,
+    mimeType: 'image/jpeg',
+  });
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.match(result.error, /does not match/i);
+});
+
+test('validateImageInput: every allowed MIME type has a signature check', () => {
+  assert.deepEqual(ALLOWED_IMAGE_MIME_TYPES, ['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 });
 
 test('validateImageInput: oversized image is rejected', () => {
@@ -62,7 +85,7 @@ test('validateImageInput: oversized image is rejected', () => {
 });
 
 test('approxBase64Bytes: computes decoded length (ignoring whitespace/padding)', () => {
-  assert.equal(approxBase64Bytes(tinyBase64), 5); // "hello"
+  assert.equal(approxBase64Bytes('aGVsbG8='), 5); // "hello"
   assert.equal(approxBase64Bytes('QQ=='), 1); // "A"
   assert.equal(approxBase64Bytes(''), 0);
 });

@@ -9,7 +9,7 @@
 
 | Integration ID | Source | Destination | Protocol | Purpose | Authentication | Data | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| INT-BROWSER-APP | Browser (client) | Next.js server (`app/`) | HTTPS | Serve UI; submit chat/image requests with validated `en`/`bm` response preference | Signed session cookie (demo) | UI state, language code, chat text, ephemeral base64 image payload(s) | ACTIVE |
+| INT-BROWSER-APP | Browser (client) | Next.js server (`app/`) | HTTPS | Serve UI; submit chat/image requests with validated `en`/`bm` response preference; reject unsupported or malformed images with an actionable 400 response | Signed session cookie (demo) | UI state, language code, chat text, ephemeral JPEG/PNG/WebP/GIF base64 image payloads | ACTIVE |
 | INT-APP-FOUNDRY | Next.js AI provider (`lib/ai`) | Environment-owned Microsoft Foundry / Azure AI Services account | HTTPS (OpenAI-compatible) | Chat + multimodal wound analysis in the selected EN/BM response language (staged pipeline issues multiple sequential completions per request; deployment resolved per-purpose via `AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT` / `AZURE_AI_CHAT_MODEL_DEPLOYMENT`, default `AZURE_AI_MODEL_DEPLOYMENT`) | Managed identity (Bearer, `cognitiveservices.azure.com`) | Prompts, language instruction, image content, model completions | ACTIVE |
 | INT-APP-POSTGRES | Next.js data layer (`lib/db.ts` / Prisma) | Azure PostgreSQL Flexible Server | PostgreSQL wire (TLS, `sslmode=require`) | Persist/read HCP AnalysisRecord after server-verified Entra session authorization; unavailable in demo auth | Direct `DATABASE_URL` credentials | Authorized retained analysis records | ACTIVE |
 | INT-APP-BLOB | Next.js storage provider (`lib/storage`) | Azure Blob Storage (`stphxyun55ezsi4yoq`, `clinical-uploads`) | HTTPS (Blob REST) | File persistence capability | Managed identity | (none in current UI) | OPTIONAL |
@@ -27,6 +27,10 @@
 
 > **Original-only restoration adds no integration.** The retired v2 routes used the same contracts;
 > removing them leaves `INT-BROWSER-APP`, `INT-APP-FOUNDRY`, and all Azure integrations unchanged.
+
+> **Vision input validation sends no new data and adds no integration.** Data URLs are normalized to
+> bare base64 and checked against the declared model-compatible MIME type before
+> `INT-APP-FOUNDRY`; rejected HEIC/HEIF, malformed, or mismatched payloads never reach Azure AI.
 
 > **AI Assurance controls add no new integrations.** The code register and documentation read local
 > configuration; the

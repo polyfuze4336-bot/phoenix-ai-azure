@@ -6,6 +6,16 @@ import { motion } from 'framer-motion';
 import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 
+async function responseError(response: Response, fallback: string): Promise<string> {
+  try {
+    const body = await response.json();
+    if (typeof body?.error === 'string' && body.error.trim()) return body.error;
+  } catch {
+    // Keep the existing fallback when the response is not JSON.
+  }
+  return fallback;
+}
+
 export function ImageCheckClient() {
   const { t, lang } = useLanguage();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -44,7 +54,7 @@ export function ImageCheckClient() {
         body: JSON.stringify({ image: base64, mimeType: imageFile?.type ?? 'image/jpeg', lang }),
       });
 
-      if (!response?.ok) throw new Error('Analysis failed');
+      if (!response?.ok) throw new Error(await responseError(response, 'Analysis failed'));
 
       const reader2 = response?.body?.getReader();
       const decoder = new TextDecoder();
@@ -111,7 +121,7 @@ export function ImageCheckClient() {
             <p className="font-medium text-gray-600">{lang === 'en' ? 'Upload a photo of your wound' : 'Muat naik gambar luka anda'}</p>
             <p className="text-xs text-gray-400 mt-1">JPEG, PNG</p>
           </div>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFile} className="hidden" />
         </div>
       )}
 
