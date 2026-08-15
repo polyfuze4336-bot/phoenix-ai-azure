@@ -30,15 +30,11 @@ Malaysia, with two portals:
 
 It supports English and Bahasa Melayu, and ships as an installable PWA.
 
-### Two experiences
+### Application entry
 
-The root `/` is an **experience selector**. The original portals above are preserved unchanged.
-An additive, feature-flag-gated **Phoenix AI v2.0** experience is available under **`/v2/*`** (an
-enhanced HCP workspace and community portal that reuse the same APIs and Azure services, with all
-analytics rendered from clearly-labelled synthetic data). Set `NEXT_PUBLIC_FEATURE_V2_ENABLED=false`
-to revert to the Original-only experience. See
-[docs/design/original-vs-v2.md](docs/design/original-vs-v2.md) and
-[ADR-0004](docs/architecture/decisions/ADR-0004-dual-experience-v2.md).
+The root `/` is the single Phoenix AI landing page. It links directly to the HCP and Community
+portals above. English and Bahasa Malaysia are controlled by one persisted application-wide
+language selection.
 
 ## Tech stack (imported from source)
 
@@ -122,7 +118,7 @@ synchronized with the code (enforced by the `Architecture Governance` CI workflo
 
 ## Responsible AI & AI Assurance
 
-AI output in PhoenixIQ is **clinical decision-support under human supervision**, not an autonomous
+AI output in Phoenix AI is **clinical decision-support under human supervision**, not an autonomous
 diagnosis. Responsible AI controls are surfaced as a first-class layer with a **code-based control
 register** as the single source of truth ([`nextjs_space/lib/rai/controls.ts`](nextjs_space/lib/rai/controls.ts)),
 mapped to Microsoft's six Responsible AI principles and traced to code and tests.
@@ -134,11 +130,12 @@ mapped to Microsoft's six Responsible AI principles and traced to code and tests
   escalation, confidence capping and safe failure.
 - Every result is **AI-labelled**, carries confidence + explicit limitations, and is presented for
   **clinician review** (reviewed / modified / escalated).
-- Controls are graded honestly **Active / Partial / Planned**. PhoenixIQ makes **no** claim of being
+- Controls are graded honestly **Active / Partial / Planned**. Phoenix AI makes **no** claim of being
   "certified", "approved", "bias free" or "100% safe".
 
-In-product surface: **`/v2/hcp/ai-assurance`** and a per-assessment "Analysis Information" panel.
-Tests: `npm run test:rai`. Full documentation: [docs/rai/](docs/rai/README.md) (start with the
+The governed documentation and test evidence are the current assurance review surface; the retained
+clinical interface does not yet display the complete metadata envelope. Tests: `npm run test:rai`.
+Full documentation: [docs/rai/](docs/rai/README.md) (start with the
 [executive summary](docs/rai/executive-summary.md)).
 
 ## Repository layout

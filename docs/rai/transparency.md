@@ -1,16 +1,17 @@
 # Transparency
 
-PhoenixIQ is explicit about what an AI-assisted assessment is, how confident it is, and what it could
+Phoenix AI is explicit about what an AI-assisted assessment is, how confident it is, and what it could
 not determine.
 
 ## AI-generated labelling
-Every AI-assisted result is labelled AI-generated and accompanied by a compact status line:
+The analysis metadata envelope records that the result is AI-generated and starts in a
+clinical-review-pending state:
 
 > AI-generated · Structured validation complete · Clinical review pending
 
-Implemented in
-[`components/v2/analysis-info-panel.tsx`](../../nextjs_space/components/v2/analysis-info-panel.tsx)
-(**RAI-TRANS-003**).
+Implemented in [`lib/ai/analysis/metadata.ts`](../../nextjs_space/lib/ai/analysis/metadata.ts).
+The complete envelope is not yet presented in the retained clinical interface, so
+**RAI-TRANS-003 remains Partial**.
 
 ## Confidence
 - Per-field confidence (high / moderate / low / insufficient) separates observation from
@@ -25,8 +26,8 @@ follow-up questions (**RAI-TRANS-002**), rendered by
 [`app/hcp/analysis/_components/structured-analysis.tsx`](../../nextjs_space/app/hcp/analysis/_components/structured-analysis.tsx).
 
 ## Analysis metadata
-The "Analysis Information" panel exposes a non-sensitive traceability record: analysis id, timestamp,
-model deployment name, pipeline mode/version, prompt versions, schema version, image-quality band,
+The API creates a non-sensitive traceability record containing analysis id, timestamp, model
+deployment name, pipeline mode/version, prompt versions, schema version, image-quality band,
 overall confidence and review status
 ([`lib/ai/analysis/metadata.ts`](../../nextjs_space/lib/ai/analysis/metadata.ts)).
 

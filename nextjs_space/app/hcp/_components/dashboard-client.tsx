@@ -6,7 +6,12 @@ import { motion } from 'framer-motion';
 import { useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 
-const DashboardCharts = dynamic(() => import('./dashboard-charts').then(m => ({ default: m.DashboardCharts })), { ssr: false, loading: () => <div className="h-96 flex items-center justify-center text-gray-400">Loading charts...</div> });
+function DashboardLoading() {
+  const { t } = useLanguage();
+  return <div className="h-96 flex items-center justify-center text-gray-400">{t('dash.loading_charts')}</div>;
+}
+
+const DashboardCharts = dynamic(() => import('./dashboard-charts').then(m => ({ default: m.DashboardCharts })), { ssr: false, loading: DashboardLoading });
 
 function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: string }) {
   const [count, setCount] = useState(0);
@@ -53,7 +58,7 @@ export function DashboardClient() {
     <div className="space-y-8">
       <div>
         <h1 className="font-display text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{t('hcp.dashboard')}</h1>
-        <p className="text-sm text-gray-500 mt-1">Clinical analytics overview for burn and wound cases</p>
+        <p className="text-sm text-gray-500 mt-1">{t('dash.subtitle')}</p>
       </div>
 
       {/* Summary Cards */}

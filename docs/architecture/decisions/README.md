@@ -42,6 +42,7 @@ Trivial changes (copy edits, dependency patch bumps, non-structural refactors) d
 | [ADR-0008](./ADR-0008-v2-default-public-entry.md) | Make v2.0 the default public entry | Superseded by ADR-0010 | 2026-08-14 |
 | [ADR-0009](./ADR-0009-authorize-retained-analysis-records.md) | Authorize access to retained analysis records | Accepted | 2026-08-14 |
 | [ADR-0010](./ADR-0010-restore-original-only-experience.md) | Restore the Original-only Phoenix AI experience | Accepted | 2026-08-15 |
+| [ADR-0011](./ADR-0011-single-experience-global-language.md) | One Phoenix AI experience with global language enforcement | Accepted | 2026-08-15 |
 
 ## Template
 

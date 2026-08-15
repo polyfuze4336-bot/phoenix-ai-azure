@@ -1,6 +1,6 @@
 # Microsoft Responsible AI principles — mapping
 
-PhoenixIQ's implemented controls mapped to Microsoft's six Responsible AI principles. Each row cites a
+Phoenix AI's implemented controls mapped to Microsoft's six Responsible AI principles. Each row cites a
 control ID (see [control-matrix.md](./control-matrix.md)) and an honest status. Gaps are stated
 plainly.
 
@@ -46,15 +46,15 @@ not implemented. The controls above prevent *unsupported inference*; they do not
 | --- | --- | --- | --- |
 | RAI-TRANS-001 | Field-level confidence | `lib/ai/schemas/burn-wound-analysis.ts` | Active |
 | RAI-TRANS-002 | Limitations & missing-information disclosure | `lib/ai/analysis/pipeline.ts` | Active |
-| RAI-TRANS-003 | AI labelling + analysis metadata envelope | `lib/ai/analysis/metadata.ts`, `components/v2/analysis-info-panel.tsx` | Active |
+| RAI-TRANS-003 | AI labelling + analysis metadata envelope | `lib/ai/analysis/metadata.ts`, `app/api/analyze-wound/route.ts` | Partial |
 | RAI-SAFE-004 | Observation vs interpretation with evidence basis | `lib/ai/schemas/burn-wound-analysis.ts` | Active |
-| RAI-TRANS-005 | Guideline basis disclosure | `lib/v2/guidelines.ts` | Partial (curated, uncited) |
+| RAI-TRANS-005 | Guideline basis disclosure | `app/hcp/guidelines/_components/guidelines-client.tsx`, `lib/ai/prompts/wound-management.ts` | Partial (curated, uncited) |
 
 ## Accountability
 
 | Control | Implementation | Evidence | Status |
 | --- | --- | --- | --- |
-| RAI-ACCT-001 | Human-in-the-loop review; AI never "approved" | `components/v2/clinical-review-panel.tsx` | Active |
+| RAI-ACCT-001 | Human-in-the-loop review; AI never "approved" | `lib/ai/analysis/metadata.ts`, `app/hcp/analysis/_components/structured-analysis.tsx` | Partial |
 | RAI-ACCT-002 | Analysis persistence / audit record | `lib/analysis/history.ts` | Active |
 | RAI-ACCT-003 | Architecture governance (docs-sync CI) | `docs/architecture/*` | Active |
 | RAI-ACCT-005 | Configurable model governance | `lib/ai/model-config.ts` | Active |

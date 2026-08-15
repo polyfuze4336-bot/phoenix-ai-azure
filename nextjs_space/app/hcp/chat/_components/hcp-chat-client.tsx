@@ -5,6 +5,7 @@ import { Send, ImagePlus, AlertTriangle, Calculator, Droplets, BookOpen, Stethos
 import { motion } from 'framer-motion';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
+import { localizedContent } from '@/lib/i18n/index';
 
 interface ChatMsg {
   role: 'user' | 'assistant';
@@ -12,12 +13,7 @@ interface ChatMsg {
   image?: string;
 }
 
-const quickPrompts = [
-  { label: 'Calculate TBSA', labelBm: 'Kira TBSA', icon: Calculator },
-  { label: 'Parkland Formula', labelBm: 'Formula Parkland', icon: Droplets },
-  { label: 'Burn Management Protocol', labelBm: 'Protokol Pengurusan Kelecuran', icon: BookOpen },
-  { label: 'Wound Assessment', labelBm: 'Penilaian Luka', icon: Stethoscope },
-];
+const quickPromptIcons = [Calculator, Droplets, BookOpen, Stethoscope];
 
 export function HcpChatClient() {
   const { t, lang } = useLanguage();
@@ -28,6 +24,7 @@ export function HcpChatClient() {
   const [escalated, setEscalated] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const quickPrompts = localizedContent(lang).hcp.chatQuickPrompts;
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef?.current?.scrollIntoView?.({ behavior: 'smooth' });
@@ -54,6 +51,7 @@ export function HcpChatClient() {
             content: m?.content,
             ...(m?.image ? { image: m.image } : {}),
           })),
+          language: lang,
         }),
       });
 
@@ -90,11 +88,11 @@ export function HcpChatClient() {
         }
       }
     } catch (err: any) {
-      setMessages(prev => [...(prev ?? []), { role: 'assistant', content: 'Sorry, an error occurred. Please try again.' }]);
+      setMessages(prev => [...(prev ?? []), { role: 'assistant', content: t('chat.error') }]);
     } finally {
       setLoading(false);
     }
-  }, [input, imagePreview, messages]);
+  }, [input, imagePreview, lang, messages, t]);
 
   const handleImage = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e?.target?.files?.[0];
@@ -109,7 +107,7 @@ export function HcpChatClient() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="font-display text-xl font-bold text-gray-900">{t('chat.specialist_title')}</h1>
-          <p className="text-xs text-gray-500">AI-powered burn & wound specialist consultation</p>
+          <p className="text-xs text-gray-500">{t('chat.hcp_description')}</p>
         </div>
         <button
           onClick={() => setEscalated(true)}
@@ -122,7 +120,7 @@ export function HcpChatClient() {
       {escalated && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-red-500" />
-          <p className="text-xs text-red-600 font-medium">Escalation flag raised. A human specialist will review this consultation.</p>
+          <p className="text-xs text-red-600 font-medium">{t('chat.escalated')}</p>
         </div>
       )}
 
@@ -131,16 +129,19 @@ export function HcpChatClient() {
         <div className="mb-4">
           <p className="text-xs text-gray-400 mb-2">{t('chat.quick_prompts')}</p>
           <div className="flex flex-wrap gap-2">
-            {quickPrompts?.map((p: any, i: number) => (
+            {quickPrompts.map((prompt, i) => {
+              const Icon = quickPromptIcons[i] ?? Stethoscope;
+              return (
               <button
                 key={i}
-                onClick={() => sendMessage(lang === 'en' ? p?.label : p?.labelBm)}
+                onClick={() => sendMessage(prompt)}
                 className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 hover:border-[#8B0000]/20 transition-all"
               >
-                <p.icon className="w-3.5 h-3.5 text-[#8B0000]" />
-                {lang === 'en' ? p?.label : p?.labelBm}
+                <Icon className="w-3.5 h-3.5 text-[#8B0000]" />
+                {prompt}
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

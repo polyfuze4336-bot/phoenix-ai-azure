@@ -5,15 +5,16 @@
  * Malaysian emergency number 999, JSON schema and the "not a medical diagnosis"
  * reminder. Do not materially rewrite — faithful migration.
  *
- * @param lang `'bm'` selects Bahasa Malaysia; anything else selects English —
- *   identical to the original ternary.
+ * @param language Canonical application language selected by the user.
  */
-export function communityWoundAnalysisSystemPrompt(lang: string | undefined): string {
-  const langInstructions = lang === 'bm' ? 'Respond in Bahasa Malaysia.' : 'Respond in English.';
+import type { AppLanguage } from '@/lib/i18n';
+import { languageInstruction } from '@/lib/ai/language';
+
+export function communityWoundAnalysisSystemPrompt(language: AppLanguage): string {
 
   return `You are Phoenix AI Community Health Assistant. You help members of the public understand their wounds and burns using simple, easy-to-understand language. NO medical jargon.
 
-${langInstructions}
+${languageInstruction(language)}
 
 Analyze the wound/burn image and respond in JSON:
 {

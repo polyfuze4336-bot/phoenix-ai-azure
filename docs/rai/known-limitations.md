@@ -12,7 +12,8 @@ Documented, honestly. Each has a stable ID in the governed control register and 
 | LIM-006 | A formal **WCAG accessibility** audit has not yet been completed (RAI-INCL-002 is Partial). |
 | LIM-007 | Image measurements require a visible scale reference; without one, dimensions are withheld rather than estimated. |
 | LIM-008 | AI-assisted output is **decision-support only** and must be confirmed by a qualified clinician. |
-| LIM-009 | The Original-only runtime does not currently provide an in-product AI Assurance page; reviewers must use this governed documentation and test evidence. |
+| LIM-009 | The runtime does not currently provide an in-product AI Assurance page; reviewers must use this governed documentation and test evidence. |
+| LIM-010 | AI output-language detection is heuristic: short or highly technical output may be classified as ambiguous and accepted. A confidently mismatched response is rewritten once only; retries are deliberately bounded to prevent loops. |
 
 These limitations are not defects to hide — they define the responsible scope of the tool. See
 [rai-roadmap.md](./rai-roadmap.md) for what is planned.

@@ -7,16 +7,17 @@ export const maxDuration = 220;
 import { NextRequest } from 'next/server';
 import { AiMessage } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
-import { createStructuredSseResponse, createResultSseResponse } from '@/lib/ai/streaming/sse';
+import { createResultSseResponse } from '@/lib/ai/streaming/sse';
 import { parseHcpWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
 import { validateImageInput, checkRequestBodySize } from '@/lib/ai/validation/image-input';
 import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
 import { trackEvent } from '@/lib/telemetry/server';
-import { HCP_WOUND_ANALYSIS_SYSTEM_PROMPT } from '@/lib/ai/prompts/hcp-wound-analysis';
+import { hcpWoundAnalysisSystemPrompt } from '@/lib/ai/prompts/hcp-wound-analysis';
 import { getAnalysisModelDeployment, getAnalysisPipelineMode } from '@/lib/ai/model-config';
 import { runAnalysisPipeline, type PatientContext } from '@/lib/ai/analysis/pipeline';
 import { toFlatHcpAnalysis } from '@/lib/ai/schemas/burn-wound-analysis';
 import { buildAnalysisMetadata } from '@/lib/ai/analysis/metadata';
+import { completeWithLanguageValidation, parseRequestedLanguage } from '@/lib/ai/language';
 
 /** Coerce an untrusted patient-context object into the typed shape (no invented values). */
 function readPatientContext(raw: unknown): PatientContext | undefined {
@@ -43,6 +44,10 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { image, mimeType } = body ?? {};
+    const language = parseRequestedLanguage(body?.language);
+    if (!language) {
+      return new Response(JSON.stringify({ error: 'Invalid language. Use "en" or "ms".' }), { status: 400 });
+    }
 
     const validation = validateImageInput({ image, mimeType });
     if (!validation.ok) {
@@ -70,6 +75,7 @@ export async function POST(request: NextRequest) {
       try {
         const rich = await runAnalysisPipeline({
           imageDataUrl,
+          language,
           patient,
           correlationId,
           refine: refineAnswers && priorAnalysis ? { priorAnalysis, answers: refineAnswers } : undefined,
@@ -96,7 +102,7 @@ export async function POST(request: NextRequest) {
 
     // --- Legacy single-pass path (AI_ANALYSIS_PIPELINE=single).
     const messages: AiMessage[] = [
-      { role: 'system', content: HCP_WOUND_ANALYSIS_SYSTEM_PROMPT },
+      { role: 'system', content: hcpWoundAnalysisSystemPrompt(language) },
       {
         role: 'user',
         content: [
@@ -106,26 +112,31 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    let upstream;
+    let completion;
     try {
-      upstream = await getAiProvider().streamChatCompletion({
+      completion = await completeWithLanguageValidation({
         messages,
-        model: getAnalysisModelDeployment(),
-        maxOutputTokens: 2000,
-        responseFormat: 'json_object',
-        correlationId,
+        language,
         route: 'analyze-wound',
-        timeoutMs: 110_000,
+        correlationId,
+        complete: async (completionMessages) => (await getAiProvider().streamChatCompletion({
+          messages: completionMessages,
+          model: getAnalysisModelDeployment(),
+          maxOutputTokens: 2000,
+          responseFormat: 'json_object',
+          correlationId,
+          route: 'analyze-wound',
+          timeoutMs: 110_000,
+        })).body,
       });
     } catch (err) {
       return aiErrorResponse(err, 'LLM API error');
     }
 
-    return createStructuredSseResponse({
-      upstream: upstream.body,
+    return createResultSseResponse({
+      result: parseHcpWoundAnalysis(completion.text),
       processingEvent: { status: 'processing', message: 'Analyzing' },
-      buildResult: (buffer) => parseHcpWoundAnalysis(buffer),
-      correlationId: upstream.correlationId,
+      correlationId,
     });
   } catch (error: any) {
     console.error('Analyze wound error:', error);

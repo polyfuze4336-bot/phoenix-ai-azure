@@ -3,20 +3,20 @@
 %% multimodal one-or-many image input, and structured-output validation.
 flowchart TB
     subgraph Interfaces["Client Interfaces"]
-        HCPUI["Original HCP Interface"]
+        HCPUI["HCP Interface"]
         COMMUI["Community Interface\n(chat + image check)"]
     end
 
     subgraph Routes["Next.js API Routes"]
-        RHCPCHAT["/api/hcp-chat\n(validated EN/BM)"]
-        RHCPAN["/api/analyze-wound\n(single or multi-image, validated EN/BM)"]
-        RCOMCHAT["/api/community-chat"]
-        RCOMAN["/api/community-analyze"]
+        RHCPCHAT["/api/hcp-chat\n(validated EN/MS)"]
+        RHCPAN["/api/analyze-wound\n(validated EN/MS)"]
+        RCOMCHAT["/api/community-chat\n(validated EN/MS)"]
+        RCOMAN["/api/community-analyze\n(validated EN/MS)"]
     end
 
     subgraph Prompts["Prompt Layer (lib/ai/prompts)"]
-        PHCPCHAT["hcp-chat\n(clinical, detailed, EN/BM narrative)"]
-        PHCPAN["hcp-wound-analysis\n(single-pass fallback, EN/BM narrative)"]
+        PHCPCHAT["hcp-chat\n(clinical, detailed, EN/MS narrative)"]
+        PHCPAN["hcp-wound-analysis\n(single-pass fallback, EN/MS narrative)"]
         PCOMCHAT["community-chat\n(plain-language, safe)"]
         PCOMAN["community-wound-analysis\n(simplified guidance)"]
         subgraph StagedPrompts["Staged analysis prompts"]
@@ -28,7 +28,7 @@ flowchart TB
     end
 
     subgraph Pipeline["Staged Analysis Pipeline (lib/ai/analysis)"]
-        ORCH["runAnalysisPipeline\n(flag AI_ANALYSIS_PIPELINE=staged, default)\n(overlap-aware TBSA, EN/BM narrative)"]
+        ORCH["runAnalysisPipeline\n(flag AI_ANALYSIS_PIPELINE=staged, default)\n(overlap-aware TBSA, EN/MS narrative)"]
         DETCALC["Deterministic calc\nlib/clinical/parkland + tbsa\n(no assumed weight)"]
         SCHEMA["schemas/burn-wound-analysis\n(obs vs interp, confidence, gaps)"]
         MODELSEL["model-config\nAZURE_AI_ANALYSIS_MODEL_DEPLOYMENT"]
@@ -43,6 +43,7 @@ flowchart TB
         VALOUT["validation/wound-analysis-schema\n(+ flat back-compat adapter)"]
         STREAM["streaming/sse + collect + text-stream"]
         TEL["ai/telemetry"]
+        LANG["language\nstrict instruction + detection\none bounded rewrite"]
     end
 
     subgraph Azure["Azure AI"]
@@ -77,7 +78,7 @@ flowchart TB
     RCOMAN --> VALIN
     VALIN --> FACTORY
 
-    FACTORY --> AZPROV
+    FACTORY --> LANG --> AZPROV
     AZPROV --> CRED
     AZPROV --> OAICOMPAT
     OAICOMPAT -->|"managed identity token"| FOUNDRY

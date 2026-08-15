@@ -121,52 +121,6 @@
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-
-  /* =========================================================
-     Phoenix AI v2.0 — enhanced-experience utilities.
-     Additive only; derives from the existing Phoenix tokens.
-     Used exclusively by the /v2 experience (never by Original).
-     ========================================================= */
-  .v2-surface {
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
-  }
-
-  .v2-glass {
-    background: hsl(var(--background) / 0.72);
-    backdrop-filter: saturate(180%) blur(12px);
-    -webkit-backdrop-filter: saturate(180%) blur(12px);
-    border-bottom: 1px solid hsl(var(--border) / 0.8);
-  }
-
-  .v2-nav-active {
-    background: hsl(var(--primary) / 0.1);
-    color: hsl(var(--primary));
-    font-weight: 600;
-  }
-
-  .v2-stat-gradient {
-    background:
-      radial-gradient(120% 120% at 100% 0%, hsl(var(--primary) / 0.06), transparent 60%),
-      hsl(var(--card));
-  }
-
-  .v2-hero-gradient {
-    background:
-      radial-gradient(ellipse 70% 60% at 50% -10%, hsl(0 100% 27% / 0.10), transparent),
-      radial-gradient(ellipse 50% 50% at 90% 10%, hsl(37 92% 50% / 0.08), transparent),
-      radial-gradient(ellipse 45% 40% at 10% 20%, hsl(172 84% 33% / 0.06), transparent);
-  }
-}
-
-/* Honour reduced-motion for all v2 animated affordances. */
-@media (prefers-reduced-motion: reduce) {
-  .v2-motion-safe {
-    animation: none !important;
-    transition: none !important;
-  }
 }
 
 /* PWA standalone mode tweaks */

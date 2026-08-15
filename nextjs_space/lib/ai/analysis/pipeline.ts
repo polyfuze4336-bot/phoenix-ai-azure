@@ -39,6 +39,8 @@ import { WOUND_VISUAL_OBSERVATION_PROMPT } from '../prompts/wound-visual-observa
 import { WOUND_CLINICAL_INTERPRETATION_PROMPT } from '../prompts/wound-clinical-interpretation';
 import { WOUND_MANAGEMENT_PROMPT } from '../prompts/wound-management';
 import { WOUND_ANALYSIS_CRITIC_PROMPT } from '../prompts/wound-analysis-critic';
+import { completeWithLanguageValidation, withLanguageInstruction } from '../language';
+import type { AppLanguage } from '@/lib/i18n';
 
 /** Optional patient context supplied by the clinician (never invented). */
 export interface PatientContext {
@@ -52,6 +54,7 @@ export interface PatientContext {
 
 export interface PipelineInput {
   imageDataUrl: string; // data:<mime>;base64,....
+  language: AppLanguage;
   patient?: PatientContext;
   /** Prior analysis + clinician answers for a REFINE pass (second pass). */
   refine?: { priorAnalysis: BurnWoundAnalysis; answers: string };
@@ -78,24 +81,30 @@ function contextBlock(p?: PatientContext): string {
 async function runStage(
   systemPrompt: string,
   userParts: AiMessage['content'],
+  language: AppLanguage,
   correlationId: string | undefined,
   route: string,
 ): Promise<Record<string, unknown> | null> {
   const messages: AiMessage[] = [
-    { role: 'system', content: systemPrompt },
+    { role: 'system', content: withLanguageInstruction(systemPrompt, language) },
     { role: 'user', content: userParts },
   ];
-  const upstream = await getAiProvider().streamChatCompletion({
+  const completion = await completeWithLanguageValidation({
     messages,
-    model: getAnalysisModelDeployment(),
-    maxOutputTokens: 1400,
-    responseFormat: 'json_object',
-    correlationId,
+    language,
     route,
-    timeoutMs: STAGE_TIMEOUT_MS,
+    correlationId,
+    complete: async (completionMessages) => (await getAiProvider().streamChatCompletion({
+      messages: completionMessages,
+      model: getAnalysisModelDeployment(),
+      maxOutputTokens: 1400,
+      responseFormat: 'json_object',
+      correlationId,
+      route,
+      timeoutMs: STAGE_TIMEOUT_MS,
+    })).body,
   });
-  const { text } = await collectCompletion(upstream.body);
-  return parseJsonObject(text);
+  return parseJsonObject(completion.text);
 }
 
 /* ----------------------------------------------------- deterministic helpers */
@@ -139,7 +148,7 @@ function computeParkland(isBurn: boolean, tbsa: number | null, weightKg?: number
 /* --------------------------------------------------------------- orchestrator */
 
 export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWoundAnalysis> {
-  const { imageDataUrl, patient, refine, correlationId } = input;
+  const { imageDataUrl, language, patient, refine, correlationId } = input;
   const ctx = contextBlock(patient);
 
   // Stage 1 — Visual observation (vision).
@@ -149,6 +158,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
       { type: 'text', text: `${ctx}\nDescribe what is visible in this image.` },
       { type: 'image_url', image_url: { url: imageDataUrl } },
     ],
+    language,
     correlationId,
     'analyze-wound:observation',
   );
@@ -167,6 +177,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
       },
       { type: 'image_url', image_url: { url: imageDataUrl } },
     ],
+    language,
     correlationId,
     'analyze-wound:interpretation',
   );
@@ -176,6 +187,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
   const mgmtRaw = await runStage(
     WOUND_MANAGEMENT_PROMPT,
     `${ctx}\nClinical interpretation:\n${JSON.stringify(interpretation)}\nObservations:\n${JSON.stringify(observation)}\nProvide management and referral.`,
+    language,
     correlationId,
     'analyze-wound:management',
   );
@@ -186,6 +198,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
   const criticRaw = await runStage(
     WOUND_ANALYSIS_CRITIC_PROMPT,
     `Draft analysis to audit:\n${JSON.stringify(draft)}`,
+    language,
     correlationId,
     'analyze-wound:critic',
   );

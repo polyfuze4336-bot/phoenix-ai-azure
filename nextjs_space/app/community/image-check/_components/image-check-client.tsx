@@ -51,10 +51,10 @@ export function ImageCheckClient() {
       const response = await fetch('/api/community-analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64, mimeType: imageFile?.type ?? 'image/jpeg', lang }),
+        body: JSON.stringify({ image: base64, mimeType: imageFile?.type ?? 'image/jpeg', language: lang }),
       });
 
-      if (!response?.ok) throw new Error(await responseError(response, 'Analysis failed'));
+      if (!response?.ok) throw new Error(await responseError(response, t('community.image_error')));
 
       const reader2 = response?.body?.getReader();
       const decoder = new TextDecoder();
@@ -82,11 +82,11 @@ export function ImageCheckClient() {
         }
       }
     } catch (err: any) {
-      setError(err?.message ?? 'Analysis failed');
+      setError(err?.message ?? t('community.image_error'));
     } finally {
       setAnalyzing(false);
     }
-  }, [imageFile, lang]);
+  }, [imageFile, lang, t]);
 
   const recColor = (rec: string) => {
     const lower = rec?.toLowerCase?.() ?? '';
@@ -104,11 +104,7 @@ export function ImageCheckClient() {
 
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
-        <p className="text-xs text-amber-800">
-          {lang === 'en'
-            ? 'This basic AI check provides general guidance only. It is not a medical diagnosis. Always consult a healthcare professional for serious injuries.'
-            : 'Pemeriksaan AI asas ini memberikan panduan umum sahaja. Ia bukan diagnosis perubatan. Sentiasa berunding dengan profesional penjagaan kesihatan untuk kecederaan serius.'}
-        </p>
+        <p className="text-xs text-amber-800">{t('community.image_disclaimer')}</p>
       </div>
 
       {!imagePreview && (
@@ -118,7 +114,7 @@ export function ImageCheckClient() {
             className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-[#0F9B8E]/40 hover:bg-[#0F9B8E]/5 transition-all"
           >
             <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="font-medium text-gray-600">{lang === 'en' ? 'Upload a photo of your wound' : 'Muat naik gambar luka anda'}</p>
+            <p className="font-medium text-gray-600">{t('community.image_upload')}</p>
             <p className="text-xs text-gray-400 mt-1">JPEG, PNG</p>
           </div>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFile} className="hidden" />
@@ -135,7 +131,7 @@ export function ImageCheckClient() {
           </div>
           {!result && (
             <button onClick={analyze} disabled={analyzing} className="w-full px-4 py-3 bg-[#0F9B8E] text-white rounded-xl font-medium hover:bg-[#0e8a7e] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-              {analyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> {lang === 'en' ? 'Checking...' : 'Memeriksa...'}</> : (lang === 'en' ? 'Check My Wound' : 'Periksa Luka Saya')}
+              {analyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> {t('community.image_checking')}</> : t('community.image_action')}
             </button>
           )}
         </div>
@@ -144,7 +140,7 @@ export function ImageCheckClient() {
       {result && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h3 className="font-display text-base font-bold text-gray-900 mb-3">{lang === 'en' ? 'What We Found' : 'Apa Yang Kami Temui'}</h3>
+            <h3 className="font-display text-base font-bold text-gray-900 mb-3">{t('community.image_result')}</h3>
             <p className="text-sm text-gray-700 mb-4">{result?.description ?? ''}</p>
 
             {result?.recommendation && (() => {
@@ -153,7 +149,7 @@ export function ImageCheckClient() {
                 <div className={`rounded-lg border p-4 ${rc?.bg}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <rc.icon className={`w-5 h-5 ${rc?.text}`} />
-                    <h4 className={`text-sm font-bold ${rc?.text}`}>{lang === 'en' ? 'Recommendation' : 'Cadangan'}</h4>
+                    <h4 className={`text-sm font-bold ${rc?.text}`}>{t('community.image_recommendation')}</h4>
                   </div>
                   <p className={`text-sm ${rc?.text}`}>{result?.recommendation}</p>
                 </div>
@@ -163,14 +159,14 @@ export function ImageCheckClient() {
 
           {result?.firstAidTips && (
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-              <h3 className="font-display text-sm font-bold text-gray-900 mb-3">{lang === 'en' ? 'First Aid Tips' : 'Tips Pertolongan Cemas'}</h3>
+              <h3 className="font-display text-sm font-bold text-gray-900 mb-3">{t('community.image_first_aid')}</h3>
               <p className="text-sm text-gray-700">{result?.firstAidTips}</p>
             </div>
           )}
         </motion.div>
       )}
 
-      {error && <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">{error}</div>}
+      {error && <div role="alert" className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">{error}</div>}
     </div>
   );
 }

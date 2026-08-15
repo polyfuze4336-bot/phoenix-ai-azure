@@ -1,6 +1,6 @@
 # Model governance
 
-PhoenixIQ treats the AI model as **configuration under governance**, not a hard-coded dependency.
+Phoenix AI treats the AI model as **configuration under governance**, not a hard-coded dependency.
 
 ## Selection
 - The analysis and chat model deployments are resolved from environment configuration in

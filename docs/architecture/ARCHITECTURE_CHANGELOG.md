@@ -16,6 +16,26 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [4.0.0] — 2026-08-15
+
+### Changed
+- **One Phoenix AI experience** — the repository publishes only `/`, `/hcp*`, and `/community*`;
+  the retired `app/v2`, `components/v2`, and `lib/v2` source families, feature flags, assets, and
+  v2-only tests are removed. Their history remains recoverable from Git.
+- **Global language contract** — one root `LanguageProvider` owns persisted
+  `AppLanguage = "en" | "ms"`; retained UI text is sourced from structured English and Bahasa
+  Melayu resources and reacts without refresh.
+- **AI language enforcement** — all four AI routes require the selected language, apply strict
+  system instructions, validate completed output, and retry at most once when the output is
+  predominantly in the wrong language. Telemetry records only requested/detected language codes.
+- **Canonical clinical values** — machine enums remain language-neutral and are translated only at
+  presentation time.
+
+### Boundaries
+- No Azure resource, identity, network, storage, database schema, model deployment, or clinical
+  calculation change. See [ADR-0011](./decisions/ADR-0011-single-experience-global-language.md) and
+  [CHANGE-20260815](./changes/CHANGE-20260815-single-experience-global-language.md).
+
 ## [3.0.1] — 2026-08-15
 
 ### Changed

@@ -1,10 +1,10 @@
 /**
  * Governance snapshot — a factual, non-sensitive summary of the AI configuration
- * currently governing PhoenixIQ assessments.
+ * currently governing Phoenix AI assessments.
  *
  * Assembled from environment + version constants. Contains NO secrets (only the
- * model deployment NAME, which is configuration). Rendered read-only on the AI
- * Assurance page's Governance section.
+ * model deployment NAME, which is configuration). Used by governed documentation
+ * and validation tests; no in-product assurance page is currently published.
  */
 
 import {
@@ -12,7 +12,6 @@ import {
   ANALYSIS_SCHEMA_VERSION,
   STAGED_PROMPT_VERSIONS,
 } from '../ai/prompts/versions';
-import { APP_VERSION } from '../v2/version';
 
 export interface GovernanceSnapshot {
   appVersion: string;
@@ -51,7 +50,7 @@ export function getGovernanceSnapshot(architectureVersion = 'see docs/architectu
       | 'single';
 
   return {
-    appVersion: APP_VERSION,
+    appVersion: envOr(['PHOENIX_AI_RELEASE'], 'current'),
     analysisModelDeployment: envOr(
       ['AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT', 'AZURE_AI_MODEL_DEPLOYMENT', 'AZURE_OPENAI_DEPLOYMENT'],
       'configured default',

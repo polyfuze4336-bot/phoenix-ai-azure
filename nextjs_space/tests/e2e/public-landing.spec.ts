@@ -52,7 +52,7 @@ test('public landing journey', async ({ page }) => {
   await setMobileViewport(page);
   await expect(page.locator('a[href="/hcp-login"]')).toBeVisible();
   await expect(page.locator('a[href="/community"]')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Toggle language' }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Switch to Bahasa Malaysia' }).first()).toBeVisible();
 
   await setDesktopViewport(page);
   await expect(page.locator('a[href="/hcp-login"]')).toBeVisible();

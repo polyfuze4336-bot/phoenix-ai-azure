@@ -43,3 +43,27 @@ export function createTextPassthroughResponse(
     },
   });
 }
+
+/** Emit an already-collected assistant completion using the OpenAI-compatible
+ * SSE lines consumed by the retained chat clients. */
+export function createTextCompletionResponse(text: string, correlationId?: string): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(
+        encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`),
+      );
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      ...(correlationId ? { 'x-correlation-id': correlationId } : {}),
+    },
+  });
+}

@@ -1,6 +1,6 @@
 # Human oversight
 
-AI output in PhoenixIQ is **decision-support only**. A qualified clinician remains the decision-maker.
+AI output in Phoenix AI is **decision-support only**. A qualified clinician remains the decision-maker.
 
 ## Review states
 Defined in [`lib/ai/analysis/metadata.ts`](../../nextjs_space/lib/ai/analysis/metadata.ts)
@@ -18,13 +18,10 @@ clinician, not the model. This is asserted in
 [`tests/rai/rai-metadata.test.ts`](../../nextjs_space/tests/rai/rai-metadata.test.ts).
 
 ## Surfaces
-- **Assessment result** — an assurance status line (`AI-generated · Structured validation complete ·
-  Clinical review pending`) and the "Analysis Information" panel
-  ([`components/v2/analysis-info-panel.tsx`](../../nextjs_space/components/v2/analysis-info-panel.tsx)).
-- **Case detail** — a Clinical Review panel where a clinician records reviewed / modified / escalated
-  ([`components/v2/clinical-review-panel.tsx`](../../nextjs_space/components/v2/clinical-review-panel.tsx)).
-  On the synthetic demo cases this records to component state (clearly a demonstration); in a wired
-  deployment the same action persists to the audit record.
+- **Assessment result** — structured confidence, limitations, missing information and evidence are
+  shown for clinician review. The complete metadata envelope is not currently presented.
+- **Review actions** — persisted reviewed / modified / escalated actions are not currently available
+  in the retained clinical interface; `RAI-ACCT-001` remains Partial.
 - **Refinement loop** — clinicians answer the model's follow-up questions to tighten an assessment
   without re-uploading (**RAI-SAFE-012**).
 

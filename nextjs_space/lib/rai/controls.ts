@@ -1,5 +1,5 @@
 /**
- * Responsible AI control register — the single source of truth for PhoenixIQ's
+ * Responsible AI control register — the single source of truth for Phoenix AI's
  * AI assurance controls.
  *
  * Each entry maps an ACTUALLY-IMPLEMENTED (or honestly Partial/Planned) control to:
@@ -207,7 +207,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     status: 'partial',
     description:
       'Guidance draws on widely-accepted clinical references, but these are curated general knowledge and are NOT yet version-pinned citations. This is disclosed rather than presented as a validated evidence base.',
-    evidence: ['lib/v2/guidelines.ts', 'lib/ai/prompts/wound-management.ts'],
+    evidence: ['app/hcp/guidelines/_components/guidelines-client.tsx', 'lib/ai/prompts/wound-management.ts'],
     userVisible: true,
   },
 
@@ -312,10 +312,9 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'output',
     status: 'partial',
     description:
-      'The API generates an analysis metadata envelope, but the retired v2 information panel is not published in the Original-only runtime.',
+      'The API generates an analysis metadata envelope, but the retained clinical interface does not yet present the complete envelope to users.',
     evidence: [
       'lib/ai/analysis/metadata.ts',
-      'components/v2/analysis-info-panel.tsx',
       'app/api/analyze-wound/route.ts',
     ],
     tests: ['tests/rai/rai-metadata.test.ts'],
@@ -342,10 +341,10 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'oversight',
     status: 'partial',
     description:
-      'Assessments start as "Clinical review pending", but the retired v2 review panel is not published in the Original-only runtime.',
+      'Assessments start as "Clinical review pending", but the retained clinical interface does not yet provide persisted review actions.',
     evidence: [
       'lib/ai/analysis/metadata.ts',
-      'components/v2/clinical-review-panel.tsx',
+      'app/hcp/analysis/_components/structured-analysis.tsx',
     ],
     tests: ['tests/rai/rai-metadata.test.ts'],
     userVisible: false,
@@ -454,14 +453,33 @@ export const RAI_CONTROLS: RaiControl[] = [
   },
   {
     id: 'RAI-INCL-001',
-    title: 'Bilingual public experience',
+    title: 'Bilingual application experience',
     principle: 'inclusiveness',
     layer: 'operations',
     status: 'active',
     description:
-      'The community experience supports English and Bahasa Malaysia so plain-language guidance reaches a wider population.',
-    evidence: ['lib/ai/prompts/community-wound-analysis.ts', 'lib/i18n.ts'],
+      'A root-scoped, immediately reactive language state supports English and Bahasa Malaysia across the retained healthcare-professional and community experiences and persists the user choice locally.',
+    evidence: ['lib/i18n.ts', 'components/language-provider.tsx', 'components/language-toggle.tsx'],
     tests: ['tests/unit/language.test.ts'],
+    userVisible: true,
+  },
+  {
+    id: 'RAI-INCL-003',
+    title: 'AI output language consistency',
+    principle: 'inclusiveness',
+    layer: 'output',
+    status: 'active',
+    description:
+      'Every AI route requires the selected language, applies a strict non-mixing instruction, checks completed output, and makes at most one language-only rewrite when a confident mismatch is detected.',
+    evidence: [
+      'lib/ai/language.ts',
+      'lib/ai/analysis/pipeline.ts',
+      'app/api/analyze-wound/route.ts',
+      'app/api/hcp-chat/route.ts',
+      'app/api/community-chat/route.ts',
+      'app/api/community-analyze/route.ts',
+    ],
+    tests: ['tests/unit/ai-language.test.ts', 'tests/rai/rai-controls.test.ts'],
     userVisible: true,
   },
   {

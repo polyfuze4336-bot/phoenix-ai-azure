@@ -13,33 +13,22 @@ import { trackClientEvent } from '@/lib/telemetry/client';
 // Public demo directory — display only. NO passwords live in browser source;
 // credentials are verified server-side via POST /api/auth/login.
 const DEMO_USERS = [
-  { email: 'doctor@phoenix.my', name: 'Dr. Ahmad Faizal', role: 'Pakar Perubatan Kecemasan' },
-  { email: 'nurse@phoenix.my', name: 'Nurse Siti Aminah', role: 'Jururawat Kanan' },
-  { email: 'admin@phoenix.my', name: 'Admin Phoenix', role: 'Pentadbir Sistem' },
+  { email: 'doctor@phoenix.my', name: 'Dr. Ahmad Faizal', roleKey: 'login.role_doctor' },
+  { email: 'nurse@phoenix.my', name: 'Nurse Siti Aminah', roleKey: 'login.role_nurse' },
+  { email: 'admin@phoenix.my', name: 'Admin Phoenix', roleKey: 'login.role_admin' },
 ];
 
 type AuthMode = 'demo' | 'entra';
 type LoginErrorCode = 'unauthorized' | 'forbidden' | 'unavailable' | null;
 
-function entraErrorMessage(code: LoginErrorCode, lang: string): string {
-  if (code === 'forbidden') {
-    return lang === 'bm'
-      ? 'Akaun anda tiada peranan klinikal untuk portal Phoenix AI.'
-      : 'Your account does not have a clinical role for the Phoenix AI portal.';
-  }
-  if (code === 'unavailable') {
-    return lang === 'bm'
-      ? 'Log masuk Entra ID tidak tersedia. Sila hubungi pentadbir anda.'
-      : 'Entra ID sign-in is unavailable. Please contact your administrator.';
-  }
-  // unauthorized (expired / cancelled)
-  return lang === 'bm'
-    ? 'Sesi anda telah tamat atau log masuk dibatalkan. Sila log masuk semula.'
-    : 'Your session expired or sign-in was cancelled. Please sign in again.';
+function entraErrorKey(code: LoginErrorCode): string {
+  if (code === 'forbidden') return 'login.entra_forbidden';
+  if (code === 'unavailable') return 'login.entra_unavailable';
+  return 'login.entra_unauthorized';
 }
 
 export function LoginClient({ mode, initialError }: { mode: AuthMode; initialError: LoginErrorCode }) {
-  const { lang } = useLanguage();
+  const { t } = useLanguage();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -67,17 +56,17 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
         body: JSON.stringify({ email: email.toLowerCase().trim(), password }),
       });
       if (!res.ok) {
-        setError(lang === 'bm' ? 'E-mel atau kata laluan tidak sah' : 'Invalid email or password');
+        setError(t('login.invalid_credentials'));
         setLoading(false);
         return;
       }
       const data = await res.json();
       startSession(data.user, 'manual');
     } catch {
-      setError(lang === 'bm' ? 'Ralat sambungan. Sila cuba lagi.' : 'Connection error. Please try again.');
+      setError(t('login.connection_error'));
       setLoading(false);
     }
-  }, [email, password, lang, startSession]);
+  }, [email, password, startSession, t]);
 
   const quickLogin = useCallback(async (demoUser: typeof DEMO_USERS[0]) => {
     setEmail(demoUser.email);
@@ -91,17 +80,17 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
         body: JSON.stringify({ email: demoUser.email, quick: true }),
       });
       if (!res.ok) {
-        setError(lang === 'bm' ? 'Log masuk demo gagal' : 'Demo login failed');
+        setError(t('login.demo_failed'));
         setLoading(false);
         return;
       }
       const data = await res.json();
       startSession(data.user, 'quick');
     } catch {
-      setError(lang === 'bm' ? 'Ralat sambungan. Sila cuba lagi.' : 'Connection error. Please try again.');
+      setError(t('login.connection_error'));
       setLoading(false);
     }
-  }, [lang, startSession]);
+  }, [startSession, t]);
 
   const isEntra = mode === 'entra';
 
@@ -133,10 +122,10 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
                 <Stethoscope className="w-8 h-8 text-white" />
               </div>
               <h1 className="font-display text-xl font-bold text-white">
-                {lang === 'bm' ? 'Portal Profesional Kesihatan' : 'Healthcare Professional Portal'}
+                {t('login.portal_title')}
               </h1>
               <p className="text-white/70 text-sm mt-1">
-                {lang === 'bm' ? 'Sila log masuk untuk meneruskan' : 'Please log in to continue'}
+                {t('login.subtitle')}
               </p>
             </div>
 
@@ -145,25 +134,21 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
               <div className="p-6 space-y-4">
                 {initialError && (
                   <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-sm text-red-600">
-                    {entraErrorMessage(initialError, lang)}
+                    {t(entraErrorKey(initialError))}
                   </div>
                 )}
                 <p className="text-sm text-gray-600 text-center">
-                  {lang === 'bm'
-                    ? 'Log masuk dengan akaun organisasi anda melalui Microsoft Entra ID.'
-                    : 'Sign in with your organisational account via Microsoft Entra ID.'}
+                  {t('login.entra_description')}
                 </p>
                 <a
                   href="/api/auth/entra/login"
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#8B0000] text-white rounded-xl font-semibold text-sm hover:bg-[#7a0000] transition-colors"
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  {lang === 'bm' ? 'Log Masuk dengan Microsoft Entra ID' : 'Sign in with Microsoft Entra ID'}
+                  {t('login.entra_action')}
                 </a>
                 <p className="text-xs text-gray-400 text-center">
-                  {lang === 'bm'
-                    ? 'Akses dikawal oleh peranan organisasi (Doktor, Jururawat, Pentadbir).'
-                    : 'Access is governed by your organisation role (Doctor, Nurse, Administrator).'}
+                  {t('login.entra_roles')}
                 </p>
               </div>
             ) : (
@@ -172,7 +157,7 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
                 <form onSubmit={handleLogin} className="p-6 space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      {lang === 'bm' ? 'E-mel' : 'Email'}
+                      {t('login.email')}
                     </label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -189,7 +174,7 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      {lang === 'bm' ? 'Kata Laluan' : 'Password'}
+                      {t('login.password')}
                     </label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -227,9 +212,9 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#8B0000] text-white rounded-xl font-semibold text-sm hover:bg-[#7a0000] transition-colors disabled:opacity-60"
                   >
                     {loading ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> {lang === 'bm' ? 'Sedang log masuk...' : 'Signing in...'}</>
+                      <><Loader2 className="w-4 h-4 animate-spin" /> {t('login.signing_in')}</>
                     ) : (
-                      lang === 'bm' ? 'Log Masuk' : 'Sign In'
+                      t('login.sign_in')
                     )}
                   </button>
                 </form>
@@ -238,7 +223,7 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
                 <div className="px-6">
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-px bg-gray-200" />
-                    <span className="text-xs text-gray-400">{lang === 'bm' ? 'atau log masuk pantas' : 'or quick login as'}</span>
+                    <span className="text-xs text-gray-400">{t('login.quick_login')}</span>
                     <div className="flex-1 h-px bg-gray-200" />
                   </div>
                 </div>
@@ -257,7 +242,7 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
-                        <p className="text-xs text-gray-500 truncate">{user.role}</p>
+                        <p className="text-xs text-gray-500 truncate">{t(user.roleKey)}</p>
                       </div>
                       <ArrowLeft className="w-4 h-4 text-gray-300 rotate-180 group-hover:text-[#8B0000] transition-colors" />
                     </button>
@@ -267,10 +252,8 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
                 {/* Demo Notice */}
                 <div className="px-6 pb-6">
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700 text-center">
-                    <strong>{lang === 'bm' ? 'Mod Demo' : 'Demo Mode'}:</strong>{' '}
-                    {lang === 'bm'
-                      ? 'Gunakan butang log masuk pantas atau masukkan e-mel & kata laluan di atas'
-                      : 'Use quick login buttons above or enter email & password'}
+                    <strong>{t('login.demo_mode')}:</strong>{' '}
+                    {t('login.demo_help')}
                   </div>
                 </div>
               </>
@@ -280,7 +263,7 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
           <div className="text-center mt-6">
             <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
               <ArrowLeft className="w-4 h-4" />
-              {lang === 'bm' ? 'Kembali ke halaman utama' : 'Back to home'}
+              {t('login.back_home')}
             </Link>
           </div>
         </motion.div>

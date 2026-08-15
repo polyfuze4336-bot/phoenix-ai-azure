@@ -21,15 +21,21 @@ type Depth = 'ptl' | 'ftl';
 type Tool = 'paint' | 'erase';
 type ViewKind = 'ant' | 'post';
 
-const AGE_LABELS: Record<AgeGroup, string> = {
-  '0': 'Age 0', '1': '1 yr', '5': '5 yrs', '10': '10 yrs', '15': '15 yrs', 'adult': 'Adult',
+const AGE_LABEL_KEYS: Record<AgeGroup, string> = {
+  '0': 'tbsa.age_label_0', '1': 'tbsa.year_1', '5': 'tbsa.years_5', '10': 'tbsa.years_10', '15': 'tbsa.years_15', 'adult': 'tbsa.adult',
 };
 
-const REGION_LABELS: Record<RegionKey, string> = {
-  head: 'Head', neck: 'Neck', antTrunk: 'Ant. trunk', postTrunk: 'Post. trunk',
-  rightArm: 'Right arm', leftArm: 'Left arm', buttocks: 'Buttocks', genitalia: 'Genitalia',
-  rightLeg: 'Right leg', leftLeg: 'Left leg',
+const REGION_LABEL_KEYS: Record<RegionKey, string> = {
+  head: 'tbsa.head', neck: 'tbsa.neck', antTrunk: 'tbsa.ant_trunk', postTrunk: 'tbsa.post_trunk',
+  rightArm: 'tbsa.right_arm_short', leftArm: 'tbsa.left_arm_short', buttocks: 'tbsa.buttocks', genitalia: 'tbsa.genitalia',
+  rightLeg: 'tbsa.right_leg_short', leftLeg: 'tbsa.left_leg_short',
 };
+
+const VARIABLE_AREA_LABEL_KEYS = {
+  head: 'tbsa.half_head',
+  thigh: 'tbsa.half_thigh',
+  lowerLeg: 'tbsa.half_lower_leg',
+} as const;
 
 /* ===================== BODY SHAPE DATA ===================== */
 
@@ -115,6 +121,7 @@ function BodyPainter({
   resetSignal: number;
   onCounts: (view: ViewKind, counts: Counts) => void;
 }) {
+  const { t } = useLanguage();
   const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const ptlBufRef = useRef<HTMLCanvasElement | null>(null);
   const ftlBufRef = useRef<HTMLCanvasElement | null>(null);
@@ -276,7 +283,7 @@ function BodyPainter({
     <div className="relative w-full" style={{ aspectRatio: `${VW} / ${VH}` }}>
       {/* 3D anatomical figure image */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={imgSrc} alt={view === 'ant' ? 'Anterior' : 'Posterior'} className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none" draggable={false} />
+      <img src={imgSrc} alt={view === 'ant' ? t('tbsa.anterior') : t('tbsa.posterior')} className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none" draggable={false} />
       {/* Hidden computation canvases */}
       <canvas ref={maskRef} className="hidden" />
       <canvas ref={ptlBufRef} className="hidden" />
@@ -318,6 +325,13 @@ export function TbsaClient() {
   );
 
   const severity = getSeverity(breakdown.total);
+  const severityLabel = breakdown.total < 10
+    ? `${t('tbsa.minor')} (<10%)`
+    : breakdown.total <= 20
+      ? `${t('tbsa.moderate')} (10-20%)`
+      : breakdown.total <= 40
+        ? `${t('tbsa.major')} (20-40%)`
+        : `${t('tbsa.critical')} (>40%)`;
 
   // Privacy-safe: after the user stops painting, record that a TBSA figure was
   // computed with its numeric result + severity band only (no image / drawing).
@@ -342,42 +356,42 @@ export function TbsaClient() {
       {/* Header */}
       <div>
         <h1 className="font-display text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{t('tbsa.title')}</h1>
-        <p className="text-sm text-gray-500 mt-1">Lund &amp; Browder Chart — Shade the burned areas directly on the figure. Be clear and accurate, do not include erythema.</p>
+        <p className="text-sm text-gray-500 mt-1">{t('tbsa.instructions')}</p>
       </div>
 
       {/* Controls */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-600">Age:</label>
+          <label className="text-sm font-medium text-gray-600">{t('tbsa.age')}:</label>
           <select
             value={age}
             onChange={(e: any) => setAge(e.target.value as AgeGroup)}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#8B0000]/20 focus:border-[#8B0000] outline-none"
           >
-            <option value="0">Age 0 (Neonate)</option>
-            <option value="1">1 year</option>
-            <option value="5">5 years</option>
-            <option value="10">10 years</option>
-            <option value="15">15 years</option>
-            <option value="adult">Adult</option>
+            <option value="0">{t('tbsa.age_0')}</option>
+            <option value="1">{t('tbsa.age_1')}</option>
+            <option value="5">{t('tbsa.age_5')}</option>
+            <option value="10">{t('tbsa.age_10')}</option>
+            <option value="15">{t('tbsa.age_15')}</option>
+            <option value="adult">{t('tbsa.adult')}</option>
           </select>
         </div>
 
         {/* Depth toggle */}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-600">Depth:</span>
+          <span className="text-sm font-medium text-gray-600">{t('tbsa.depth')}</span>
           <div className="flex rounded-lg overflow-hidden border border-gray-200">
             <button
               onClick={() => { setDepth('ptl'); setTool('paint'); }}
               className={`px-3 py-2 text-xs font-semibold transition-colors ${depth === 'ptl' && tool === 'paint' ? 'bg-[#E67E22] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
             >
-              Partial (PTL)
+              {t('tbsa.partial')}
             </button>
             <button
               onClick={() => { setDepth('ftl'); setTool('paint'); }}
               className={`px-3 py-2 text-xs font-semibold transition-colors border-l border-gray-200 ${depth === 'ftl' && tool === 'paint' ? 'bg-[#8B0000] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
             >
-              Full (FTL)
+              {t('tbsa.full')}
             </button>
           </div>
         </div>
@@ -388,24 +402,24 @@ export function TbsaClient() {
             onClick={() => setTool('paint')}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${tool === 'paint' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
           >
-            <Paintbrush className="w-3.5 h-3.5" /> Shade
+            <Paintbrush className="w-3.5 h-3.5" /> {t('tbsa.shade')}
           </button>
           <button
             onClick={() => setTool('erase')}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${tool === 'erase' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
           >
-            <Eraser className="w-3.5 h-3.5" /> Erase
+            <Eraser className="w-3.5 h-3.5" /> {t('tbsa.erase')}
           </button>
         </div>
 
         {/* Brush size */}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-600">Brush:</span>
+          <span className="text-sm font-medium text-gray-600">{t('tbsa.brush')}</span>
           <input type="range" min={4} max={28} value={brushSize} onChange={(e: any) => setBrushSize(Number(e.target.value))} className="accent-[#8B0000]" />
         </div>
 
         <button onClick={reset} className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-500 hover:text-[#8B0000] transition-colors ml-auto">
-          <RotateCcw className="w-4 h-4" /> Reset
+          <RotateCcw className="w-4 h-4" /> {t('common.reset')}
         </button>
       </div>
 
@@ -422,16 +436,16 @@ export function TbsaClient() {
             </div>
           </div>
           <div className="flex items-center justify-center gap-4 mt-3 text-xs text-gray-500">
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm" style={{ background: '#E67E22' }} /> Partial thickness</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm" style={{ background: '#8B0000' }} /> Full thickness</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm" style={{ background: '#E67E22' }} /> {t('tbsa.partial_thickness')}</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm" style={{ background: '#8B0000' }} /> {t('tbsa.full_thickness')}</span>
           </div>
-          <p className="text-xs text-center text-gray-400 mt-1">Drag your finger or pointer over the burned areas to shade them.</p>
+          <p className="text-xs text-center text-gray-400 mt-1">{t('tbsa.drag_help')}</p>
         </div>
 
         {/* Results + breakdown */}
         <div className="space-y-4 min-w-[300px]">
           <motion.div key={breakdown.total} initial={{ scale: 0.97 }} animate={{ scale: 1 }} className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm text-center">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Total TBSA</h3>
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('tbsa.total')}</h3>
             <p className="font-mono text-5xl font-bold text-[#8B0000]">{breakdown.total}%</p>
             <div className="mt-2 flex items-center justify-center gap-2">
               <span className="text-xs text-gray-500">PTL: {breakdown.ptlTotal}%</span>
@@ -439,19 +453,19 @@ export function TbsaClient() {
               <span className="text-xs text-gray-500">FTL: {breakdown.ftlTotal}%</span>
             </div>
             <div className={`inline-block mt-3 px-4 py-1.5 rounded-full text-white text-xs font-semibold ${severity.color}`}>
-              {severity.label}
+              {severityLabel}
             </div>
           </motion.div>
 
           {/* Per-region breakdown */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="bg-gradient-to-r from-[#8B0000] to-[#a01010] px-4 py-2.5 text-center">
-              <h3 className="text-white font-semibold text-xs">Region Breakdown (%)</h3>
+              <h3 className="text-white font-semibold text-xs">{t('tbsa.region_breakdown')}</h3>
             </div>
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left px-3 py-2 font-semibold text-gray-700">Region</th>
+                  <th className="text-left px-3 py-2 font-semibold text-gray-700">{t('tbsa.region')}</th>
                   <th className="px-2 py-2 font-semibold text-gray-700 text-center w-16">PTL</th>
                   <th className="px-2 py-2 font-semibold text-gray-700 text-center w-16">FTL</th>
                 </tr>
@@ -461,14 +475,14 @@ export function TbsaClient() {
                   const active = r.ptlPct > 0 || r.ftlPct > 0;
                   return (
                     <tr key={r.region} className={`border-b border-gray-100 ${active ? 'bg-orange-50' : i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                      <td className="px-3 py-1.5 text-gray-700 font-medium">{REGION_LABELS[r.region]}</td>
+                      <td className="px-3 py-1.5 text-gray-700 font-medium">{t(REGION_LABEL_KEYS[r.region])}</td>
                       <td className="px-2 py-1.5 text-center font-mono text-gray-600">{r.ptlPct || '-'}</td>
                       <td className="px-2 py-1.5 text-center font-mono text-gray-600">{r.ftlPct || '-'}</td>
                     </tr>
                   );
                 })}
                 <tr className="bg-[#8B0000]/5 border-t-2 border-[#8B0000]/20">
-                  <td className="px-3 py-2 font-bold text-[#8B0000]">Total burn</td>
+                  <td className="px-3 py-2 font-bold text-[#8B0000]">{t('tbsa.total_burn')}</td>
                   <td className="px-2 py-2 text-center font-bold text-[#8B0000]">{breakdown.ptlTotal || '-'}</td>
                   <td className="px-2 py-2 text-center font-bold text-[#8B0000]">{breakdown.ftlTotal || '-'}</td>
                 </tr>
@@ -478,13 +492,13 @@ export function TbsaClient() {
 
           {/* Severity legend */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-            <h4 className="text-xs font-semibold text-gray-500 mb-3">Severity Classification</h4>
+            <h4 className="text-xs font-semibold text-gray-500 mb-3">{t('tbsa.severity_classification')}</h4>
             <div className="space-y-1.5">
               {[
-                { range: '<10%', label: 'Minor', color: 'bg-green-500' },
-                { range: '10-20%', label: 'Moderate', color: 'bg-yellow-500' },
-                { range: '20-40%', label: 'Major', color: 'bg-orange-500' },
-                { range: '>40%', label: 'Critical', color: 'bg-red-600' },
+                { range: '<10%', label: t('tbsa.minor'), color: 'bg-green-500' },
+                { range: '10-20%', label: t('tbsa.moderate'), color: 'bg-yellow-500' },
+                { range: '20-40%', label: t('tbsa.major'), color: 'bg-orange-500' },
+                { range: '>40%', label: t('tbsa.critical'), color: 'bg-red-600' },
               ].map(item => (
                 <div key={item.range} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
@@ -502,7 +516,7 @@ export function TbsaClient() {
               href={`/hcp/parkland?tbsa=${breakdown.total}`}
               className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-[#8B0000] text-white rounded-xl font-medium hover:bg-[#7a0000] transition-colors text-sm"
             >
-              <Calculator className="w-4 h-4" /> Calculate Parkland Formula <ArrowRight className="w-4 h-4" />
+              <Calculator className="w-4 h-4" /> {t('tbsa.calculate_parkland')} <ArrowRight className="w-4 h-4" />
             </Link>
           )}
         </div>
@@ -512,16 +526,16 @@ export function TbsaClient() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="bg-gradient-to-r from-[#0F9B8E] to-[#0e8a7e] px-4 py-3 flex items-center gap-2">
           <Info className="w-4 h-4 text-white" />
-          <h3 className="text-white font-semibold text-sm">Lund &amp; Browder — Relative Percentage of Body Surface Area Affected by Growth</h3>
+          <h3 className="text-white font-semibold text-sm">{t('tbsa.reference_title')}</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left px-4 py-2.5 font-bold text-gray-800 min-w-[180px]">AREA</th>
+                <th className="text-left px-4 py-2.5 font-bold text-gray-800 min-w-[180px]">{t('tbsa.area')}</th>
                 {(['0', '1', '5', '10', '15', 'adult'] as AgeGroup[]).map(a => (
                   <th key={a} className={`px-3 py-2.5 font-bold text-center min-w-[60px] ${a === age ? 'bg-[#8B0000]/10 text-[#8B0000]' : 'text-gray-700'}`}>
-                    {AGE_LABELS[a]}
+                    {t(AGE_LABEL_KEYS[a])}
                   </th>
                 ))}
               </tr>
@@ -529,7 +543,7 @@ export function TbsaClient() {
             <tbody>
               {Object.entries(VARIABLE_AREAS).map(([key, data], i) => (
                 <tr key={key} className={`border-b border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                  <td className="px-4 py-2 font-medium text-gray-800 text-xs">{data.label}</td>
+                  <td className="px-4 py-2 font-medium text-gray-800 text-xs">{t(VARIABLE_AREA_LABEL_KEYS[key as keyof typeof VARIABLE_AREA_LABEL_KEYS])}</td>
                   {(['0', '1', '5', '10', '15', 'adult'] as AgeGroup[]).map(a => (
                     <td key={a} className={`px-3 py-2 text-center font-mono text-xs ${a === age ? 'bg-[#8B0000]/10 font-bold text-[#8B0000]' : 'text-gray-600'}`}>
                       {formatFraction((data as any)[a])}
@@ -541,10 +555,7 @@ export function TbsaClient() {
           </table>
         </div>
         <div className="px-4 py-2 bg-gray-50 border-t border-gray-200">
-          <p className="text-xs text-gray-500">
-            <strong>A</strong> = ½ of head &nbsp;|&nbsp; <strong>B</strong> = ½ of one thigh &nbsp;|&nbsp; <strong>C</strong> = ½ of one lower leg &nbsp;|&nbsp;
-            <strong>PTL</strong> = Partial Thickness Loss &nbsp;|&nbsp; <strong>FTL</strong> = Full Thickness Loss
-          </p>
+          <p className="text-xs text-gray-500">{t('tbsa.legend')}</p>
         </div>
       </div>
     </div>

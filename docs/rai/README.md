@@ -1,16 +1,16 @@
-# PhoenixIQ — Responsible AI & AI Assurance
+# Phoenix AI — Responsible AI & AI Assurance
 
 This directory documents the Responsible AI (RAI) controls that are **actually implemented** in
-PhoenixIQ, mapped to Microsoft's six Responsible AI principles and traced to source code and tests.
-The Original-only runtime does not publish the former v2 AI Assurance page; this documentation is
-the review surface until an Original-compatible in-product view is implemented.
+Phoenix AI, mapped to Microsoft's six Responsible AI principles and traced to source code and tests.
+The runtime does not currently publish an in-product AI Assurance page; this documentation is the
+review surface until a presentation consistent with the retained experience is implemented.
 
 > **Honesty rule.** Nothing here claims a capability that is not in the codebase. Controls are marked
-> **Active**, **Partial** or **Planned**. PhoenixIQ makes **no** claim of being "100% safe", "bias
+> **Active**, **Partial** or **Planned**. Phoenix AI makes **no** claim of being "100% safe", "bias
 > free", "hallucination free", "clinically certified" or "regulatory approved". AI output is
 > decision-support only and is reviewed by a clinician.
 
-## What PhoenixIQ is (and is not)
+## What Phoenix AI is (and is not)
 
 - **Is:** an AI-assisted burn & wound assessment aid that separates observation from interpretation,
   gates confidence on image quality, computes clinically sensitive quantities deterministically, runs

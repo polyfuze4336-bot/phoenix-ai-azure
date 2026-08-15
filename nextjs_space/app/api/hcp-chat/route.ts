@@ -6,11 +6,12 @@ export const maxDuration = 90;
 import { NextRequest } from 'next/server';
 import { AiMessage } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
-import { createTextPassthroughResponse } from '@/lib/ai/streaming/text-stream';
+import { createTextCompletionResponse } from '@/lib/ai/streaming/text-stream';
 import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
 import { trackEvent } from '@/lib/telemetry/server';
 import { checkRequestBodySize } from '@/lib/ai/validation/image-input';
-import { HCP_CHAT_SYSTEM_PROMPT } from '@/lib/ai/prompts/hcp-chat';
+import { hcpChatSystemPrompt } from '@/lib/ai/prompts/hcp-chat';
+import { completeWithLanguageValidation, parseRequestedLanguage } from '@/lib/ai/language';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,8 +22,12 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { messages: chatMessages } = body ?? {};
+    const language = parseRequestedLanguage(body?.language);
+    if (!language) {
+      return new Response(JSON.stringify({ error: 'Invalid language. Use "en" or "ms".' }), { status: 400 });
+    }
 
-    const llmMessages: AiMessage[] = [{ role: 'system', content: HCP_CHAT_SYSTEM_PROMPT }];
+    const llmMessages: AiMessage[] = [{ role: 'system', content: hcpChatSystemPrompt(language) }];
     for (const msg of (chatMessages ?? [])) {
       if (msg?.image) {
         llmMessages.push({
@@ -45,19 +50,25 @@ export async function POST(request: NextRequest) {
       messageCount: Array.isArray(chatMessages) ? chatMessages.length : 0,
     });
 
-    let upstream;
+    let completion;
     try {
-      upstream = await getAiProvider().streamChatCompletion({
+      completion = await completeWithLanguageValidation({
         messages: llmMessages,
-        maxOutputTokens: 3000,
-        correlationId,
+        language,
         route: 'hcp-chat',
+        correlationId,
+        complete: async (messages) => (await getAiProvider().streamChatCompletion({
+          messages,
+          maxOutputTokens: 3000,
+          correlationId,
+          route: 'hcp-chat',
+        })).body,
       });
     } catch (err) {
       return aiErrorResponse(err, 'LLM error');
     }
 
-    return createTextPassthroughResponse(upstream.body, upstream.correlationId);
+    return createTextCompletionResponse(completion.text, correlationId);
   } catch (error: any) {
     console.error('HCP chat error:', error);
     return new Response(JSON.stringify({ error: error?.message ?? 'Internal error' }), { status: 500 });

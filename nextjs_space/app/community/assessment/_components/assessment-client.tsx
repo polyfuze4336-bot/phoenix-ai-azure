@@ -4,85 +4,27 @@ import { useLanguage } from '@/components/language-provider';
 import { AlertTriangle, CheckCircle, ArrowRight, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useCallback } from 'react';
+import { localizedContent } from '@/lib/i18n/index';
 
-interface Question {
-  id: number;
-  textEn: string;
-  textBm: string;
-  options: { labelEn: string; labelBm: string; score: number }[];
-}
-
-const questions: Question[] = [
-  {
-    id: 1, textEn: 'What caused the burn?', textBm: 'Apa yang menyebabkan kelecuran?',
-    options: [
-      { labelEn: 'Hot liquid (water, oil)', labelBm: 'Cecair panas (air, minyak)', score: 1 },
-      { labelEn: 'Fire/Flame', labelBm: 'Api/Nyalaan', score: 2 },
-      { labelEn: 'Chemical', labelBm: 'Bahan kimia', score: 3 },
-      { labelEn: 'Electrical', labelBm: 'Elektrik', score: 4 },
-      { labelEn: 'Sun/Radiation', labelBm: 'Matahari/Radiasi', score: 1 },
-    ],
-  },
-  {
-    id: 2, textEn: 'How large is the burned area?', textBm: 'Seberapa besar kawasan yang terbakar?',
-    options: [
-      { labelEn: 'Smaller than a coin', labelBm: 'Lebih kecil daripada syiling', score: 0 },
-      { labelEn: 'About the size of your palm', labelBm: 'Sebesar tapak tangan', score: 1 },
-      { labelEn: 'Larger than your palm', labelBm: 'Lebih besar daripada tapak tangan', score: 2 },
-      { labelEn: 'Covers a large body area (arm, leg, chest)', labelBm: 'Meliputi kawasan badan besar (lengan, kaki, dada)', score: 4 },
-    ],
-  },
-  {
-    id: 3, textEn: 'What does the burn look like?', textBm: 'Bagaimana rupa kelecuran?',
-    options: [
-      { labelEn: 'Red, like a sunburn', labelBm: 'Merah, seperti selaran matahari', score: 0 },
-      { labelEn: 'Red with blisters', labelBm: 'Merah dengan lepuh', score: 2 },
-      { labelEn: 'White, waxy, or charred', labelBm: 'Putih, berlilin, atau hangus', score: 4 },
-      { labelEn: 'Not sure', labelBm: 'Tidak pasti', score: 2 },
-    ],
-  },
-  {
-    id: 4, textEn: 'Rate the pain level (1-10)', textBm: 'Nilaikan tahap kesakitan (1-10)',
-    options: [
-      { labelEn: 'Mild (1-3)', labelBm: 'Ringan (1-3)', score: 0 },
-      { labelEn: 'Moderate (4-6)', labelBm: 'Sederhana (4-6)', score: 1 },
-      { labelEn: 'Severe (7-9)', labelBm: 'Teruk (7-9)', score: 2 },
-      { labelEn: 'No pain / Numbness (10)', labelBm: 'Tiada sakit / Kebas (10)', score: 3 },
-    ],
-  },
-];
-
-function getResult(score: number) {
+function getResultStyle(score: number) {
   if (score <= 3) return {
     level: 'minor',
     color: 'bg-green-500',
     bgColor: 'bg-green-50 border-green-200',
     textColor: 'text-green-800',
-    titleEn: 'Minor — Home Care Recommended',
-    titleBm: 'Ringan — Penjagaan di Rumah Dicadangkan',
-    descEn: 'This appears to be a minor burn. Apply first aid at home: cool under running water for 20 minutes, apply aloe vera or burn cream, and cover with a clean bandage. Monitor for signs of infection.',
-    descBm: 'Ini kelihatan seperti kelecuran ringan. Sapukan pertolongan cemas di rumah: sejukkan di bawah air mengalir selama 20 minit, sapukan aloe vera atau krim kelecuran, dan tutup dengan pembalut bersih. Pantau tanda jangkitan.',
-  };
+  } as const;
   if (score <= 7) return {
     level: 'moderate',
     color: 'bg-orange-500',
     bgColor: 'bg-orange-50 border-orange-200',
     textColor: 'text-orange-800',
-    titleEn: 'Moderate — Visit a Clinic',
-    titleBm: 'Sederhana — Pergi ke Klinik',
-    descEn: 'This burn may need professional medical attention. Apply first aid, then visit your nearest clinic or hospital for proper assessment and treatment.',
-    descBm: 'Kelecuran ini mungkin memerlukan perhatian perubatan profesional. Sapukan pertolongan cemas, kemudian pergi ke klinik atau hospital terdekat untuk penilaian dan rawatan yang sewajarnya.',
-  };
+  } as const;
   return {
     level: 'emergency',
     color: 'bg-red-600',
     bgColor: 'bg-red-50 border-red-200',
     textColor: 'text-red-800',
-    titleEn: '⚠️ Emergency — Go to Hospital Immediately',
-    titleBm: '⚠️ Kecemasan — Pergi ke Hospital Segera',
-    descEn: 'This appears to be a serious burn that requires immediate emergency medical attention. Call 999 or go to the nearest Emergency Department immediately. While waiting, cool the burn under running water.',
-    descBm: 'Ini kelihatan seperti kelecuran serius yang memerlukan perhatian perubatan kecemasan segera. Hubungi 999 atau pergi ke Jabatan Kecemasan terdekat segera. Semasa menunggu, sejukkan kelecuran di bawah air mengalir.',
-  };
+  } as const;
 }
 
 export function AssessmentClient() {
@@ -90,6 +32,8 @@ export function AssessmentClient() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [showResult, setShowResult] = useState(false);
+  const content = localizedContent(lang).community.assessment;
+  const questions = content.questions;
 
   const handleAnswer = useCallback((score: number) => {
     const newAnswers = [...(answers ?? []), score];
@@ -99,7 +43,7 @@ export function AssessmentClient() {
     } else {
       setShowResult(true);
     }
-  }, [answers, step]);
+  }, [answers, step, questions.length]);
 
   const reset = useCallback(() => {
     setStep(0);
@@ -108,7 +52,8 @@ export function AssessmentClient() {
   }, []);
 
   const totalScore = (answers ?? [])?.reduce((a: number, b: number) => a + b, 0);
-  const result = getResult(totalScore);
+  const result = getResultStyle(totalScore);
+  const resultCopy = content.results[result.level];
   const currentQ = questions?.[step];
 
   return (
@@ -121,11 +66,7 @@ export function AssessmentClient() {
       {/* Disclaimer */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
-        <p className="text-xs text-amber-800">
-          {lang === 'en'
-            ? 'This is a basic self-assessment tool and does not replace professional medical advice. When in doubt, seek medical help.'
-            : 'Ini adalah alat penilaian kendiri asas dan tidak menggantikan nasihat perubatan profesional. Apabila ragu, dapatkan bantuan perubatan.'}
-        </p>
+        <p className="text-xs text-amber-800">{content.disclaimer}</p>
       </div>
 
       {!showResult && currentQ && (
@@ -136,10 +77,10 @@ export function AssessmentClient() {
               <div key={i} className={`h-2 flex-1 rounded-full transition-colors ${i <= step ? 'bg-[#0F9B8E]' : 'bg-gray-200'}`} />
             ))}
           </div>
-          <p className="text-xs text-gray-400">{lang === 'en' ? 'Question' : 'Soalan'} {step + 1} / {questions?.length ?? 0}</p>
+          <p className="text-xs text-gray-400">{content.questionLabel} {step + 1} / {questions.length}</p>
 
           <h2 className="font-display text-lg font-bold text-gray-900">
-            {lang === 'en' ? currentQ?.textEn : currentQ?.textBm}
+            {currentQ.text}
           </h2>
 
           <div className="space-y-3">
@@ -149,7 +90,7 @@ export function AssessmentClient() {
                 onClick={() => handleAnswer(opt?.score ?? 0)}
                 className="w-full text-left px-5 py-4 bg-white rounded-xl border border-gray-200 hover:border-[#0F9B8E] hover:bg-[#0F9B8E]/5 transition-all text-sm font-medium text-gray-700 flex items-center justify-between group"
               >
-                {lang === 'en' ? opt?.labelEn : opt?.labelBm}
+                {opt.label}
                 <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-[#0F9B8E] transition-colors" />
               </button>
             ))}
@@ -165,17 +106,17 @@ export function AssessmentClient() {
                 {result?.level === 'minor' ? <CheckCircle className="w-5 h-5 text-white" /> : <AlertTriangle className="w-5 h-5 text-white" />}
               </div>
               <h2 className={`font-display text-lg font-bold ${result?.textColor}`}>
-                {lang === 'en' ? result?.titleEn : result?.titleBm}
+                {resultCopy.title}
               </h2>
             </div>
             <p className={`text-sm ${result?.textColor}`}>
-              {lang === 'en' ? result?.descEn : result?.descBm}
+              {resultCopy.description}
             </p>
           </div>
 
           {result?.level === 'emergency' && (
             <a href="tel:999" className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-red-600 text-white rounded-xl font-bold text-lg hover:bg-red-700 transition-colors">
-              {lang === 'en' ? 'Call 999 Now' : 'Hubungi 999 Sekarang'}
+              {content.callEmergency}
             </a>
           )}
 

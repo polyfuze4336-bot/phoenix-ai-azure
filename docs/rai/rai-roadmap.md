@@ -16,9 +16,11 @@ Honest staging. **Implemented** items are in the product today; **Next** and **F
 - Human-in-the-loop review; audit persistence (RAI-ACCT-001/002).
 - Managed identity, server-side calls, privacy-safe telemetry (RAI-PRIV-001/002/003).
 - Structural evaluation harness + RAI test suite (RAI-ACCT-004).
+- All-route AI language propagation, strict non-mixing instructions, completed-output detection, and
+  one bounded rewrite retry (RAI-INCL-003).
 
 ## Next (planned, not yet implemented)
-- Provide an Original-compatible, in-product AI Assurance view without reintroducing v2 routes.
+- Provide an in-product AI Assurance view consistent with the retained experience.
 - Version-pinned guideline citations to replace curated general references (upgrade RAI-TRANS-005
   Partial → Active).
 - Persisted clinical-review audit trail wired to real cases (extend RAI-ACCT-001 beyond demo state).

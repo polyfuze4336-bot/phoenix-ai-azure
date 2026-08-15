@@ -1334,3 +1334,40 @@ AI experience without rewriting Git history or changing the deployed Azure topol
   four-stage vision analysis with a safe non-wound result (correlation
   `48dd9bf6-5b47-4169-8974-e3a24a5cf604`); controlled JPEG did the same (correlation
   `64a92191-4e5c-43c8-8d2a-d722df2d7d7a`).
+
+### Step 34 - Remove Phoenix AI v2 and govern one bilingual experience
+
+This step permanently removes the alternate Phoenix AI v2 implementation and establishes the
+retained HCP and Community application as the only product experience. The supplied Phoenix AI logo,
+clinical workflows, shared staged analysis, safety controls, persistence, telemetry, and Azure
+integration layers remain intact.
+
+- **Single experience.** Deleted `app/v2`, `components/v2`, `lib/v2`, the experience selector,
+  v2-only unit tests, v2 styling, feature flags, and obsolete active comparison/design documents.
+  `/` now presents the retained HCP and Community entries directly. Representative `/v2` paths are
+  covered by browser tests and return HTTP 404.
+- **Global language contract.** The root provider owns one persisted and reactive
+  `AppLanguage = "en" | "ms"` value under local-storage key `phoenix-ai-language`. Visible retained
+  UI content is centralized in English and Bahasa Melayu resources, including dashboard charts,
+  analysis/history, TBSA, Parkland, guidelines, chat, Community education, first aid, assessment,
+  image-check, login, landing, and PWA surfaces. Canonical clinical values remain language-neutral
+  in logic and storage and are translated only for display.
+- **Governed AI language.** All four AI routes require canonical `language`, reject legacy or invalid
+  codes, add strict single-language instructions, inspect model prose/JSON string values, and permit
+  no more than one bounded rewrite for a confident mismatch. Telemetry records language metadata and
+  outcome only, never prompts, clinical text, images, or model output. Prompt/pipeline versions were
+  advanced to reflect the governed behavior.
+- **Responsible AI.** `RAI-INCL-003` is Active with code and tests for strict instructions, structured
+  detection, the one-rewrite ceiling, and metadata-only telemetry. Existing safety, fairness,
+  transparency, human-oversight, and privacy controls were retained; active documentation no longer
+  claims that deleted assurance panels are published.
+- **Architecture governance.** MAJOR impact; architecture version `3.0.1 -> 4.0.0`. ADR-0011 records
+  the single-experience/global-language decision. Current architecture, inventories, Azure resource
+  map, three Mermaid diagrams, changelog, and
+  `docs/architecture/changes/CHANGE-20260815-single-experience-global-language.md` were synchronized.
+  Azure resource impact is NONE.
+- **Validation.** PASS: unit `96/96`, Responsible AI `26/26`, integration `14/14`, production HTTP API
+  `20/20`, retained-route/bilingual E2E `22/22`, TypeScript, ESLint, production build, architecture
+  drift, and seven Mermaid diagrams. The final build publishes only the retained routes. Local AI and
+  database checks exercised explicit unconfigured terminal states because credentials were not loaded;
+  no test was skipped or allowed to hang.

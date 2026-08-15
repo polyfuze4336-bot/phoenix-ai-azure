@@ -9,7 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export function LandingClient() {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/30 flex flex-col">
@@ -51,9 +51,6 @@ export function LandingClient() {
             <p className="text-base md:text-xl text-gray-600 max-w-2xl mx-auto mb-1 font-medium">
               {t('landing.tagline')}
             </p>
-            <p className="text-sm text-gray-500 max-w-2xl mx-auto mb-1 italic">
-              Alat Penilaian Penjagaan Luka & Kelecuran
-            </p>
             <p className="text-xs md:text-base text-gray-500 max-w-xl mx-auto mb-8 md:mb-12 px-2">
               {t('landing.subtitle')}
             </p>
@@ -81,7 +78,7 @@ export function LandingClient() {
                         {t('landing.hcp_desc')}
                       </p>
                       <p className="text-xs text-gray-500 md:hidden">
-                        {lang === 'bm' ? 'Alat klinikal & analisis AI' : 'Clinical tools & AI analysis'}
+                        {t('landing.hcp_short')}
                       </p>
                     </div>
                     <ArrowRight className="w-5 h-5 text-[#8B0000] md:hidden shrink-0" />
@@ -113,7 +110,7 @@ export function LandingClient() {
                         {t('landing.community_desc')}
                       </p>
                       <p className="text-xs text-gray-500 md:hidden">
-                        {lang === 'bm' ? 'Pertolongan cemas & panduan kesihatan' : 'First aid & health education'}
+                        {t('landing.community_short')}
                       </p>
                     </div>
                     <ArrowRight className="w-5 h-5 text-[#0F9B8E] md:hidden shrink-0" />
@@ -134,9 +131,9 @@ export function LandingClient() {
             className="flex flex-wrap justify-center gap-2 md:gap-4 mt-8 md:mt-16"
           >
             {[
-              { icon: Shield, label: lang === 'bm' ? 'Analisis AI' : 'AI-Powered Analysis' },
-              { icon: Flame, label: lang === 'bm' ? 'Kalkulator TBSA' : 'TBSA & Fluid Calculator' },
-              { icon: Heart, label: lang === 'bm' ? 'Pendidikan Kesihatan' : 'Community Education' },
+              { icon: Shield, label: t('landing.feature_analysis') },
+              { icon: Flame, label: t('landing.feature_calculators') },
+              { icon: Heart, label: t('landing.feature_education') },
             ].map((item: any, i: number) => (
               <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 rounded-full shadow-sm border border-gray-100 text-xs md:text-sm text-gray-600">
                 <item.icon className="w-3.5 h-3.5 text-[#0F9B8E]" />
@@ -154,7 +151,7 @@ export function LandingClient() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#8B0000]/5 rounded-full text-xs text-[#8B0000]">
               <Smartphone className="w-3.5 h-3.5" />
-              {lang === 'bm' ? 'Pasang sebagai aplikasi dari pelayar anda' : 'Install as app from your browser'}
+              {t('landing.install_hint')}
             </div>
           </motion.div>
         </div>
@@ -163,9 +160,9 @@ export function LandingClient() {
       {/* Footer — minimal on mobile */}
       <footer className="py-5 md:py-8 text-center border-t border-gray-100 px-4">
         <p className="text-xs md:text-sm font-medium text-gray-600">
-          Department of Plastic and Reconstructive Surgery, Hospital Kuala Lumpur
+          {t('landing.department')}
         </p>
-        <p className="text-xs text-gray-400 mt-1">© 2026 Phoenix AI — Malaysia</p>
+        <p className="text-xs text-gray-400 mt-1">{t('landing.copyright')}</p>
       </footer>
     </div>
   );

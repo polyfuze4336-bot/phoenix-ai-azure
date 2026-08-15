@@ -6,12 +6,13 @@
 flowchart TB
     subgraph HCPChat["HCP Chat"]
         U1["User"] --> UI1["HCP Chat UI"]
-        UI1 --> L1["EN/BM selection"]
+        UI1 --> L1["Global persisted EN/MS selection"]
         L1 --> R1["/api/hcp-chat"]
         R1 --> P1["lib/ai prompts: hcp-chat + language instruction"]
         P1 --> AP1["AI Provider (AzureFoundryProvider)"]
         AP1 --> F1["Microsoft Foundry / Azure OpenAI"]
-        F1 --> S1["Streaming SSE response"]
+        F1 --> LV1["Language validation\nretry once if needed"]
+        LV1 --> S1["Response"]
         S1 --> UI1
     end
 
@@ -22,7 +23,8 @@ flowchart TB
         V2 -.->|"invalid: actionable HTTP 400"| UI2
         V2 --> AP2["AI Provider (multimodal, consolidated TBSA)"]
         AP2 --> F2["Microsoft Foundry (gpt-4o vision)"]
-        F2 --> SV2["Structured response validation (wound-analysis-schema)"]
+        F2 --> LV2["Language validation\nretry once if needed"]
+        LV2 --> SV2["Structured response validation (wound-analysis-schema)"]
         SV2 --> UI2["Original HCP Result Panel"]
         R2 -.->|"Entra session only: persist AnalysisRecord"| DB2["PostgreSQL (lib/analysis/history)"]
         R2 -.->|"Entra session only: private image"| BLOB2["Azure Blob Storage"]
@@ -34,7 +36,8 @@ flowchart TB
         R3 --> P3["lib/ai prompts: community-chat"]
         P3 --> AP3["AI Provider"]
         AP3 --> F3["Microsoft Foundry"]
-        F3 --> S3["Response"]
+        F3 --> LV3["Language validation\nretry once if needed"]
+        LV3 --> S3["Response"]
         S3 --> UI3
     end
 
@@ -45,6 +48,7 @@ flowchart TB
         V4 -.->|"invalid: actionable HTTP 400"| UI4
         V4 --> AP4["AI Provider (multimodal)"]
         AP4 --> F4["Microsoft Foundry (gpt-4o vision)"]
-        F4 --> SG4["Safe simplified guidance (community schema)"]
+        F4 --> LV4["Language validation\nretry once if needed"]
+        LV4 --> SG4["Safe simplified guidance (community schema)"]
         SG4 --> UI4["Community interface"]
     end

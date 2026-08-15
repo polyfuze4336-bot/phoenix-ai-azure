@@ -1,7 +1,7 @@
 # Fairness & skin tone
 
 Burn assessment is known to be harder on deeply pigmented skin (e.g. erythema is less visible).
-PhoenixIQ handles skin tone carefully and avoids unsupported demographic inference.
+Phoenix AI handles skin tone carefully and avoids unsupported demographic inference.
 
 ## What the system does
 - **Describes** observed skin tone in plain terms (e.g. "light brown", "deeply pigmented") at the

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { StructuredAnalysis, type StructuredAnalysisData } from './structured-analysis';
+import { translateCanonicalValue } from '@/lib/i18n';
 
 interface AnalysisResult {
   fitzpatrickType: string;
@@ -67,17 +68,12 @@ async function saveAnalysisToHistory(result: AnalysisResult, image: string, mime
 }
 
 async function responseError(response: Response, fallback: string): Promise<string> {
-  try {
-    const body = await response.json();
-    if (typeof body?.error === 'string' && body.error.trim()) return body.error;
-  } catch {
-    // Keep the existing fallback when the response is not JSON.
-  }
+  await response.json().catch(() => undefined);
   return fallback;
 }
 
 export function AnalysisClient() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -151,9 +147,9 @@ export function AnalysisClient() {
       setResult(null);
       setError(null);
     } catch (err: any) {
-      setError('Camera access denied. Please allow camera access.');
+      setError(t('analysis.camera_denied'));
     }
-  }, []);
+  }, [t]);
 
   const stopCamera = useCallback(() => {
     streamRef?.current?.getTracks()?.forEach((track: any) => track?.stop?.());
@@ -194,10 +190,10 @@ export function AnalysisClient() {
       const response = await fetch('/api/analyze-wound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext() }),
+        body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext(), language: lang }),
       });
 
-      if (!response?.ok) throw new Error(await responseError(response, 'Analysis failed'));
+      if (!response?.ok) throw new Error(await responseError(response, t('analysis.failed')));
 
       const completed = await readAnalysisStream(response);
       if (completed) {
@@ -205,11 +201,11 @@ export function AnalysisClient() {
         void saveAnalysisToHistory(completed, base64, mime);
       }
     } catch (err: any) {
-      setError(err?.message ?? 'Analysis failed');
+      setError(err?.message ?? t('analysis.failed'));
     } finally {
       setAnalyzing(false);
     }
-  }, [imageFile, patientContext, readAnalysisStream]);
+  }, [imageFile, lang, patientContext, readAnalysisStream, t]);
 
   /** Second pass: re-run the pipeline with clinician answers, no re-upload. */
   const refineAnalysis = useCallback(async (answers: string) => {
@@ -226,20 +222,21 @@ export function AnalysisClient() {
           patient: patientContext(),
           priorAnalysis: result.structured,
           refineAnswers: answers,
+          language: lang,
         }),
       });
-      if (!response?.ok) throw new Error(await responseError(response, 'Refine failed'));
+      if (!response?.ok) throw new Error(await responseError(response, t('analysis.refine_failed')));
       const completed = await readAnalysisStream(response);
       if (completed) {
         setResult(completed);
         void saveAnalysisToHistory(completed, lastBase64Ref.current, lastMimeRef.current);
       }
     } catch (err: any) {
-      setError(err?.message ?? 'Refine failed');
+      setError(err?.message ?? t('analysis.refine_failed'));
     } finally {
       setRefining(false);
     }
-  }, [result, patientContext, readAnalysisStream]);
+  }, [lang, result, patientContext, readAnalysisStream, t]);
 
   const clearImage = useCallback(() => {
     setImagePreview(null);
@@ -260,7 +257,7 @@ export function AnalysisClient() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{t('analysis.title')}</h1>
-        <p className="text-sm text-gray-500 mt-1">Upload or capture a wound/burn image for AI-powered clinical assessment</p>
+        <p className="text-sm text-gray-500 mt-1">{t('analysis.subtitle')}</p>
       </div>
 
       {/* Disclaimer */}
@@ -280,7 +277,7 @@ export function AnalysisClient() {
               >
                 <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="font-medium text-gray-600">{t('analysis.upload')}</p>
-                <p className="text-xs text-gray-400 mt-1">JPEG, PNG — max 10MB</p>
+                <p className="text-xs text-gray-400 mt-1">{t('analysis.file_hint')}</p>
               </div>
                 <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileSelect} className="hidden" />
               <button
@@ -298,8 +295,8 @@ export function AnalysisClient() {
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
               </div>
               <div className="flex gap-3">
-                <button onClick={capturePhoto} className="flex-1 px-4 py-3 bg-[#8B0000] text-white rounded-xl font-medium hover:bg-[#7a0000] transition-colors">Capture</button>
-                <button onClick={stopCamera} className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors">Cancel</button>
+                <button onClick={capturePhoto} className="flex-1 px-4 py-3 bg-[#8B0000] text-white rounded-xl font-medium hover:bg-[#7a0000] transition-colors">{t('analysis.capture')}</button>
+                <button onClick={stopCamera} className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors">{t('analysis.cancel')}</button>
               </div>
               <canvas ref={canvasRef} className="hidden" />
             </div>
@@ -317,32 +314,32 @@ export function AnalysisClient() {
               </div>
               {/* Optional patient context — improves accuracy; nothing is assumed when blank. */}
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
-                <p className="text-xs font-semibold text-gray-500">Patient details (optional — improves accuracy)</p>
+                <p className="text-xs font-semibold text-gray-500">{t('analysis.patient_details')}</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1">Weight (kg)</label>
+                    <label className="text-xs text-gray-500 block mb-1">{t('analysis.weight')}</label>
                     <input
                       type="number"
                       inputMode="decimal"
                       min="0"
                       value={weightKg}
                       onChange={(e) => setWeightKg(e.target.value)}
-                      placeholder="e.g. 68"
+                      placeholder={t('analysis.weight_placeholder')}
                       className="w-full text-sm border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#8B0000]/30"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1">Mechanism</label>
+                    <label className="text-xs text-gray-500 block mb-1">{t('analysis.mechanism')}</label>
                     <input
                       type="text"
                       value={mechanism}
                       onChange={(e) => setMechanism(e.target.value)}
-                      placeholder="e.g. scald"
+                      placeholder={t('analysis.mechanism_placeholder')}
                       className="w-full text-sm border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#8B0000]/30"
                     />
                   </div>
                 </div>
-                <p className="text-[11px] text-gray-400">Weight enables an accurate Parkland calculation. No weight is assumed if left blank.</p>
+                <p className="text-[11px] text-gray-400">{t('analysis.weight_help')}</p>
               </div>
               <button
                 onClick={analyzeImage}
@@ -366,8 +363,8 @@ export function AnalysisClient() {
               {/* Native skin type (Fitzpatrick) */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 overflow-hidden">
                 <div className="p-4 flex items-center justify-between">
-                  <span className="flex items-center gap-2 text-sm font-medium text-gray-600"><Palette className="w-4 h-4 text-[#E67E22]" /> Native Skin Type (Fitzpatrick)</span>
-                  <span className="text-sm font-bold text-[#8B0000]">{result?.fitzpatrickType ?? 'N/A'}</span>
+                  <span className="flex items-center gap-2 text-sm font-medium text-gray-600"><Palette className="w-4 h-4 text-[#E67E22]" /> {t('analysis.native_skin_type')}</span>
+                  <span className="text-sm font-bold text-[#8B0000]">{translateCanonicalValue(result?.fitzpatrickType, lang)}</span>
                 </div>
                 {result?.fitzpatrickNote && result?.fitzpatrickNote !== 'N/A' && (
                   <div className="px-4 pb-4 -mt-1">
@@ -378,20 +375,20 @@ export function AnalysisClient() {
 
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y">
                 <div className="p-4 flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-500">Wound Category</span>
-                  <span className="text-sm font-semibold text-gray-900 text-right">{result?.woundCategory ?? 'N/A'}</span>
+                  <span className="text-sm font-medium text-gray-500">{t('analysis.wound_category')}</span>
+                  <span className="text-sm font-semibold text-gray-900 text-right">{translateCanonicalValue(result?.woundCategory, lang)}</span>
                 </div>
                 <div className="p-4 flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500">{t('analysis.wound_type')}</span>
-                  <span className="text-sm font-semibold text-gray-900 text-right">{result?.woundType ?? 'N/A'}</span>
+                  <span className="text-sm font-semibold text-gray-900 text-right">{translateCanonicalValue(result?.woundType, lang)}</span>
                 </div>
                 <div className="p-4 flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500">{t('analysis.burn_degree')}</span>
-                  <span className="text-sm font-semibold text-gray-900">{result?.burnDegree ?? 'N/A'}</span>
+                  <span className="text-sm font-semibold text-gray-900">{translateCanonicalValue(result?.burnDegree, lang)}</span>
                 </div>
                 <div className="p-4 flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500">{t('analysis.severity')}</span>
-                  <span className={`text-xs font-semibold px-3 py-1 rounded-full ${severityColor(result?.severity ?? '')}`}>{result?.severity ?? 'N/A'}</span>
+                  <span className={`text-xs font-semibold px-3 py-1 rounded-full ${severityColor(result?.severity ?? '')}`}>{translateCanonicalValue(result?.severity, lang)}</span>
                 </div>
                 <div className="p-4">
                   <span className="text-sm font-medium text-gray-500 block mb-2">{t('analysis.characteristics')}</span>
@@ -399,7 +396,7 @@ export function AnalysisClient() {
                 </div>
                 <div className="p-4 flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500">{t('analysis.confidence')}</span>
-                  <span className="text-sm font-semibold text-[#0F9B8E]">{result?.confidence ?? 'N/A'}</span>
+                  <span className="text-sm font-semibold text-[#0F9B8E]">{translateCanonicalValue(result?.confidence, lang)}</span>
                 </div>
               </div>
 
@@ -410,24 +407,24 @@ export function AnalysisClient() {
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                   <div className="px-4 py-2.5 bg-gradient-to-r from-[#0F9B8E] to-[#0e8a7e] flex items-center gap-2">
                     <Layers className="w-4 h-4 text-white" />
-                    <span className="text-white font-semibold text-sm">Wound Bed &amp; Tissue Assessment</span>
+                    <span className="text-white font-semibold text-sm">{t('analysis.wound_bed')}</span>
                   </div>
                   <div className="divide-y">
                     {result?.tissueComposition && result?.tissueComposition !== 'N/A' && (
                       <div className="p-4">
-                        <span className="text-xs font-semibold text-[#0F9B8E] block mb-1">Tissue Composition</span>
+                        <span className="text-xs font-semibold text-[#0F9B8E] block mb-1">{t('analysis.tissue_composition')}</span>
                         <p className="text-sm text-gray-700">{result?.tissueComposition}</p>
                       </div>
                     )}
                     {result?.exudate && result?.exudate !== 'N/A' && (
                       <div className="p-4">
-                        <span className="text-xs font-semibold text-[#0F9B8E] block mb-1">Exudate &amp; Infection Signs</span>
+                        <span className="text-xs font-semibold text-[#0F9B8E] block mb-1">{t('analysis.exudate_signs')}</span>
                         <p className="text-sm text-gray-700">{result?.exudate}</p>
                       </div>
                     )}
                     {result?.woundEdges && result?.woundEdges !== 'N/A' && (
                       <div className="p-4">
-                        <span className="text-xs font-semibold text-[#0F9B8E] block mb-1">Wound Edges &amp; Periwound Skin</span>
+                        <span className="text-xs font-semibold text-[#0F9B8E] block mb-1">{t('analysis.wound_edges')}</span>
                         <p className="text-sm text-gray-700">{result?.woundEdges}</p>
                       </div>
                     )}
@@ -440,24 +437,24 @@ export function AnalysisClient() {
                 <div className="space-y-3">
                   <h3 className="font-display text-base font-bold text-gray-900 pt-2 flex items-center gap-2">
                     <Flame className="w-5 h-5 text-[#F59B0C]" />
-                    TBSA Estimation
+                    {t('analysis.tbsa_estimation')}
                   </h3>
                   <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-orange-200 overflow-hidden">
                     <div className="p-4 bg-gradient-to-r from-[#8B0000] to-[#a01010] flex items-center justify-between">
-                      <span className="text-white font-medium text-sm">Estimated TBSA</span>
+                      <span className="text-white font-medium text-sm">{t('analysis.estimated_tbsa')}</span>
                       <span className="text-white font-bold text-2xl">{result?.tbsaEstimate ?? '0'}%</span>
                     </div>
                     <div className="divide-y divide-orange-100">
                       <div className="p-4 flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">TBSA Range</span>
+                        <span className="text-sm font-medium text-gray-600">{t('analysis.tbsa_range')}</span>
                         <span className="text-sm font-semibold text-gray-900">{result?.tbsaRange ?? 'N/A'}</span>
                       </div>
                       <div className="p-4">
-                        <span className="text-sm font-medium text-gray-600 block mb-1">Affected Body Regions</span>
+                        <span className="text-sm font-medium text-gray-600 block mb-1">{t('analysis.affected_regions')}</span>
                         <p className="text-sm text-gray-800">{result?.tbsaBodyRegions ?? 'N/A'}</p>
                       </div>
                       <div className="p-4 flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">Estimation Method</span>
+                        <span className="text-sm font-medium text-gray-600">{t('analysis.estimation_method')}</span>
                         <span className="text-xs font-medium px-2 py-1 bg-orange-100 text-orange-700 rounded-full">{result?.tbsaMethod ?? 'N/A'}</span>
                       </div>
                     </div>
@@ -468,16 +465,16 @@ export function AnalysisClient() {
                     <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-200 overflow-hidden">
                       <div className="p-4 bg-gradient-to-r from-[#0F9B8E] to-[#0e8a7e] flex items-center gap-2">
                         <Droplets className="w-5 h-5 text-white" />
-                        <span className="text-white font-medium text-sm">Parkland Formula (Fluid Resuscitation)</span>
+                        <span className="text-white font-medium text-sm">{t('analysis.parkland_title')}</span>
                       </div>
                       <div className="p-4">
                         <p className="text-sm text-gray-800 whitespace-pre-line">{result?.parklandFluid}</p>
                         {result?.structured ? (
                           result?.structured?.parkland?.requiresWeight ? (
-                            <p className="text-xs text-gray-500 mt-3 italic">* Enter the patient weight above (or in the Parkland Calculator) for an accurate calculation. No weight is assumed.</p>
+                            <p className="text-xs text-gray-500 mt-3 italic">{t('analysis.parkland_weight_help')}</p>
                           ) : null
                         ) : (
-                          <p className="text-xs text-gray-500 mt-3 italic">* Based on assumed 70kg adult. Adjust weight in the Parkland Calculator for precise calculations.</p>
+                          <p className="text-xs text-gray-500 mt-3 italic">{t('analysis.parkland_assumed_help')}</p>
                         )}
                       </div>
                       <div className="px-4 pb-4">
@@ -486,7 +483,7 @@ export function AnalysisClient() {
                           className="inline-flex items-center gap-1.5 text-sm font-medium text-[#0F9B8E] hover:text-[#0e8a7e] transition-colors"
                         >
                           <Calculator className="w-4 h-4" />
-                          Open Parkland Calculator for precise calculation →
+                          {t('analysis.open_parkland')}
                         </a>
                       </div>
                     </div>
@@ -498,15 +495,15 @@ export function AnalysisClient() {
               <h3 className="font-display text-base font-bold text-gray-900 pt-2">{t('analysis.management')}</h3>
               <div className="space-y-3">
                 {[
-                  { label: 'First Aid', value: result?.firstAid },
-                  { label: 'Wound Care Protocol', value: result?.woundCare },
-                  { label: 'Dressing Recommendations', value: result?.dressing },
-                  { label: 'Referral Criteria', value: result?.referral },
-                  { label: 'Follow-up Schedule', value: result?.followUp },
+                  { label: t('analysis.first_aid'), value: result?.firstAid },
+                  { label: t('analysis.wound_protocol'), value: result?.woundCare },
+                  { label: t('analysis.dressing_recommendations'), value: result?.dressing },
+                  { label: t('analysis.referral_criteria'), value: result?.referral },
+                  { label: t('analysis.follow_up'), value: result?.followUp },
                 ]?.map((item: any, i: number) => (
                   <div key={i} className="bg-gray-50 rounded-lg p-4">
                     <p className="text-xs font-semibold text-[#8B0000] mb-1">{item?.label}</p>
-                    <p className="text-sm text-gray-700">{item?.value ?? 'N/A'}</p>
+                    <p className="text-sm text-gray-700">{item?.value ?? t('common.not_available')}</p>
                   </div>
                 ))}
               </div>
@@ -521,7 +518,7 @@ export function AnalysisClient() {
           {!result && !analyzing && (
             <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
               <Brain className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-              <p className="text-sm text-gray-400">Upload an image to begin AI analysis</p>
+              <p className="text-sm text-gray-400">{t('analysis.empty')}</p>
             </div>
           )}
 

@@ -107,7 +107,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
       <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center gap-3">
           <PhoenixLogo className="w-12 h-12" />
-          <p className="text-sm text-gray-400">Loading...</p>
+          <p className="text-sm text-gray-400">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -234,7 +234,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
                         className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                       >
                         <LogOut className="w-4 h-4" />
-                        {lang === 'bm' ? 'Log Keluar' : 'Sign Out'}
+                        {t('hcp.sign_out')}
                       </button>
                     </div>
                   </>

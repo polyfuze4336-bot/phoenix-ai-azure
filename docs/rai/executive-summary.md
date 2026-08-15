@@ -1,7 +1,7 @@
-# PhoenixIQ Responsible AI — executive summary
+# Phoenix AI Responsible AI — executive summary
 
 ## What this is
-PhoenixIQ is an AI-assisted burn & wound assessment tool. This summary describes the Responsible AI
+Phoenix AI is an AI-assisted burn & wound assessment tool. This summary describes the Responsible AI
 controls that are **actually implemented in the codebase today**, with links to the code and the tests
 that evidence them. It intentionally makes no unverified claims of certification, approval or
 diagnostic accuracy.
@@ -27,8 +27,8 @@ layer of deterministic safety rules runs after every AI analysis.
   ([`lib/rai/controls.ts`](../../nextjs_space/lib/rai/controls.ts)), each mapped to code, a Microsoft
   RAI principle and (where applicable) tests.
 - **RAI test suite** (`npm run test:rai`) plus the existing unit and evaluation suites.
-- Governed code register, documentation, and test evidence; the former v2 in-product surface is not
-   published in the Original-only runtime.
+- Governed code register, documentation, and test evidence; a complete in-product assurance view is
+   not currently published.
 
 ## Honest limitations
 Confidence ≠ validated accuracy; guideline basis is curated (not version-pinned citations — Partial);

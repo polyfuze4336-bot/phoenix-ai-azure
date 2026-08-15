@@ -4,11 +4,12 @@
 > **No secrets, connection strings, keys, or credentials appear in this file.**
 > Keep synchronized with [component-inventory.md](./component-inventory.md) and the Bicep under `infra/`.
 >
-> **The Original-only restoration changes no Azure resources.** It ships a restored application image
-> to the existing Container App and retains the same ACR, Azure AI, PostgreSQL, Application Insights,
-> Key Vault, and Managed Identity resources.
+> **The single-experience application changes no Azure resources.** It uses the existing Container
+> App, ACR, Azure AI, PostgreSQL, Application Insights, Key Vault, and Managed Identity resources.
 > The `3.0.1` vision-input safe-failure correction is application-only and likewise changes no Azure
 > resource, SKU, network path, identity, secret, model deployment, or region.
+> The `4.0.0` single-experience and global-language change is also application-only. Removing retired
+> source and adding bounded output-language validation changes no Azure resource or deployment SKU.
 
 ## Environment
 

@@ -6,12 +6,13 @@ export const maxDuration = 120;
 import { NextRequest } from 'next/server';
 import { AiMessage } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
-import { createStructuredSseResponse } from '@/lib/ai/streaming/sse';
+import { createResultSseResponse } from '@/lib/ai/streaming/sse';
 import { parseCommunityWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
 import { validateImageInput, checkRequestBodySize } from '@/lib/ai/validation/image-input';
 import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
 import { trackEvent } from '@/lib/telemetry/server';
 import { communityWoundAnalysisSystemPrompt } from '@/lib/ai/prompts/community-wound-analysis';
+import { completeWithLanguageValidation, parseRequestedLanguage } from '@/lib/ai/language';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +22,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { image, mimeType, lang } = body ?? {};
+    const { image, mimeType } = body ?? {};
+    const language = parseRequestedLanguage(body?.language);
+    if (!language) {
+      return new Response(JSON.stringify({ error: 'Invalid language. Use "en" or "ms".' }), { status: 400 });
+    }
 
     const validation = validateImageInput({ image, mimeType });
     if (!validation.ok) {
@@ -33,7 +38,7 @@ export async function POST(request: NextRequest) {
     // correlation ID + a flag are recorded — never the image or any advice text.
     trackEvent('community_analysis_requested', { correlationId, hasImage: true });
     const messages: AiMessage[] = [
-      { role: 'system', content: communityWoundAnalysisSystemPrompt(lang) },
+      { role: 'system', content: communityWoundAnalysisSystemPrompt(language) },
       {
         role: 'user',
         content: [
@@ -43,25 +48,30 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    let upstream;
+    let completion;
     try {
-      upstream = await getAiProvider().streamChatCompletion({
+      completion = await completeWithLanguageValidation({
         messages,
-        maxOutputTokens: 1500,
-        responseFormat: 'json_object',
-        correlationId,
+        language,
         route: 'community-analyze',
-        timeoutMs: 110_000,
+        correlationId,
+        complete: async (completionMessages) => (await getAiProvider().streamChatCompletion({
+          messages: completionMessages,
+          maxOutputTokens: 1500,
+          responseFormat: 'json_object',
+          correlationId,
+          route: 'community-analyze',
+          timeoutMs: 110_000,
+        })).body,
       });
     } catch (err) {
       return aiErrorResponse(err, 'API error');
     }
 
-    return createStructuredSseResponse({
-      upstream: upstream.body,
+    return createResultSseResponse({
+      result: parseCommunityWoundAnalysis(completion.text, 'done'),
       processingEvent: { status: 'processing' },
-      buildResult: (buffer, phase) => parseCommunityWoundAnalysis(buffer, phase),
-      correlationId: upstream.correlationId,
+      correlationId,
     });
   } catch (error: any) {
     console.error('Community analyze error:', error);

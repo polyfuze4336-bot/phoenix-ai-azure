@@ -11,7 +11,7 @@ import { calculateResuscitation, type ResuscitationFormula } from '@/lib/clinica
 type Formula = ResuscitationFormula;
 
 export function ParklandClient() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const searchParams = useSearchParams();
   const [weight, setWeight] = useState('');
   const [tbsa, setTbsa] = useState('');
@@ -142,21 +142,21 @@ export function ParklandClient() {
               <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
                 <p className="text-xs text-gray-500">{t('parkland.urine_target')}</p>
                 <p className="font-mono text-xl font-bold text-gray-900 mt-1">{results?.urineTarget?.toFixed?.(1) ?? 0} mL/hr</p>
-                <p className="text-xs text-gray-400 mt-1">{results?.isChild ? '(1 mL/kg/hr — Child <30kg)' : '(0.5 mL/kg/hr — Adult)'}</p>
+                <p className="text-xs text-gray-400 mt-1">{results?.isChild ? t('parkland.child_target') : t('parkland.adult_target')}</p>
               </div>
 
               {burnTime && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-                  <p className="font-semibold">Timing Reference:</p>
-                  <p>First 8h fluid ends: {new Date(new Date(burnTime).getTime() + 8 * 3600000).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}</p>
-                  <p>24h fluid ends: {new Date(new Date(burnTime).getTime() + 24 * 3600000).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}</p>
+                  <p className="font-semibold">{t('parkland.timing_reference')}</p>
+                  <p>{t('parkland.first_8h_ends')} {new Date(new Date(burnTime).getTime() + 8 * 3600000).toLocaleString(lang === 'ms' ? 'ms-MY' : 'en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}</p>
+                  <p>{t('parkland.24h_ends')} {new Date(new Date(burnTime).getTime() + 24 * 3600000).toLocaleString(lang === 'ms' ? 'ms-MY' : 'en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}</p>
                 </div>
               )}
             </motion.div>
           ) : (
             <div className="bg-white rounded-xl border border-gray-100 p-12 text-center shadow-sm">
               <Calculator className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-              <p className="text-sm text-gray-400">Enter weight and TBSA% to calculate fluid requirements</p>
+              <p className="text-sm text-gray-400">{t('parkland.empty')}</p>
             </div>
           )}
         </div>

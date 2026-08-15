@@ -4,6 +4,7 @@ import { useLanguage } from '@/components/language-provider';
 import { Heart, ClipboardCheck, Camera, MessageCircle, Phone, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { localizedContent } from '@/lib/i18n/index';
 
 const quickActions = [
   { href: '/community/first-aid', icon: Heart, labelKey: 'community.firstaid_title', descKey: 'community.firstaid_desc', color: 'from-red-500 to-red-600' },
@@ -12,15 +13,9 @@ const quickActions = [
   { href: '/community/chat', icon: MessageCircle, labelKey: 'community.chat', descKey: 'community.welcome_desc', color: 'from-blue-500 to-blue-600' },
 ];
 
-const healthTips = [
-  { en: 'Cool burns immediately under running water for 20 minutes', bm: 'Sejukkan kelecuran segera di bawah air mengalir selama 20 minit' },
-  { en: 'Never apply toothpaste, butter, or ice to burns', bm: 'Jangan sapukan ubat gigi, mentega, atau ais pada kelecuran' },
-  { en: 'Keep wounds clean and covered to prevent infection', bm: 'Pastikan luka bersih dan ditutup untuk mencegah jangkitan' },
-  { en: 'Seek medical help for burns larger than your palm', bm: 'Dapatkan bantuan perubatan untuk kelecuran lebih besar daripada tapak tangan' },
-];
-
 export function CommunityHomeClient() {
   const { t, lang } = useLanguage();
+  const healthTips = localizedContent(lang).community.healthTips;
 
   return (
     <div className="space-y-8">
@@ -40,7 +35,7 @@ export function CommunityHomeClient() {
           <AlertTriangle className="w-8 h-8" />
           <div>
             <p className="font-bold text-lg">{t('community.emergency')}</p>
-            <p className="text-sm opacity-90">Bomba & Ambulans / Fire & Ambulance</p>
+            <p className="text-sm opacity-90">{t('community.emergency_services')}</p>
           </div>
         </div>
         <a href="tel:999" className="flex items-center gap-2 px-5 py-2.5 bg-white text-red-600 rounded-lg font-bold text-lg hover:bg-red-50 transition-colors">
@@ -67,9 +62,9 @@ export function CommunityHomeClient() {
 
       {/* Health Tips */}
       <div>
-        <h2 className="font-display text-lg font-bold text-gray-900 mb-4">Health Tips / Tips Kesihatan</h2>
+        <h2 className="font-display text-lg font-bold text-gray-900 mb-4">{t('community.health_tips')}</h2>
         <div className="grid sm:grid-cols-2 gap-3">
-          {healthTips?.map((tip: any, i: number) => (
+          {healthTips.map((tip, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, x: i % 2 === 0 ? -10 : 10 }}
@@ -81,7 +76,7 @@ export function CommunityHomeClient() {
                 <div className="w-8 h-8 rounded-full bg-[#0F9B8E]/10 flex items-center justify-center shrink-0">
                   <Heart className="w-4 h-4 text-[#0F9B8E]" />
                 </div>
-                <p className="text-sm text-gray-700">{lang === 'en' ? tip?.en : tip?.bm}</p>
+                <p className="text-sm text-gray-700">{tip}</p>
               </div>
             </motion.div>
           ))}

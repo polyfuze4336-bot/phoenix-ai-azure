@@ -15,6 +15,23 @@ import {
   ASSURANCE_LAYER_LABELS,
   CONTROL_STATUS_LABELS,
 } from '../../lib/rai/controls';
+import {
+  completeWithLanguageValidation,
+  languageInstruction,
+  languageTelemetryProperties,
+  withLanguageInstruction,
+} from '../../lib/ai/language';
+
+function completionStream(text: string): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`));
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    },
+  });
+}
 
 test('control IDs are unique', () => {
   const ids = RAI_CONTROLS.map((c) => c.id);
@@ -48,7 +65,7 @@ test('status counts sum to the number of controls', () => {
   assert.ok(counts.active >= counts.partial + counts.planned);
 });
 
-test('v2 presentation-dependent controls are partial and not user-visible', () => {
+test('presentation-dependent controls are partial and not user-visible', () => {
   for (const id of ['RAI-TRANS-003', 'RAI-ACCT-001']) {
     const control = RAI_CONTROLS.find((candidate) => candidate.id === id);
     assert.equal(control?.status, 'partial', id);
@@ -61,4 +78,46 @@ test('the five assurance stages are present and ordered', () => {
     ASSURANCE_STAGES.map((s) => s.layer),
     ['input', 'analysis', 'output', 'oversight', 'operations'],
   );
+});
+
+test('RAI-INCL-003 applies strict, non-mixed language instructions', () => {
+  assert.match(withLanguageInstruction('Clinical system prompt', 'en'), /entirely in English/i);
+  assert.match(languageInstruction('en'), /Do not mix Bahasa Malaysia prose/i);
+  assert.match(withLanguageInstruction('Clinical system prompt', 'ms'), /entirely in Bahasa Malaysia/i);
+  assert.match(languageInstruction('ms'), /Do not mix English prose/i);
+});
+
+test('RAI-INCL-003 permits no more than one language rewrite', async () => {
+  let calls = 0;
+  const result = await completeWithLanguageValidation({
+    messages: [{ role: 'system', content: languageInstruction('ms') }],
+    language: 'ms',
+    route: 'rai-test',
+    complete: async () => {
+      calls += 1;
+      return completionStream('This is a complete clinical response and you should keep the wound clean with a dressing.');
+    },
+  });
+
+  assert.equal(calls, 2);
+  assert.equal(result.retried, true);
+});
+
+test('RAI-INCL-003 telemetry contains metadata only', () => {
+  const properties = languageTelemetryProperties({
+    correlationId: 'test-correlation',
+    route: 'analyze-wound',
+    requestedLanguage: 'ms',
+    detectedLanguage: 'en',
+    attempt: 1,
+  });
+
+  assert.deepEqual(Object.keys(properties).sort(), [
+    'attempt',
+    'correlationId',
+    'detectedLanguage',
+    'requestedLanguage',
+    'route',
+  ]);
+  assert.doesNotMatch(JSON.stringify(properties), /image|message|prompt|response|clinicalContent/i);
 });

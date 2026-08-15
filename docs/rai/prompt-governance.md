@@ -21,8 +21,20 @@ Version identifiers live in
 ## Recording
 The staged prompt versions are aggregated into `STAGED_PROMPT_VERSIONS` and recorded with every
 analysis via the metadata envelope
-([`lib/ai/analysis/metadata.ts`](../../nextjs_space/lib/ai/analysis/metadata.ts)), then surfaced in the
-"Analysis Information" panel and the AI Assurance → Governance panel (**RAI-TRANS-004**).
+([`lib/ai/analysis/metadata.ts`](../../nextjs_space/lib/ai/analysis/metadata.ts)). The complete
+envelope is retained for traceability but is not yet fully presented in the clinical interface.
+
+## Output language
+Every AI route must receive the canonical `en` or `ms` language, add the corresponding strict system
+instruction, inspect completed output, and make no more than one rewrite request when the output is
+confidently in the wrong language. Detection and telemetry must operate on language metadata only,
+never prompts, transcripts, images, or clinical output.
+
+This behaviour is implemented by
+[`lib/ai/language.ts`](../../nextjs_space/lib/ai/language.ts), applied by all four AI API routes and
+every staged analysis call, and evidenced by `RAI-INCL-003` tests in
+[`tests/rai/rai-controls.test.ts`](../../nextjs_space/tests/rai/rai-controls.test.ts) and
+[`tests/unit/ai-language.test.ts`](../../nextjs_space/tests/unit/ai-language.test.ts).
 
 ## Safety-relevant prompt guardrails (asserted by tests)
 [`tests/rai/rai-unsupported-inference.test.ts`](../../nextjs_space/tests/rai/rai-unsupported-inference.test.ts)

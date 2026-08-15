@@ -28,9 +28,18 @@ export async function seedHcpAuth(page: Page): Promise<void> {
   }, DEMO_HCP_SESSION);
 }
 
-/** Click the language toggle (aria-label "Toggle language"); returns the new code shown. */
+/** Seed the persisted global language before React hydrates. */
+export async function seedLanguage(page: Page, language: 'en' | 'ms'): Promise<void> {
+  await page.addInitScript((selectedLanguage) => {
+    window.localStorage.setItem('phoenix-ai-language', selectedLanguage);
+  }, language);
+}
+
+/** Click the language toggle using either localized accessible name. */
 export async function toggleLanguage(page: Page): Promise<void> {
-  const toggle = page.getByRole('button', { name: 'Toggle language' }).first();
+  const toggle = page
+    .getByRole('button', { name: /Switch to (?:English|Bahasa Malaysia)|Tukar kepada (?:bahasa Inggeris|Bahasa Malaysia)/i })
+    .first();
   await expect(toggle).toBeVisible();
   await toggle.click();
 }
@@ -61,5 +70,6 @@ export async function expectAiTerminalState(
 ): Promise<void> {
   const success = page.getByText(successLocatorText).first();
   const failure = page.getByText(failureLocatorText).first();
-  await expect(success.or(failure)).toBeVisible({ timeout: 90_000 });
+  const alert = page.getByRole('alert').first();
+  await expect(success.or(failure).or(alert)).toBeVisible({ timeout: 90_000 });
 }

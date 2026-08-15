@@ -4,17 +4,14 @@ import { useLanguage } from '@/components/language-provider';
 import { Send, Loader2, Heart, Flame, Shield, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { localizedContent } from '@/lib/i18n/index';
 
 interface ChatMsg {
   role: 'user' | 'assistant';
   content: string;
 }
 
-const quickPrompts = [
-  { en: 'How to treat a minor burn at home?', bm: 'Bagaimana merawat kelecuran ringan di rumah?', icon: Flame },
-  { en: 'Signs that a wound is infected', bm: 'Tanda-tanda luka dijangkiti', icon: Shield },
-  { en: 'When should I go to the hospital for a burn?', bm: 'Bilakah saya perlu pergi ke hospital untuk kelecuran?', icon: Heart },
-];
+const quickPromptIcons = [Flame, Shield, Heart];
 
 export function CommunityChatClient() {
   const { t, lang } = useLanguage();
@@ -22,6 +19,7 @@ export function CommunityChatClient() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const quickPrompts = localizedContent(lang).community.chatQuickPrompts;
 
   useEffect(() => { endRef?.current?.scrollIntoView?.({ behavior: 'smooth' }); }, [messages]);
 
@@ -39,7 +37,7 @@ export function CommunityChatClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [...(messages ?? []), userMsg]?.map((m: ChatMsg) => ({ role: m?.role, content: m?.content })),
-          lang,
+          language: lang,
         }),
       });
 
@@ -76,11 +74,11 @@ export function CommunityChatClient() {
         }
       }
     } catch (err: any) {
-      setMessages(prev => [...(prev ?? []), { role: 'assistant', content: 'Sorry, an error occurred. Please try again.' }]);
+      setMessages(prev => [...(prev ?? []), { role: 'assistant', content: t('chat.error') }]);
     } finally {
       setLoading(false);
     }
-  }, [input, messages, lang]);
+  }, [input, messages, lang, t]);
 
   const hasEmergency = messages?.some((m: ChatMsg) => {
     const lower = m?.content?.toLowerCase?.() ?? '';
@@ -92,13 +90,13 @@ export function CommunityChatClient() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="font-display text-xl font-bold text-gray-900">{t('chat.community_title')}</h1>
-          <p className="text-xs text-gray-500">{lang === 'en' ? 'Friendly health guidance for burns and wounds' : 'Panduan kesihatan mesra untuk kelecuran dan luka'}</p>
+          <p className="text-xs text-gray-500">{t('chat.community_description')}</p>
         </div>
       </div>
 
       {hasEmergency && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 flex items-center justify-between">
-          <p className="text-xs text-red-600 font-medium">{lang === 'en' ? '⚠️ This sounds like an emergency!' : '⚠️ Ini kedengaran seperti kecemasan!'}</p>
+          <p className="text-xs text-red-600 font-medium">{t('chat.emergency_detected')}</p>
           <a href="tel:999" className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold">
             <Phone className="w-3 h-3" /> 999
           </a>
@@ -109,16 +107,19 @@ export function CommunityChatClient() {
         <div className="mb-4">
           <p className="text-xs text-gray-400 mb-2">{t('chat.quick_prompts')}</p>
           <div className="flex flex-wrap gap-2">
-            {quickPrompts?.map((p: any, i: number) => (
+            {quickPrompts.map((prompt, i) => {
+              const Icon = quickPromptIcons[i] ?? Heart;
+              return (
               <button
                 key={i}
-                onClick={() => sendMessage(lang === 'en' ? p?.en : p?.bm)}
+                onClick={() => sendMessage(prompt)}
                 className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 hover:border-[#0F9B8E]/20 transition-all"
               >
-                <p.icon className="w-3.5 h-3.5 text-[#0F9B8E]" />
-                {lang === 'en' ? p?.en : p?.bm}
+                <Icon className="w-3.5 h-3.5 text-[#0F9B8E]" />
+                {prompt}
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

@@ -8,21 +8,14 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 
 ## [Unreleased]
 
+### Changed
+- Consolidated Phoenix AI into one application experience with direct HCP and Community entries.
+  Added one persisted English/Bahasa Malaysia state across retained UI and all AI routes, strict
+  output-language instructions, completed-output detection, and one bounded rewrite attempt.
+- Removed the retired alternate route, component, library, feature-flag, asset, and test families.
+  Historical architecture decisions and change records remain as the immutable decision trail.
+
 ### Added
-- **Phoenix AI v2.0 — an enhanced experience alongside the preserved Original.** Introduced an
-  additive, isolated, feature-flag-gated v2 experience under `/v2/*` (`app/v2/*`, `components/v2/*`,
-  `lib/v2/*`) that reuses the same API contracts and Azure services, adding no new resources or
-  integrations. The root `/` becomes an experience selector routing to either the **unchanged**
-  Original portals (`/hcp-login`, `/community`) or v2, and degrades to the original landing when
-  `NEXT_PUBLIC_FEATURE_V2_ENABLED=false`. v2 adds an enhanced HCP workspace (dashboard, cases,
-  guided assessment, AI assistant, TBSA/Parkland calculators, guidelines, reports, insights) and an
-  enhanced community portal (home, self-assessment, image-check, chat, first-aid, education). All v2
-  analytics use deterministic, clearly-labelled **synthetic** data — no fabricated claims and no
-  dead buttons. Governed by [ADR-0004](docs/architecture/decisions/ADR-0004-dual-experience-v2.md),
-  [CHANGE-20260807-phoenix-v2-experience](docs/architecture/changes/CHANGE-20260807-phoenix-v2-experience.md),
-  and mapped in [docs/design/original-vs-v2.md](docs/design/original-vs-v2.md); architecture version
-  bumped to `1.2.0`. Added `tests/unit/v2-*.test.ts` (feature-flag defaults, synthetic-data
-  determinism, first-aid parity) — full unit suite 104/104 passing.
 - Documented the complete Phoenix AI source-to-Azure transformation as an evidence-based audit
   under `docs/migration/`, `docs/architecture/`, and `docs/testing/`. The consolidated entry
   point is [docs/migration/phoenix-ai-azure-migration-report.md](docs/migration/phoenix-ai-azure-migration-report.md),

@@ -4,7 +4,10 @@
  * Preserves the professional clinical tone, Malaysian CPG references, Parkland
  * guidance and disclaimers. Do not materially rewrite — faithful migration.
  */
-export const HCP_CHAT_SYSTEM_PROMPT = `You are Phoenix AI, an expert clinical AI assistant specialized in burn and wound care for Malaysian healthcare professionals. You are a burn and wound specialist consultant.
+import type { AppLanguage } from '@/lib/i18n';
+import { withLanguageInstruction } from '@/lib/ai/language';
+
+const HCP_CHAT_SYSTEM_PROMPT = `You are Phoenix AI, an expert clinical AI assistant specialized in burn and wound care for Malaysian healthcare professionals. You are a burn and wound specialist consultant.
 
 You can:
 - Answer clinical questions about burns, wounds, TBSA calculation, fluid resuscitation, management protocols
@@ -19,3 +22,7 @@ Always:
 - Include disclaimers about clinical judgment
 - Be thorough but concise
 - Format responses clearly with bullet points or numbered lists when appropriate`;
+
+export function hcpChatSystemPrompt(language: AppLanguage): string {
+	return withLanguageInstruction(HCP_CHAT_SYSTEM_PROMPT, language);
+}

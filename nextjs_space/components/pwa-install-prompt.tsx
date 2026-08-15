@@ -12,7 +12,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PwaInstallPrompt() {
-  const { lang } = useLanguage();
+  const { t } = useLanguage();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isIos, setIsIos] = useState(false);
@@ -65,30 +65,6 @@ export function PwaInstallPrompt() {
     sessionStorage.setItem('pwa-dismissed', 'true');
   };
 
-  const texts = {
-    en: {
-      title: 'Install Phoenix AI',
-      desc: 'Add to your home screen for the best experience',
-      install: 'Install App',
-      iosTitle: 'Install on iPhone/iPad',
-      iosStep1: '1. Tap the Share button',
-      iosStep2: '2. Scroll down and tap "Add to Home Screen"',
-      iosStep3: '3. Tap "Add" to install',
-      gotIt: 'Got it!',
-    },
-    bm: {
-      title: 'Pasang Phoenix AI',
-      desc: 'Tambah ke skrin utama untuk pengalaman terbaik',
-      install: 'Pasang Aplikasi',
-      iosTitle: 'Pasang di iPhone/iPad',
-      iosStep1: '1. Ketik butang Kongsi',
-      iosStep2: '2. Tatal ke bawah dan ketik "Tambah ke Skrin Utama"',
-      iosStep3: '3. Ketik "Tambah" untuk memasang',
-      gotIt: 'Faham!',
-    },
-  };
-  const txt = texts[lang] || texts.en;
-
   return (
     <AnimatePresence>
       {showBanner && (
@@ -102,29 +78,29 @@ export function PwaInstallPrompt() {
             {showIosGuide ? (
               <div className="p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-display font-bold text-gray-900">{txt.iosTitle}</h3>
+                  <h3 className="font-display font-bold text-gray-900">{t('pwa.ios_title')}</h3>
                   <button onClick={handleDismiss} className="text-gray-400 hover:text-gray-600">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
                 <div className="space-y-3 text-sm text-gray-600">
-                  <p>{txt.iosStep1} <span className="inline-block">⎋</span></p>
-                  <p>{txt.iosStep2}</p>
-                  <p>{txt.iosStep3}</p>
+                  <p>{t('pwa.ios_step_1')} <span className="inline-block">⎋</span></p>
+                  <p>{t('pwa.ios_step_2')}</p>
+                  <p>{t('pwa.ios_step_3')}</p>
                 </div>
                 <button
                   onClick={handleDismiss}
                   className="mt-4 w-full py-2.5 rounded-xl bg-[#8B0000] text-white font-semibold text-sm"
                 >
-                  {txt.gotIt}
+                  {t('pwa.got_it')}
                 </button>
               </div>
             ) : (
               <div className="p-4 flex items-center gap-4">
                 <PhoenixLogo className="w-12 h-12 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-display font-bold text-gray-900 text-sm">{txt.title}</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">{txt.desc}</p>
+                  <h3 className="font-display font-bold text-gray-900 text-sm">{t('pwa.title')}</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">{t('pwa.description')}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
@@ -138,7 +114,7 @@ export function PwaInstallPrompt() {
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#8B0000] text-white text-xs font-semibold hover:bg-[#6B0000] transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    {txt.install}
+                    {t('pwa.install')}
                   </button>
                 </div>
               </div>

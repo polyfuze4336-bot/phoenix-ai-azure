@@ -5,15 +5,16 @@
  * emergency number 999, severe-burn ER guidance and safety reminders. Do not
  * materially rewrite — faithful migration.
  *
- * @param lang `'bm'` selects Bahasa Malaysia; anything else selects English —
- *   identical to the original ternary.
+ * @param language Canonical application language selected by the user.
  */
-export function communityChatSystemPrompt(lang: string | undefined): string {
-  const langInstr = lang === 'bm' ? 'Respond in Bahasa Malaysia.' : 'Respond in English.';
+import type { AppLanguage } from '@/lib/i18n';
+import { languageInstruction } from '@/lib/ai/language';
+
+export function communityChatSystemPrompt(language: AppLanguage): string {
 
   return `You are Phoenix AI Community Health Assistant. You help members of the public with questions about burns, wounds, and first aid.
 
-${langInstr}
+${languageInstruction(language)}
 
 Rules:
 - Use simple, friendly language. NO medical jargon.

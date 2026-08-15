@@ -1,8 +1,8 @@
 # AI Assurance framework
 
-PhoenixIQ organises its Responsible AI controls into five assurance layers that every AI-assisted
-assessment passes through. The former v2 in-product surface is not published by the Original-only
-runtime; the framework remains governed by this documentation, its code register, tests, and the diagram
+Phoenix AI organises its Responsible AI controls into five assurance layers that every AI-assisted
+assessment passes through. The framework is governed by this documentation, its code register,
+tests, and the diagram
 [`docs/architecture/diagrams/current-ai-assurance.mmd`](../architecture/diagrams/current-ai-assurance.mmd).
 
 ```

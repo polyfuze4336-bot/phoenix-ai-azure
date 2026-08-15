@@ -25,6 +25,7 @@ Status: **Active** (implemented + evidenced) · **Partial** · **Planned**.
 | RAI-TRANS-002 | Limitations & missing-info disclosure | Transparency | Output | Active |
 | RAI-TRANS-003 | AI labelling + analysis metadata | Transparency | Output | Partial |
 | RAI-TRANS-004 | Prompt/pipeline/schema versioning | Accountability | Output | Active |
+| RAI-INCL-003 | AI output language consistency | Inclusiveness | Output | Active |
 | RAI-ACCT-001 | Human-in-the-loop review | Accountability | Oversight | Partial |
 | RAI-SAFE-012 | Clinician refinement loop | Reliability & Safety | Oversight | Active |
 | RAI-ACCT-002 | Analysis persistence / audit record | Accountability | Oversight | Active |
@@ -34,6 +35,6 @@ Status: **Active** (implemented + evidenced) · **Partial** · **Planned**.
 | RAI-ACCT-005 | Configurable model governance | Accountability | Operations | Active |
 | RAI-ACCT-003 | Architecture governance (docs-sync) | Accountability | Operations | Active |
 | RAI-ACCT-004 | Structural evaluation harness | Reliability & Safety | Operations | Active |
-| RAI-INCL-001 | Bilingual public experience | Inclusiveness | Operations | Active |
+| RAI-INCL-001 | Bilingual application experience | Inclusiveness | Operations | Active |
 | RAI-INCL-002 | Responsive, installable access | Inclusiveness | Operations | Partial |
 | RAI-REL-001 | Bounded stage execution | Reliability & Safety | Operations | Active |

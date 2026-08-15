@@ -1,6 +1,6 @@
 # Evaluation framework
 
-PhoenixIQ ships a repeatable evaluation harness for the analysis pipeline. It is **structural**, not a
+Phoenix AI ships a repeatable evaluation harness for the analysis pipeline. It is **structural**, not a
 diagnostic-accuracy certification.
 
 ## What it measures

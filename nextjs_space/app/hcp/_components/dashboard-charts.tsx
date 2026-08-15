@@ -8,37 +8,6 @@ import {
 
 const COLORS = ['#8B0000', '#E67E22', '#F59B0C', '#0F9B8E', '#C0392B', '#60B5FF', '#FF9898'];
 
-const severityData = [
-  { name: '1st Degree', value: 210 },
-  { name: '2nd Superficial', value: 285 },
-  { name: '2nd Deep', value: 178 },
-  { name: '3rd Degree', value: 112 },
-  { name: '4th Degree', value: 49 },
-];
-
-const bodyRegionData = [
-  { region: 'Head/Neck', cases: 145 },
-  { region: 'Trunk', cases: 234 },
-  { region: 'Upper Limb', cases: 312 },
-  { region: 'Lower Limb', cases: 267 },
-  { region: 'Perineum', cases: 42 },
-];
-
-const monthlyData = [
-  { month: 'Jan', cases: 85 }, { month: 'Feb', cases: 92 }, { month: 'Mar', cases: 78 },
-  { month: 'Apr', cases: 110 }, { month: 'May', cases: 125 }, { month: 'Jun', cases: 98 },
-  { month: 'Jul', cases: 134 }, { month: 'Aug', cases: 112 }, { month: 'Sep', cases: 95 },
-  { month: 'Oct', cases: 108 }, { month: 'Nov', cases: 120 }, { month: 'Dec', cases: 90 },
-];
-
-const woundTypeData = [
-  { type: 'Burn', count: 834 },
-  { type: 'Diabetic Ulcer', count: 128 },
-  { type: 'Pressure Ulcer', count: 95 },
-  { type: 'Traumatic', count: 112 },
-  { type: 'Surgical', count: 78 },
-];
-
 const tbsaRangeData = [
   { range: '<5%', count: 320 }, { range: '5-10%', count: 245 },
   { range: '10-20%', count: 178 }, { range: '20-40%', count: 112 },
@@ -51,13 +20,6 @@ const ageGroupData = [
   { group: '41-60', count: 334 }, { group: '60+', count: 182 },
 ];
 
-const outcomeData = [
-  { name: 'Healed', value: 612 },
-  { name: 'Ongoing', value: 345 },
-  { name: 'Referred', value: 178 },
-  { name: 'Complicated', value: 112 },
-];
-
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
@@ -68,7 +30,39 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 }
 
 export function DashboardCharts() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const severityData = [
+    { name: t('dash.degree_1'), value: 210 },
+    { name: t('dash.degree_2_superficial'), value: 285 },
+    { name: t('dash.degree_2_deep'), value: 178 },
+    { name: t('dash.degree_3'), value: 112 },
+    { name: t('dash.degree_4'), value: 49 },
+  ];
+  const bodyRegionData = [
+    { region: t('dash.head_neck'), cases: 145 },
+    { region: t('dash.trunk'), cases: 234 },
+    { region: t('dash.upper_limb'), cases: 312 },
+    { region: t('dash.lower_limb'), cases: 267 },
+    { region: t('dash.perineum'), cases: 42 },
+  ];
+  const monthValues = [85, 92, 78, 110, 125, 98, 134, 112, 95, 108, 120, 90];
+  const monthlyData = monthValues.map((cases, month) => ({
+    month: new Intl.DateTimeFormat(lang === 'ms' ? 'ms-MY' : 'en-MY', { month: 'short' }).format(new Date(2026, month, 1)),
+    cases,
+  }));
+  const woundTypeData = [
+    { type: t('dash.burn'), count: 834 },
+    { type: t('dash.diabetic_ulcer'), count: 128 },
+    { type: t('dash.pressure_ulcer'), count: 95 },
+    { type: t('dash.traumatic'), count: 112 },
+    { type: t('dash.surgical'), count: 78 },
+  ];
+  const outcomeData = [
+    { name: t('dash.healed'), value: 612 },
+    { name: t('dash.ongoing'), value: 345 },
+    { name: t('dash.referred'), value: 178 },
+    { name: t('dash.complicated'), value: 112 },
+  ];
 
   return (
     <div className="grid md:grid-cols-2 gap-6">

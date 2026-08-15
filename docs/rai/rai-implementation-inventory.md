@@ -1,6 +1,6 @@
 # RAI implementation inventory
 
-Every Responsible AI control in PhoenixIQ, traced to code and tests. Status is honest: **Implemented**
+Every Responsible AI control in Phoenix AI, traced to code and tests. Status is honest: **Implemented**
 (Active), **Partially Implemented** (Partial), **Planned**, **Not Implemented**, or **Not Applicable**.
 Control IDs are stable and match [`lib/rai/controls.ts`](../../nextjs_space/lib/rai/controls.ts).
 
@@ -23,10 +23,10 @@ Control IDs are stable and match [`lib/rai/controls.ts`](../../nextjs_space/lib/
 | RAI-FAIR-002 | No demographic inference | Fairness | Prompts forbid ethnicity/race/age/pain inference | `lib/ai/prompts/*.ts` | Yes | `tests/rai/rai-unsupported-inference.test.ts` | Implemented |
 | RAI-TRANS-001 | Field-level confidence | Transparency | high/moderate/low/insufficient per field | `lib/ai/schemas/burn-wound-analysis.ts` | Yes | `tests/unit/wound-schema.test.ts` | Implemented |
 | RAI-TRANS-002 | Limitations & missing info | Transparency | Always-present disclosure lists | `lib/ai/analysis/pipeline.ts` | Yes | `tests/rai/rai-safety.test.ts` | Implemented |
-| RAI-TRANS-003 | AI labelling + metadata | Transparency | Metadata envelope is generated; the v2 status/info panel is not published in the Original-only runtime | `lib/ai/analysis/metadata.ts`, `components/v2/analysis-info-panel.tsx` | Partial | `tests/rai/rai-metadata.test.ts` | Partially Implemented |
+| RAI-TRANS-003 | AI labelling + metadata | Transparency | Metadata envelope is generated; the complete envelope is not yet presented in the retained clinical interface | `lib/ai/analysis/metadata.ts`, `app/api/analyze-wound/route.ts` | No | `tests/rai/rai-metadata.test.ts` | Partially Implemented |
 | RAI-TRANS-004 | Prompt/pipeline/schema versioning | Accountability | Version constants recorded per analysis | `lib/ai/prompts/versions.ts`, `lib/ai/analysis/metadata.ts` | Yes | `tests/rai/rai-metadata.test.ts` | Implemented |
-| RAI-TRANS-005 | Guideline basis disclosure | Transparency | Curated general references, **not** version-pinned citations | `lib/v2/guidelines.ts` | Yes | — | Partially Implemented |
-| RAI-ACCT-001 | Human-in-the-loop review | Accountability | Review states exist; the v2 review panel is not published in the Original-only runtime | `lib/ai/analysis/metadata.ts`, `components/v2/clinical-review-panel.tsx` | Partial | `tests/rai/rai-metadata.test.ts` | Partially Implemented |
+| RAI-TRANS-005 | Guideline basis disclosure | Transparency | Curated general references, **not** version-pinned citations | `app/hcp/guidelines/_components/guidelines-client.tsx`, `lib/ai/prompts/wound-management.ts` | Yes | — | Partially Implemented |
+| RAI-ACCT-001 | Human-in-the-loop review | Accountability | Review states exist; persisted review actions are not yet available in the retained clinical interface | `lib/ai/analysis/metadata.ts`, `app/hcp/analysis/_components/structured-analysis.tsx` | No | `tests/rai/rai-metadata.test.ts` | Partially Implemented |
 | RAI-ACCT-002 | Analysis persistence / audit | Accountability | Persisted result + image ref + timestamp | `lib/analysis/history.ts`, `prisma/schema.prisma` | Yes | `tests/unit/db-mappings.test.ts` | Implemented |
 | RAI-ACCT-003 | Architecture governance | Accountability | Docs-sync CI + change policy | `docs/architecture/*`, `scripts/validate-architecture.mjs` | No | — | Implemented |
 | RAI-ACCT-004 | Structural evaluation harness | Reliability & Safety | Completeness/safety/appropriateness scoring | `tests/evaluation/burn-wound/evaluate.ts` | Yes | — | Implemented |
@@ -35,7 +35,8 @@ Control IDs are stable and match [`lib/rai/controls.ts`](../../nextjs_space/lib/
 | RAI-PRIV-002 | Server-side model calls | Privacy & Security | Browser never calls model directly | `app/api/analyze-wound/route.ts` | No | — | Implemented |
 | RAI-PRIV-003 | Privacy-safe telemetry | Privacy & Security | Blocked-key sanitisation; no clinical content | `lib/telemetry/server.ts`, `lib/ai/telemetry.ts` | No | `tests/rai/rai-telemetry.test.ts` | Implemented |
 | RAI-PRIV-006 | Request size limits | Privacy & Security | Body size checked | `lib/ai/validation/image-input.ts` | No | `tests/unit/image-input.test.ts` | Implemented |
-| RAI-INCL-001 | Bilingual public experience | Inclusiveness | EN / Bahasa Malaysia | `lib/ai/prompts/community-wound-analysis.ts`, `lib/i18n.ts` | Yes | `tests/unit/language.test.ts` | Implemented |
+| RAI-INCL-001 | Bilingual application experience | Inclusiveness | Root-scoped, persisted EN / Bahasa Malaysia state across HCP and Community surfaces | `lib/i18n.ts`, `components/language-provider.tsx`, `components/language-toggle.tsx` | Yes | `tests/unit/language.test.ts` | Implemented |
+| RAI-INCL-003 | AI output language consistency | Inclusiveness | Every AI route requires `en` or `ms`, adds a strict non-mixing instruction, checks completed output values, and permits one language-only rewrite on a confident mismatch | `lib/ai/language.ts`, `lib/ai/analysis/pipeline.ts`, `app/api/analyze-wound/route.ts`, `app/api/hcp-chat/route.ts`, `app/api/community-chat/route.ts`, `app/api/community-analyze/route.ts` | Yes | `tests/unit/ai-language.test.ts`, `tests/rai/rai-controls.test.ts` | Implemented |
 | RAI-INCL-002 | Responsive, installable access | Inclusiveness | PWA + responsive; WCAG audit pending | `components/pwa-provider.tsx` | No | — | Partially Implemented |
 
 ## Not implemented / not applicable (documented honestly)
