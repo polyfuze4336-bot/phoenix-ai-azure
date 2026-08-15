@@ -1325,3 +1325,12 @@ AI experience without rewriting Git history or changing the deployed Azure topol
   test evidence; no prompt, model, clinical-calculation, or output-schema change.
 - **Pre-deploy validation.** PASS: focused image validation (11), unit (107), RAI (23), integration
   (14), production HTTP API (16), typecheck, lint, production build, and architecture synchronization.
+- **Deployment.** Commit `0a62796` was built in the existing ACR as immutable image
+  `phoenixai:0a627965c929729bbb4902f9438212529fe13e9b` (digest `sha256:82b588c2b0b83a1b3545907a511e0bb4eae172b4250570de3ce2c1eee10930cc`)
+  and released as healthy Container App revision `ca-phoenixai-oaprp7dte7bw2--0000007` with 100%
+  traffic. No Azure resource configuration changed.
+- **Live verification.** PASS: readiness and all dependencies healthy; Original landing/logo HTTP
+  200; `/v2` HTTP 404; HEIC rejected with actionable HTTP 400; controlled PNG completed the real
+  four-stage vision analysis with a safe non-wound result (correlation
+  `48dd9bf6-5b47-4169-8974-e3a24a5cf604`); controlled JPEG did the same (correlation
+  `64a92191-4e5c-43c8-8d2a-d722df2d7d7a`).

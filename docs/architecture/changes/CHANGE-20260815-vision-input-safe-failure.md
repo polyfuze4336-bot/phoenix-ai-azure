@@ -51,4 +51,17 @@ No resource, model, prompt, identity, RBAC, network, database, storage, or secre
 - `node scripts/validate-architecture.mjs` — PASS.
 - Controlled live PNG request against pre-fix revision — PASS, proving the model and identity path.
 
-Deployment and post-deploy live verification are recorded in the migration log after release.
+## Deployment and live verification
+
+- Application commit: `0a627965c929729bbb4902f9438212529fe13e9b`.
+- ACR image: `phoenixai:0a627965c929729bbb4902f9438212529fe13e9b`, digest
+  `sha256:82b588c2b0b83a1b3545907a511e0bb4eae172b4250570de3ce2c1eee10930cc`.
+- Container App revision: `ca-phoenixai-oaprp7dte7bw2--0000007` — Healthy, latest-ready,
+  one replica, 100% traffic.
+- `/api/health/ready` — PASS (`runtime`, `azure-ai`, `postgresql`, `blob-storage` all `ok`).
+- Original landing and logo — PASS (HTTP 200); `/v2` — PASS (HTTP 404).
+- HEIC safe failure — PASS (HTTP 400 with the supported-format message; no model invocation).
+- Controlled PNG vision analysis — PASS (HTTP 200, completed safe non-wound result; correlation ID
+  `48dd9bf6-5b47-4169-8974-e3a24a5cf604`).
+- Controlled JPEG vision analysis — PASS (HTTP 200, completed safe non-wound result; correlation ID
+  `64a92191-4e5c-43c8-8d2a-d722df2d7d7a`).
