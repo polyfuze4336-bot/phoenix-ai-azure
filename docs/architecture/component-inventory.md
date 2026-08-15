@@ -9,15 +9,15 @@
 
 | Component ID | Component | Type | Technology | Location | Purpose | Dependencies | Status | Owner |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| UI-LANDING | Public landing | UI | Next.js/React | `app/page.tsx`, `app/v2/_components/v2-landing-client.tsx` | Public entry and brand; renders v2.0 directly when enabled, with original routes retained but not advertised (degrades to Original-only when v2 flag is off) | APP-NEXT, LIB-V2 | ACTIVE | Phoenix AI team |
+| UI-LANDING | Public landing | UI | Next.js/React | `app/page.tsx`, `app/_components/landing-client.tsx` | Original Phoenix AI public entry and brand | APP-NEXT | ACTIVE | Phoenix AI team |
 | UI-HCP | HCP portal | UI | Next.js/React | `app/hcp/*` | Clinician chat, analysis, TBSA, Parkland, guidelines, history | APP-NEXT, AUTH-DEMO, API-* | ACTIVE | Phoenix AI team |
-| UI-COMMUNITY | Community portal | UI | Next.js/React | `app/community/*` | Public chat, assessment, articles, first-aid | APP-NEXT, API-* | ACTIVE | Phoenix AI team |
-| UI-V2-HCP | Phoenix AI v2.0 HCP workspace | UI | Next.js/React | `app/v2/hcp/*` | Enhanced clinician experience (dashboard, cases, assessment, chat, calculators, guidelines, reports, insights); reuses existing API contracts | APP-NEXT, UI-V2-SHELL, LIB-V2, API-HCP-CHAT, API-HCP-ANALYSIS, CLINICAL-PARKLAND | ACTIVE | Phoenix AI team |
-| UI-V2-COMMUNITY | Phoenix AI v2.0 community portal | UI | Next.js/React | `app/v2/community/*` | Enhanced public experience (home, self-assessment, chat, first-aid, education); reuses existing API contracts | APP-NEXT, UI-V2-SHELL, LIB-V2, API-COMMUNITY-CHAT | ACTIVE | Phoenix AI team |
-| UI-V2-SHELL | v2 shell + shared components | UI | Next.js/React, Framer Motion | `components/v2/*`, `app/v2/layout.tsx` | App shell (nav rail, command palette, demo badge), stat/chart/case cards; flag-gated at layout | APP-NEXT, LIB-V2 | ACTIVE | Phoenix AI team |
-| LIB-V2 | v2 foundation library | Lib | TypeScript | `lib/v2/*` | Feature flags, deterministic synthetic demo dataset, nav config, format helpers, guideline topics, first-aid parity content, version metadata | — | ACTIVE | Phoenix AI team |
+| UI-COMMUNITY | Community portal | UI | Next.js/React | `app/community/*` | Public chat, assessment, image check, articles, first-aid | APP-NEXT, API-* | ACTIVE | Phoenix AI team |
+| UI-V2-HCP | Phoenix AI v2.0 HCP workspace | UI | Next.js/React | `app/v2/hcp/*` | Retained but unreachable enhanced clinician source | — | LEGACY | Phoenix AI team |
+| UI-V2-COMMUNITY | Phoenix AI v2.0 community portal | UI | Next.js/React | `app/v2/community/*` | Retained but unreachable enhanced public source | — | LEGACY | Phoenix AI team |
+| UI-V2-SHELL | v2 shell + shared components | UI | Next.js/React | `components/v2/*`, `app/v2/layout.tsx` | Retained but unreachable v2 shell | — | LEGACY | Phoenix AI team |
+| LIB-V2 | v2 foundation library | Lib | TypeScript | `lib/v2/*` | Retained v2 feature foundation, unused by public entry | — | LEGACY | Phoenix AI team |
 | UI-PWA | PWA / mobile + i18n | UI | Next.js PWA, Tailwind | `components/pwa-*`, `components/language-*`, `lib/i18n.ts` | Installable app, EN/BM UI and AI-response selection, responsive | APP-NEXT | ACTIVE | Phoenix AI team |
-| UI-CLINICAL-NOTICE | Clinical AI legal/safety notice | UI | Next.js/React | `components/clinical-ai-notice.tsx` | Bilingual PDPA/Malaysian-law data-handling warning and clinical decision-support limitation on HCP analysis/chat surfaces | UI-PWA | ACTIVE | Phoenix AI team |
+| UI-CLINICAL-NOTICE | Clinical AI legal/safety notice | UI | Next.js/React | planned Original surfaces | Concise bilingual confidentiality, PDPA and decision-support reminders | UI-PWA | PLANNED | Phoenix AI team |
 | APP-NEXT | Next.js server | App | Next.js 14 standalone | `next.config.js`, `app/` | SSR/API host | — | ACTIVE | Phoenix AI team |
 | APP-MIDDLEWARE | Route-protection middleware | App | Next.js middleware | `middleware.ts` | Guard HCP routes/APIs, including retained-analysis APIs | AUTH-SESSION | ACTIVE | Phoenix AI team |
 | APP-INSTRUMENTATION | Startup instrumentation | App | Next.js instrumentation hook | `instrumentation.ts` | Env validation + telemetry init | CFG-ENV, OBS-APPINSIGHTS | ACTIVE | Phoenix AI team |
@@ -49,7 +49,7 @@
 | LIB-RAI | Responsible AI control register | Lib | TypeScript | `lib/rai/controls.ts`, `lib/rai/governance.ts` | Source-of-truth RAI control register (IDs, principle, status, evidence) + governance snapshot | AI-MODEL-SELECTOR | ACTIVE | Phoenix AI team |
 | AI-PROMPT-VERSIONS | Prompt/pipeline/schema versions | Lib | TypeScript | `lib/ai/prompts/versions.ts` | Version constants for prompts, pipeline and schema | — | ACTIVE | Phoenix AI team |
 | AI-ANALYSIS-METADATA | Analysis metadata envelope | Lib | TypeScript | `lib/ai/analysis/metadata.ts` | Non-sensitive analysis metadata (id, model, versions, image-quality band, review status) | AI-PROMPT-VERSIONS | ACTIVE | Phoenix AI team |
-| UI-V2-AI-ASSURANCE | AI Assurance in-product surface | UI | Next.js/React | `app/v2/hcp/ai-assurance/*`, `components/v2/analysis-info-panel.tsx`, `components/v2/clinical-review-panel.tsx` | Renders the RAI control register (overview, controls, matrix, governance, limitations) + per-assessment assurance/review surfaces | LIB-RAI, AI-ANALYSIS-METADATA, UI-V2-SHELL | ACTIVE | Phoenix AI team |
+| UI-V2-AI-ASSURANCE | AI Assurance in-product surface | UI | Next.js/React | rollback history | Retired with the v2 runtime; documentation and test evidence remain authoritative | LIB-RAI | LEGACY | Phoenix AI team |
 | RAI-TESTS | Responsible AI test suite | Test | TypeScript/tsx | `tests/rai/*` | Asserts safety rules, prompt guardrails, metadata/versioning, privacy-safe telemetry, register integrity | LIB-RAI, AI-ANALYSIS-PIPELINE | ACTIVE | Phoenix AI team |
 | PROMPT-HCP-CHAT | HCP chat prompt | Lib | TypeScript | `lib/ai/prompts/hcp-chat.ts` | Clinical chat prompt | — | ACTIVE | Phoenix AI team |
 | PROMPT-HCP-ANALYSIS | HCP analysis prompt (single-pass fallback) | Lib | TypeScript | `lib/ai/prompts/hcp-wound-analysis.ts` | Structured clinical prompt (used when `AI_ANALYSIS_PIPELINE=single`) | — | ACTIVE | Phoenix AI team |

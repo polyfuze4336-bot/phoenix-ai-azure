@@ -31,12 +31,6 @@ asserts that the prompts:
 - default `reportedFitzpatrickType` to `unknown` unless supplied;
 - forbid invented measurements;
 - defer fluid resuscitation to deterministic calculation.
-- apply only validated `en` / `bm` response instructions and keep structured property names and enum
-  tokens stable when Bahasa Malaysia narrative is requested.
-
-The 2026-08-14 bilingual-output change bumped all affected HCP/staged prompt versions and the pipeline
-version. The language instruction is implemented centrally in
-[`lib/ai/language.ts`](../../nextjs_space/lib/ai/language.ts).
 
 These tests prevent a future prompt edit from silently dropping a safety guardrail.
 

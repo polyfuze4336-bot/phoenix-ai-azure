@@ -127,7 +127,7 @@ async function main() {
       const { runAnalysisPipeline } = await import('../../../lib/ai/analysis/pipeline');
       const bytes = readFileSync(c.imagePath);
       const dataUrl = `data:image/jpeg;base64,${bytes.toString('base64')}`;
-      const a = await runAnalysisPipeline({ imageDataUrls: [dataUrl], patient: c.context });
+      const a = await runAnalysisPipeline({ imageDataUrl: dataUrl, patient: c.context });
       results.push({ id: c.id, mode: 'live', ...scoreAnalysis(a, c) });
     } else if (existsSync(fixturePath)) {
       const a = JSON.parse(readFileSync(fixturePath, 'utf8')) as BurnWoundAnalysis;

@@ -4,11 +4,9 @@
 > **No secrets, connection strings, keys, or credentials appear in this file.**
 > Keep synchronized with [component-inventory.md](./component-inventory.md) and the Bicep under `infra/`.
 >
-> **Phoenix AI v2.0 (`/v2/*`, ADR-0004) introduces NO additional Azure resources.** It ships inside the
-> existing Next.js standalone bundle in the same Container App and reuses the same environment-owned Azure AI,
-> Application Insights, Key Vault, and Managed Identity resources. The Azure footprint below is unchanged.
-> The v2-only landing, shared analysis transport, bilingual HCP AI output and legal/safety notices added
-> in architecture version 2.4.0 are application-layer changes and likewise require no Azure resource change.
+> **The Original-only restoration changes no Azure resources.** It ships a restored application image
+> to the existing Container App and retains the same ACR, Azure AI, PostgreSQL, Application Insights,
+> Key Vault, and Managed Identity resources.
 
 ## Environment
 

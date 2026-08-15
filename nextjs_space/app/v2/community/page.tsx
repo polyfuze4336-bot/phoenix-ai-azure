@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { MessagesSquare, BookOpenText, HeartPulse, ArrowRight, ShieldAlert } from 'lucide-react';
+import { ScanLine, MessagesSquare, BookOpenText, HeartPulse, ArrowRight, ShieldAlert } from 'lucide-react';
 import { PhoenixV2Shell } from '@/components/v2/phoenix-v2-shell';
 
 export const metadata: Metadata = { title: 'Community · Phoenix AI v2.0' };
 
 const cards = [
+  { href: '/v2/community/image-check', icon: ScanLine, title: 'Image Check', desc: 'Get quick, plain-language guidance on a wound or burn photo.', accent: 'from-[#8B0000] to-[#C0392B]' },
   { href: '/v2/community/assessment', icon: HeartPulse, title: 'Self Assessment', desc: 'Answer a few questions to understand what to do next.', accent: 'from-[#0F9B8E] to-[#0e8a7e]' },
   { href: '/v2/community/chat', icon: MessagesSquare, title: 'Ask Phoenix', desc: 'Chat about first aid and wound care in English or Bahasa Melayu.', accent: 'from-[#E67E22] to-[#F59B0C]' },
   { href: '/v2/community/first-aid', icon: ShieldAlert, title: 'First Aid', desc: 'Step-by-step first aid for common burns and wounds.', accent: 'from-[#8B0000] to-[#E67E22]' },

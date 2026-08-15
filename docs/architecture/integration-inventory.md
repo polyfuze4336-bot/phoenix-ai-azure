@@ -25,15 +25,11 @@
 | INT-ACR-CONTAINERAPP | Azure Container App | Azure Container Registry | HTTPS (OCI pull) | Pull immutable Phoenix AI image revision | User-assigned managed identity (`AcrPull`) | OCI image layers | BUILD |
 | INT-GHA-DBMIGRATE | GitHub Actions (`db-migrate.yml`) | Azure PostgreSQL | PostgreSQL wire (TLS) | Apply Prisma migrations | Deploy-time credentials | Schema migrations | BUILD |
 
-> **Phoenix AI v2.0 (`/v2/*`) adds no new integrations.** The v2 experience reuses the existing
-> API contracts and therefore the same runtime integrations — `INT-BROWSER-APP`, `INT-APP-FOUNDRY`
-> (via `/api/analyze-wound`, `/api/hcp-chat`, `/api/community-analyze`, `/api/community-chat`), and
-> `INT-APP-APPINSIGHTS`. v2 dashboards/insights render deterministic, clearly-labelled **synthetic**
-> data (`lib/v2/demo-data.ts`); they do not query PostgreSQL or Blob. See
-> [ADR-0004](./decisions/ADR-0004-dual-experience-v2.md).
+> **Original-only restoration adds no integration.** The retired v2 routes used the same contracts;
+> removing them leaves `INT-BROWSER-APP`, `INT-APP-FOUNDRY`, and all Azure integrations unchanged.
 
-> **AI Assurance layer adds no new integrations.** The Responsible AI surface
-> (`/v2/hcp/ai-assurance`, `LIB-RAI`) reads local configuration and the in-code control register; the
+> **AI Assurance controls add no new integrations.** The code register and documentation read local
+> configuration; the
 > `/api/analyze-wound` response now carries a non-sensitive metadata envelope (`result.meta`:
 > analysis id, model deployment name, prompt/pipeline/schema versions, image-quality band, review
 > status) over the existing `INT-BROWSER-APP` channel. No clinical content, keys or prompts are added

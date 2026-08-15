@@ -46,6 +46,7 @@ export const V2_HCP_NAV: NavItem[] = [
 export const V2_COMMUNITY_NAV: NavItem[] = [
   { label: 'Home', href: '/v2/community', icon: HeartHandshake },
   { label: 'Self Assessment', href: '/v2/community/assessment', icon: ScanLine },
+  { label: 'Image Check', href: '/v2/community/image-check', icon: ScanLine },
   { label: 'Ask Phoenix', href: '/v2/community/chat', icon: MessagesSquare },
   { label: 'First Aid', href: '/v2/community/first-aid', icon: BookOpenText },
   { label: 'Education', href: '/v2/community/education', icon: BookOpenText },

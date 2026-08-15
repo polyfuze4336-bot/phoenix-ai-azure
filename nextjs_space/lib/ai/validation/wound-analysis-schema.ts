@@ -3,7 +3,8 @@
  *
  * The model is asked to return a structured JSON object. Here we validate that
  * output with Zod against the EXACT fields the front-end renders (see
- * `app/hcp/analysis/_components/analysis-client.tsx`).
+ * `app/hcp/analysis/_components/analysis-client.tsx` and
+ * `app/community/image-check/_components/image-check-client.tsx`).
  *
  * Validation is deliberately *tolerant of type variance* (a number or boolean
  * where a string is expected is coerced) so a usable model result is not
@@ -58,7 +59,6 @@ export const hcpWoundAnalysisSchema = z.object({
   woundEdges: strField(),
   confidence: strField(),
   tbsaEstimate: strField('0'),
-  tbsaClassification: strField(),
   tbsaRange: strField(),
   tbsaBodyRegions: strField(),
   tbsaMethod: strField(),
@@ -113,7 +113,6 @@ export const HCP_ASSESSMENT_UNAVAILABLE: HcpWoundAnalysis = {
   woundEdges: 'N/A',
   confidence: 'N/A',
   tbsaEstimate: '0',
-  tbsaClassification: 'N/A',
   tbsaRange: 'N/A',
   tbsaBodyRegions: 'N/A',
   tbsaMethod: 'N/A',
@@ -124,17 +123,6 @@ export const HCP_ASSESSMENT_UNAVAILABLE: HcpWoundAnalysis = {
   dressing: 'N/A',
   referral: 'Please seek an in-person clinical assessment.',
   followUp: 'N/A',
-};
-
-/** Bahasa Malaysia safe fallback for the HCP path. Schema keys remain unchanged. */
-export const HCP_ASSESSMENT_UNAVAILABLE_BM: HcpWoundAnalysis = {
-  ...HCP_ASSESSMENT_UNAVAILABLE,
-  woundType: 'Penilaian tidak dapat diselesaikan',
-  characteristics:
-    'Penilaian AI tidak dapat diselesaikan kerana model tidak mengembalikan hasil berstruktur yang sah. ' +
-    'Sila cuba semula analisis atau gunakan pertimbangan klinikal anda sendiri. Alat ini hanya menyediakan ' +
-    'sokongan keputusan klinikal dan bukan pengganti penilaian perubatan profesional.',
-  referral: 'Sila dapatkan penilaian klinikal secara bersemuka.',
 };
 
 const COMMUNITY_UNAVAILABLE_MESSAGE =
@@ -175,18 +163,13 @@ function hasMeaningfulValue(obj: Record<string, unknown>, keys: string[]): boole
  * success, or an explicit "assessment could not be completed" state (never a
  * fabricated clinical result) when the output is invalid.
  */
-export function parseHcpWoundAnalysis(
-  buffer: string,
-  language: 'en' | 'bm' = 'en',
-): HcpWoundAnalysis {
-  const unavailable =
-    language === 'bm' ? HCP_ASSESSMENT_UNAVAILABLE_BM : HCP_ASSESSMENT_UNAVAILABLE;
+export function parseHcpWoundAnalysis(buffer: string): HcpWoundAnalysis {
   const obj = tryParseObject(buffer);
   if (!obj || !hasMeaningfulValue(obj, HCP_SIGNAL_KEYS)) {
-    return unavailable;
+    return HCP_ASSESSMENT_UNAVAILABLE;
   }
   const result = hcpWoundAnalysisSchema.safeParse(obj);
-  return result.success ? result.data : unavailable;
+  return result.success ? result.data : HCP_ASSESSMENT_UNAVAILABLE;
 }
 
 /**

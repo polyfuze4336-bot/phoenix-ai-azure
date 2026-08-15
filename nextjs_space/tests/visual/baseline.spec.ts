@@ -182,6 +182,7 @@ const COMMUNITY_ROUTES = [
   '/community/assessment',
   '/community/chat',
   '/community/first-aid',
+  '/community/image-check',
 ];
 
 for (const route of COMMUNITY_ROUTES) {

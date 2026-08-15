@@ -9,8 +9,8 @@
  *  - the test(s) that cover it (where any exist),
  *  - whether it is visible to the clinician in the product.
  *
- * This register drives the /v2/hcp/ai-assurance page, the control matrix, and the
- * RAI documentation. It is deliberately conservative: a control is only marked
+ * This register drives the control matrix and RAI documentation. It is deliberately
+ * conservative: a control is only marked
  * `active` where code + evidence exist. Capabilities that are curated-but-uncited
  * (guideline grounding) or aspirational are marked `partial` / `planned` and must
  * never be presented as fully implemented.
@@ -84,7 +84,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'input',
     status: 'active',
     description:
-      'Uploaded image payloads (single or multiple for HCP analysis) are validated for MIME type, count and size before any model call; oversized, unsupported or excessive payloads are rejected with an explicit error.',
+      'Uploaded images are validated for MIME type and size before any model call; oversized or unsupported payloads are rejected with an explicit error.',
     evidence: ['lib/ai/validation/image-input.ts', 'app/api/analyze-wound/route.ts'],
     tests: ['tests/unit/image-input.test.ts', 'tests/rai/rai-safety.test.ts'],
     userVisible: false,
@@ -165,12 +165,12 @@ export const RAI_CONTROLS: RaiControl[] = [
   },
   {
     id: 'RAI-SAFE-006',
-    title: 'Deterministic, indication- and weight-gated Parkland',
+    title: 'Deterministic, weight-gated Parkland',
     principle: 'reliabilitySafety',
     layer: 'analysis',
     status: 'active',
     description:
-      'Fluid resuscitation volumes are computed deterministically only when TBSA meets the age-aware indication threshold and weight is supplied; the pipeline never invents a body weight or recommends routine formula volumes for small burns.',
+      'Fluid resuscitation volumes are computed deterministically and only when a weight is supplied; the pipeline never invents a body weight.',
     evidence: ['lib/clinical/parkland.ts', 'lib/ai/analysis/pipeline.ts'],
     tests: ['tests/unit/parkland.test.ts', 'tests/rai/rai-safety.test.ts'],
     userVisible: true,
@@ -310,16 +310,16 @@ export const RAI_CONTROLS: RaiControl[] = [
     title: 'AI-generated labelling + analysis metadata',
     principle: 'transparency',
     layer: 'output',
-    status: 'active',
+    status: 'partial',
     description:
-      'Results are labelled AI-generated and accompanied by an analysis metadata envelope (analysis id, timestamp, model deployment, pipeline/prompt/schema versions, image-quality band, confidence, review status).',
+      'The API generates an analysis metadata envelope, but the retired v2 information panel is not published in the Original-only runtime.',
     evidence: [
       'lib/ai/analysis/metadata.ts',
       'components/v2/analysis-info-panel.tsx',
       'app/api/analyze-wound/route.ts',
     ],
     tests: ['tests/rai/rai-metadata.test.ts'],
-    userVisible: true,
+    userVisible: false,
   },
   {
     id: 'RAI-TRANS-004',
@@ -340,15 +340,15 @@ export const RAI_CONTROLS: RaiControl[] = [
     title: 'Human-in-the-loop review',
     principle: 'accountability',
     layer: 'oversight',
-    status: 'active',
+    status: 'partial',
     description:
-      'AI output is decision-support only; assessments start as "Clinical review pending" and a clinician records reviewed / modified / escalated. AI is never marked "approved".',
+      'Assessments start as "Clinical review pending", but the retired v2 review panel is not published in the Original-only runtime.',
     evidence: [
       'lib/ai/analysis/metadata.ts',
       'components/v2/clinical-review-panel.tsx',
     ],
     tests: ['tests/rai/rai-metadata.test.ts'],
-    userVisible: true,
+    userVisible: false,
   },
   {
     id: 'RAI-SAFE-012',
@@ -417,41 +417,6 @@ export const RAI_CONTROLS: RaiControl[] = [
     userVisible: false,
   },
   {
-    id: 'RAI-PRIV-007',
-    title: 'Patient-data legal handling notice',
-    principle: 'privacySecurity',
-    layer: 'operations',
-    status: 'active',
-    description:
-      'HCP analysis and chat surfaces display a bilingual warning to use only authorized, preferably de-identified patient data and images and to handle them under Malaysia\'s PDPA 2010, applicable Malaysian law and professional confidentiality duties. This is a handling obligation, not a compliance-certification claim.',
-    evidence: [
-      'components/clinical-ai-notice.tsx',
-      'app/hcp/analysis/_components/analysis-client.tsx',
-      'app/v2/hcp/analysis/_components/v2-assessment-client.tsx',
-      'app/hcp/chat/_components/hcp-chat-client.tsx',
-      'app/v2/hcp/chat/_components/v2-chat-client.tsx',
-    ],
-    tests: ['tests/rai/rai-controls.test.ts'],
-    userVisible: true,
-  },
-  {
-    id: 'RAI-PRIV-008',
-    title: 'Server-authorized retained analysis access',
-    principle: 'privacySecurity',
-    layer: 'operations',
-    status: 'active',
-    description:
-      'Retained analysis create, list and detail APIs require a verified Entra HCP session and scope records to that session email. Client-only demo authentication cannot retain or read patient records.',
-    evidence: [
-      'lib/auth/analysis-api-authorization.ts',
-      'app/api/hcp/analyses/route.ts',
-      'app/api/hcp/analyses/[id]/route.ts',
-      'lib/analysis/history.ts',
-    ],
-    tests: ['tests/unit/auth.test.ts'],
-    userVisible: false,
-  },
-  {
     id: 'RAI-ACCT-005',
     title: 'Configurable model governance',
     principle: 'accountability',
@@ -489,20 +454,14 @@ export const RAI_CONTROLS: RaiControl[] = [
   },
   {
     id: 'RAI-INCL-001',
-    title: 'Bilingual AI experience',
+    title: 'Bilingual public experience',
     principle: 'inclusiveness',
     layer: 'operations',
     status: 'active',
     description:
-      'The selected English or Bahasa Malaysia language is applied to public guidance and to clinician-facing HCP chat and image-analysis narratives while structured contract tokens remain stable.',
-    evidence: [
-      'lib/ai/language.ts',
-      'lib/ai/analysis/pipeline.ts',
-      'app/api/analyze-wound/route.ts',
-      'app/api/hcp-chat/route.ts',
-      'lib/i18n.ts',
-    ],
-    tests: ['tests/unit/language.test.ts', 'tests/unit/analysis-pipeline.test.ts'],
+      'The community experience supports English and Bahasa Malaysia so plain-language guidance reaches a wider population.',
+    evidence: ['lib/ai/prompts/community-wound-analysis.ts', 'lib/i18n.ts'],
+    tests: ['tests/unit/language.test.ts'],
     userVisible: true,
   },
   {

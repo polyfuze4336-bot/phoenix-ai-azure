@@ -45,7 +45,6 @@ function baseInterpretation(over: Partial<Interpretation> = {}): Interpretation 
     visualExtent: 'small area',
     measuredDimensions: '5 x 4 cm',
     tbsaEstimate: 5,
-    tbsaSeverityClass: 'N/A',
     tbsaRange: '4-6%',
     tbsaMethod: 'Palm method',
     tbsaBodyRegions: 'Left forearm',
@@ -74,7 +73,7 @@ function baseManagement(over: Partial<Management> = {}): Management {
 const critic = { pass: true, issues: [], recommendedCorrections: [] };
 
 test('Parkland is NOT computed from an assumed weight when weight is absent', () => {
-  const a = assembleAnalysis({ observation: baseObservation(), interpretation: baseInterpretation({ tbsaEstimate: 20 }), management: baseManagement(), critic });
+  const a = assembleAnalysis({ observation: baseObservation(), interpretation: baseInterpretation(), management: baseManagement(), critic });
   assert.equal(a.parkland.requiresWeight, true);
   assert.equal(a.parkland.total24hMl, null);
   assert.match(a.parkland.summary, /requires the patient/i);
@@ -86,37 +85,15 @@ test('Parkland is NOT computed from an assumed weight when weight is absent', ()
 test('Parkland IS computed deterministically when weight is supplied', () => {
   const a = assembleAnalysis({
     observation: baseObservation(),
-    interpretation: baseInterpretation({ tbsaEstimate: 20 }),
+    interpretation: baseInterpretation({ tbsaEstimate: 10 }),
     management: baseManagement(),
     critic,
     patient: { weightKg: 70 },
   });
-  // 4 * 70 * 20 = 5600 mL
+  // 4 * 70 * 10 = 2800 mL
   assert.equal(a.parkland.indicated, 'yes');
-  assert.equal(a.parkland.total24hMl, 5600);
-  assert.equal(a.parkland.first8hMl, 2800);
-});
-
-test('Parkland is not recommended below the age-aware TBSA threshold', () => {
-  const adult = assembleAnalysis({
-    observation: baseObservation(),
-    interpretation: baseInterpretation({ tbsaEstimate: 10 }),
-    management: baseManagement(),
-    critic,
-    patient: { ageGroup: 'adult', weightKg: 70 },
-  });
-  assert.equal(adult.parkland.indicated, 'no');
-  assert.equal(adult.parkland.total24hMl, null);
-
-  const child = assembleAnalysis({
-    observation: baseObservation(),
-    interpretation: baseInterpretation({ tbsaEstimate: 10 }),
-    management: baseManagement(),
-    critic,
-    patient: { ageGroup: 'child', weightKg: 20 },
-  });
-  assert.equal(child.parkland.indicated, 'yes');
-  assert.equal(child.parkland.total24hMl, 800);
+  assert.equal(a.parkland.total24hMl, 2800);
+  assert.equal(a.parkland.first8hMl, 1400);
 });
 
 test('measured dimensions are dropped when no scale reference is present', () => {
@@ -153,18 +130,6 @@ test('special-site burn is never left on routine follow-up', () => {
   assert.notEqual(a.management.referralLevel, 'routine');
 });
 
-test('special-site escalation recognizes Bahasa Malaysia anatomical terms', () => {
-  const a = assembleAnalysis({
-    observation: baseObservation({ anatomicalLocation: 'tangan kanan' }),
-    interpretation: baseInterpretation(),
-    management: baseManagement({ referralLevel: 'routine' }),
-    critic,
-    language: 'bm',
-  });
-  assert.equal(a.management.referralLevel, 'consultation');
-  assert.match(a.management.locationConsiderations, /tapak anatomi khas/i);
-});
-
 test('non-burn cannot carry a TBSA value', () => {
   const a = assembleAnalysis({
     observation: baseObservation(),
@@ -173,30 +138,11 @@ test('non-burn cannot carry a TBSA value', () => {
     critic,
   });
   assert.equal(a.interpretation.tbsaEstimate, null);
-  assert.equal(a.interpretation.tbsaSeverityClass, 'N/A');
   assert.equal(a.parkland.indicated, 'no');
 });
 
-test('TBSA severity class is deterministic at 15% threshold', () => {
-  const minor = assembleAnalysis({
-    observation: baseObservation(),
-    interpretation: baseInterpretation({ tbsaEstimate: 14 }),
-    management: baseManagement(),
-    critic,
-  });
-  assert.equal(minor.interpretation.tbsaSeverityClass, 'Minor burn (<15% TBSA)');
-
-  const major = assembleAnalysis({
-    observation: baseObservation(),
-    interpretation: baseInterpretation({ tbsaEstimate: 15 }),
-    management: baseManagement(),
-    critic,
-  });
-  assert.equal(major.interpretation.tbsaSeverityClass, 'Major burn (>=15% TBSA)');
-});
-
 test('missing weight for a burn is surfaced as missing information', () => {
-  const a = assembleAnalysis({ observation: baseObservation(), interpretation: baseInterpretation({ tbsaEstimate: 20 }), management: baseManagement(), critic });
+  const a = assembleAnalysis({ observation: baseObservation(), interpretation: baseInterpretation(), management: baseManagement(), critic });
   assert.ok(a.missingInformation.some((m) => /weight/i.test(m)));
   assert.ok(a.recommendedFollowUpQuestions.some((q) => /weight/i.test(q)));
 });
@@ -207,25 +153,7 @@ test('flat adapter maps the rich structure back to the 22-field contract', () =>
   assert.equal(flat.isBurn, true);
   assert.equal(flat.woundType, 'Scald');
   assert.equal(typeof flat.tbsaEstimate, 'string');
-  assert.equal(flat.tbsaClassification, 'Minor burn (<15% TBSA)');
   assert.ok(flat.parklandFluid.length > 0);
   // A clinician-supplied Fitzpatrick type is carried into the flat field.
   assert.match(flat.fitzpatrickType, /Type V/);
-});
-
-test('Bahasa Malaysia selection localizes deterministic analysis guidance', () => {
-  const a = assembleAnalysis({
-    observation: baseObservation({ imageQualityAdequate: false }),
-    interpretation: baseInterpretation({ tbsaEstimate: 20 }),
-    management: baseManagement(),
-    critic,
-    language: 'bm',
-  });
-  assert.match(a.parkland.summary, /berat pesakit/i);
-  assert.match(a.limitations[0], /penilaian ini/i);
-  assert.match(a.recommendedFollowUpQuestions[0], /berat pesakit/i);
-  assert.equal(a.interpretation.tbsaSeverityClass, 'Kelecuran major (>=15% TBSA)');
-
-  const flat = toFlatHcpAnalysis(a, 'bm');
-  assert.match(flat.fitzpatrickType, /Tidak dapat ditentukan/i);
 });

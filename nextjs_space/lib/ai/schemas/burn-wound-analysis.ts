@@ -19,7 +19,6 @@
 
 import { z } from 'zod';
 import type { HcpWoundAnalysis } from '../validation/wound-analysis-schema';
-import type { AiResponseLanguage } from '../language';
 
 /* ------------------------------------------------------------------ helpers */
 
@@ -112,7 +111,6 @@ export const interpretationSchema = z.object({
   visualExtent: str(), // qualitative, e.g. "small area on dorsal hand"
   measuredDimensions: str('unavailable'), // 'unavailable' unless a scale reference is present
   tbsaEstimate: numOrNull, // percent, null when not a burn / cannot estimate
-  tbsaSeverityClass: str('N/A'), // deterministic: major (>=15%) / minor (<15%) / N/A
   tbsaRange: str(),
   tbsaMethod: str(),
   tbsaBodyRegions: str(),
@@ -196,12 +194,8 @@ export type BurnWoundAnalysis = z.infer<typeof burnWoundAnalysisSchema>;
  * SSE contract and HCP client render unchanged during rollout. The rich object
  * travels alongside under `result.structured` for the enhanced UI.
  */
-export function toFlatHcpAnalysis(
-  a: BurnWoundAnalysis,
-  language: AiResponseLanguage = 'en',
-): HcpWoundAnalysis {
+export function toFlatHcpAnalysis(a: BurnWoundAnalysis): HcpWoundAnalysis {
   const i = a.interpretation;
-  const bm = language === 'bm';
   const withBasis = (f: { interpretation: string; observation: string; basis: string[] }) => {
     const main = f.interpretation || f.observation;
     return main;
@@ -209,17 +203,13 @@ export function toFlatHcpAnalysis(
   const fitz =
     i.reportedFitzpatrickType && i.reportedFitzpatrickType.toLowerCase() !== 'unknown'
       ? i.reportedFitzpatrickType
-      : bm
-        ? `Tidak dapat ditentukan dengan pasti daripada foto (tona kulit yang diperhatikan: ${a.observation.observedSkinTone || 'tidak jelas'})`
-        : `Not reliably determinable from a photograph (observed skin tone: ${a.observation.observedSkinTone || 'unclear'})`;
+      : `Not reliably determinable from a photograph (observed skin tone: ${a.observation.observedSkinTone || 'unclear'})`;
 
   return {
     fitzpatrickType: fitz,
     fitzpatrickNote:
       i.skinToneInterpretationNote ||
-      (bm
-        ? 'Jenis Fitzpatrick menerangkan tindak balas UV dan tidak dapat ditentukan dengan pasti daripada satu imej; gunakan petunjuk tekstur, suhu dan edema pada kulit lebih gelap.'
-        : 'Fitzpatrick type describes UV response and cannot be reliably determined from a single image; use texture, temperature and oedema cues on darker skin.'),
+      'Fitzpatrick type describes UV response and cannot be reliably determined from a single image; use texture, temperature and oedema cues on darker skin.',
     woundCategory: withBasis(i.woundCategory) || 'N/A',
     woundType: i.woundType || 'N/A',
     burnDegree: i.isBurn ? withBasis(i.burnDepth) || 'N/A' : 'N/A',
@@ -231,7 +221,6 @@ export function toFlatHcpAnalysis(
     woundEdges: withBasis(i.edgesAndPeriwound) || 'N/A',
     confidence: a.overallConfidence || a.analysisQuality,
     tbsaEstimate: i.tbsaEstimate != null ? String(i.tbsaEstimate) : '0',
-    tbsaClassification: i.tbsaSeverityClass || 'N/A',
     tbsaRange: i.tbsaRange || 'N/A',
     tbsaBodyRegions: i.tbsaBodyRegions || 'N/A',
     tbsaMethod: i.tbsaMethod || 'N/A',

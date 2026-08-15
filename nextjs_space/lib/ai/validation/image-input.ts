@@ -54,12 +54,10 @@ export interface BodySizeCheck {
  * A missing/unparseable Content-Length passes here (the decoded-size check in
  * validateImageInput remains the authoritative guard after parsing).
  */
-export function checkRequestBodySize(contentLength: string | null, maxImages = 1): BodySizeCheck {
-  const safeMaxImages = Number.isFinite(maxImages) && maxImages > 0 ? Math.floor(maxImages) : 1;
-  const requestLimit = maxImageRequestBytes() * safeMaxImages;
+export function checkRequestBodySize(contentLength: string | null): BodySizeCheck {
   const declared = Number.parseInt(contentLength ?? '', 10);
-  if (Number.isFinite(declared) && declared > requestLimit) {
-    const limitMb = (requestLimit / (1024 * 1024)).toFixed(0);
+  if (Number.isFinite(declared) && declared > maxImageRequestBytes()) {
+    const limitMb = (maxImageRequestBytes() / (1024 * 1024)).toFixed(0);
     return { ok: false, error: `Request body too large. Maximum upload is about ${limitMb} MB.` };
   }
   return { ok: true };
@@ -71,7 +69,7 @@ export interface ImageInput {
 }
 
 export type ImageValidationResult =
-  | { ok: true; mimeType: string; bytes: number; base64: string }
+  | { ok: true; mimeType: string; bytes: number }
   | { ok: false; error: string };
 
 /** Validate a base64 image payload + optional MIME type. */
@@ -104,42 +102,5 @@ export function validateImageInput(input: ImageInput): ImageValidationResult {
     return { ok: false, error: `Image is too large. Maximum size is ${limitMb} MB.` };
   }
 
-  return { ok: true, mimeType: resolvedMime, bytes, base64 };
-}
-
-export interface MultiImageInputItem {
-  image?: unknown;
-  mimeType?: unknown;
-}
-
-export interface MultiImageValidationOptions {
-  maxImages: number;
-}
-
-export type MultiImageValidationResult =
-  | { ok: true; images: Array<{ mimeType: string; bytes: number; base64: string }>; totalBytes: number }
-  | { ok: false; error: string };
-
-/** Validate one-or-many image payloads and enforce a maximum image count. */
-export function validateImageBatchInput(
-  images: MultiImageInputItem[],
-  options: MultiImageValidationOptions,
-): MultiImageValidationResult {
-  const maxImages = Number.isFinite(options.maxImages) && options.maxImages > 0 ? Math.floor(options.maxImages) : 1;
-  if (!Array.isArray(images) || images.length === 0) {
-    return { ok: false, error: 'No image provided' };
-  }
-  if (images.length > maxImages) {
-    return { ok: false, error: `Too many images. Maximum allowed is ${maxImages}.` };
-  }
-
-  const validated: Array<{ mimeType: string; bytes: number; base64: string }> = [];
-  let totalBytes = 0;
-  for (const item of images) {
-    const parsed = validateImageInput(item);
-    if (!parsed.ok) return parsed;
-    validated.push({ mimeType: parsed.mimeType, bytes: parsed.bytes, base64: parsed.base64 });
-    totalBytes += parsed.bytes;
-  }
-  return { ok: true, images: validated, totalBytes };
+  return { ok: true, mimeType: resolvedMime, bytes };
 }

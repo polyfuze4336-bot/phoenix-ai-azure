@@ -9,7 +9,6 @@ import {
   findPublicDemoUser,
   verifyDemoCredentials,
 } from '../../lib/auth/demo-users';
-import { getAuthorizedAnalysisSession } from '../../lib/auth/analysis-api-authorization';
 
 function withAuthMode(value: string | undefined, fn: () => void): void {
   const saved = process.env.AUTH_MODE;
@@ -79,38 +78,3 @@ test('verifyDemoCredentials: wrong password returns null', () => {
 test('verifyDemoCredentials: email match is case-insensitive', () => {
   assert.ok(verifyDemoCredentials('DOCTOR@PHOENIX.MY', 'phoenix2026'));
 });
-
-test('retained analysis records are unavailable to client-only demo auth', async () => {
-  await withAuthModeAsync('demo', async () => {
-    const session = await getAuthorizedAnalysisSession(async () => ({
-      name: 'Demo',
-      email: 'demo@example.test',
-      roleKey: 'doctor',
-      roleLabel: 'Doctor',
-    }));
-    assert.equal(session, null);
-  });
-});
-
-test('retained analysis records use the verified Entra session', async () => {
-  await withAuthModeAsync('entra', async () => {
-    const expected = {
-      name: 'Doctor',
-      email: 'doctor@example.test',
-      roleKey: 'doctor' as const,
-      roleLabel: 'Doctor',
-    };
-    assert.deepEqual(await getAuthorizedAnalysisSession(async () => expected), expected);
-  });
-});
-
-async function withAuthModeAsync(value: string, fn: () => Promise<void>): Promise<void> {
-  const saved = process.env.AUTH_MODE;
-  process.env.AUTH_MODE = value;
-  try {
-    await fn();
-  } finally {
-    if (saved === undefined) delete process.env.AUTH_MODE;
-    else process.env.AUTH_MODE = saved;
-  }
-}

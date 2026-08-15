@@ -40,7 +40,6 @@ export interface StructuredAnalysisData {
     visualExtent: string;
     tbsaAssumptions: string[];
     tbsaLimitations: string[];
-    tbsaSeverityClass: string;
   };
   parkland: { indicated: string; requiresWeight: boolean; summary: string };
   confidenceByCategory: Record<string, Confidence>;
@@ -162,7 +161,6 @@ export function StructuredAnalysis({
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-1">
         <span className="text-xs font-semibold text-gray-500">Extent &amp; Dimensions</span>
         <p className="text-sm text-gray-700">Visual extent: {i.visualExtent || 'N/A'}</p>
-        <p className="text-sm text-gray-700">TBSA category: {i.tbsaSeverityClass || 'N/A'}</p>
         <p className="text-xs text-gray-600">Measured dimensions: <span className="font-medium">{i.measuredDimensions}</span>{i.measuredDimensions === 'unavailable' && ' (no size reference visible)'}</p>
       </div>
 

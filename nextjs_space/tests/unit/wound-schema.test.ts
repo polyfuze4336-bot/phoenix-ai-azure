@@ -23,7 +23,6 @@ test('hcpWoundAnalysisSchema: parses a complete valid object', () => {
     woundEdges: 'Defined',
     confidence: 'High',
     tbsaEstimate: '12',
-    tbsaClassification: 'Minor burn (<15% TBSA)',
     tbsaRange: '10-15',
     tbsaBodyRegions: 'Arm',
     tbsaMethod: 'Rule of nines',
@@ -43,7 +42,6 @@ test('hcpWoundAnalysisSchema: missing fields fall back to defaults (N/A, 0, fals
   const parsed = hcpWoundAnalysisSchema.parse({ woundType: 'Burn' });
   assert.equal(parsed.woundCategory, 'N/A');
   assert.equal(parsed.tbsaEstimate, '0');
-  assert.equal(parsed.tbsaClassification, 'N/A');
   assert.equal(parsed.isBurn, false);
 });
 

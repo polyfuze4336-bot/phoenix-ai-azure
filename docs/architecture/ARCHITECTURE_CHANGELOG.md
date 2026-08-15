@@ -16,6 +16,22 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [3.0.0] — 2026-08-15
+
+### Changed
+- **Original-only public experience** — `/` renders the verified Original Phoenix AI landing;
+  `/hcp*`, `/community*`, and `/community/image-check` are the supported user journeys.
+- **v2 retired from runtime** — `/v2/*` is no longer published. The v2 source remains recoverable
+  from `backup/pre-rollback-20260815` and `pre-rollback-20260815`.
+- **Stable application baseline** — Original application files are restored from deployment-tagged
+  commit `7298f21`; current Container Apps, ACR, Azure AI, PostgreSQL, identity, telemetry, and OIDC
+  deployment topology are retained.
+
+### Boundaries
+- No Azure resource, external integration, database schema, secret, or managed identity changes.
+- No destructive Git rewrite or database rollback. See [ADR-0010](./decisions/ADR-0010-restore-original-only-experience.md)
+  and [CHANGE-20260815](./changes/CHANGE-20260815-restore-original-only-experience.md).
+
 ## [2.4.0] — 2026-08-14
 
 ## [2.5.0] — 2026-08-14

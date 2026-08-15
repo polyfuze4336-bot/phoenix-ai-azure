@@ -11,15 +11,10 @@ import {
   saveAnalysisRecord,
   type HcpAnalysisResult,
 } from '@/lib/analysis/history';
-import { getAuthorizedAnalysisSession } from '@/lib/auth/analysis-api-authorization';
 
 /** Persist a completed HCP analysis (image + structured result) for later reference. */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getAuthorizedAnalysisSession();
-    if (!session) {
-      return new Response(JSON.stringify({ error: 'Authentication required.' }), { status: 401 });
-    }
     const bodySize = checkRequestBodySize(request.headers.get('content-length'));
     if (!bodySize.ok) {
       return new Response(JSON.stringify({ error: bodySize.error }), { status: 413 });
@@ -39,8 +34,8 @@ export async function POST(request: NextRequest) {
       result,
       image: body?.image ?? null,
       mimeType: body?.mimeType ?? null,
-      clinicianName: session.name,
-      clinicianEmail: session.email,
+      clinicianName: body?.clinician?.name ?? null,
+      clinicianEmail: body?.clinician?.email ?? null,
     });
 
     return new Response(JSON.stringify({ id }), {
@@ -59,11 +54,7 @@ export async function POST(request: NextRequest) {
 /** List retained analyses (newest first) for the history page. */
 export async function GET() {
   try {
-    const session = await getAuthorizedAnalysisSession();
-    if (!session) {
-      return new Response(JSON.stringify({ error: 'Authentication required.' }), { status: 401 });
-    }
-    const records = await listAnalysisRecords(session.email);
+    const records = await listAnalysisRecords();
     return new Response(JSON.stringify({ records }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

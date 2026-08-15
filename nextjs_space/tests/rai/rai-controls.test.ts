@@ -7,7 +7,6 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import {
   RAI_CONTROLS,
   ASSURANCE_STAGES,
@@ -49,23 +48,17 @@ test('status counts sum to the number of controls', () => {
   assert.ok(counts.active >= counts.partial + counts.planned);
 });
 
+test('v2 presentation-dependent controls are partial and not user-visible', () => {
+  for (const id of ['RAI-TRANS-003', 'RAI-ACCT-001']) {
+    const control = RAI_CONTROLS.find((candidate) => candidate.id === id);
+    assert.equal(control?.status, 'partial', id);
+    assert.equal(control?.userVisible, false, id);
+  }
+});
+
 test('the five assurance stages are present and ordered', () => {
   assert.deepEqual(
     ASSURANCE_STAGES.map((s) => s.layer),
     ['input', 'analysis', 'output', 'oversight', 'operations'],
   );
-});
-
-test('patient-data notice control is active and evidence contains legal and clinical boundaries', () => {
-  const control = RAI_CONTROLS.find((item) => item.id === 'RAI-PRIV-007');
-  assert.equal(control?.status, 'active');
-  assert.equal(control?.userVisible, true);
-  const source = readFileSync(
-    new URL('../../components/clinical-ai-notice.tsx', import.meta.url),
-    'utf8',
-  );
-  assert.match(source, /Personal Data Protection Act 2010/);
-  assert.match(source, /clinical decision support only/);
-  assert.match(source, /Akta Perlindungan Data Peribadi 2010/);
-  assert.match(source, /sokongan keputusan klinikal sahaja/);
 });

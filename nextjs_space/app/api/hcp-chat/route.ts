@@ -10,8 +10,7 @@ import { createTextPassthroughResponse } from '@/lib/ai/streaming/text-stream';
 import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
 import { trackEvent } from '@/lib/telemetry/server';
 import { checkRequestBodySize } from '@/lib/ai/validation/image-input';
-import { hcpChatSystemPrompt } from '@/lib/ai/prompts/hcp-chat';
-import { normalizeAiLanguage } from '@/lib/ai/language';
+import { HCP_CHAT_SYSTEM_PROMPT } from '@/lib/ai/prompts/hcp-chat';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,9 +21,8 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { messages: chatMessages } = body ?? {};
-    const language = normalizeAiLanguage(body?.lang);
 
-    const llmMessages: AiMessage[] = [{ role: 'system', content: hcpChatSystemPrompt(language) }];
+    const llmMessages: AiMessage[] = [{ role: 'system', content: HCP_CHAT_SYSTEM_PROMPT }];
     for (const msg of (chatMessages ?? [])) {
       if (msg?.image) {
         llmMessages.push({
@@ -45,7 +43,6 @@ export async function POST(request: NextRequest) {
     trackEvent('hcp_chat_requested', {
       correlationId,
       messageCount: Array.isArray(chatMessages) ? chatMessages.length : 0,
-      language,
     });
 
     let upstream;

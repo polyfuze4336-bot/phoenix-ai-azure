@@ -39,10 +39,6 @@ import { WOUND_VISUAL_OBSERVATION_PROMPT } from '../prompts/wound-visual-observa
 import { WOUND_CLINICAL_INTERPRETATION_PROMPT } from '../prompts/wound-clinical-interpretation';
 import { WOUND_MANAGEMENT_PROMPT } from '../prompts/wound-management';
 import { WOUND_ANALYSIS_CRITIC_PROMPT } from '../prompts/wound-analysis-critic';
-import {
-  responseLanguageInstruction,
-  type AiResponseLanguage,
-} from '../language';
 
 /** Optional patient context supplied by the clinician (never invented). */
 export interface PatientContext {
@@ -50,26 +46,19 @@ export interface PatientContext {
   ageGroup?: string;
   fitzpatrickType?: string;
   mechanism?: string;
-  anatomicalSite?: string;
   timeSinceInjury?: string;
   freeText?: string;
 }
 
 export interface PipelineInput {
-  imageDataUrls: string[]; // data:<mime>;base64,.... (one or more images)
+  imageDataUrl: string; // data:<mime>;base64,....
   patient?: PatientContext;
   /** Prior analysis + clinician answers for a REFINE pass (second pass). */
   refine?: { priorAnalysis: BurnWoundAnalysis; answers: string };
   correlationId?: string;
-  language?: AiResponseLanguage;
 }
 
-const SPECIAL_SITES = [
-  'hand', 'finger', 'face', 'foot', 'feet', 'perineum', 'genital', 'joint',
-  'circumferential', 'eye', 'ear', 'neck',
-  'tangan', 'jari', 'muka', 'wajah', 'kaki', 'kemaluan', 'sendi', 'lilit',
-  'mata', 'telinga', 'leher',
-];
+const SPECIAL_SITES = ['hand', 'finger', 'face', 'foot', 'feet', 'perineum', 'genital', 'joint', 'circumferential', 'eye', 'ear', 'neck'];
 
 const STAGE_TIMEOUT_MS = 60_000;
 
@@ -80,7 +69,6 @@ function contextBlock(p?: PatientContext): string {
   if (p.ageGroup) parts.push(`age group: ${p.ageGroup}`);
   if (p.fitzpatrickType) parts.push(`reported Fitzpatrick type: ${p.fitzpatrickType}`);
   if (p.mechanism) parts.push(`mechanism: ${p.mechanism}`);
-  if (p.anatomicalSite) parts.push(`anatomical site: ${p.anatomicalSite}`);
   if (p.timeSinceInjury) parts.push(`time since injury: ${p.timeSinceInjury}`);
   if (p.freeText) parts.push(`notes: ${p.freeText}`);
   return parts.length ? `Provided patient context: ${parts.join('; ')}.` : 'No additional patient context was provided.';
@@ -92,13 +80,9 @@ async function runStage(
   userParts: AiMessage['content'],
   correlationId: string | undefined,
   route: string,
-  language: AiResponseLanguage,
 ): Promise<Record<string, unknown> | null> {
   const messages: AiMessage[] = [
-    {
-      role: 'system',
-      content: `${systemPrompt}\n\n=== RESPONSE LANGUAGE ===\n${responseLanguageInstruction(language, true)}`,
-    },
+    { role: 'system', content: systemPrompt },
     { role: 'user', content: userParts },
   ];
   const upstream = await getAiProvider().streamChatCompletion({
@@ -126,76 +110,47 @@ function isSpecialSite(text: string): boolean {
   return SPECIAL_SITES.some((s) => t.includes(s));
 }
 
-function computeParkland(
-  isBurn: boolean,
-  tbsa: number | null,
-  weightKg: number | undefined,
-  ageGroup: PatientContext['ageGroup'] | undefined,
-  language: AiResponseLanguage,
-) {
-  const bm = language === 'bm';
+function computeParkland(isBurn: boolean, tbsa: number | null, weightKg?: number) {
   if (!isBurn || !tbsa || tbsa <= 0) {
-    return { indicated: 'no' as const, requiresWeight: false, summary: bm ? 'Tidak berkenaan (bukan kelecuran atau TBSA tidak dapat dianggarkan).' : 'Not applicable (not a burn or no estimable TBSA).', total24hMl: null, first8hMl: null, next16hMl: null };
-  }
-  const threshold = ageGroup === 'child' || ageGroup === 'infant' ? 10 : 20;
-  if (tbsa < threshold) {
-    return {
-      indicated: 'no' as const,
-      requiresWeight: false,
-      summary: bm
-        ? `Formula Parkland biasanya tidak ditunjukkan kerana TBSA ${tbsa}% berada di bawah ambang ${threshold}% untuk kumpulan umur ini. Gunakan penilaian klinikal dan protokol tempatan.`
-        : `The Parkland formula is not routinely indicated because ${tbsa}% TBSA is below the ${threshold}% threshold for this age group. Use clinical assessment and local protocol.`,
-      total24hMl: null,
-      first8hMl: null,
-      next16hMl: null,
-    };
+    return { indicated: 'no' as const, requiresWeight: false, summary: 'Not applicable (not a burn or no estimable TBSA).', total24hMl: null, first8hMl: null, next16hMl: null };
   }
   if (!weightKg || weightKg <= 0) {
     return {
       indicated: 'uncertain' as const,
       requiresWeight: true,
-      summary: bm
-        ? 'Resusitasi cecair Parkland mungkin diperlukan, tetapi berat pesakit diperlukan untuk pengiraan. Masukkan berat dalam Kalkulator Parkland. Tiada berat badan diandaikan.'
-        : 'Parkland fluid resuscitation may be indicated, but requires the patient\'s weight to calculate. Enter the weight in the Parkland Calculator. No weight is assumed.',
+      summary:
+        'Parkland fluid resuscitation may be indicated, but requires the patient\'s weight to calculate. ' +
+        'Enter the weight in the Parkland Calculator. (No weight is assumed — a fixed 70 kg estimate is clinically unsafe.)',
       total24hMl: null,
       first8hMl: null,
       next16hMl: null,
     };
   }
   const r = calculateResuscitation({ weightKg, tbsaPercent: tbsa, formula: 'parkland' });
-  if (!r) return { indicated: 'uncertain' as const, requiresWeight: true, summary: bm ? 'Pengiraan tidak dapat diselesaikan.' : 'Calculation could not be completed.', total24hMl: null, first8hMl: null, next16hMl: null };
-  const summary = bm
-    ? `Parkland (4 mL x ${weightKg} kg x ${tbsa}% TBSA) = ${Math.round(r.total24h)} mL dalam 24 jam. 8 jam pertama: ${Math.round(r.first8h)} mL (~${Math.round(r.rate8h)} mL/jam). 16 jam berikutnya: ${Math.round(r.next16h)} mL (~${Math.round(r.rate16h)} mL/jam). Titrasi kepada output urin ~${r.urineTarget} mL/jam.`
-    : `Parkland (4 mL x ${weightKg} kg x ${tbsa}% TBSA) = ${Math.round(r.total24h)} mL over 24h. First 8h: ${Math.round(r.first8h)} mL (~${Math.round(r.rate8h)} mL/h). Next 16h: ${Math.round(r.next16h)} mL (~${Math.round(r.rate16h)} mL/h). Titrate to urine output ~${r.urineTarget} mL/h.`;
+  if (!r) return { indicated: 'uncertain' as const, requiresWeight: true, summary: 'Unable to calculate.', total24hMl: null, first8hMl: null, next16hMl: null };
+  const summary =
+    `Parkland (4 mL x ${weightKg} kg x ${tbsa}% TBSA) = ${Math.round(r.total24h)} mL over 24h. ` +
+    `First 8h: ${Math.round(r.first8h)} mL (~${Math.round(r.rate8h)} mL/h). ` +
+    `Next 16h: ${Math.round(r.next16h)} mL (~${Math.round(r.rate16h)} mL/h). ` +
+    `Titrate to urine output ~${r.urineTarget} mL/h.`;
   return { indicated: 'yes' as const, requiresWeight: false, summary, total24hMl: Math.round(r.total24h), first8hMl: Math.round(r.first8h), next16hMl: Math.round(r.next16h) };
 }
 
 /* --------------------------------------------------------------- orchestrator */
 
 export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWoundAnalysis> {
-  const { imageDataUrls, patient, refine, correlationId } = input;
-  const language = input.language ?? 'en';
+  const { imageDataUrl, patient, refine, correlationId } = input;
   const ctx = contextBlock(patient);
-  const images = imageDataUrls.filter((u) => typeof u === 'string' && u.length > 0);
-  if (images.length === 0) {
-    throw new Error('No image data provided for analysis.');
-  }
-  const multiImageHint =
-    images.length > 1
-      ? 'Multiple images are provided for the same case. Some may overlap or be duplicate views. Consolidate them into one coherent assessment and estimate TOTAL unique TBSA across all images without double-counting overlapping regions.'
-      : 'A single image is provided for this case.';
-  const visionImages = images.map((url) => ({ type: 'image_url' as const, image_url: { url } }));
 
   // Stage 1 — Visual observation (vision).
   const obsRaw = await runStage(
     WOUND_VISUAL_OBSERVATION_PROMPT,
     [
-      { type: 'text', text: `${ctx}\n${multiImageHint}\nDescribe what is visible in the provided image set.` },
-      ...visionImages,
+      { type: 'text', text: `${ctx}\nDescribe what is visible in this image.` },
+      { type: 'image_url', image_url: { url: imageDataUrl } },
     ],
     correlationId,
     'analyze-wound:observation',
-    language,
   );
   const observation: VisualObservation = visualObservationSchema.parse(obsRaw ?? {});
 
@@ -208,13 +163,12 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
     [
       {
         type: 'text',
-        text: `${ctx}\n${multiImageHint}\nObservations from the observation stage:\n${JSON.stringify(observation)}${priorNote}\nInterpret this wound.`,
+        text: `${ctx}\nObservations from the observation stage:\n${JSON.stringify(observation)}${priorNote}\nInterpret this wound.`,
       },
-      ...visionImages,
+      { type: 'image_url', image_url: { url: imageDataUrl } },
     ],
     correlationId,
     'analyze-wound:interpretation',
-    language,
   );
   const interpretation: Interpretation = interpretationSchema.parse(interpRaw ?? {});
 
@@ -224,7 +178,6 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
     `${ctx}\nClinical interpretation:\n${JSON.stringify(interpretation)}\nObservations:\n${JSON.stringify(observation)}\nProvide management and referral.`,
     correlationId,
     'analyze-wound:management',
-    language,
   );
   const management: Management = managementSchema.parse(mgmtRaw ?? {});
 
@@ -235,11 +188,10 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
     `Draft analysis to audit:\n${JSON.stringify(draft)}`,
     correlationId,
     'analyze-wound:critic',
-    language,
   );
   const critic = criticSchema.parse(criticRaw ?? { pass: true, issues: [], recommendedCorrections: [] });
 
-  return assemble({ observation, interpretation, management, critic, patient, language });
+  return assemble({ observation, interpretation, management, critic, patient });
 }
 
 /* ------------------------------------------------- deterministic assembly */
@@ -256,7 +208,6 @@ export function assembleAnalysis(args: {
   management: Management;
   critic: { pass: boolean; issues: string[]; recommendedCorrections: string[] };
   patient?: PatientContext;
-  language?: AiResponseLanguage;
 }): BurnWoundAnalysis {
   return assemble(args);
 }
@@ -267,11 +218,8 @@ function assemble(args: {
   management: Management;
   critic: { pass: boolean; issues: string[]; recommendedCorrections: string[] };
   patient?: PatientContext;
-  language?: AiResponseLanguage;
 }): BurnWoundAnalysis {
   const { observation, patient } = args;
-  const language = args.language ?? 'en';
-  const bm = language === 'bm';
   const interpretation = { ...args.interpretation };
   const management = { ...args.management };
 
@@ -288,16 +236,8 @@ function assemble(args: {
   // --- Safety rule: non-burn cannot carry a TBSA value.
   if (!interpretation.isBurn) {
     interpretation.tbsaEstimate = null;
-    interpretation.tbsaSeverityClass = 'N/A';
     interpretation.tbsaRange = 'N/A';
     interpretation.tbsaMethod = 'N/A';
-  } else if (interpretation.tbsaEstimate == null || interpretation.tbsaEstimate <= 0) {
-    interpretation.tbsaSeverityClass = 'N/A';
-  } else {
-    interpretation.tbsaSeverityClass =
-      interpretation.tbsaEstimate >= 15
-        ? (bm ? 'Kelecuran major (>=15% TBSA)' : 'Major burn (>=15% TBSA)')
-        : (bm ? 'Kelecuran minor (<15% TBSA)' : 'Minor burn (<15% TBSA)');
   }
 
   // --- Image-quality gating: cap confidence when the image is not adequate.
@@ -320,19 +260,11 @@ function assemble(args: {
     management.referralLevel = 'consultation';
     management.locationConsiderations =
       (management.locationConsiderations ? management.locationConsiderations + ' ' : '') +
-      (bm
-        ? 'Tapak anatomi khas — ambang rujukan kepada pakar direndahkan.'
-        : 'Special anatomical site — threshold for specialist referral is lowered.');
+      'Special anatomical site — threshold for specialist referral is lowered.';
   }
 
   // --- Deterministic Parkland (never from an assumed weight).
-  const parkland = computeParkland(
-    interpretation.isBurn,
-    interpretation.tbsaEstimate,
-    patient?.weightKg,
-    patient?.ageGroup,
-    language,
-  );
+  const parkland = computeParkland(interpretation.isBurn, interpretation.tbsaEstimate, patient?.weightKg);
 
   // --- Analysis-quality band.
   const analysisQuality: BurnWoundAnalysis['analysisQuality'] = inadequate
@@ -355,30 +287,26 @@ function assemble(args: {
 
   // --- Missing information + follow-up questions (deterministic, honest).
   const missing: string[] = [];
-  if (!patient?.weightKg && parkland.indicated === 'uncertain') missing.push(bm ? 'Berat pesakit — diperlukan untuk mengira resusitasi cecair.' : 'Patient weight — required to calculate fluid resuscitation.');
-  if (!observation.scalePresent) missing.push(bm ? 'Rujukan saiz (pembaris/syiling) — diperlukan untuk mengukur dimensi sebenar.' : 'A size reference (ruler/coin) — needed to measure real dimensions.');
-  if (interpretation.isBurn && !patient?.mechanism) missing.push(bm ? 'Mekanisme kelecuran dan masa sejak kecederaan.' : 'Burn mechanism (scald/flame/chemical/electrical) and time since injury.');
-  if (!patient?.freeText) missing.push(bm ? 'Sejarah berkaitan: komorbiditi, sakit, sensasi dan status tetanus.' : 'Relevant history: comorbidities (e.g. diabetes), pain, sensation, tetanus status.');
+  if (!patient?.weightKg && interpretation.isBurn) missing.push('Patient weight — required to calculate fluid resuscitation.');
+  if (!observation.scalePresent) missing.push('A size reference (ruler/coin) — needed to measure real dimensions.');
+  if (interpretation.isBurn && !patient?.mechanism) missing.push('Burn mechanism (scald/flame/chemical/electrical) and time since injury.');
+  if (!patient?.freeText) missing.push('Relevant history: comorbidities (e.g. diabetes), pain, sensation, tetanus status.');
   missing.push(...(interpretation.tbsaLimitations ?? []));
 
   const followUpQuestions: string[] = [];
-  if (!patient?.weightKg && parkland.indicated === 'uncertain') followUpQuestions.push(bm ? 'Berapakah berat pesakit (kg)?' : 'What is the patient\'s weight (kg)?');
-  if (interpretation.isBurn && !patient?.mechanism) followUpQuestions.push(bm ? 'Apakah punca kelecuran dan bilakah ia berlaku?' : 'What caused the burn, and how long ago did it happen?');
-  followUpQuestions.push(bm ? 'Adakah terdapat kehilangan sensasi, sakit mendalam atau pengisian semula kapilari yang berkurangan?' : 'Is there loss of sensation, deep pain, or reduced capillary refill in the affected area?');
-  if (interpretation.infectionSigns.confidence !== 'insufficient') followUpQuestions.push(bm ? 'Adakah terdapat tanda jangkitan sistemik seperti demam, kemerahan merebak, kesakitan meningkat atau lelehan bernanah?' : 'Are there systemic signs of infection (fever, spreading redness, increasing pain, purulent discharge)?');
+  if (!patient?.weightKg && interpretation.isBurn) followUpQuestions.push('What is the patient\'s weight (kg)?');
+  if (interpretation.isBurn && !patient?.mechanism) followUpQuestions.push('What caused the burn, and how long ago did it happen?');
+  followUpQuestions.push('Is there loss of sensation, deep pain, or reduced capillary refill in the affected area?');
+  if (interpretation.infectionSigns.confidence !== 'insufficient') followUpQuestions.push('Are there systemic signs of infection (fever, spreading redness, increasing pain, purulent discharge)?');
 
   const limitations: string[] = [
-    bm
-      ? 'Penilaian ini berdasarkan imej yang dihantar dan tidak boleh menggantikan pemeriksaan klinikal secara langsung.'
-      : 'This assessment is based on the submitted image set and cannot replace hands-on clinical examination.',
-    ...(inadequate ? [bm ? 'Kualiti imej mengehadkan kebolehpercayaan: ' + (observation.imageQualityNote || issues.join(', ')) + '.' : 'Image quality limits reliability: ' + (observation.imageQualityNote || issues.join(', ')) + '.'] : []),
+    'This assessment is based solely on a single photograph and cannot replace hands-on clinical examination.',
+    ...(inadequate ? ['Image quality limits reliability: ' + (observation.imageQualityNote || issues.join(', ')) + '.'] : []),
     ...(interpretation.tbsaLimitations ?? []),
   ];
 
   const overallConfidence =
-    bm
-      ? (analysisQuality === 'HIGH' ? 'Tinggi' : analysisQuality === 'MODERATE' ? 'Sederhana' : analysisQuality === 'LOW' ? 'Rendah' : 'Tidak mencukupi')
-      : (analysisQuality === 'HIGH' ? 'High' : analysisQuality === 'MODERATE' ? 'Moderate' : analysisQuality === 'LOW' ? 'Low' : 'Insufficient');
+    analysisQuality === 'HIGH' ? 'High' : analysisQuality === 'MODERATE' ? 'Moderate' : analysisQuality === 'LOW' ? 'Low' : 'Insufficient';
 
   const candidate = {
     schemaVersion: '2.0' as const,

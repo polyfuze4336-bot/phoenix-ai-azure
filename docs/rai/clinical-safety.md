@@ -5,9 +5,7 @@ set of deterministic safety rules run after every analysis.
 
 ## Deterministic calculations
 - **Parkland fluid resuscitation** — [`lib/clinical/parkland.ts`](../../nextjs_space/lib/clinical/parkland.ts).
-  Computed only when TBSA meets the age-aware indication threshold and a weight is supplied; the
-  pipeline **never invents a body weight** and does not recommend formula volumes for small burns
-  (**RAI-SAFE-006**).
+  Computed only when a weight is supplied; the pipeline **never invents a body weight** (**RAI-SAFE-006**).
   Verified by [`tests/unit/parkland.test.ts`](../../nextjs_space/tests/unit/parkland.test.ts) and
   [`tests/rai/rai-safety.test.ts`](../../nextjs_space/tests/rai/rai-safety.test.ts).
 - **TBSA** — Lund & Browder age-adjusted chart
@@ -35,7 +33,6 @@ a result (**RAI-SAFE-010**,
 [`lib/ai/validation/wound-analysis-schema.ts`](../../nextjs_space/lib/ai/validation/wound-analysis-schema.ts)).
 
 ## Boundaries
-A one-time image submission (single photo or multi-view set) cannot establish depth progression,
-infection, pain or sensation with certainty.
+A single photograph cannot establish depth progression, infection, pain or sensation with certainty.
 These limits are disclosed per assessment (see [transparency.md](./transparency.md)) and in
 [known-limitations.md](./known-limitations.md).

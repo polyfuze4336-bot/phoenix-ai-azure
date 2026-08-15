@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
-  Upload, Check, ChevronRight, ChevronLeft, Loader2,
+  Upload, Check, ChevronRight, ChevronLeft, Loader2, AlertTriangle,
   ScanLine, ClipboardList, Sparkles, RotateCcw, ImageIcon, Scale, Flame, MapPin,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,9 +13,6 @@ import { cn } from '@/lib/utils';
 import { StructuredAnalysis, type StructuredAnalysisData } from '@/app/hcp/analysis/_components/structured-analysis';
 import { AnalysisInfoPanel, AssuranceStatusLine } from '@/components/v2/analysis-info-panel';
 import type { AnalysisMetadata } from '@/lib/ai/analysis/metadata';
-import { useLanguage } from '@/components/language-provider';
-import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
-import { prepareAnalysisImages, readCompletedAnalysis } from '@/lib/ai/streaming/client-analysis';
 
 interface AnalysisResult {
   woundCategory: string;
@@ -23,8 +20,6 @@ interface AnalysisResult {
   burnDegree: string;
   severity: string;
   confidence: string;
-  tbsaEstimate?: string;
-  tbsaClassification?: string;
   tbsaRange: string;
   isBurn: boolean;
   structured?: StructuredAnalysisData;
@@ -39,21 +34,47 @@ const STEPS = [
   { id: 4, label: 'Analysis', icon: Sparkles },
 ] as const;
 
+async function readAnalysisStream(response: Response): Promise<AnalysisResult | null> {
+  const reader = response.body?.getReader();
+  if (!reader) return null;
+  const decoder = new TextDecoder();
+  let buffer = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const data = line.slice(6);
+        if (data === '[DONE]') return null;
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed?.status === 'completed' && parsed?.result) return parsed.result as AnalysisResult;
+        } catch {
+          /* skip partial */
+        }
+      }
+    }
+  }
+  return null;
+}
+
 export function V2AssessmentClient() {
-  const { lang } = useLanguage();
   const [step, setStep] = useState(1);
   const [weightKg, setWeightKg] = useState('');
   const [mechanism, setMechanism] = useState('');
   const [site, setSite] = useState('');
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [refining, setRefining] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const lastBase64 = useRef<string[]>([]);
-  const lastMime = useRef<string[]>([]);
+  const lastBase64 = useRef('');
+  const lastMime = useRef('image/jpeg');
 
   const patientContext = useCallback(() => {
     const w = parseFloat(weightKg);
@@ -66,52 +87,50 @@ export function V2AssessmentClient() {
   }, [weightKg, mechanism, site]);
 
   const handleFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []).slice(0, 6);
-    if (files.length === 0) return;
-    setImageFiles(files);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
     setResult(null);
     setError(null);
-    Promise.all(
-      files.map(
-        (file) =>
-          new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => resolve(ev.target?.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          }),
-      ),
-    )
-      .then((previews) => setImagePreviews(previews))
-      .catch(() => setError('Failed to read selected image(s).'));
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
   }, []);
 
   const runAnalysis = useCallback(async () => {
-    if (imageFiles.length === 0) return;
+    if (!imageFile) return;
     setAnalyzing(true);
     setError(null);
     setStep(4);
     try {
-      const prepared = await prepareAnalysisImages(imageFiles);
-      lastBase64.current = prepared.map((p) => p.image);
-      lastMime.current = prepared.map((p) => p.mimeType);
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string)?.split(',')[1] ?? '');
+        reader.onerror = reject;
+        reader.readAsDataURL(imageFile);
+      });
+      const mime = imageFile.type || 'image/jpeg';
+      lastBase64.current = base64;
+      lastMime.current = mime;
       const response = await fetch('/api/analyze-wound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images: prepared, patient: patientContext(), lang }),
+        body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext() }),
       });
-      const completed = await readCompletedAnalysis<AnalysisResult>(response, lang);
-      setResult(completed);
+      if (!response.ok) throw new Error('Analysis failed. Please try again.');
+      const completed = await readAnalysisStream(response);
+      if (completed) setResult(completed);
+      else throw new Error('The analysis did not return a result.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed.');
     } finally {
       setAnalyzing(false);
     }
-  }, [imageFiles, patientContext, lang]);
+  }, [imageFile, patientContext]);
 
   const refineAnalysis = useCallback(
     async (answers: string) => {
-      if (lastBase64.current.length === 0 || !result?.structured) return;
+      if (!lastBase64.current || !result?.structured) return;
       setRefining(true);
       setError(null);
       try {
@@ -119,31 +138,29 @@ export function V2AssessmentClient() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            images: lastBase64.current.map((image, index) => ({
-              image,
-              mimeType: lastMime.current[index] ?? 'image/jpeg',
-            })),
+            image: lastBase64.current,
+            mimeType: lastMime.current,
             patient: patientContext(),
             priorAnalysis: result.structured,
             refineAnswers: answers,
-            lang,
           }),
         });
-        const completed = await readCompletedAnalysis<AnalysisResult>(response, lang);
-        setResult(completed);
+        if (!response.ok) throw new Error('Refine failed.');
+        const completed = await readAnalysisStream(response);
+        if (completed) setResult(completed);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Refine failed.');
       } finally {
         setRefining(false);
       }
     },
-    [result, patientContext, lang],
+    [result, patientContext],
   );
 
   const reset = useCallback(() => {
     setStep(1);
-    setImagePreviews([]);
-    setImageFiles([]);
+    setImagePreview(null);
+    setImageFile(null);
     setResult(null);
     setError(null);
   }, []);
@@ -174,7 +191,12 @@ export function V2AssessmentClient() {
         })}
       </ol>
 
-      <ClinicalAiNotice />
+      <div className="rounded-xl border bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+        <div className="flex items-start gap-2">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>Decision-support only. AI output does not replace clinical judgement. Do not upload identifiable patient information.</p>
+        </div>
+      </div>
 
       {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>
@@ -216,9 +238,9 @@ export function V2AssessmentClient() {
             <h3 className="font-display text-lg font-bold tracking-tight">Wound image</h3>
             <p className="text-sm text-muted-foreground">Upload a clear, well-lit photo. Include a scale reference (e.g. ruler) if possible.</p>
           </div>
-          {imagePreviews.length > 0 ? (
+          {imagePreview ? (
             <div className="relative mx-auto aspect-video w-full max-w-md overflow-hidden rounded-lg border">
-              <Image src={imagePreviews[0]} alt="Selected wound" fill className="object-contain" />
+              <Image src={imagePreview} alt="Selected wound" fill className="object-contain" />
             </div>
           ) : (
             <button
@@ -228,22 +250,19 @@ export function V2AssessmentClient() {
             >
               <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
               <p className="font-medium text-foreground">Click to upload an image</p>
-              <p className="mt-1 text-xs text-muted-foreground">JPEG or PNG — up to 6 images, max 10MB each</p>
+              <p className="mt-1 text-xs text-muted-foreground">JPEG or PNG — max 10MB</p>
             </button>
           )}
-          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFile} className="hidden" />
-          {imagePreviews.length > 1 ? (
-            <p className="text-xs text-muted-foreground">Selected images: {imagePreviews.length}</p>
-          ) : null}
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
           <div className="flex justify-between">
             <Button variant="ghost" onClick={() => setStep(1)}>
               <ChevronLeft className="mr-1 h-4 w-4" /> Back
             </Button>
             <div className="flex gap-2">
-              {imagePreviews.length > 0 ? (
+              {imagePreview ? (
                 <Button variant="outline" onClick={() => fileInputRef.current?.click()}>Replace</Button>
               ) : null}
-              <Button onClick={() => setStep(3)} disabled={imagePreviews.length === 0}>
+              <Button onClick={() => setStep(3)} disabled={!imagePreview}>
                 Continue <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
@@ -258,9 +277,9 @@ export function V2AssessmentClient() {
             <h3 className="font-display text-lg font-bold tracking-tight">Pre-analysis quality check</h3>
             <p className="text-sm text-muted-foreground">Confirm the image before running the AI assessment. The AI also re-checks quality and gates its confidence accordingly.</p>
           </div>
-          {imagePreviews.length > 0 ? (
+          {imagePreview ? (
             <div className="relative mx-auto aspect-video w-full max-w-md overflow-hidden rounded-lg border">
-              <Image src={imagePreviews[0]} alt="Selected wound" fill className="object-contain" />
+              <Image src={imagePreview} alt="Selected wound" fill className="object-contain" />
             </div>
           ) : null}
           <ul className="space-y-2 text-sm">
@@ -275,7 +294,7 @@ export function V2AssessmentClient() {
             <Button variant="ghost" onClick={() => setStep(2)}>
               <ChevronLeft className="mr-1 h-4 w-4" /> Back
             </Button>
-            <Button onClick={runAnalysis} disabled={imageFiles.length === 0}>
+            <Button onClick={runAnalysis} disabled={!imageFile}>
               <Sparkles className="mr-1.5 h-4 w-4" /> Run AI assessment
             </Button>
           </div>
@@ -310,7 +329,6 @@ export function V2AssessmentClient() {
                 </div>
               )}
               {result.meta ? <AnalysisInfoPanel meta={result.meta} /> : null}
-              
               <div className="flex justify-center">
                 <Button variant="outline" onClick={reset}>
                   <RotateCcw className="mr-1.5 h-4 w-4" /> Start a new assessment

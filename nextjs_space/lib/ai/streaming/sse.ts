@@ -35,39 +35,15 @@ export function createStructuredSseResponse(options: StructuredSseOptions): Resp
   const decoder = new TextDecoder();
   let buffer = '';
   let partialRead = '';
-  let completed = false;
 
   const emitCompleted = (
     controller: ReadableStreamDefaultController<Uint8Array>,
     phase: StructuredResultPhase,
   ) => {
-    if (completed) return;
-    completed = true;
     const result = buildResult(buffer, phase);
     controller.enqueue(
       encoder.encode(`data: ${JSON.stringify({ status: 'completed', result })}\n\n`),
     );
-  };
-
-  const processLine = (
-    line: string,
-    controller: ReadableStreamDefaultController<Uint8Array>,
-  ): boolean => {
-    const normalized = line.endsWith('\r') ? line.slice(0, -1) : line;
-    if (!normalized.startsWith('data: ')) return false;
-    const data = normalized.slice(6);
-    if (data === '[DONE]') {
-      emitCompleted(controller, 'done');
-      return true;
-    }
-    try {
-      const parsed = JSON.parse(data);
-      buffer += parsed?.choices?.[0]?.delta?.content ?? '';
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify(processingEvent)}\n\n`));
-    } catch {
-      /* skip keep-alive / non-JSON lines */
-    }
-    return false;
   };
 
   const stream = new ReadableStream<Uint8Array>({
@@ -81,13 +57,22 @@ export function createStructuredSseResponse(options: StructuredSseOptions): Resp
           let lines = partialRead.split('\n');
           partialRead = lines?.pop() ?? '';
           for (const line of (lines ?? [])) {
-            if (processLine(line, controller)) return;
+            if (line?.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                emitCompleted(controller, 'done');
+                return;
+              }
+              try {
+                const parsed = JSON.parse(data);
+                buffer += parsed?.choices?.[0]?.delta?.content ?? '';
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(processingEvent)}\n\n`));
+              } catch (e: any) { /* skip */ }
+            }
           }
         }
-        partialRead += decoder.decode();
-        if (partialRead && processLine(partialRead, controller)) return;
         // Reached end of stream without a [DONE] sentinel.
-        if (buffer && !completed) {
+        if (buffer) {
           emitCompleted(controller, 'end');
         }
       } catch (error: any) {

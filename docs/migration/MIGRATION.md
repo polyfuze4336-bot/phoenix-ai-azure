@@ -1274,3 +1274,38 @@ unsupported PostgreSQL major version in infrastructure code.
 - **Responsible AI impact.** NONE (infrastructure compatibility fix only).
 - **Validation planned in this step.** Bicep build, architecture drift check, secret scan, code review,
   and CodeQL.
+
+### Step 32 - Restore the stable Original Phoenix AI experience
+
+This preservation-first restoration returns the public application to the verified Original Phoenix
+AI experience without rewriting Git history or changing the deployed Azure topology.
+
+- **Evidence and source selection.** `docs/migration/rollback-assessment.md` distinguishes the latest
+  chronological pre-change commit, the latest successful pre-August-14 deployment (`5f065529`), and
+  the functionally valid Original-route source (`7298f21`, application image commit `a83bb80`). The
+  later deployment was rejected because it had already removed `/community/image-check`.
+- **Safety point.** The pre-restoration state is preserved at branch
+  `backup/pre-rollback-20260815` and tag `pre-rollback-20260815`, both fixed at `f050416`.
+- **Application restoration.** Tracked `nextjs_space` application and test files were restored from
+  `7298f21`; `/` now renders the Original landing, `/community/image-check` is restored, and
+  middleware returns 404 for `/v2` and `/v2/*`. The Phoenix logo Git blob is byte-identical to the
+  baseline (`370601eccff66267cac08573e90f1015680a7c31`).
+- **Preserved deployment boundary.** Current Container Apps, ACR, GitHub OIDC workflows, Bicep,
+  managed identity, Azure AI, PostgreSQL, Blob Storage, Key Vault, and telemetry configuration are
+  retained. No database reset, down migration, PostgreSQL version change, Azure mutation, or secret
+  change is part of this restoration.
+- **Architecture governance.** Impact level **HIGH**; architecture version `2.5.0 -> 3.0.0`.
+  ADR-0010 supersedes the v2 public-entry decisions, and
+  `docs/architecture/changes/CHANGE-20260815-restore-original-only-experience.md` records the change.
+  Architecture drift validation passes.
+- **Responsible AI impact.** The staged analysis code/control register returns to its validated
+  Original baseline. `RAI-TRANS-003` and `RAI-ACCT-001` are Partial because their former v2
+  information/review panels are no longer published. `LIM-009` records the absence of an in-product
+  assurance page; governed documentation and tests remain available.
+- **Validation.** Production build passes (76 generated pages); public Original landing and v2 404
+  contract tests pass `2/2`; API tests pass `14/14`; HCP/community journeys pass `2/2`; RAI tests
+  pass `23/23`; integration tests pass `14/14`; the no-Abacus network guard passes; and all 68 visual
+  captures pass across desktop, tablet, and mobile, including `/community/image-check`.
+- **Evaluation limitation.** The structural analysis harness ran in rubric-only mode but scored zero
+  cases because no consented images or fixture outputs are present; all four cases were honestly
+  skipped. No diagnostic-accuracy or clinical-validation claim is made.

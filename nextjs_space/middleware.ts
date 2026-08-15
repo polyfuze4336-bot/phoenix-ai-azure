@@ -15,7 +15,11 @@ import { resolveAuthMode } from '@/lib/auth/auth-config';
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth/session';
 
 // Protected HCP APIs (community APIs remain public).
-const PROTECTED_API_PREFIXES = ['/api/hcp-chat', '/api/analyze-wound', '/api/hcp/analyses'];
+const PROTECTED_API_PREFIXES = ['/api/hcp-chat', '/api/analyze-wound'];
+
+function isRetiredV2Path(pathname: string): boolean {
+  return pathname === '/v2' || pathname.startsWith('/v2/');
+}
 
 function isProtectedApi(pathname: string): boolean {
   return PROTECTED_API_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -27,12 +31,16 @@ function isProtectedPage(pathname: string): boolean {
 }
 
 export async function middleware(req: NextRequest): Promise<Response> {
+  const { pathname } = req.nextUrl;
+  if (isRetiredV2Path(pathname)) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   // Only enforce server sessions in Entra mode; demo mode keeps its own guard.
   if (resolveAuthMode() !== 'entra') {
     return NextResponse.next();
   }
 
-  const { pathname } = req.nextUrl;
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const session = await verifySessionToken(token);
   if (session) {
@@ -59,10 +67,11 @@ export async function middleware(req: NextRequest): Promise<Response> {
 
 export const config = {
   matcher: [
+    '/v2',
+    '/v2/:path*',
     '/hcp/:path*',
     '/hcp',
     '/api/hcp-chat/:path*',
     '/api/analyze-wound/:path*',
-    '/api/hcp/analyses/:path*',
   ],
 };

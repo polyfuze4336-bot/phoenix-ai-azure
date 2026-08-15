@@ -1,9 +1,7 @@
 'use client';
 
 import { useLanguage } from '@/components/language-provider';
-import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
-import { prepareAnalysisImages, readCompletedAnalysis } from '@/lib/ai/streaming/client-analysis';
-import { Upload, Camera, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette } from 'lucide-react';
+import { Upload, Camera, AlertTriangle, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
@@ -22,7 +20,6 @@ interface AnalysisResult {
   woundEdges: string;
   confidence: string;
   tbsaEstimate: string;
-  tbsaClassification: string;
   tbsaRange: string;
   tbsaBodyRegions: string;
   tbsaMethod: string;
@@ -42,7 +39,6 @@ interface PatientContext {
   weightKg?: number;
   mechanism?: string;
 }
-const MAX_ANALYSIS_IMAGES = 6;
 
 /**
  * Best-effort persistence of a completed analysis (image + result) to the clinician
@@ -71,9 +67,9 @@ async function saveAnalysisToHistory(result: AnalysisResult, image: string, mime
 }
 
 export function AnalysisClient() {
-  const { t, lang } = useLanguage();
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const { t } = useLanguage();
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
@@ -81,8 +77,8 @@ export function AnalysisClient() {
   const [refining, setRefining] = useState(false);
   const [weightKg, setWeightKg] = useState('');
   const [mechanism, setMechanism] = useState('');
-  const lastBase64Ref = useRef<string[]>([]);
-  const lastMimeRef = useRef<string[]>([]);
+  const lastBase64Ref = useRef<string>('');
+  const lastMimeRef = useRef<string>('image/jpeg');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -97,35 +93,41 @@ export function AnalysisClient() {
     return ctx.weightKg || ctx.mechanism ? ctx : undefined;
   }, [weightKg, mechanism]);
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const picked = Array.from(e?.target?.files ?? []);
-    const remaining = Math.max(0, MAX_ANALYSIS_IMAGES - imageFiles.length);
-    const selected = picked.slice(0, remaining);
-    if (selected.length === 0) {
-      setError(`You can upload up to ${MAX_ANALYSIS_IMAGES} images.`);
-      e.target.value = '';
-      return;
+  /** Read the SSE stream from /api/analyze-wound and resolve the completed result. */
+  const readAnalysisStream = useCallback(async (response: Response): Promise<AnalysisResult | null> => {
+    const reader = response?.body?.getReader();
+    const decoder = new TextDecoder();
+    let partialRead = '';
+    while (true) {
+      const { done, value } = await (reader?.read() ?? { done: true, value: undefined });
+      if (done) break;
+      partialRead += decoder?.decode(value, { stream: true }) ?? '';
+      const lines = partialRead?.split('\n') ?? [];
+      partialRead = lines?.pop() ?? '';
+      for (const line of (lines ?? [])) {
+        if (line?.startsWith('data: ')) {
+          const data = line?.slice(6);
+          if (data === '[DONE]') return null;
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed?.status === 'completed' && parsed?.result) return parsed.result as AnalysisResult;
+          } catch (e: any) { /* skip */ }
+        }
+      }
     }
-    setImageFiles((prev) => [...prev, ...selected].slice(0, MAX_ANALYSIS_IMAGES));
+    return null;
+  }, []);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e?.target?.files?.[0];
+    if (!file) return;
+    setImageFile(file);
     setResult(null);
-    setError(picked.length > selected.length ? `You can upload up to ${MAX_ANALYSIS_IMAGES} images.` : null);
-    Promise.all(
-      selected.map(
-        (file) =>
-          new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (ev: any) => resolve(ev?.target?.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          }),
-      ),
-    )
-      .then((previews) => {
-        setImagePreviews((prev) => [...prev, ...previews].slice(0, MAX_ANALYSIS_IMAGES));
-      })
-      .catch(() => setError('Failed to read selected image(s).'));
-    e.target.value = '';
-  }, [imageFiles.length]);
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = (ev: any) => setImagePreview(ev?.target?.result as string);
+    reader.readAsDataURL(file);
+  }, []);
 
   const startCamera = useCallback(async () => {
     try {
@@ -156,43 +158,52 @@ export function AnalysisClient() {
     const ctx = canvas?.getContext('2d');
     ctx?.drawImage(videoRef.current, 0, 0);
     const dataUrl = canvas?.toDataURL('image/jpeg', 0.8);
-    setImagePreviews([dataUrl]);
+    setImagePreview(dataUrl);
     canvas?.toBlob((blob: any) => {
-      if (blob) setImageFiles([new File([blob], 'capture.jpg', { type: 'image/jpeg' })]);
+      if (blob) setImageFile(new File([blob], 'capture.jpg', { type: 'image/jpeg' }));
     }, 'image/jpeg', 0.8);
     stopCamera();
   }, [stopCamera]);
 
   const analyzeImage = useCallback(async () => {
-    if (imageFiles.length === 0) return;
+    if (!imageFile) return;
     setAnalyzing(true);
     setError(null);
     try {
-      const prepared = await prepareAnalysisImages(imageFiles);
-      lastBase64Ref.current = prepared.map((p) => p.image);
-      lastMimeRef.current = prepared.map((p) => p.mimeType);
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve((reader?.result as string)?.split(',')?.[1] ?? '');
+        reader.onerror = reject;
+        reader.readAsDataURL(imageFile);
+      });
+
+      const mime = imageFile?.type ?? 'image/jpeg';
+      lastBase64Ref.current = base64;
+      lastMimeRef.current = mime;
 
       const response = await fetch('/api/analyze-wound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images: prepared, patient: patientContext(), lang }),
+        body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext() }),
       });
 
-      const completed = await readCompletedAnalysis<AnalysisResult>(response, lang);
-      setResult(completed);
-      if (prepared[0]) {
-        void saveAnalysisToHistory(completed, prepared[0].image, prepared[0].mimeType);
+      if (!response?.ok) throw new Error('Analysis failed');
+
+      const completed = await readAnalysisStream(response);
+      if (completed) {
+        setResult(completed);
+        void saveAnalysisToHistory(completed, base64, mime);
       }
     } catch (err: any) {
       setError(err?.message ?? 'Analysis failed');
     } finally {
       setAnalyzing(false);
     }
-  }, [imageFiles, patientContext, lang]);
+  }, [imageFile, patientContext, readAnalysisStream]);
 
   /** Second pass: re-run the pipeline with clinician answers, no re-upload. */
   const refineAnalysis = useCallback(async (answers: string) => {
-    if (lastBase64Ref.current.length === 0 || !result?.structured) return;
+    if (!lastBase64Ref.current || !result?.structured) return;
     setRefining(true);
     setError(null);
     try {
@@ -200,44 +211,38 @@ export function AnalysisClient() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          images: lastBase64Ref.current.map((image, index) => ({
-            image,
-            mimeType: lastMimeRef.current[index] ?? 'image/jpeg',
-          })),
+          image: lastBase64Ref.current,
+          mimeType: lastMimeRef.current,
           patient: patientContext(),
           priorAnalysis: result.structured,
           refineAnswers: answers,
-          lang,
         }),
       });
-      const completed = await readCompletedAnalysis<AnalysisResult>(response, lang);
-      setResult(completed);
-      if (lastBase64Ref.current[0]) {
-        void saveAnalysisToHistory(
-          completed,
-          lastBase64Ref.current[0],
-          lastMimeRef.current[0] ?? 'image/jpeg',
-        );
+      if (!response?.ok) throw new Error('Refine failed');
+      const completed = await readAnalysisStream(response);
+      if (completed) {
+        setResult(completed);
+        void saveAnalysisToHistory(completed, lastBase64Ref.current, lastMimeRef.current);
       }
     } catch (err: any) {
       setError(err?.message ?? 'Refine failed');
     } finally {
       setRefining(false);
     }
-  }, [result, patientContext, lang]);
+  }, [result, patientContext, readAnalysisStream]);
 
   const clearImage = useCallback(() => {
-    setImagePreviews([]);
-    setImageFiles([]);
+    setImagePreview(null);
+    setImageFile(null);
     setResult(null);
     setError(null);
   }, []);
 
   const severityColor = (s: string) => {
     const lower = s?.toLowerCase?.() ?? '';
-    if (lower?.includes('critical') || lower?.includes('kritikal')) return 'bg-red-600 text-white';
-    if (lower?.includes('severe') || lower?.includes('teruk')) return 'bg-red-500 text-white';
-    if (lower?.includes('moderate') || lower?.includes('sederhana')) return 'bg-orange-500 text-white';
+    if (lower?.includes('critical')) return 'bg-red-600 text-white';
+    if (lower?.includes('severe')) return 'bg-red-500 text-white';
+    if (lower?.includes('moderate')) return 'bg-orange-500 text-white';
     return 'bg-green-500 text-white';
   };
 
@@ -248,12 +253,16 @@ export function AnalysisClient() {
         <p className="text-sm text-gray-500 mt-1">Upload or capture a wound/burn image for AI-powered clinical assessment</p>
       </div>
 
-      <ClinicalAiNotice />
+      {/* Disclaimer */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+        <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+        <p className="text-sm text-amber-800">{t('analysis.disclaimer')}</p>
+      </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Upload Section */}
         <div className="space-y-4">
-          {imagePreviews.length === 0 && !cameraActive && (
+          {!imagePreview && !cameraActive && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
               <div
                 onClick={() => fileInputRef?.current?.click?.()}
@@ -261,9 +270,9 @@ export function AnalysisClient() {
               >
                 <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="font-medium text-gray-600">{t('analysis.upload')}</p>
-                <p className="text-xs text-gray-400 mt-1">JPEG, PNG — up to 6 images, max 10MB each</p>
+                <p className="text-xs text-gray-400 mt-1">JPEG, PNG — max 10MB</p>
               </div>
-              <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileSelect} className="hidden" />
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
               <button
                 onClick={startCamera}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#0F9B8E] text-white rounded-xl font-medium hover:bg-[#0e8a7e] transition-colors"
@@ -286,34 +295,16 @@ export function AnalysisClient() {
             </div>
           )}
 
-          {imagePreviews.length > 0 && (
+          {imagePreview && (
             <div className="space-y-3">
               <div className="relative rounded-xl overflow-hidden bg-gray-100">
                 <div className="relative aspect-video">
-                  <Image src={imagePreviews[0]} alt="Wound image" fill className="object-contain" />
+                  <Image src={imagePreview} alt="Wound image" fill className="object-contain" />
                 </div>
                 <button onClick={clearImage} className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70">
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              {imagePreviews.length > 1 && (
-                <div className="grid grid-cols-4 gap-2">
-                  {imagePreviews.slice(1).map((preview, index) => (
-                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
-                      <Image src={preview} alt={`Wound image ${index + 2}`} fill className="object-cover" />
-                    </div>
-                  ))}
-                </div>
-              )}
-              <p className="text-xs text-gray-500">Selected images: {imagePreviews.length}</p>
-              {imagePreviews.length < MAX_ANALYSIS_IMAGES && (
-                <button
-                  onClick={() => fileInputRef?.current?.click?.()}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-xl font-medium hover:border-[#8B0000]/40 hover:bg-[#8B0000]/5 transition-colors"
-                >
-                  <Upload className="w-4 h-4" /> Add more images
-                </button>
-              )}
               {/* Optional patient context — improves accuracy; nothing is assumed when blank. */}
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
                 <p className="text-xs font-semibold text-gray-500">Patient details (optional — improves accuracy)</p>
@@ -451,10 +442,6 @@ export function AnalysisClient() {
                         <span className="text-sm font-medium text-gray-600">TBSA Range</span>
                         <span className="text-sm font-semibold text-gray-900">{result?.tbsaRange ?? 'N/A'}</span>
                       </div>
-                      <div className="p-4 flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">Burn Category</span>
-                        <span className="text-sm font-semibold text-gray-900">{result?.tbsaClassification ?? 'N/A'}</span>
-                      </div>
                       <div className="p-4">
                         <span className="text-sm font-medium text-gray-600 block mb-1">Affected Body Regions</span>
                         <p className="text-sm text-gray-800">{result?.tbsaBodyRegions ?? 'N/A'}</p>
@@ -518,7 +505,6 @@ export function AnalysisClient() {
               {result?.structured && (
                 <StructuredAnalysis data={result.structured} onRefine={refineAnalysis} refining={refining} />
               )}
-
             </motion.div>
           )}
 

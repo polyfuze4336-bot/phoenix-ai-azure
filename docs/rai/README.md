@@ -1,8 +1,9 @@
 # PhoenixIQ — Responsible AI & AI Assurance
 
 This directory documents the Responsible AI (RAI) controls that are **actually implemented** in
-PhoenixIQ, mapped to Microsoft's six Responsible AI principles, traced to source code and tests, and
-surfaced to clinicians in the product.
+PhoenixIQ, mapped to Microsoft's six Responsible AI principles and traced to source code and tests.
+The Original-only runtime does not publish the former v2 AI Assurance page; this documentation is
+the review surface until an Original-compatible in-product view is implemented.
 
 > **Honesty rule.** Nothing here claims a capability that is not in the codebase. Controls are marked
 > **Active**, **Partial** or **Planned**. PhoenixIQ makes **no** claim of being "100% safe", "bias
@@ -16,9 +17,6 @@ surfaced to clinicians in the product.
   an automated consistency review, and presents results for clinician review.
 - **Is not:** an autonomous diagnostic device, a certified medical device, or a replacement for
   clinical judgement.
-- **Data-handling boundary:** HCP surfaces warn that patient data and images must be handled under
-  Malaysia's PDPA 2010 and applicable Malaysian law. This is an obligation notice, not a compliance
-  certification.
 
 ## Contents
 
@@ -42,7 +40,6 @@ surfaced to clinicians in the product.
 
 ## Single source of truth
 
-The control register that drives the in-product **AI Assurance** page
-(`/v2/hcp/ai-assurance`) and this documentation lives in code at
+The control register that governs this documentation lives in code at
 [`nextjs_space/lib/rai/controls.ts`](../../nextjs_space/lib/rai/controls.ts). Its integrity is
 guarded by [`tests/rai/rai-controls.test.ts`](../../nextjs_space/tests/rai/rai-controls.test.ts).

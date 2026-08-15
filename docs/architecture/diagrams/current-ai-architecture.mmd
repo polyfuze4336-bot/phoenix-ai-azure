@@ -3,7 +3,7 @@
 %% multimodal one-or-many image input, and structured-output validation.
 flowchart TB
     subgraph Interfaces["Client Interfaces"]
-        HCPUI["Original + v2 HCP Interfaces\n(shared analysis transport, EN/BM)"]
+        HCPUI["Original HCP Interface"]
         COMMUI["Community Interface\n(chat + image check)"]
     end
 
@@ -41,7 +41,7 @@ flowchart TB
         OAICOMPAT["openai-compatible mapping"]
         VALIN["validation/image-input"]
         VALOUT["validation/wound-analysis-schema\n(+ flat back-compat adapter)"]
-        STREAM["streaming/sse + collect + text-stream\n+ shared client analysis parser"]
+        STREAM["streaming/sse + collect + text-stream"]
         TEL["ai/telemetry"]
     end
 
@@ -52,7 +52,7 @@ flowchart TB
 
     APPINS["Application Insights"]
 
-    ASSURE["AI Assurance layer\nlib/rai/controls.ts + /v2/hcp/ai-assurance\n(see current-ai-assurance.mmd)"]
+    ASSURE["AI Assurance controls\nlib/rai/controls.ts + documentation\n(see current-ai-assurance.mmd)"]
 
     HCPUI --> RHCPCHAT
     HCPUI --> RHCPAN

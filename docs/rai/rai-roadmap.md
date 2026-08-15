@@ -4,7 +4,7 @@ Honest staging. **Implemented** items are in the product today; **Next** and **F
 **not** present yet and are never shown in-product as current capabilities.
 
 ## Implemented (today)
-- Five-layer AI assurance model surfaced in-product (`/v2/hcp/ai-assurance`).
+- Five-layer AI assurance model maintained in the code register, documentation, and tests.
 - Input validation + image-quality gating (RAI-SAFE-001/002).
 - Observation/interpretation separation with field-level confidence + evidence (RAI-SAFE-004,
   RAI-TRANS-001).
@@ -18,6 +18,7 @@ Honest staging. **Implemented** items are in the product today; **Next** and **F
 - Structural evaluation harness + RAI test suite (RAI-ACCT-004).
 
 ## Next (planned, not yet implemented)
+- Provide an Original-compatible, in-product AI Assurance view without reintroducing v2 routes.
 - Version-pinned guideline citations to replace curated general references (upgrade RAI-TRANS-005
   Partial → Active).
 - Persisted clinical-review audit trail wired to real cases (extend RAI-ACCT-001 beyond demo state).

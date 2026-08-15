@@ -5,7 +5,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   validateImageInput,
-  validateImageBatchInput,
   checkRequestBodySize,
   approxBase64Bytes,
   maxImageRequestBytes,
@@ -33,10 +32,7 @@ test('validateImageInput: strips a data-URL prefix before decoding', () => {
     mimeType: 'image/png',
   });
   assert.equal(result.ok, true);
-  if (result.ok) {
-    assert.equal(result.mimeType, 'image/png');
-    assert.equal(result.base64, tinyBase64);
-  }
+  if (result.ok) assert.equal(result.mimeType, 'image/png');
 });
 
 test('validateImageInput: disallowed MIME type is rejected', () => {
@@ -77,35 +73,4 @@ test('checkRequestBodySize: rejects over-limit Content-Length, passes null/valid
   assert.equal(checkRequestBodySize(null).ok, true);
   assert.equal(checkRequestBodySize('1024').ok, true);
   assert.equal(checkRequestBodySize('not-a-number').ok, true);
-});
-
-test('checkRequestBodySize: supports higher body ceiling when multiple images are allowed', () => {
-  const twoImageLimit = maxImageRequestBytes() * 2;
-  assert.equal(checkRequestBodySize(String(twoImageLimit), 2).ok, true);
-  assert.equal(checkRequestBodySize(String(twoImageLimit + 1), 2).ok, false);
-});
-
-test('validateImageBatchInput: validates multiple images and enforces max count', () => {
-  const ok = validateImageBatchInput(
-    [
-      { image: tinyBase64, mimeType: 'image/png' },
-      { image: tinyBase64, mimeType: 'image/jpeg' },
-    ],
-    { maxImages: 2 },
-  );
-  assert.equal(ok.ok, true);
-  if (ok.ok) {
-    assert.equal(ok.images.length, 2);
-    assert.equal(ok.totalBytes > 0, true);
-  }
-
-  const tooMany = validateImageBatchInput(
-    [
-      { image: tinyBase64, mimeType: 'image/png' },
-      { image: tinyBase64, mimeType: 'image/jpeg' },
-    ],
-    { maxImages: 1 },
-  );
-  assert.equal(tooMany.ok, false);
-  if (!tooMany.ok) assert.match(tooMany.error, /too many images/i);
 });

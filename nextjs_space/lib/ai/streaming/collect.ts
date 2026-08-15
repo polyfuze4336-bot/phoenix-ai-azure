@@ -24,27 +24,6 @@ export async function collectCompletion(
   let partial = '';
   let usage: CollectedCompletion['usage'];
 
-  const processLine = (line: string): boolean => {
-    const normalized = line.endsWith('\r') ? line.slice(0, -1) : line;
-    if (!normalized.startsWith('data: ')) return false;
-    const data = normalized.slice(6);
-    if (data === '[DONE]') return true;
-    try {
-      const parsed = JSON.parse(data);
-      buffer += parsed?.choices?.[0]?.delta?.content ?? '';
-      if (parsed?.usage) {
-        usage = {
-          prompt: parsed.usage.prompt_tokens,
-          completion: parsed.usage.completion_tokens,
-          total: parsed.usage.total_tokens,
-        };
-      }
-    } catch {
-      /* ignore non-JSON keep-alive lines */
-    }
-    return false;
-  };
-
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -53,11 +32,24 @@ export async function collectCompletion(
       const lines = partial.split('\n');
       partial = lines.pop() ?? '';
       for (const line of lines) {
-        if (processLine(line)) return { text: buffer, usage };
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6);
+        if (data === '[DONE]') return { text: buffer, usage };
+        try {
+          const parsed = JSON.parse(data);
+          buffer += parsed?.choices?.[0]?.delta?.content ?? '';
+          if (parsed?.usage) {
+            usage = {
+              prompt: parsed.usage.prompt_tokens,
+              completion: parsed.usage.completion_tokens,
+              total: parsed.usage.total_tokens,
+            };
+          }
+        } catch {
+          /* ignore non-JSON keep-alive lines */
+        }
       }
     }
-    partial += decoder.decode();
-    if (partial) processLine(partial);
   } finally {
     reader.releaseLock?.();
   }

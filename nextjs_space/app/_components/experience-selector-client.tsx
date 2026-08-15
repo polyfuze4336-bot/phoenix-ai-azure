@@ -4,7 +4,6 @@ import { useLanguage } from '@/components/language-provider';
 import { LanguageToggle } from '@/components/language-toggle';
 import { PhoenixLogo } from '@/components/phoenix-logo';
 import { APP_VERSION, DEMO_ENVIRONMENT_LABEL } from '@/lib/v2/version';
-import { MalaysiaDateTime } from './malaysia-date-time';
 import { Stethoscope, Users, ArrowRight, Sparkles, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -135,9 +134,6 @@ export function ExperienceSelectorClient() {
 
           <p className="mx-auto mt-8 max-w-xl text-[11px] text-gray-400">
             {DEMO_ENVIRONMENT_LABEL} · {bm ? 'Data demonstrasi sintetik sahaja' : 'Synthetic demonstration data only'}
-          </p>
-          <p className="mx-auto mt-1 max-w-xl text-[11px] text-gray-400">
-            <MalaysiaDateTime />
           </p>
         </div>
       </section>

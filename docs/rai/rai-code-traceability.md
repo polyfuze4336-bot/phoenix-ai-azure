@@ -12,14 +12,17 @@ and `tests`).
 | [`nextjs_space/lib/ai/prompts/versions.ts`](../../nextjs_space/lib/ai/prompts/versions.ts) | Prompt / pipeline / schema version constants |
 | [`nextjs_space/lib/ai/analysis/metadata.ts`](../../nextjs_space/lib/ai/analysis/metadata.ts) | Analysis metadata envelope + review status |
 
-## In-product surfaces
+## Retired v2 presentation surfaces
+
+These source files remain recoverable for audit and rollback, but `/v2/*` is not published by the
+Original-only runtime. They are not current user-visible evidence.
+
 | Path | Surface |
 | --- | --- |
 | [`nextjs_space/app/v2/hcp/ai-assurance/page.tsx`](../../nextjs_space/app/v2/hcp/ai-assurance/page.tsx) | AI Assurance route |
 | [`nextjs_space/app/v2/hcp/ai-assurance/_components/ai-assurance-client.tsx`](../../nextjs_space/app/v2/hcp/ai-assurance/_components/ai-assurance-client.tsx) | Assurance overview, controls, matrix, governance, limitations |
 | [`nextjs_space/components/v2/analysis-info-panel.tsx`](../../nextjs_space/components/v2/analysis-info-panel.tsx) | Assurance status line + Analysis Information panel |
 | [`nextjs_space/components/v2/clinical-review-panel.tsx`](../../nextjs_space/components/v2/clinical-review-panel.tsx) | Human-oversight review actions |
-| [`nextjs_space/components/clinical-ai-notice.tsx`](../../nextjs_space/components/clinical-ai-notice.tsx) | Bilingual PDPA/Malaysian-law handling warning + clinical decision-support limitation |
 | [`nextjs_space/lib/v2/nav.ts`](../../nextjs_space/lib/v2/nav.ts) | "AI Assurance" nav item |
 
 ## Pre-existing implementation (surfaced, not created here)
@@ -35,9 +38,6 @@ and `tests`).
 | `lib/ai/azure-credential.ts` | RAI-PRIV-001 |
 | `lib/analysis/history.ts`, `prisma/schema.prisma` | RAI-ACCT-002 |
 | `lib/ai/model-config.ts` | RAI-ACCT-005 |
-| `lib/ai/language.ts`, `lib/ai/analysis/pipeline.ts` | RAI-INCL-001 |
-| `components/clinical-ai-notice.tsx` | RAI-PRIV-007, RAI-ACCT-001 |
-| `lib/auth/analysis-api-authorization.ts`, `app/api/hcp/analyses/*` | RAI-PRIV-008 |
 | `tests/evaluation/burn-wound/*` | RAI-ACCT-004 |
 
 ## Tests

@@ -75,21 +75,7 @@ test('POST /api/analyze-wound rejects an oversized body with 413', async ({ requ
 });
 
 test('POST /api/analyze-wound reaches a terminal response for a valid image', async ({ request }) => {
-  const res = await postJson(request, '/api/analyze-wound', {
-    image: TINY_PNG_B64,
-    mimeType: 'image/png',
-    lang: 'bm',
-  });
-  expectTerminalResponse(res.status());
-});
-
-test('POST /api/analyze-wound reaches a terminal response for valid multi-image input', async ({ request }) => {
-  const res = await postJson(request, '/api/analyze-wound', {
-    images: [
-      { image: TINY_PNG_B64, mimeType: 'image/png' },
-      { image: TINY_PNG_B64, mimeType: 'image/png' },
-    ],
-  });
+  const res = await postJson(request, '/api/analyze-wound', { image: TINY_PNG_B64, mimeType: 'image/png' });
   expectTerminalResponse(res.status());
 });
 
@@ -126,7 +112,6 @@ test('POST /api/hcp-chat rejects an oversized body with 413', async ({ request }
 test('POST /api/hcp-chat reaches a terminal response for a valid question', async ({ request }) => {
   const res = await postJson(request, '/api/hcp-chat', {
     messages: [{ role: 'user', content: 'What is the initial management of a burn?' }],
-    lang: 'bm',
   });
   expectTerminalResponse(res.status());
 });

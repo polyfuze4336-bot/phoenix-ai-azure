@@ -17,13 +17,12 @@ flowchart TB
 
     subgraph HCPAnalysis["HCP Wound Analysis"]
         U2["User"] --> IMG2["Image upload (base64, one-or-many)"]
-        IMG2 --> L2["Shared original/v2 request + SSE parser\nEN/BM selection"]
-        L2 --> R2["/api/analyze-wound"]
+        IMG2 --> R2["/api/analyze-wound"]
         R2 --> V2["Image validation (lib/ai/validation/image-input)"]
         V2 --> AP2["AI Provider (multimodal, consolidated TBSA)"]
         AP2 --> F2["Microsoft Foundry (gpt-4o vision)"]
         F2 --> SV2["Structured response validation (wound-analysis-schema)"]
-        SV2 --> UI2["HCP Result Panel\nbilingual PDPA + decision-support notice"]
+        SV2 --> UI2["Original HCP Result Panel"]
         R2 -.->|"Entra session only: persist AnalysisRecord"| DB2["PostgreSQL (lib/analysis/history)"]
         R2 -.->|"Entra session only: private image"| BLOB2["Azure Blob Storage"]
     end

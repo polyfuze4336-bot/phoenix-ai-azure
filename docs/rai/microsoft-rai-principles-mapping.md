@@ -10,7 +10,7 @@ plainly.
 | --- | --- | --- | --- | --- |
 | RAI-FAIR-001 | Skin tone is described, never converted to a Fitzpatrick type from a photo | `lib/ai/analysis/pipeline.ts`, `tests/rai/rai-unsupported-inference.test.ts` | Active | No quantitative cross-skin-tone benchmark yet |
 | RAI-FAIR-002 | Prompts forbid inferring ethnicity, race, age, pain or sensation | `lib/ai/prompts/*.ts`, `tests/rai/rai-unsupported-inference.test.ts` | Active | — |
-| RAI-INCL-001 | Bilingual EN / Bahasa Malaysia public and HCP AI experience | `lib/ai/language.ts`, `lib/i18n.ts` | Active | Additional languages not yet covered |
+| RAI-INCL-001 | Bilingual EN / Bahasa Malaysia community experience | `lib/i18n.ts` | Active | Additional languages not yet covered |
 
 **Gap:** a governed, consented, labelled dataset to *measure* performance parity across skin tones is
 not implemented. The controls above prevent *unsupported inference*; they do not certify parity.
@@ -32,14 +32,12 @@ not implemented. The controls above prevent *unsupported inference*; they do not
 | RAI-PRIV-002 | Server-side model calls only | `app/api/analyze-wound/route.ts` | Active |
 | RAI-PRIV-003 | Privacy-safe telemetry (blocked-key sanitisation) | `lib/telemetry/server.ts`, `tests/rai/rai-telemetry.test.ts` | Active |
 | RAI-PRIV-006 | Request size limits | `lib/ai/validation/image-input.ts` | Active |
-| RAI-PRIV-007 | Bilingual patient-data legal handling notice (obligation, not certification) | `components/clinical-ai-notice.tsx`, `tests/rai/rai-controls.test.ts` | Active |
-| RAI-PRIV-008 | Verified Entra session required for retained analysis records | `lib/auth/analysis-api-authorization.ts`, `app/api/hcp/analyses/*` | Active |
 
 ## Inclusiveness
 
 | Control | Implementation | Evidence | Status | Gap |
 | --- | --- | --- | --- | --- |
-| RAI-INCL-001 | EN / Bahasa Malaysia UI and AI narrative output | `lib/ai/language.ts`, `lib/i18n.ts` | Active | More languages |
+| RAI-INCL-001 | EN / Bahasa Malaysia | `lib/i18n.ts` | Active | More languages |
 | RAI-INCL-002 | Responsive, installable (PWA) | `components/pwa-provider.tsx` | Partial | Formal WCAG audit pending |
 
 ## Transparency

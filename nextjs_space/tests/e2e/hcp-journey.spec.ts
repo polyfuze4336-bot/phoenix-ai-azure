@@ -47,19 +47,11 @@ test('hcp journey', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /AI Wound & Burn Analysis/i })).toBeVisible();
 
   // 5. Upload a valid image (hidden file input).
-  await page.locator('input[type="file"]').setInputFiles([
-    {
-      name: 'wound-1.png',
-      mimeType: 'image/png',
-      buffer: TINY_PNG,
-    },
-    {
-      name: 'wound-2.png',
-      mimeType: 'image/png',
-      buffer: TINY_PNG,
-    },
-  ]);
-  await expect(page.getByText(/Selected images:\s*2/i)).toBeVisible();
+  await page.locator('input[type="file"]').setInputFiles({
+    name: 'wound.png',
+    mimeType: 'image/png',
+    buffer: TINY_PNG,
+  });
   const analyzeBtn = page.getByRole('button', { name: /Analyze Image/i });
   await expect(analyzeBtn).toBeVisible();
 

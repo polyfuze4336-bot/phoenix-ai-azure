@@ -43,18 +43,36 @@ test('community journey', async ({ page }) => {
   // 4. Navigate to assessment.
   await navTo(page, '/community/assessment', /\/community\/assessment$/);
 
-  // 5. Navigate to chat.
+  // 5. Navigate to image check.
+  await navTo(page, '/community/image-check', /\/community\/image-check$/);
+
+  // 6. Upload an image (hidden file input).
+  await page.locator('input[type="file"]').setInputFiles({
+    name: 'wound.png',
+    mimeType: 'image/png',
+    buffer: TINY_PNG,
+  });
+  const checkBtn = page.getByRole('button', { name: /Check My Wound/i });
+  await expect(checkBtn).toBeVisible();
+  await checkBtn.click();
+  // Loading state.
+  await expect(page.getByRole('button', { name: /Checking/i })).toBeVisible();
+
+  // 7. Confirm simplified advice (real "What We Found" result OR explicit failure).
+  await expectAiTerminalState(page, /What We Found/i, /Analysis failed|could not be completed/i);
+
+  // 8. Navigate to chat.
   await navTo(page, '/community/chat', /\/community\/chat$/);
   const chatInput = page.getByPlaceholder('Type your message...');
   await expect(chatInput).toBeVisible();
 
-  // 6. Send a question.
+  // 9. Send a question.
   const question = 'How do I treat a minor kitchen burn at home?';
   await chatInput.fill(question);
   await chatInput.press('Enter');
   await expect(page.getByText(question).first()).toBeVisible(); // user message rendered
 
-  // 7. Confirm response (assistant bubble gains content OR the error fallback).
+  // 10. Confirm response (assistant bubble gains content OR the error fallback).
   const assistantBubbles = page.locator('div.justify-start');
   await expect(assistantBubbles.last()).toBeVisible();
   await expect

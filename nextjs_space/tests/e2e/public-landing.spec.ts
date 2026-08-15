@@ -5,11 +5,11 @@ import { toggleLanguage, setMobileViewport, setDesktopViewport } from './_helper
  * Public landing journey (verbatim steps):
  *  1. Load /.
  *  2. Confirm Phoenix logo.
- *  3. Confirm v2.0 is the retained public experience.
- *  4. Confirm v2 HCP entry.
- *  5. Confirm v2 community entry.
- *  6. Confirm the original experience is not advertised.
- *  7. Confirm language control and responsive navigation.
+ *  3. Confirm KKM/HKL logo.
+ *  4. Confirm HCP entry.
+ *  5. Confirm community entry.
+ *  6. Confirm language switching.
+ *  7. Confirm responsive navigation.
  */
 test('public landing journey', async ({ page }) => {
   // 1. Load /.
@@ -22,34 +22,46 @@ test('public landing journey', async ({ page }) => {
   const phoenixSrc = await phoenixLogos.first().getAttribute('src');
   expect(phoenixSrc).toMatch(/logo\.png/);
 
-  // 3. Confirm v2.0 is the retained public experience.
-  await expect(page.getByRole('heading', { name: /Phoenix AI v2\.0/i })).toBeVisible();
+  // 3. Confirm KKM/HKL endorsement logo.
+  const kkmLogo = page.getByAltText(/Kementerian Kesihatan Malaysia/i);
+  await expect(kkmLogo).toBeVisible();
+  expect(await kkmLogo.getAttribute('src')).toMatch(/kkm-hkl-logo/);
 
-  // 4. Confirm v2 HCP entry.
-  const hcpEntry = page.locator('a[href="/v2/hcp"]');
+  // 4. Confirm HCP entry (links to the HCP login).
+  const hcpEntry = page.locator('a[href="/hcp-login"]');
   await expect(hcpEntry).toBeVisible();
-  await expect(hcpEntry).toContainText(/Clinician Workspace/i);
+  await expect(hcpEntry).toContainText(/Healthcare Professional Portal/i);
 
-  // 5. Confirm v2 community entry.
-  const communityEntry = page.locator('a[href="/v2/community"]');
+  // 5. Confirm community entry (links to the community portal).
+  const communityEntry = page.locator('a[href="/community"]');
   await expect(communityEntry).toBeVisible();
   await expect(communityEntry).toContainText(/Community Portal/i);
 
-  // 6. Confirm no original/v1 entry is advertised.
-  await expect(page.locator('a[href="/hcp-login"]')).toHaveCount(0);
-  await expect(page.locator('a[href="/community"]')).toHaveCount(0);
-  await expect(page.getByText(/Original Experience|Pengalaman Asal/i)).toHaveCount(0);
-
-  // 7. Confirm language control remains operable and entries stay responsive.
+  // 6. Confirm language switching (English -> Bahasa Malaysia -> English) using the
+  //    fully language-conditional HCP portal card title as the discriminator.
+  await expect(page.getByText('Healthcare Professional Portal', { exact: true })).toBeVisible();
   await toggleLanguage(page);
+  await expect(
+    page.getByText('Portal Profesional Penjagaan Kesihatan', { exact: true }),
+  ).toBeVisible(); // Bahasa Malaysia
   await toggleLanguage(page);
+  await expect(page.getByText('Healthcare Professional Portal', { exact: true })).toBeVisible();
 
+  // 7. Confirm responsive navigation: the portal entries remain reachable on a
+  // narrow (mobile) viewport, then again on desktop.
   await setMobileViewport(page);
-  await expect(page.locator('a[href="/v2/hcp"]')).toBeVisible();
-  await expect(page.locator('a[href="/v2/community"]')).toBeVisible();
+  await expect(page.locator('a[href="/hcp-login"]')).toBeVisible();
+  await expect(page.locator('a[href="/community"]')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Toggle language' }).first()).toBeVisible();
 
   await setDesktopViewport(page);
-  await expect(page.locator('a[href="/v2/hcp"]')).toBeVisible();
-  await expect(page.locator('a[href="/v2/community"]')).toBeVisible();
+  await expect(page.locator('a[href="/hcp-login"]')).toBeVisible();
+  await expect(page.locator('a[href="/community"]')).toBeVisible();
+});
+
+test('v2 routes are not published', async ({ request }) => {
+  for (const path of ['/v2', '/v2/hcp', '/v2/hcp/ai-assurance', '/v2/community']) {
+    const response = await request.get(path);
+    expect(response.status(), path).toBe(404);
+  }
 });

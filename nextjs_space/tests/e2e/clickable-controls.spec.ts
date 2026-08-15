@@ -21,6 +21,7 @@ const PUBLIC_ROUTES = [
   '/community',
   '/community/first-aid',
   '/community/assessment',
+  '/community/image-check',
   '/community/articles',
   '/community/chat',
 ];

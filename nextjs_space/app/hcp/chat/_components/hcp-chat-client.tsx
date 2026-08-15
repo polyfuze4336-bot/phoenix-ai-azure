@@ -5,8 +5,6 @@ import { Send, ImagePlus, AlertTriangle, Calculator, Droplets, BookOpen, Stethos
 import { motion } from 'framer-motion';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
-import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
-import { streamChatText } from '@/lib/ai/streaming/client-analysis';
 
 interface ChatMsg {
   role: 'user' | 'assistant';
@@ -56,27 +54,47 @@ export function HcpChatClient() {
             content: m?.content,
             ...(m?.image ? { image: m.image } : {}),
           })),
-          lang,
         }),
       });
 
+      if (!response?.ok) throw new Error('Chat failed');
+
+      const reader = response?.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+      let partialRead = '';
+
       setMessages(prev => [...(prev ?? []), { role: 'assistant', content: '' }]);
-      await streamChatText(response, lang, (assistantContent) => {
-        setMessages(prev => {
-          const arr = [...(prev ?? [])];
-          if (arr?.length > 0) arr[arr.length - 1] = { role: 'assistant', content: assistantContent };
-          return arr;
-        });
-      });
+
+      while (true) {
+        const { done, value } = await (reader?.read() ?? { done: true, value: undefined });
+        if (done) break;
+        partialRead += decoder?.decode(value, { stream: true }) ?? '';
+        const lines = partialRead?.split('\n') ?? [];
+        partialRead = lines?.pop() ?? '';
+        for (const line of (lines ?? [])) {
+          if (line?.startsWith('data: ')) {
+            const data = line?.slice(6);
+            if (data === '[DONE]') break;
+            try {
+              const parsed = JSON.parse(data);
+              const delta = parsed?.choices?.[0]?.delta?.content ?? '';
+              assistantContent += delta;
+              setMessages(prev => {
+                const arr = [...(prev ?? [])];
+                if (arr?.length > 0) arr[arr.length - 1] = { role: 'assistant', content: assistantContent };
+                return arr;
+              });
+            } catch (e: any) { /* skip */ }
+          }
+        }
+      }
     } catch (err: any) {
-      setMessages(prev => [...(prev ?? []), {
-        role: 'assistant',
-        content: lang === 'bm' ? 'Maaf, ralat berlaku. Sila cuba lagi.' : 'Sorry, an error occurred. Please try again.',
-      }]);
+      setMessages(prev => [...(prev ?? []), { role: 'assistant', content: 'Sorry, an error occurred. Please try again.' }]);
     } finally {
       setLoading(false);
     }
-  }, [input, imagePreview, messages, lang]);
+  }, [input, imagePreview, messages]);
 
   const handleImage = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e?.target?.files?.[0];
@@ -107,8 +125,6 @@ export function HcpChatClient() {
           <p className="text-xs text-red-600 font-medium">Escalation flag raised. A human specialist will review this consultation.</p>
         </div>
       )}
-
-      <ClinicalAiNotice className="mb-4" />
 
       {/* Quick Prompts */}
       {(messages?.length ?? 0) === 0 && (

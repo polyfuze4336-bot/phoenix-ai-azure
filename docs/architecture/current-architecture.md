@@ -7,7 +7,7 @@
 > and MUST remain synchronized with the implementation (see
 > [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `2.4.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `3.0.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -36,7 +36,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Concern | Current state |
 | --- | --- |
 | Application runtime | Next.js 14 (App Router), React 18, TypeScript 5, standalone Node server (`node server.js`) — **Implemented** |
-| Major portals | v2.0 public landing (when feature enabled), retained Original HCP + Community routes, and **Phoenix AI v2.0** (`/v2/*`, feature-flag gated), PWA + EN/BM UI and AI output — **Implemented** |
+| Major portals | Original Phoenix AI landing, HCP routes, Community routes including `/community/image-check`, PWA, and EN/BM UI — **Implemented**; v2 runtime routes are retired |
 | Hosting | Azure Container Apps Consumption, `eastus2`; image in Azure Container Registry Basic — **Implemented** |
 | AI processing | Environment-owned Azure AI Services S0 account with `gpt-4o` via `lib/ai`, managed identity — **Implemented** |
 | Data handling | Azure PostgreSQL Flexible Server via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
@@ -57,12 +57,10 @@ flowchart TB
     Users["Users (Clinicians & Public)"]
 
     subgraph CLIENT["Client Experience"]
-        Landing["v2.0 Public Landing — ACTIVE"]
-        HCP["Original HCP Portal: retained direct routes — ACTIVE"]
-        Community["Original Community Portal: retained direct routes — ACTIVE"]
-        V2["Phoenix AI v2.0 Experience (/v2/*): HCP workspace + Community portal — ACTIVE (flag-gated)"]
-        PWA["PWA / Mobile + EN/BM UI and AI output — ACTIVE"]
-        Notice["Bilingual PDPA + clinical decision-support notice — ACTIVE"]
+        Landing["Original Phoenix AI Landing — ACTIVE"]
+        HCP["Original HCP Portal — ACTIVE"]
+        Community["Original Community Portal + image check — ACTIVE"]
+        PWA["PWA / Mobile + EN/BM UI — ACTIVE"]
     end
 
     subgraph APP["Phoenix AI Application (Next.js 14 App Router)"]
@@ -99,15 +97,11 @@ flowchart TB
     Users --> Landing
     Users --> HCP
     Users --> Community
-    Users --> V2
     Users --> PWA
-    HCP --> Notice
-    V2 --> Notice
 
     Landing --> Next
     HCP --> Next
     Community --> Next
-    V2 --> Next
     PWA --> Next
 
     Next --> MW
@@ -153,13 +147,12 @@ Companion diagrams:
 
 | Element | Location | Status |
 | --- | --- | --- |
-| Public landing (v2.0 directly when enabled; degrades to the original landing when v2 is disabled; ADR-0008) | `app/page.tsx`, `app/v2/_components/v2-landing-client.tsx`, `app/_components/landing-client.tsx` | Implemented |
+| Public landing (Original Phoenix AI) | `app/page.tsx`, `app/_components/landing-client.tsx` | Implemented |
 | HCP portal (chat, analysis, TBSA, Parkland, guidelines, history) | `app/hcp/*` | Implemented |
-| Community portal (chat, assessment, articles, first-aid) | `app/community/*` | Implemented |
-| **Phoenix AI v2.0 experience** — additive, isolated, feature-flag gated; reuses the same API contracts and Azure services (ADR-0004) | `app/v2/*`, `components/v2/*`, `lib/v2/*` | Implemented |
+| Community portal (chat, assessment, image check, articles, first-aid) | `app/community/*` | Implemented |
+| Phoenix AI v2.0 experience | Source retained for audit/recovery; middleware returns 404 for `/v2*` | Retired |
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |
-| English / Bahasa Malaysia UI + AI response selection | `components/language-provider.tsx`, `components/language-toggle.tsx`, `lib/i18n.ts`, `lib/ai/language.ts` | Implemented |
-| Patient-data and clinical decision-support notice | `components/clinical-ai-notice.tsx` | Implemented |
+| English / Bahasa Malaysia UI | `components/language-provider.tsx`, `components/language-toggle.tsx`, `lib/i18n.ts` | Implemented |
 | Responsive interface + theming | Tailwind + shadcn/ui, `components/theme-*` | Implemented |
 
 ### 3.2 Application Layer
@@ -189,14 +182,14 @@ Companion diagrams:
 | Staged analysis pipeline | `lib/ai/analysis/pipeline.ts` (`runAnalysisPipeline`, `assembleAnalysis`) — default for `/api/analyze-wound`; preserves stable structured enums while localizing narrative EN/BM; flag `AI_ANALYSIS_PIPELINE=single` reverts | Implemented |
 | Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — Parkland is indication/age-threshold/weight gated; no assumed patient weight | Implemented |
 | Rich analysis schema + adapter | `lib/ai/schemas/burn-wound-analysis.ts` (observation vs interpretation, field confidence, gaps) + flat back-compat adapter | Implemented |
-| Streaming | `lib/ai/streaming/{sse,collect,text-stream,client-analysis}.ts` (shared original/v2 completion parser; trailing-frame safe) | Implemented |
+| Streaming | `lib/ai/streaming/{sse,collect,text-stream}.ts` | Implemented |
 | Image analysis (multimodal, one-or-many images per HCP request) | `lib/ai/validation/image-input.ts` + vision model | Implemented |
 | Structured response validation | `lib/ai/validation/wound-analysis-schema.ts` (Zod, 22-field contract) | Implemented |
 | Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
 | AI telemetry | `lib/ai/telemetry.ts` | Implemented |
 
-**Wound image analysis flow (`/api/analyze-wound`).** Original and v2 clients use the same image
-preparation, request and SSE completion helper. The default `staged` pipeline runs four
+**Wound image analysis flow (`/api/analyze-wound`).** The Original HCP client sends image data to
+the API and consumes its SSE completion. The default `staged` pipeline runs four
 sequential model stages — visual observation → clinical interpretation + quantification →
 management & referral → consistency/safety critic — then applies deterministic post-processing:
 Parkland is computed in app code from a supplied weight (never an assumed 70 kg), Fitzpatrick is
@@ -283,7 +276,7 @@ and [`docs/rai/`](../rai/README.md).
 | Governance snapshot | `lib/rai/governance.ts` (model deployment name, versions, identity, posture) | Implemented |
 | Prompt / pipeline / schema versions | `lib/ai/prompts/versions.ts` | Implemented |
 | Analysis metadata envelope | `lib/ai/analysis/metadata.ts` (analysis id, model, versions, image-quality band, review status) | Implemented |
-| In-product AI Assurance page | `app/v2/hcp/ai-assurance/` (overview, controls, matrix, governance, limitations) | Implemented |
+| In-product AI Assurance page | v2-only surface retained in rollback history, not published in the Original-only runtime | Retired |
 | Per-assessment assurance surfaces | `components/v2/analysis-info-panel.tsx`, `components/v2/clinical-review-panel.tsx` | Implemented |
 | RAI test suite | `tests/rai/*` (`npm run test:rai`) | Implemented |
 | Guideline-basis citations | curated general references (`RAI-TRANS-005`) | **Partial** (not version-pinned) |

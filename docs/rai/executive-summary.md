@@ -27,7 +27,8 @@ layer of deterministic safety rules runs after every AI analysis.
   ([`lib/rai/controls.ts`](../../nextjs_space/lib/rai/controls.ts)), each mapped to code, a Microsoft
   RAI principle and (where applicable) tests.
 - **RAI test suite** (`npm run test:rai`) plus the existing unit and evaluation suites.
-- In-product surface at **`/v2/hcp/ai-assurance`** and a per-assessment **Analysis Information** panel.
+- Governed code register, documentation, and test evidence; the former v2 in-product surface is not
+   published in the Original-only runtime.
 
 ## Honest limitations
 Confidence ≠ validated accuracy; guideline basis is curated (not version-pinned citations — Partial);
