@@ -1,7 +1,7 @@
 'use client';
 
 import { useLanguage } from '@/components/language-provider';
-import { Upload, Camera, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette, RefreshCw, Images } from 'lucide-react';
+import { Upload, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette, RefreshCw, Images } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
@@ -103,7 +103,6 @@ export function AnalysisClient() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [cameraActive, setCameraActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisFailed, setAnalysisFailed] = useState(false);
   const [analysisRetryCount, setAnalysisRetryCount] = useState(0);
@@ -114,9 +113,6 @@ export function AnalysisClient() {
   const lastBase64Ref = useRef<string>('');
   const lastMimeRef = useRef<string>('image/jpeg');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
   const analysisStages = lang === 'ms'
     ? ['Menyediakan imej', 'Menganalisis ciri luka', 'Menyemak penilaian', 'Menyediakan keputusan']
@@ -194,46 +190,6 @@ export function AnalysisClient() {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }, [t]);
-
-  const startCamera = useCallback(async () => {
-    try {
-      const stream = await navigator?.mediaDevices?.getUserMedia({ video: { facingMode: 'environment' } });
-      streamRef.current = stream;
-      if (videoRef?.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      setCameraActive(true);
-      setResult(null);
-      setError(null);
-      setAnalysisFailed(false);
-      setAnalysisRetryCount(0);
-    } catch (err: any) {
-      setError(t('analysis.camera_denied'));
-    }
-  }, [t]);
-
-  const stopCamera = useCallback(() => {
-    streamRef?.current?.getTracks()?.forEach((track: any) => track?.stop?.());
-    setCameraActive(false);
-  }, []);
-
-  const capturePhoto = useCallback(() => {
-    if (!videoRef?.current || !canvasRef?.current) return;
-    const canvas = canvasRef.current;
-    canvas.width = videoRef.current.videoWidth ?? 640;
-    canvas.height = videoRef.current.videoHeight ?? 480;
-    const ctx = canvas?.getContext('2d');
-    ctx?.drawImage(videoRef.current, 0, 0);
-    const dataUrl = canvas?.toDataURL('image/jpeg', 0.8);
-    setImagePreview(dataUrl);
-    setAnalysisFailed(false);
-    setAnalysisRetryCount(0);
-    canvas?.toBlob((blob: any) => {
-      if (blob) setImageFile(new File([blob], 'capture.jpg', { type: 'image/jpeg' }));
-    }, 'image/jpeg', 0.8);
-    stopCamera();
-  }, [stopCamera]);
 
   const analyzeImage = useCallback(async (retryCount: number) => {
     if (!imageFile) return;
@@ -354,7 +310,7 @@ export function AnalysisClient() {
           <ClinicalAiNotice variant="confidentiality" />
           <ClinicalAiNotice variant="personal-data" />
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileSelect} className="hidden" />
-          {!imagePreview && !cameraActive && (
+          {!imagePreview && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
               <div
                 onClick={() => fileInputRef?.current?.click?.()}
@@ -364,26 +320,7 @@ export function AnalysisClient() {
                 <p className="font-medium text-gray-600">{t('analysis.upload')}</p>
                 <p className="text-xs text-gray-400 mt-1">{t('analysis.file_hint')}</p>
               </div>
-              <button
-                onClick={startCamera}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#0F9B8E] text-white rounded-xl font-medium hover:bg-[#0e8a7e] transition-colors"
-              >
-                <Camera className="w-5 h-5" /> {t('analysis.camera')}
-              </button>
             </motion.div>
-          )}
-
-          {cameraActive && (
-            <div className="space-y-3">
-              <div className="relative rounded-xl overflow-hidden bg-black aspect-video">
-                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-              </div>
-              <div className="flex gap-3">
-                <button onClick={capturePhoto} className="flex-1 px-4 py-3 bg-[#8B0000] text-white rounded-xl font-medium hover:bg-[#7a0000] transition-colors">{t('analysis.capture')}</button>
-                <button onClick={stopCamera} className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors">{t('analysis.cancel')}</button>
-              </div>
-              <canvas ref={canvasRef} className="hidden" />
-            </div>
           )}
 
           {imagePreview && (
