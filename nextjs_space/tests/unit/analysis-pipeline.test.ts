@@ -110,8 +110,15 @@ test('analysis timeout is configurable and bounded', () => {
   }
 });
 
-test('Parkland is NOT computed from an assumed weight when weight is absent', () => {
-  const a = assembleAnalysis({ observation: baseObservation(), interpretation: baseInterpretation(), management: baseManagement(), critic });
+test('Parkland is NOT computed from an assumed weight when an indicated adult regimen lacks weight', () => {
+  const a = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 15 }),
+    management: baseManagement(),
+    critic,
+    patient: { ageGroup: 'adult' },
+  });
+  assert.equal(a.parkland.indicated, 'yes');
   assert.equal(a.parkland.requiresWeight, true);
   assert.equal(a.parkland.total24hMl, null);
   assert.match(a.parkland.summary, /requires the patient/i);
@@ -120,18 +127,57 @@ test('Parkland is NOT computed from an assumed weight when weight is absent', ()
   assert.doesNotMatch(a.parkland.summary, /\d[\d,]*\s?mL/i);
 });
 
-test('Parkland IS computed deterministically when weight is supplied', () => {
+test('Parkland IS computed deterministically when category, threshold, and weight permit it', () => {
   const a = assembleAnalysis({
     observation: baseObservation(),
-    interpretation: baseInterpretation({ tbsaEstimate: 10 }),
+    interpretation: baseInterpretation({ tbsaEstimate: 15 }),
+    management: baseManagement(),
+    critic,
+    patient: { weightKg: 70, ageGroup: 'adult' },
+  });
+  // 4 * 70 * 15 = 4200 mL
+  assert.equal(a.parkland.indicated, 'yes');
+  assert.equal(a.parkland.total24hMl, 4200);
+  assert.equal(a.parkland.first8hMl, 2100);
+});
+
+test('Parkland below-threshold guidance is localized without calculated volumes', () => {
+  const english = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 14.9 }),
+    management: baseManagement(),
+    critic,
+    patient: { weightKg: 70, ageGroup: 'adult' },
+    language: 'en',
+  });
+  const malay = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 9.9 }),
+    management: baseManagement(),
+    critic,
+    patient: { weightKg: 20, ageGroup: 'child' },
+    language: 'ms',
+  });
+  assert.equal(english.parkland.indicated, 'no');
+  assert.equal(english.parkland.total24hMl, null);
+  assert.match(english.parkland.summary, /not required/i);
+  assert.equal(malay.parkland.indicated, 'no');
+  assert.equal(malay.parkland.total24hMl, null);
+  assert.match(malay.parkland.summary, /tidak diperlukan/i);
+});
+
+test('Parkland is uncertain when patient category is unavailable', () => {
+  const a = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 20 }),
     management: baseManagement(),
     critic,
     patient: { weightKg: 70 },
   });
-  // 4 * 70 * 10 = 2800 mL
-  assert.equal(a.parkland.indicated, 'yes');
-  assert.equal(a.parkland.total24hMl, 2800);
-  assert.equal(a.parkland.first8hMl, 1400);
+  assert.equal(a.parkland.indicated, 'uncertain');
+  assert.equal(a.parkland.requiresWeight, false);
+  assert.equal(a.parkland.total24hMl, null);
+  assert.match(a.parkland.summary, /adult or child/i);
 });
 
 test('measured dimensions are dropped when no scale reference is present', () => {
@@ -179,14 +225,20 @@ test('non-burn cannot carry a TBSA value', () => {
   assert.equal(a.parkland.indicated, 'no');
 });
 
-test('missing weight for a burn is surfaced as missing information', () => {
-  const a = assembleAnalysis({ observation: baseObservation(), interpretation: baseInterpretation(), management: baseManagement(), critic });
+test('missing weight for an indicated burn is surfaced as missing information', () => {
+  const a = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation({ tbsaEstimate: 15 }),
+    management: baseManagement(),
+    critic,
+    patient: { ageGroup: 'adult' },
+  });
   assert.ok(a.missingInformation.some((m) => /weight/i.test(m)));
   assert.ok(a.recommendedFollowUpQuestions.some((q) => /weight/i.test(q)));
 });
 
 test('flat adapter maps the rich structure back to the 22-field contract', () => {
-  const a = assembleAnalysis({ observation: baseObservation(), interpretation: baseInterpretation(), management: baseManagement(), critic, patient: { weightKg: 70, fitzpatrickType: 'Type V' } });
+  const a = assembleAnalysis({ observation: baseObservation(), interpretation: baseInterpretation({ tbsaEstimate: 15 }), management: baseManagement(), critic, patient: { weightKg: 70, ageGroup: 'adult', fitzpatrickType: 'Type V' } });
   const flat = toFlatHcpAnalysis(a);
   assert.equal(flat.isBurn, true);
   assert.equal(flat.woundType, 'Scald');

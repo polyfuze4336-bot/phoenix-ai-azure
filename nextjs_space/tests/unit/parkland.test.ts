@@ -8,7 +8,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { calculateResuscitation } from '../../lib/clinical/parkland';
+import {
+  calculateResuscitation,
+  determineParklandIndication,
+  type PatientCategory,
+} from '../../lib/clinical/parkland';
+
+function indication(tbsaPercent: number, patientCategory?: PatientCategory, isBurn = true) {
+  return determineParklandIndication({ isBurn, tbsaPercent, patientCategory }).indicated;
+}
+
+test('adult Parkland indication starts at exactly 15% TBSA', () => {
+  assert.equal(indication(14.9, 'adult'), 'no');
+  assert.equal(indication(15.0, 'adult'), 'yes');
+  assert.equal(indication(15.1, 'adult'), 'yes');
+});
+
+test('child Parkland indication starts at exactly 10% TBSA', () => {
+  assert.equal(indication(9.9, 'child'), 'no');
+  assert.equal(indication(10.0, 'child'), 'yes');
+  assert.equal(indication(10.1, 'child'), 'yes');
+});
+
+test('Parkland indication is no for a non-burn or zero TBSA', () => {
+  assert.equal(indication(20, 'adult', false), 'no');
+  assert.equal(indication(0, 'child'), 'no');
+});
+
+test('Parkland indication is uncertain without an adult/child category', () => {
+  assert.equal(indication(20), 'uncertain');
+});
 
 test('Parkland: total 24h = 4 x weight x TBSA', () => {
   const r = calculateResuscitation({ weightKg: 70, tbsaPercent: 25, formula: 'parkland' });

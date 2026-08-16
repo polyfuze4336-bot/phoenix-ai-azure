@@ -40,6 +40,7 @@ interface AnalysisResult {
 /** Optional patient context the clinician can supply to improve accuracy. */
 interface PatientContext {
   weightKg?: number;
+  ageGroup?: 'adult' | 'child';
   mechanism?: string;
 }
 
@@ -111,6 +112,7 @@ export function AnalysisClient() {
   const [translating, setTranslating] = useState(false);
   const [translationError, setTranslationError] = useState(false);
   const [weightKg, setWeightKg] = useState('');
+  const [patientCategory, setPatientCategory] = useState('');
   const [mechanism, setMechanism] = useState('');
   const [loadingStage, setLoadingStage] = useState(0);
   const lastBase64Ref = useRef<string>('');
@@ -170,10 +172,11 @@ export function AnalysisClient() {
     const w = parseFloat(weightKg);
     const ctx: PatientContext = {
       weightKg: Number.isFinite(w) && w > 0 ? w : undefined,
+      ageGroup: patientCategory === 'adult' || patientCategory === 'child' ? patientCategory : undefined,
       mechanism: mechanism.trim() || undefined,
     };
-    return ctx.weightKg || ctx.mechanism ? ctx : undefined;
-  }, [weightKg, mechanism]);
+    return ctx.weightKg || ctx.ageGroup || ctx.mechanism ? ctx : undefined;
+  }, [weightKg, patientCategory, mechanism]);
 
   /** Read the SSE stream from /api/analyze-wound and resolve the completed result. */
   const readAnalysisStream = useCallback(async (response: Response): Promise<AnalysisResult | null> => {
@@ -381,7 +384,19 @@ export function AnalysisClient() {
               {/* Optional patient context — improves accuracy; nothing is assumed when blank. */}
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
                 <p className="text-xs font-semibold text-gray-500">{t('analysis.patient_details')}</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">{t('analysis.patient_category')}</label>
+                    <select
+                      value={patientCategory}
+                      onChange={(e) => setPatientCategory(e.target.value)}
+                      className="w-full text-sm border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#8B0000]/30"
+                    >
+                      <option value="">{t('analysis.category_select')}</option>
+                      <option value="adult">{t('analysis.category_adult')}</option>
+                      <option value="child">{t('analysis.category_child')}</option>
+                    </select>
+                  </div>
                   <div>
                     <label className="text-xs text-gray-500 block mb-1">{t('analysis.weight')}</label>
                     <input
@@ -572,12 +587,8 @@ export function AnalysisClient() {
                       </div>
                       <div className="p-4">
                         <p className="text-sm text-gray-800 whitespace-pre-line">{result?.parklandFluid}</p>
-                        {result?.structured ? (
-                          result?.structured?.parkland?.requiresWeight ? (
-                            <p className="text-xs text-gray-500 mt-3 italic">{t('analysis.parkland_weight_help')}</p>
-                          ) : null
-                        ) : (
-                          <p className="text-xs text-gray-500 mt-3 italic">{t('analysis.parkland_assumed_help')}</p>
+                        {result?.structured?.parkland?.requiresWeight && (
+                          <p className="text-xs text-gray-500 mt-3 italic">{t('analysis.parkland_weight_help')}</p>
                         )}
                       </div>
                       <div className="px-4 pb-4">

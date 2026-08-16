@@ -56,7 +56,7 @@ You MUST respond in valid JSON with this EXACT structure:
   "tbsaBodyRegions": "affected body regions and their individual TBSA contributions, e.g. 'Left forearm (4.5%), Left hand (2.5%)'. Use N/A if not a burn.",
   "tbsaMethod": "Rule of Nines / Lund & Browder / Palm Method / Combined. Use N/A if not a burn.",
   "isBurn": true or false,
-  "parklandFluid": "If burn, calculate Parkland formula assuming 70kg adult: 4 x weight(kg) x TBSA%. Show the 24hr total and first 8hr/next 16hr breakdown. Use N/A if not a burn or TBSA is 0.",
+  "parklandFluid": "Always return N/A. The application determines fluid-resuscitation indication and calculates any regimen deterministically from clinician-supplied patient category and weight.",
   "firstAid": "immediate first aid steps",
   "woundCare": "wound care protocol appropriate to the wound category (e.g. debridement for slough/eschar, moisture balance, offloading for pressure injuries, compression for venous ulcers)",
   "dressing": "dressing recommendations appropriate to the wound bed and exudate level",

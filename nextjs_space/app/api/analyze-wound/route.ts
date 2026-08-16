@@ -14,7 +14,12 @@ import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
 import { trackEvent } from '@/lib/telemetry/server';
 import { hcpWoundAnalysisSystemPrompt } from '@/lib/ai/prompts/hcp-wound-analysis';
 import { getAnalysisModelDeployment, getAnalysisPipelineMode } from '@/lib/ai/model-config';
-import { getAnalysisTimeoutMs, runAnalysisPipeline, type PatientContext } from '@/lib/ai/analysis/pipeline';
+import {
+  computeParkland,
+  getAnalysisTimeoutMs,
+  runAnalysisPipeline,
+  type PatientContext,
+} from '@/lib/ai/analysis/pipeline';
 import { toFlatHcpAnalysis } from '@/lib/ai/schemas/burn-wound-analysis';
 import { buildAnalysisMetadata } from '@/lib/ai/analysis/metadata';
 import { completeWithLanguageValidation, parseRequestedLanguage } from '@/lib/ai/language';
@@ -33,7 +38,7 @@ function readPatientContext(raw: unknown): PatientContext | undefined {
   const weight = typeof p.weightKg === 'number' ? p.weightKg : parseFloat(String(p.weightKg ?? ''));
   const ctx: PatientContext = {
     weightKg: Number.isFinite(weight) && weight > 0 ? weight : undefined,
-    ageGroup: typeof p.ageGroup === 'string' ? p.ageGroup : undefined,
+    ageGroup: p.ageGroup === 'adult' || p.ageGroup === 'child' ? p.ageGroup : undefined,
     fitzpatrickType: typeof p.fitzpatrickType === 'string' ? p.fitzpatrickType : undefined,
     mechanism: typeof p.mechanism === 'string' ? p.mechanism : undefined,
     timeSinceInjury: typeof p.timeSinceInjury === 'string' ? p.timeSinceInjury : undefined,
@@ -191,8 +196,16 @@ export async function POST(request: NextRequest) {
       httpStatus: 200,
       latencyMs: Date.now() - requestStartedAt,
     });
+    const parsed = parseHcpWoundAnalysis(completion.text);
+    const parkland = computeParkland(
+      parsed.isBurn,
+      Number.parseFloat(parsed.tbsaEstimate),
+      patient?.ageGroup,
+      patient?.weightKg,
+      language,
+    );
     return createResultSseResponse({
-      result: { ...parseHcpWoundAnalysis(completion.text), language },
+      result: { ...parsed, parklandFluid: parkland.summary, language },
       processingEvent: { status: 'processing', message: 'Analyzing' },
       correlationId,
     });
