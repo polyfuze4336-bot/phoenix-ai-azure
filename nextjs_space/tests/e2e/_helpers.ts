@@ -71,5 +71,8 @@ export async function expectAiTerminalState(
   const success = page.getByText(successLocatorText).first();
   const failure = page.getByText(failureLocatorText).first();
   const alert = page.getByRole('alert').first();
-  await expect(success.or(failure).or(alert)).toBeVisible({ timeout: 90_000 });
+  await expect.poll(
+    async () => await success.isVisible() || await failure.isVisible() || await alert.isVisible(),
+    { timeout: 90_000 },
+  ).toBe(true);
 }

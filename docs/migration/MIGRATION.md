@@ -54,6 +54,24 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 ## Migration audit log
 
+### Steps 35-42 — Codespaces, deliberate delivery, and immutable-image rollback
+- Added a secret-free Node.js 22 devcontainer with dependency/Prisma setup, Azure CLI, GitHub CLI,
+  Copilot/Azure extensions, and port 3000 forwarding. Codespaces terminals open in `nextjs_space`.
+- Added `npm run verify` for the quick typecheck + production-build loop. `npm run dev` remains the
+  single development-server command.
+- Kept commits explicit: no daemon commits Copilot edits and no keystroke triggers deployment. One
+  developer-selected push to `main` remains the automatic Azure deployment boundary.
+- Added `scripts/rollback-demo.sh` and manual `deploy.yml` dispatch for a full known Git SHA. It
+  verifies the immutable ACR image, skips rebuild/migrations, creates a new Container App revision,
+  runs health/smoke checks, and records actor, restored SHA, and revision without rewriting history.
+- Updated application/language/clinical/privacy/development/deployment/rollback documentation and
+  architecture version `6.0.0` -> `6.1.0` with ADR-0014.
+- Validation PASS: `npm run verify`; unit `107/107`; Responsible AI `29/29`; integration `14/14`;
+  production HTTP API `24/24`; complete retained-route/bilingual E2E `27/27`; architecture drift;
+  both changed Mermaid diagrams; workflow/devcontainer/editor diagnostics; and changed-surface
+  credential scan. The full HCP and Community interaction journeys pass independently in English
+  and Malay without opposite-language route text.
+
 ### Steps 23-34 — Safe retry, reliability telemetry/testing, and prototype delivery simplification
 - Failed HCP analysis now retains the selected image and entered context, displays the exact English
   or Malay recovery guidance, and provides Retry Analysis / Choose Another Image actions without

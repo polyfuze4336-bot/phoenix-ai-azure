@@ -3,6 +3,7 @@
 %% Resource names use the deterministic Bicep environment token resolved during deployment.
 flowchart LR
     DEV["Developer"]
+    CODESPACES["GitHub Codespaces\nNode 22 + Copilot"]
     OPS["Entra Security Group\nBFG Solutions (3 current members)"]
     GH["GitHub Repository"]
     GHA["GitHub Actions"]
@@ -22,13 +23,16 @@ flowchart LR
         ALERTS["Metric Alerts + Action Group\nag-phoenixai-ops"]
     end
 
-    DEV -->|"direct commit / push to main"| GH
+    DEV -->|"open"| CODESPACES
+    CODESPACES -->|"explicit commit / push to main"| GH
     OPS -->|"Owner (demo RG scope only)"| AZURE
     GH -->|"push main: validate, build, deploy, verify"| GHA
     GHA -->|"Development OIDC; zero protection rules"| DEPLOY_ID
     DEPLOY_ID -->|"subscription Contributor\nRBAC Admin on demo RG only"| AZURE
     GHA -->|"ACR remote build"| ACR
     GHA -->|"deploy immutable revision + health/smoke"| APP
+    GH -->|"manual rollback dispatch: known SHA"| GHA
+    GHA -->|"verify existing SHA image"| ACR
 
     ENV --> APP
     ACR -->|"AcrPull via managed identity"| APP

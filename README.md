@@ -18,23 +18,37 @@
 
 ---
 
-## What this app is
+## Application
 
 Phoenix AI is an AI-powered clinical decision support tool for **burn and wound care** in
-Malaysia, with two portals:
+Malaysia. There is one Phoenix AI experience with two portals:
 
 - **`/hcp`** — Healthcare Professional portal (dashboard, wound-image analysis, clinical
   chat, TBSA estimator, Parkland fluid calculator, guidelines).
 - **`/community`** — Public/community portal (first-aid guides, self-assessment, image check,
   articles, chat).
 
-It supports English and Bahasa Melayu, and ships as an installable PWA.
-
-### Application entry
-
 The root `/` is the single Phoenix AI landing page. It links directly to the HCP and Community
-portals above. English and Bahasa Malaysia are controlled by one persisted application-wide
-language selection.
+portals above. The app also ships as an installable PWA.
+
+## Language
+
+The complete retained experience supports English and Bahasa Melayu through one persisted,
+application-wide language selection. UI labels, navigation, clinical notices, calculators, chat,
+and image-analysis requests follow the selected language.
+
+## Clinical Support
+
+Phoenix AI is AI-assisted **clinical decision-support**, not autonomous diagnosis. AI output must be
+reviewed by a qualified healthcare professional and does not replace professional clinical
+judgement. The HCP analysis, chat, TBSA, and Parkland surfaces display this warning.
+
+## Privacy
+
+Use demo data only. Do not enter unnecessary patient identifiers or confidential information.
+Developers and users remain responsible for following applicable Malaysian personal-data protection
+requirements. Images are processed ephemerally unless an explicitly authorized persistence flow is
+enabled.
 
 ## Tech stack (imported from source)
 
@@ -58,7 +72,11 @@ unwired to the current UI. See the current architecture for exact runtime bounda
 The deployed application does **not** depend on a developer laptop, local database, local file
 share or `localhost` service.
 
-## Local development
+## Development
+
+This repository runs in **PROTOTYPE / DEMO DEVELOPMENT MODE**. A developer decides when a coherent
+change is ready, commits it explicitly, and pushes once. There is no daemon that commits every
+Copilot edit or deploys every keystroke.
 
 > Prerequisites: Node.js 22 (`nvm use`), npm.
 
@@ -69,13 +87,49 @@ copy ..\.env.example .env         # then fill in local values (never commit .env
 npm run dev                       # http://localhost:3000
 ```
 
-Production build:
+Quick verification:
 
 ```powershell
 cd nextjs_space
-npm run build
-npm run start
+npm run verify                    # typecheck + production build
 ```
+
+## Codespaces
+
+[`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json) provides Node.js 22, Azure CLI,
+GitHub CLI, Copilot support, useful Azure/TypeScript extensions, dependency installation, and port
+`3000` forwarding. Codespaces terminals start in `nextjs_space`, so the npm commands are immediately
+available. No secrets are baked into the container configuration.
+
+```text
+Open Codespace
+→ Ask Copilot to change the app
+→ npm run verify
+→ git add .
+→ git commit
+→ git push origin main
+→ automatic Azure deployment
+```
+
+## Deployment
+
+One explicit push to `main` triggers [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+It validates, builds, applies committed database migrations, deploys an immutable SHA-tagged image to
+the existing Azure Container App, waits for the exact new revision, and smoke-tests HCP and Community.
+OIDC and managed identity are retained; no client secret is stored in the workflow.
+
+## Rollback
+
+Rollback restores a previously deployed immutable image without rewriting Git history. From a
+Codespace or other authenticated shell, pass the full deployed Git SHA:
+
+```bash
+scripts/rollback-demo.sh <full-40-character-git-sha>
+```
+
+The helper asks for confirmation and dispatches the same deployment workflow. The workflow verifies
+the image exists, deploys it without rerunning migrations, checks health/smoke tests, and records the
+requesting actor, restored SHA, and resulting Container App revision in its summary.
 
 ## Configuration
 
@@ -158,9 +212,9 @@ Full documentation: [docs/rai/](docs/rai/README.md) (start with the
 
 ## Contributing & repository workflow
 
-Open a Codespace, edit with Copilot, test locally, commit, and push directly to `main`. The single
-deployment workflow validates the app and updates Azure automatically. Pull requests and manual
-approvals are optional, not required. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Open a Codespace, edit with Copilot, run `npm run verify`, commit a coherent change, and push directly
+to `main`. The single deployment workflow validates the app and updates Azure automatically. Pull
+requests and manual approvals are optional, not required. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License / status
 

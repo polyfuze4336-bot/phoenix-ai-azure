@@ -8,6 +8,7 @@ interface RouteExpectation {
 }
 
 const communityRoutes: RouteExpectation[] = [
+  { path: '/', en: 'AI-powered clinical decision support for healthcare professionals and health education for the community.', ms: 'Sokongan keputusan klinikal berkuasa AI untuk profesional penjagaan kesihatan dan pendidikan kesihatan untuk komuniti.' },
   { path: '/community', en: 'Welcome to Phoenix AI Community Health', ms: 'Selamat Datang ke Kesihatan Komuniti Phoenix AI' },
   { path: '/community/first-aid', en: 'First Aid Education', ms: 'Pendidikan Pertolongan Cemas' },
   { path: '/community/assessment', en: 'Burn Severity Self-Assessment', ms: 'Penilaian Kendiri Keterukan Kelecuran' },
@@ -34,9 +35,9 @@ async function assertRoutes(
   for (const route of routes) {
     await page.goto(route.path);
     await expect(page.locator('html')).toHaveAttribute('lang', language);
-    await expect(page.locator('main')).toContainText(route[language]);
+    await expect(page.locator('body')).toContainText(route[language]);
     const opposite = language === 'en' ? route.ms : route.en;
-    await expect(page.locator('main')).not.toContainText(opposite);
+    await expect(page.locator('body')).not.toContainText(opposite);
   }
 }
 

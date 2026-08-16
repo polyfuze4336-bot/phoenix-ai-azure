@@ -16,6 +16,21 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [6.1.0] — 2026-08-16
+
+### Added
+- **Codespaces development environment** — Node.js 22, dependency/Prisma setup, Azure CLI, GitHub
+  CLI, Copilot extensions, and port 3000 forwarding provide one reproducible development path.
+- **Explicit immutable-image rollback** — manual `deploy.yml` dispatch accepts a full deployed Git
+  SHA, verifies its ACR image, deploys it without rewriting Git history or rerunning migrations, and
+  records the actor, SHA, and resulting Container App revision.
+
+### Boundaries
+- Direct `main` pushes remain the only automatic deployment trigger. Copilot edits and file changes
+  are never auto-committed. No Azure resource, identity, RBAC, secret, network, model, database, or
+  storage change. See [ADR-0014](./decisions/ADR-0014-codespaces-immutable-image-rollback.md) and
+  [CHANGE-20260816](./changes/CHANGE-20260816-codespaces-immutable-image-rollback.md).
+
 ## [6.0.0] — 2026-08-16
 
 ### Changed

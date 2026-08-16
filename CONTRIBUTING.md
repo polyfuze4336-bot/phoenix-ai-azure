@@ -26,6 +26,8 @@ The guiding rule for every change:
 
 1. Work in **small, reviewable commits** with clear, conventional messages
    (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`).
+  Copilot edits are never committed automatically; the developer chooses the coherent rollback
+  boundary and performs the commit explicitly.
 2. For this rapid-prototype repository, commit reviewed changes directly to `main`. Feature branches
   and pull requests remain optional for risky or collaborative work.
 3. At the end of every migration step:
@@ -43,9 +45,13 @@ The guiding rule for every change:
 ```powershell
 cd nextjs_space
 npm install --legacy-peer-deps
-npm run build      # must pass
+npm run verify     # typecheck + production build; must pass
 npm run lint       # advisory (source sets eslint.ignoreDuringBuilds)
 ```
+
+Codespaces provisions Node.js 22 and dependencies automatically. To restore a known successful
+immutable image without rewriting Git history, run
+`scripts/rollback-demo.sh <full-40-character-git-sha>` and confirm the workflow dispatch.
 
 ## GitHub repository policy
 

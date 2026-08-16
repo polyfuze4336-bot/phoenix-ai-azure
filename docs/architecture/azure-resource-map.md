@@ -21,6 +21,9 @@
 > The `6.0.0` safe-retry, telemetry, reliability-test, and workflow consolidation changes application
 > and GitHub delivery code only. Existing Azure resources, OIDC identity, RBAC, secrets, model,
 > database, storage, network, SKU, and region remain unchanged.
+> The `6.1.0` Codespaces and immutable-image rollback change adds developer configuration and a
+> manual workflow path only. It reuses the existing OIDC identity, ACR SHA images, and Container App;
+> no Azure resource, RBAC, secret, model, database, network, SKU, or region changes.
 
 ## Environment
 

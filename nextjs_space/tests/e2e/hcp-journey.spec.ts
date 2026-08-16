@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import {
   TINY_PNG,
   expectAiTerminalState,
+  seedLanguage,
   setMobileViewport,
   setDesktopViewport,
 } from './_helpers';
@@ -28,15 +29,42 @@ async function navTo(page: Page, href: string, urlRe: RegExp): Promise<void> {
   await expect(page).toHaveURL(urlRe);
 }
 
-test('hcp journey', async ({ page }) => {
+for (const language of ['en', 'ms'] as const) {
+test(`hcp journey in ${language}`, async ({ page }) => {
+  await seedLanguage(page, language);
+  const labels = language === 'en'
+    ? {
+      portal: /Healthcare Professional Portal/i,
+      signIn: /^Sign In$/,
+      analysis: /AI Wound & Burn Analysis/i,
+      analyze: /Analyze Image/i,
+      preparing: /Preparing image/i,
+      results: /Analysis Results/i,
+      failure: /Analysis failed|could not be completed/i,
+      placeholder: 'Type your message...',
+      question: 'What is the initial management of a deep partial-thickness burn?',
+    }
+    : {
+      portal: /Portal Profesional Kesihatan/i,
+      signIn: /^Log Masuk$/,
+      analysis: /Analisis Luka & Kelecuran AI/i,
+      analyze: /Analisis Imej/i,
+      preparing: /Menyediakan imej/i,
+      results: /Keputusan Analisis/i,
+      failure: /Analisis gagal|tidak dapat diselesaikan/i,
+      placeholder: 'Taip mesej anda...',
+      question: 'Apakah pengurusan awal bagi kelecuran separa ketebalan yang dalam?',
+    };
+
   // 1. Load /hcp-login.
   await page.goto('/hcp-login');
-  await expect(page.getByRole('heading', { name: /Healthcare Professional Portal/i })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', language);
+  await expect(page.getByRole('heading', { name: labels.portal })).toBeVisible();
 
   // 2. Use demo doctor login (verified server-side via /api/auth/login).
   await page.locator('input[type="email"]').fill('doctor@phoenix.my');
   await page.locator('input[type="password"]').fill('phoenix2026');
-  await page.getByRole('button', { name: /^Sign In$/ }).click();
+  await page.getByRole('button', { name: labels.signIn }).click();
 
   // 3. Reach /hcp.
   await expect(page).toHaveURL(/\/hcp$/);
@@ -44,7 +72,7 @@ test('hcp journey', async ({ page }) => {
 
   // 4. Navigate to analysis.
   await navTo(page, '/hcp/analysis', /\/hcp\/analysis$/);
-  await expect(page.getByRole('heading', { name: /AI Wound & Burn Analysis/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: labels.analysis })).toBeVisible();
 
   // 5. Upload a valid image (hidden file input).
   await page.locator('input[type="file"]').setInputFiles({
@@ -52,29 +80,29 @@ test('hcp journey', async ({ page }) => {
     mimeType: 'image/png',
     buffer: TINY_PNG,
   });
-  const analyzeBtn = page.getByRole('button', { name: /Analyze Image/i });
+  const analyzeBtn = page.getByRole('button', { name: labels.analyze });
   await expect(analyzeBtn).toBeVisible();
 
   // 6. Request AI assessment.
   await analyzeBtn.click();
 
   // 7. Confirm loading state (the analyze button is disabled while analyzing).
-  await expect(page.getByRole('button', { name: /Preparing image/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: labels.preparing })).toBeVisible();
 
   // 8. Confirm structured result (real result OR the explicit unavailable state).
   await expectAiTerminalState(
     page,
-    /Analysis Results/i,
-    /Analysis failed|could not be completed/i,
+    labels.results,
+    labels.failure,
   );
 
   // 9. Navigate to chat.
   await navTo(page, '/hcp/chat', /\/hcp\/chat$/);
-  const chatInput = page.getByPlaceholder(/type|message|soalan|question/i).first();
+  const chatInput = page.getByPlaceholder(labels.placeholder);
   await expect(chatInput).toBeVisible();
 
   // 10. Send a clinical question.
-  const question = 'What is the initial management of a deep partial-thickness burn?';
+  const question = labels.question;
   await chatInput.fill(question);
   await chatInput.press('Enter');
   await expect(page.getByText(question).first()).toBeVisible(); // user message rendered
@@ -143,3 +171,4 @@ test('hcp journey', async ({ page }) => {
   await page.getByRole('button', { name: /Sign Out|Log Keluar/i }).click();
   await expect(page).toHaveURL(/\/hcp-login$/);
 });
+}

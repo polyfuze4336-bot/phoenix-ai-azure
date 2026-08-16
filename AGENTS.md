@@ -86,4 +86,4 @@ status before/after, evidence (code + tests), any new limitation, and validation
 - Control register (source of truth): [`nextjs_space/lib/rai/controls.ts`](./nextjs_space/lib/rai/controls.ts)
 - RAI documentation: [`docs/rai/`](./docs/rai/) — start at [`README.md`](./docs/rai/README.md)
 - RAI tests: `nextjs_space/tests/rai/` (`npm run test:rai`)
-- In-product surface: `/v2/hcp/ai-assurance`
+- Current assurance review surface: governed documentation and automated test evidence

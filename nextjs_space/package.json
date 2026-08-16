@@ -6,6 +6,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "verify": "npm run typecheck && npm run build",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

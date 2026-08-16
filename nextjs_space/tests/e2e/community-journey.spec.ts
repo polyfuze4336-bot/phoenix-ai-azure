@@ -1,8 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   TINY_PNG,
-  toggleLanguage,
   expectAiTerminalState,
+  seedLanguage,
   setMobileViewport,
   setDesktopViewport,
 } from './_helpers';
@@ -13,8 +13,7 @@ import {
  *  4. Navigate to assessment. 5. Navigate to image check. 6. Upload an image.
  *  7. Confirm simplified advice.
  *  8. Navigate to chat.       9. Send a question.        10. Confirm response.
- * 11. Switch English and Bahasa Malaysia.
- * 12. Test mobile navigation.
+ * 11. Confirm selected-language controls. 12. Test mobile navigation.
  *
  * AI-backed steps (6-7, 9-10) assert a deterministic terminal state — a real
  * simplified result when Azure OpenAI is configured, or the app's explicit
@@ -28,10 +27,31 @@ async function navTo(page: Page, href: string, urlRe: RegExp): Promise<void> {
   await expect(page.locator('main')).not.toBeEmpty();
 }
 
-test('community journey', async ({ page }) => {
+for (const language of ['en', 'ms'] as const) {
+test(`community journey in ${language}`, async ({ page }) => {
+  await seedLanguage(page, language);
+  const labels = language === 'en'
+    ? {
+      check: /Check My Wound/i,
+      checking: /Checking/i,
+      result: /What We Found/i,
+      failure: /Analysis failed|could not be completed/i,
+      placeholder: 'Type your message...',
+      question: 'How do I treat a minor kitchen burn at home?',
+    }
+    : {
+      check: /Periksa Luka Saya/i,
+      checking: /Memeriksa/i,
+      result: /Apa Yang Kami Temui/i,
+      failure: /Analisis gagal|tidak dapat diselesaikan/i,
+      placeholder: 'Taip mesej anda...',
+      question: 'Bagaimanakah saya merawat kelecuran kecil di dapur di rumah?',
+    };
+
   // 1. Load /community.
   await page.goto('/community');
   await expect(page).toHaveURL(/\/community$/);
+  await expect(page.locator('html')).toHaveAttribute('lang', language);
   await expect(page.locator('aside a[href="/community/first-aid"]').first()).toBeVisible();
 
   // 2. Navigate to first aid.
@@ -52,22 +72,26 @@ test('community journey', async ({ page }) => {
     mimeType: 'image/png',
     buffer: TINY_PNG,
   });
-  const checkBtn = page.getByRole('button', { name: /Check My Wound/i });
+  const checkBtn = page.getByRole('button', { name: labels.check });
   await expect(checkBtn).toBeVisible();
+  await page.route('**/api/community-analyze', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    await route.continue();
+  });
   await checkBtn.click();
   // Loading state.
-  await expect(page.getByRole('button', { name: /Checking/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: labels.checking })).toBeVisible();
 
   // 7. Confirm simplified advice (real "What We Found" result OR explicit failure).
-  await expectAiTerminalState(page, /What We Found/i, /Analysis failed|could not be completed/i);
+  await expectAiTerminalState(page, labels.result, labels.failure);
 
   // 8. Navigate to chat.
   await navTo(page, '/community/chat', /\/community\/chat$/);
-  const chatInput = page.getByPlaceholder('Type your message...');
+  const chatInput = page.getByPlaceholder(labels.placeholder);
   await expect(chatInput).toBeVisible();
 
   // 9. Send a question.
-  const question = 'How do I treat a minor kitchen burn at home?';
+  const question = labels.question;
   await chatInput.fill(question);
   await chatInput.press('Enter');
   await expect(page.getByText(question).first()).toBeVisible(); // user message rendered
@@ -79,12 +103,8 @@ test('community journey', async ({ page }) => {
     .poll(async () => (await assistantBubbles.last().innerText()).trim(), { timeout: 90_000 })
     .not.toMatch(/^\.*$/);
 
-  // 11. Switch English and Bahasa Malaysia (chat placeholder is language-conditional).
-  await expect(page.getByPlaceholder('Type your message...')).toBeVisible();
-  await toggleLanguage(page);
-  await expect(page.getByPlaceholder('Taip mesej anda...')).toBeVisible();
-  await toggleLanguage(page);
-  await expect(page.getByPlaceholder('Type your message...')).toBeVisible();
+  // 11. Confirm the selected-language chat control remains consistent.
+  await expect(page.getByPlaceholder(labels.placeholder)).toBeVisible();
 
   // 12. Test mobile navigation (open the drawer, jump to first aid).
   await setMobileViewport(page);
@@ -95,3 +115,4 @@ test('community journey', async ({ page }) => {
   await expect(page).toHaveURL(/\/community\/first-aid$/);
   await setDesktopViewport(page);
 });
+}

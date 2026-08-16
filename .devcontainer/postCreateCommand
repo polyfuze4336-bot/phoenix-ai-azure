@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)/nextjs_space"
+npm ci --legacy-peer-deps
+npm run db:generate

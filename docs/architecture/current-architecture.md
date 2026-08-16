@@ -6,7 +6,7 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `6.0.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `6.1.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -42,7 +42,8 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Authentication | Server-verified **demo** login by default; Microsoft Entra ID **opt-in** placeholder — **Mock/demo + Optional** |
 | Storage | Azure Blob provider present + infra provisioned; no UI workflow persists files — **Configured but unused** |
 | Monitoring | Application Insights + Log Analytics + health probes + metric alerts — **Implemented** |
-| Deployment | Direct pushes to `main` run one approval-free `deploy.yml` path using GitHub OIDC; infrastructure is manual-only; `Development` scopes existing secrets but has zero protection rules; no PR, status-check, or reviewer gate — **Implemented** |
+| Development | GitHub Codespaces with Node.js 22, npm dependencies, Azure/GitHub CLIs, Copilot extensions, and port 3000 forwarding — **Implemented** |
+| Deployment | Direct pushes to `main` run one approval-free `deploy.yml` path using GitHub OIDC; explicit manual rollback restores a known immutable SHA image without rewriting history; infrastructure is manual-only — **Implemented** |
 
 ---
 
@@ -87,8 +88,9 @@ flowchart TB
     end
 
     subgraph DEVOPS["Engineering"]
+        Codespaces["Codespaces Node 22 + Copilot — ACTIVE"]
         GitHub["GitHub Repository — ACTIVE"]
-        Actions["Single direct-main deploy.yml (OIDC) — ACTIVE"]
+        Actions["Direct-main deploy + explicit SHA rollback (OIDC) — ACTIVE"]
         DeployIdentity["Entra deployment principal — ACTIVE"]
         Bicep["Bicep IaC (13 files) — ACTIVE"]
     end
@@ -126,7 +128,8 @@ flowchart TB
     MI --> Foundry
     MI --> Blob
 
-    GitHub --> Actions
+    Codespaces -->|"explicit commit / push"| GitHub
+    GitHub -->|"push main or manual SHA rollback"| Actions
     Actions -->|"reviewer-free Development OIDC"| DeployIdentity
     DeployIdentity -->|"subscription Contributor"| Bicep
     Actions -->|"OIDC / remote image build"| ACR

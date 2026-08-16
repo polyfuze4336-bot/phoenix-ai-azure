@@ -39,8 +39,9 @@ flowchart TB
     end
 
     subgraph DEVOPS["Engineering"]
+        Codespaces["Codespaces Node 22 + Copilot — ACTIVE"]
         GitHub["GitHub Repository — ACTIVE"]
-        Actions["Single direct-main deploy.yml (OIDC) — ACTIVE"]
+        Actions["Direct-main deploy + explicit SHA rollback (OIDC) — ACTIVE"]
         DeployIdentity["Entra deployment principal\ngithub-phoenixai-deploy — ACTIVE"]
         Bicep["Bicep IaC — ACTIVE"]
     end
@@ -84,7 +85,8 @@ flowchart TB
     ARM -.->|"control plane"| Foundry
     ARM -.->|"control plane"| PostgreSQL
 
-    GitHub --> Actions
+    Codespaces -->|"explicit commit / push"| GitHub
+    GitHub -->|"push main or manual SHA rollback"| Actions
     Actions -->|"OIDC"| Bicep
     Actions -->|"OIDC / remote image build"| ACR
     Actions -->|"OIDC / Bicep"| ContainerApp

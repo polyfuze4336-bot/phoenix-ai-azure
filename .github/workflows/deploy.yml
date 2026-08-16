@@ -7,6 +7,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Full Git SHA of a previously deployed immutable image
+        required: true
+        type: string
 
 permissions:
   id-token: write
@@ -17,7 +23,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  IMAGE_TAG: ${{ github.sha }}
+  IMAGE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.target_sha || github.sha }}
   AZURE_RESOURCE_GROUP: rg-phoenixai-bfgs-demo
 
 jobs:
@@ -26,10 +32,21 @@ jobs:
     runs-on: ubuntu-latest
     environment: Development
     steps:
+      - name: Validate deployment target
+        shell: bash
+        run: |
+          if [[ ! "${IMAGE_TAG}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Deployment target must be a full 40-character lowercase Git SHA." >&2
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.IMAGE_TAG }}
 
       - name: Use Node.js
+        if: github.event_name == 'push'
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -37,22 +54,27 @@ jobs:
           cache-dependency-path: nextjs_space/package-lock.json
 
       - name: Install dependencies
+        if: github.event_name == 'push'
         working-directory: nextjs_space
         run: npm ci --legacy-peer-deps
 
       - name: Generate Prisma client
+        if: github.event_name == 'push'
         working-directory: nextjs_space
         run: npm run db:generate
 
       - name: Type check
+        if: github.event_name == 'push'
         working-directory: nextjs_space
         run: npm run typecheck
 
       - name: Essential unit tests
+        if: github.event_name == 'push'
         working-directory: nextjs_space
         run: npm run test:unit
 
       - name: Production build
+        if: github.event_name == 'push'
         working-directory: nextjs_space
         env:
           NEXTAUTH_URL: http://localhost:3000
@@ -81,6 +103,7 @@ jobs:
           echo "LOGIN_SERVER=${LOGIN_SERVER}" >> "$GITHUB_ENV"
 
       - name: Build and push immutable container
+        if: github.event_name == 'push'
         run: |
           az acr build \
             --registry "${ACR}" \
@@ -88,7 +111,16 @@ jobs:
             --file nextjs_space/Dockerfile \
             nextjs_space
 
+      - name: Verify rollback image exists
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          az acr repository show \
+            --name "${ACR}" \
+            --image "phoenixai:${IMAGE_TAG}" \
+            --output none
+
       - name: Run committed database migrations
+        if: github.event_name == 'push'
         working-directory: nextjs_space
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -102,7 +134,7 @@ jobs:
 
       - name: Deploy Container App revision
         run: |
-          SUFFIX="${GITHUB_SHA:0:7}-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          SUFFIX="${IMAGE_TAG:0:7}-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
           REVISION=$(az containerapp update \
             --resource-group "${AZURE_RESOURCE_GROUP}" \
             --name "${APP}" \
@@ -159,9 +191,16 @@ jobs:
 
       - name: Report deployment
         run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            MODE="Rollback to existing immutable image"
+          else
+            MODE="Direct-main deployment"
+          fi
           {
             echo "## Phoenix AI deployment"
-            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Mode: ${MODE}"
+            echo "- Requested by: \`${GITHUB_ACTOR}\`"
+            echo "- Deployed Git SHA: \`${IMAGE_TAG}\`"
             echo "- Revision: \`${REVISION}\`"
             echo "- URL: ${APP_URL}"
             echo "- Health: ${APP_URL}/api/health/live"
