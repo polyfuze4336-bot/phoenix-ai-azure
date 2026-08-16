@@ -54,6 +54,19 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 ## Migration audit log
 
+### Step 43 — Audit PostgreSQL version and prototype workflows
+
+- Read-only Azure control-plane and SQL checks verified the deployed server as PostgreSQL `17.10`,
+  Ready, East US 2, `Standard_B1ms`, 32 GiB, seven-day PITR retention, HA disabled, and `plpgsql 1.0`.
+- The active Container App database endpoint matches `psql-phoenixai-oaprp7dte7bw2` / `phoenix`.
+  Five tables, eleven indexes, two finished Prisma migrations, and non-sensitive row counts were
+  captured without exporting record content.
+- Decision: **PostgreSQL is already on an acceptable current major version. No upgrade required.**
+  No restore, temporary server, precheck, upgrade, Bicep version change, or database write occurred.
+- GitHub Actions already consists of one automatic `deploy.yml` and one manual-only
+  `infrastructure.yml`. Fast unit tests remain because they add seconds; no PR/governance/approval or
+  expensive matrix gate exists to remove. Architecture documentation `6.1.0` -> `6.1.1`.
+
 ### Steps 35-42 — Codespaces, deliberate delivery, and immutable-image rollback
 - Added a secret-free Node.js 22 devcontainer with dependency/Prisma setup, Azure CLI, GitHub CLI,
   Copilot/Azure extensions, and port 3000 forwarding. Codespaces terminals open in `nextjs_space`.

@@ -4,6 +4,10 @@ Phoenix AI persists to **Azure Database for PostgreSQL Flexible Server** via Pri
 This document describes the schema, connection configuration, migration workflow, and
 seed data.
 
+> **Live baseline (2026-08-16):** PostgreSQL `17.10`, database `phoenix`, verified by the
+> read-only [PostgreSQL version audit](../database/postgresql-version-audit.md). The deployed major
+> version already matches Bicep, so no upgrade is required.
+
 > Parity note: the database layer is provisioned and seeded, but the visible UI
 > (HCP dashboard, community articles) still renders the original in-app demonstration
 > content. The seed makes matching data available for a future wiring step without
@@ -90,6 +94,25 @@ seeded** (no conversational content is stored by the seed).
 
 Indexes: `ChatMessage_sessionId_idx(sessionId)`, `ChatMessage_portal_idx(portal)`.
 
+### `AnalysisRecord`
+
+Persisted HCP AI wound-analysis results for authorized history access. The structured assessment is
+stored as JSONB; summary fields support list rendering without reading the full result.
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | `TEXT` PK | cuid generated in app |
+| `clinicianName` / `clinicianEmail` | `TEXT` NULL | authorized clinical context |
+| `imageKey` / `imageMimeType` | `TEXT` NULL | private image reference and media type |
+| `woundCategory` / `woundType` | `TEXT` NULL | analysis summary |
+| `burnDegree` / `severity` | `TEXT` NULL | analysis summary |
+| `confidence` / `tbsaEstimate` | `TEXT` NULL | display-form summary values |
+| `isBurn` | `BOOLEAN` NOT NULL | default `false` |
+| `result` | `JSONB` NOT NULL | complete structured assessment |
+| `createdAt` | `TIMESTAMP(3)` NOT NULL | default `CURRENT_TIMESTAMP` |
+
+Index: `AnalysisRecord_createdAt_idx(createdAt)`.
+
 ### `Article`
 
 Bilingual community education articles.
@@ -112,16 +135,24 @@ Index: `Article_category_idx(category)`.
 
 - Initial migration:
   [nextjs_space/prisma/migrations/20260806120000_init/migration.sql](../../nextjs_space/prisma/migrations/20260806120000_init/migration.sql).
-- **Validation (offline, on every push to `main` or manual CI run):** `npm run db:migrate:validate` runs
-  [scripts/validate-migration.ts](../../nextjs_space/scripts/validate-migration.ts) — checks
-  the lock file targets postgresql, every migration has a non-empty `migration.sql`, and
-  `prisma validate` passes. No database required. Wired into the `db-validate` CI job.
-- **Execution (controlled):** `npm run db:migrate:deploy` (`prisma migrate deploy`) applies
-  only pending migrations and **never** resets or drops data. It runs from the manual
-  [.github/workflows/db-migrate.yml](../../.github/workflows/db-migrate.yml)
-  (`workflow_dispatch`, selected reviewer-free `Development` or `Demo` environment), preceded by a readiness check and
-  followed by `prisma migrate status`.
+- Analysis history migration:
+  [nextjs_space/prisma/migrations/20260807090000_analysis_records/migration.sql](../../nextjs_space/prisma/migrations/20260807090000_analysis_records/migration.sql).
+- **Validation:** the direct-main deployment generates Prisma Client, typechecks, runs fast unit
+  tests, and produces a Next.js production build before Azure deployment.
+- **Execution (controlled):** on pushes to `main`,
+  [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml) runs database readiness and
+  `npm run db:migrate:deploy` (`prisma migrate deploy`) when `DATABASE_URL` is configured. Rollback
+  dispatches explicitly skip migrations. The command applies only pending migrations and **never**
+  resets or drops data.
 - Destructive migrations are never run automatically in production.
+
+## Verified deployed baseline
+
+The 2026-08-16 read-only audit found five tables, eleven indexes, no sequences/triggers/user views/
+user routines, and both committed Prisma migrations finished successfully. Exact row counts were:
+`AnalysisRecord=11`, `Article=0`, `Case=0`, `ChatMessage=0`, `_prisma_migrations=2`. No record content
+was selected. See the [data-integrity check](../database/postgresql-data-integrity-check.md) and
+[upgrade compatibility report](../database/postgresql-upgrade-compatibility.md).
 
 ## Seed data
 

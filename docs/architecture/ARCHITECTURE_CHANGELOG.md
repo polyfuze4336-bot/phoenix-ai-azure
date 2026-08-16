@@ -16,6 +16,19 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [6.1.1] — 2026-08-16
+
+### Verified
+- **Live PostgreSQL baseline** — read-only Azure and SQL evidence confirms PostgreSQL 17.10 in East
+  US 2, matching the Bicep major-version declaration. No upgrade or resource mutation is required.
+- **Prototype workflow baseline** — active GitHub Actions remain one direct-main deployment workflow
+  plus manual-only infrastructure; no redundant governance or approval gate remains.
+
+### Boundaries
+- Documentation correction only. No resource, database, data, workflow, identity, secret, RBAC,
+  model, storage, network, SKU, region, application, or RAI behavior change. See
+  [CHANGE-20260816](./changes/CHANGE-20260816-postgresql-version-and-workflow-audit.md).
+
 ## [6.1.0] — 2026-08-16
 
 ### Added

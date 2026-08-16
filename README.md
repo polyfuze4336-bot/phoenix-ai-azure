@@ -69,6 +69,10 @@ AI routes use an Azure AI/OpenAI-compatible vision deployment through managed id
 PostgreSQL supports authorized HCP analysis history; private Blob Storage is provisioned but remains
 unwired to the current UI. See the current architecture for exact runtime boundaries.
 
+The deployed database was verified on 2026-08-16 as Azure PostgreSQL Flexible Server `17.10`.
+No upgrade was required. See the
+[PostgreSQL version audit](docs/database/postgresql-version-audit.md).
+
 The deployed application does **not** depend on a developer laptop, local database, local file
 share or `localhost` service.
 
@@ -139,7 +143,7 @@ Container Apps app settings, with secrets sourced from Azure Key Vault.
 
 ## Architecture
 
-> Architecture version: **6.0.0** (see [docs/architecture/ARCHITECTURE_VERSION](docs/architecture/ARCHITECTURE_VERSION)).
+> Architecture version: **6.1.1** (see [docs/architecture/ARCHITECTURE_VERSION](docs/architecture/ARCHITECTURE_VERSION)).
 
 Phoenix AI runs as a Next.js standalone server on Azure Container Apps, calling the environment-owned
 Azure AI Services `gpt-4o` deployment through managed identity, with PostgreSQL, Blob Storage, Key

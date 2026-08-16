@@ -6,7 +6,7 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `6.1.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `6.1.1`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -38,7 +38,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Major portals | One Phoenix AI landing, HCP routes, Community routes including `/community/image-check`, PWA, and global English/Bahasa Melayu UI — **Implemented** |
 | Hosting | Azure Container Apps Consumption, `eastus2`; image in Azure Container Registry Basic — **Implemented** |
 | AI processing | Environment-owned Azure AI Services S0 account with `gpt-4o` via `lib/ai`, managed identity — **Implemented** |
-| Data handling | Azure PostgreSQL Flexible Server via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
+| Data handling | Azure PostgreSQL Flexible Server 17.10 via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
 | Authentication | Server-verified **demo** login by default; Microsoft Entra ID **opt-in** placeholder — **Mock/demo + Optional** |
 | Storage | Azure Blob provider present + infra provisioned; no UI workflow persists files — **Configured but unused** |
 | Monitoring | Application Insights + Log Analytics + health probes + metric alerts — **Implemented** |
@@ -216,7 +216,7 @@ tokens remain stable.
 | Element | Location | Status |
 | --- | --- | --- |
 | Prisma client | `lib/db.ts` (auto `sslmode=require`, pool defaults) | Implemented |
-| PostgreSQL | Azure Database for PostgreSQL Flexible Server | Implemented (infra) |
+| PostgreSQL | Azure Database for PostgreSQL Flexible Server 17.10 (live audit 2026-08-16) | Implemented (infra) |
 | Models: `Case`, `ChatMessage`, `Article` | `prisma/schema.prisma` | Present, **not wired to UI** (parity demo content) |
 | Model: `AnalysisRecord` | `prisma/schema.prisma` | Implemented — used by HCP history |
 | Migrations + seed | `prisma/migrations/*`, `scripts/{seed,seed-data,safe-seed}.ts` | Implemented (fictional data) |

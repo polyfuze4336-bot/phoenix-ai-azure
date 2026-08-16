@@ -62,7 +62,7 @@
 | CLINICAL-TBSA | TBSA calculator | Lib | TypeScript | `lib/clinical/tbsa.ts` | Total body surface area | — | ACTIVE | Phoenix AI team |
 | CLINICAL-PARKLAND | Parkland calculator | Lib | TypeScript | `lib/clinical/parkland.ts` | Fluid resuscitation formula | — | ACTIVE | Phoenix AI team |
 | DB-PRISMA | Prisma data access | Lib | Prisma 6 | `lib/db.ts` | DB client | DB-POSTGRES | ACTIVE | Phoenix AI team |
-| DB-POSTGRES | PostgreSQL database | Data | Azure PostgreSQL Flexible Server | infra + `DATABASE_URL` | Relational store | INFRA-MI | ACTIVE | Phoenix AI team |
+| DB-POSTGRES | PostgreSQL database | Data | Azure PostgreSQL Flexible Server 17.10 | infra + `DATABASE_URL` | Relational store | INFRA-MI | ACTIVE | Phoenix AI team |
 | DB-ANALYSISRECORD | Analysis history model | Data | Prisma model | `prisma/schema.prisma` | Persist HCP analyses | DB-PRISMA | ACTIVE | Phoenix AI team |
 | DB-LEGACY-MODELS | Case/ChatMessage/Article | Data | Prisma models | `prisma/schema.prisma` | Retained-for-parity models | DB-PRISMA | OPTIONAL | Phoenix AI team |
 | STORAGE-BLOB | Blob storage provider | Lib | @azure/storage-blob + identity | `lib/storage/*` | Private file storage | INFRA-MI, INFRA-STORAGE | OPTIONAL | Phoenix AI team |
@@ -80,7 +80,7 @@
 | INFRA-ACR | Azure Container Registry | Infra | Bicep | `infra/modules/container-registry.bicep` | Private image storage and remote build | INFRA-MI | ACTIVE | Phoenix AI team |
 | INFRA-MI | User-assigned managed identity | Infra | Bicep | `infra/modules/managed-identity.bicep` | Workload identity | — | ACTIVE | Phoenix AI team |
 | INFRA-STORAGE | Storage account | Infra | Bicep | `infra/modules/storage.bicep` | Blob backing | — | ACTIVE | Phoenix AI team |
-| INFRA-POSTGRES | PostgreSQL server | Infra | Bicep | `infra/modules/postgresql.bicep` | DB backing | — | ACTIVE | Phoenix AI team |
+| INFRA-POSTGRES | PostgreSQL server | Infra | Bicep (major version 17) | `infra/modules/postgresql.bicep` | DB backing | — | ACTIVE | Phoenix AI team |
 | INFRA-KV | Key Vault | Infra | Bicep | `infra/modules/key-vault.bicep` | Secret store | — | ACTIVE | Phoenix AI team |
 | INFRA-APPINSIGHTS | Application Insights | Infra | Bicep | `infra/modules/application-insights.bicep` | Telemetry backing | INFRA-LAW | ACTIVE | Phoenix AI team |
 | INFRA-LAW | Log Analytics | Infra | Bicep | `infra/modules/log-analytics.bicep` | Log store | — | ACTIVE | Phoenix AI team |
