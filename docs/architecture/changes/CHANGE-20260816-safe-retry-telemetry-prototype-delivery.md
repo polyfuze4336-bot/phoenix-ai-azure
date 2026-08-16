@@ -35,6 +35,9 @@ and one approval-free direct-main Azure deployment workflow.
 
 - Focused safe-retry UI, telemetry-sanitization, and reliability-summary tests.
 - Pre-fix live baseline: 2/10 completed (20%); 8/10 returned `AI_SCHEMA_VALIDATION_FAILED`, with no
-  timeout or parsing failure. Post-deployment measurement is required before claiming the target.
+  timeout or parsing failure.
+- Post-deployment live result: 10/10 completed (100%) with 28,584 ms average latency, no failures,
+  timeouts, or parsing failures. The `>=95%` demo API-completion target was met under these recorded
+  sequential synthetic-image conditions; this is not clinical-accuracy evidence or an SLA.
 - Typecheck, unit, RAI, production build, workflow diagnostics, Bicep, Mermaid, architecture drift,
   secret scan, Actions deployment, named-revision health, liveness, and HCP/community smoke checks.

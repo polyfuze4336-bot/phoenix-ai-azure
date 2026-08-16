@@ -70,8 +70,10 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 - The first live 10-run baseline completed 2/10 requests (20%); all eight failures were
   `AI_SCHEMA_VALIDATION_FAILED`, with no timeout or parsing failure. The core-stage signal gate now
   accepts structurally explicit unreadable-image/non-burn responses as honest low-information
-  results while continuing to reject empty or malformed core output. A post-deployment rerun is
-  required before recording whether the demo target is met.
+  results while continuing to reject empty or malformed core output. After deployment, the same
+  harness completed 10/10 requests (100%) with 28,584 ms average latency and no failures, timeouts,
+  or parsing failures. This meets the `>=95%` demo API-completion target for the recorded sequential
+  synthetic-image conditions only; it is not clinical-accuracy evidence or an SLA.
 - Declared PROTOTYPE / DEMO DEVELOPMENT MODE and retained the direct Codespaces -> edit -> local test
   -> commit -> push `main` -> automatic Azure deployment loop. Pull requests and manual approvals
   are optional.

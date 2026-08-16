@@ -42,7 +42,10 @@ The 2026-08-16 pre-fix live baseline completed 2/10 requests (20%). The other ei
 `AI_SCHEMA_VALIDATION_FAILED`; none timed out and none failed response parsing. This is recorded as
 operational evidence, not hidden or interpreted as a clinical result. The signal gate was then
 changed to retain structurally explicit unreadable-image/non-burn responses as low-information
-results while still rejecting empty or malformed core output. Post-deployment evidence is pending.
+results while still rejecting empty or malformed core output. The post-deployment rerun completed
+10/10 requests (100%) with 28,584 ms average latency and no failures, timeouts, or parsing failures.
+The `>=95%` demo target was therefore met for those recorded sequential synthetic-image conditions;
+the result remains API reliability evidence only, not clinical-accuracy evidence or an SLA.
 
 ## CI summary artifact
 `npm run rai:summary` produces `rai-evaluation-summary.{json,md}` from the governance snapshot and the
