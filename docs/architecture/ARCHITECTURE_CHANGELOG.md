@@ -13,8 +13,27 @@ Versioning follows semantic versioning applied to architecture:
 - **PATCH** — documentation corrections, clarifications, or diagram tidy-ups with no change to the
   described architecture.
 
-Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
-reference the relevant ADR and change record.
+Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
+the relevant ADR and change record.
+
+## [5.0.0] — 2026-08-16
+
+### Changed
+- **Direct-main prototype workflow** — maintainers, Codespaces, and Copilot may commit and push
+  reviewed changes directly to `main`; pull requests remain optional.
+- **Automated Azure delivery retained** — every push to `main` still starts the independent
+  Development OIDC deployment to the existing Azure Container App. Demo and infrastructure
+  workflows remain manual-dispatch options.
+- **Blocking checks retired** — the separate Architecture Governance workflow, pull-request
+  triggers, and report-only dependency-audit job are removed. Application CI remains a push/manual
+  signal and does not gate commits or deployment.
+- **Governance boundary** — architecture-first documentation and the local drift validator remain
+  mandatory, but synchronization is no longer server-enforced (`LIM-011`).
+
+### Boundaries
+- No Azure resource, identity, secret, RBAC, network, data, model, prompt, clinical control, or
+  application route change. See [ADR-0012](./decisions/ADR-0012-direct-main-prototype-workflow.md)
+  and [CHANGE-20260816](./changes/CHANGE-20260816-direct-main-prototype-workflow.md).
 
 ## [4.1.0] — 2026-08-16
 

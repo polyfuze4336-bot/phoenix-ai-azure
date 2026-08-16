@@ -22,9 +22,9 @@ flowchart LR
         ALERTS["Metric Alerts + Action Group\nag-phoenixai-ops"]
     end
 
-    DEV --> GH
+    DEV -->|"direct commit / push to main"| GH
     OPS -->|"Owner (demo RG scope only)"| AZURE
-    GH --> GHA
+    GH -->|"push: CI signal + automatic Development deploy"| GHA
     GHA -->|"Demo / Development OIDC"| DEPLOY_ID
     DEPLOY_ID -->|"subscription Contributor\nRBAC Admin on demo RG only"| AZURE
     GHA -->|"ACR remote build"| ACR

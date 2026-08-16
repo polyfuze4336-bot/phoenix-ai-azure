@@ -7,7 +7,7 @@ changed*, while a change record captures *the before/after detail of a specific 
 
 ## When to add a change record
 
-Add one whenever a pull request changes the architecture — i.e. it touches components,
+Add one whenever a change affects the architecture — i.e. it touches components,
 integrations, data/identity/storage/observability strategy, or the Azure resource footprint.
 Documentation-only clarifications (PATCH) do not require a change record but may add one.
 

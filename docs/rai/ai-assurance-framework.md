@@ -42,7 +42,9 @@ Clinical input
 - **RAI-PRIV-001/002/003** managed identity, server-side calls, privacy-safe telemetry.
 - **RAI-TRANS-004 / RAI-ACCT-005** prompt/pipeline/schema versioning and configurable model
   governance.
-- **RAI-ACCT-003/004** architecture docs-sync and the structural evaluation harness.
+- **RAI-ACCT-003/004** mandatory docs-first architecture governance with local drift validation,
+  and the structural evaluation harness. GitHub does not server-enforce docs synchronization for
+  the rapid-prototype workflow (`LIM-011`).
 
 The control register in [`lib/rai/controls.ts`](../../nextjs_space/lib/rai/controls.ts) is the machine
 -readable source of truth for these layers.

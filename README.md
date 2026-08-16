@@ -106,7 +106,7 @@ flowchart LR
 
 This project follows an **architecture-first change policy**: no material change is implemented
 until the current architecture is understood, documented and impact-assessed, and the docs stay
-synchronized with the code (enforced by the `Architecture Governance` CI workflow).
+synchronized with the code (validated locally before a direct `main` push).
 
 - **Current architecture (AS-IS):** [docs/architecture/current-architecture.md](docs/architecture/current-architecture.md)
 - **Component inventory:** [docs/architecture/component-inventory.md](docs/architecture/component-inventory.md)
@@ -150,7 +150,7 @@ Full documentation: [docs/rai/](docs/rai/README.md) (start with the
 │  ├─ rai/                  # Responsible AI framework, controls, evidence & limitations
 │  └─ testing/              # Test & UI-parity strategy
 ├─ .github/
-│  ├─ workflows/            # CI + Architecture Governance
+│  ├─ workflows/            # Non-gating CI + automated/manual Azure deployment
 │  ├─ PULL_REQUEST_TEMPLATE.md
 │  └─ copilot-instructions.md
 ├─ AGENTS.md                # Architecture-first change policy for agents & contributors
@@ -160,10 +160,10 @@ Full documentation: [docs/rai/](docs/rai/README.md) (start with the
 └─ README.md
 ```
 
-## Contributing & branch protection
+## Contributing & repository workflow
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and the **recommended branch
-protection rules** for `main`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the direct-main rapid-prototype workflow. Pull requests
+remain optional, and pushes to `main` retain automated Development deployment to Azure.
 
 ## License / status
 

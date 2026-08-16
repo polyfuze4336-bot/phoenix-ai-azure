@@ -72,12 +72,13 @@ observability strategy, or the Azure resource footprint, follow these steps in o
    architecture-impacting changes; add/accept an ADR when the decision is significant.
 6. **Implement** the code change, keeping it consistent with the documented architecture.
 7. **Validate** — run typecheck, build, tests, Mermaid validation, and
-   `scripts/validate-architecture`. **STOP if documentation lags implementation** — do not open a
-   PR until docs and code agree.
+   `scripts/validate-architecture`. **STOP if documentation lags implementation** — do not push
+   `main` until docs and code agree.
 
 End every architecture-impacting task with an **Architecture Review** block: impact level,
 version before/after, files reviewed/changed, ADR reference, change record, and validation
-PASS/FAIL. The `architecture-governance` CI workflow enforces docs-sync on pull requests.
+PASS/FAIL. The local drift validator is mandatory; GitHub does not enforce docs-sync for this
+rapid-prototype repository.
 
 ## RESPONSIBLE AI CHANGE POLICY (mandatory)
 

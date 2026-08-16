@@ -5,13 +5,19 @@ name: Database migrate (deploy)
 # which only applies already-committed, pending migrations and NEVER resets or drops
 # the database - so it is safe to run against production.
 #
-# Prerequisites:
-#   - Repository/environment secret DATABASE_URL (with sslmode=require).
-#   - A GitHub Environment named "production" (optionally with required reviewers) to
-#     gate the run behind an approval.
+# Prerequisite: DATABASE_URL in the selected reviewer-free Development or Demo
+# environment (with sslmode=require).
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment whose database should receive pending migrations.'
+        type: choice
+        options:
+          - Development
+          - Demo
+        default: Development
 
 permissions:
   contents: read
@@ -20,7 +26,7 @@ jobs:
   migrate:
     name: prisma migrate deploy
     runs-on: ubuntu-latest
-    environment: production
+    environment: ${{ inputs.environment }}
     defaults:
       run:
         working-directory: nextjs_space
@@ -43,7 +49,7 @@ jobs:
       - name: Verify DATABASE_URL is configured
         run: |
           if [ -z "${DATABASE_URL}" ]; then
-            echo "DATABASE_URL secret is not set for the 'production' environment." >&2
+            echo "DATABASE_URL secret is not set for the selected environment." >&2
             exit 1
           fi
 

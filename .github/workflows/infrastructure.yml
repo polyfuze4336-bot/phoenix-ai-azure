@@ -3,16 +3,11 @@ name: Infrastructure
 # Provisions the Phoenix AI Azure infrastructure from infra/ using Bicep.
 #
 # Authenticates to Azure with GitHub OIDC (federated credentials) — NO stored
-# Azure client secrets. Pull requests that touch infra/ run lint + build +
-# what-if (all read-only). Actual deployment runs only on manual dispatch and is
-# scoped to the selected reviewer-free GitHub Environment (Development or Demo)
-# for rapid prototyping.
+# Azure client secrets. Validation and optional deployment run only on manual
+# dispatch and use the selected reviewer-free GitHub Environment (Development or
+# Demo) for rapid prototyping.
 
 on:
-  pull_request:
-    paths:
-      - 'infra/**'
-      - '.github/workflows/infrastructure.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -45,8 +40,7 @@ jobs:
   validate:
     name: Lint, build & what-if
     runs-on: ubuntu-latest
-    # PRs validate against Development; manual runs use the chosen environment.
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'Development' }}
+    environment: ${{ inputs.environment }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

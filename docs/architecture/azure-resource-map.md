@@ -12,6 +12,9 @@
 > source and adding bounded output-language validation changes no Azure resource or deployment SKU.
 > The `4.1.0` bilingual HCP clinical notice is static application content and changes no Azure
 > resource, SKU, region, identity, secret, network path, data store, or model deployment.
+> The `5.0.0` direct-main repository workflow changes GitHub triggers and governance only. Existing
+> OIDC federated credentials, Azure RBAC, resources, regions, SKUs, secrets, and deployment targets
+> are unchanged.
 
 ## Environment
 

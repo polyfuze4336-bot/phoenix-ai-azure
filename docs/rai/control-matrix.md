@@ -34,7 +34,7 @@ Status: **Active** (implemented + evidenced) · **Partial** · **Planned**.
 | RAI-PRIV-003 | Privacy-safe telemetry | Privacy & Security | Operations | Active |
 | RAI-PRIV-007 | Patient-data legal handling notice | Privacy & Security | Operations | Active |
 | RAI-ACCT-005 | Configurable model governance | Accountability | Operations | Active |
-| RAI-ACCT-003 | Architecture governance (docs-sync) | Accountability | Operations | Active |
+| RAI-ACCT-003 | Architecture governance (docs-first, locally validated) | Accountability | Operations | Active |
 | RAI-ACCT-004 | Structural evaluation harness | Reliability & Safety | Operations | Active |
 | RAI-INCL-001 | Bilingual application experience | Inclusiveness | Operations | Active |
 | RAI-INCL-002 | Responsive, installable access | Inclusiveness | Operations | Partial |

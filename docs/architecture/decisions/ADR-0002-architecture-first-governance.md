@@ -1,6 +1,6 @@
 # ADR-0002: Establish architecture-first governance
 
-- **Status:** Accepted
+- **Status:** Accepted; CI/PR enforcement partially superseded by ADR-0012
 - **Date:** 2024
 - **Deciders:** Phoenix AI migration team
 - **Related components:** GOV-CI, GOV-VALIDATE, DEVOPS-GHA

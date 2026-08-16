@@ -57,6 +57,6 @@ not implemented. The controls above prevent *unsupported inference*; they do not
 | --- | --- | --- | --- |
 | RAI-ACCT-001 | Human-in-the-loop review; AI never "approved" | `lib/ai/analysis/metadata.ts`, `app/hcp/analysis/_components/structured-analysis.tsx` | Partial |
 | RAI-ACCT-002 | Analysis persistence / audit record | `lib/analysis/history.ts` | Active |
-| RAI-ACCT-003 | Architecture governance (docs-sync CI) | `docs/architecture/*` | Active |
+| RAI-ACCT-003 | Architecture governance (docs-first policy + local drift validation; not server-enforced) | `docs/architecture/*`, `scripts/validate-architecture.mjs` | Active |
 | RAI-ACCT-005 | Configurable model governance | `lib/ai/model-config.ts` | Active |
 | RAI-TRANS-004 | Prompt/pipeline/schema versioning | `lib/ai/prompts/versions.ts` | Active |

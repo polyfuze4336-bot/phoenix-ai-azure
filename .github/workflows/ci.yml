@@ -2,7 +2,7 @@ name: CI
 
 # Continuous integration for the Phoenix AI Azure migration.
 #
-# Runs the full quality gate on every push / pull request:
+# Runs a non-gating quality signal on direct pushes to main or manual dispatch:
 #   - Lock-file installation (npm ci --legacy-peer-deps)
 #   - Lint
 #   - Type check
@@ -10,7 +10,6 @@ name: CI
 #   - Integration tests
 #   - Next.js production build (standalone)
 #   - Bicep lint + build (infra/)
-#   - Dependency vulnerability report (npm audit)
 #   - Playwright smoke test (public landing journey)
 #
 # No secrets are required: the build and smoke tests do not call the LLM; runtime
@@ -18,8 +17,6 @@ name: CI
 
 on:
   push:
-    branches: [main, 'migration/**']
-  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -92,40 +89,6 @@ jobs:
 
       - name: Bicep build (compile to ARM)
         run: az bicep build --file infra/main.bicep
-
-  security:
-    name: Dependency vulnerability report
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: nextjs_space
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: nextjs_space/package-lock.json
-
-      - name: Install dependencies (lock file)
-        run: npm ci --legacy-peer-deps
-
-      - name: Audit (report only — does not fail the build)
-        # Known dev-tooling advisories exist; surface them as a report without
-        # blocking. Production runtime dependencies are reviewed separately.
-        run: |
-          npm audit --json > audit-report.json || true
-          npm audit || true
-
-      - name: Upload audit report
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-audit-report
-          path: nextjs_space/audit-report.json
-          if-no-files-found: warn
 
   db-validate:
     name: Validate DB migrations (offline)

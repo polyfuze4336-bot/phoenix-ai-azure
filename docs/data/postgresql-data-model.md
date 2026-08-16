@@ -112,14 +112,14 @@ Index: `Article_category_idx(category)`.
 
 - Initial migration:
   [nextjs_space/prisma/migrations/20260806120000_init/migration.sql](../../nextjs_space/prisma/migrations/20260806120000_init/migration.sql).
-- **Validation (offline, on every PR):** `npm run db:migrate:validate` runs
+- **Validation (offline, on every push to `main` or manual CI run):** `npm run db:migrate:validate` runs
   [scripts/validate-migration.ts](../../nextjs_space/scripts/validate-migration.ts) — checks
   the lock file targets postgresql, every migration has a non-empty `migration.sql`, and
   `prisma validate` passes. No database required. Wired into the `db-validate` CI job.
 - **Execution (controlled):** `npm run db:migrate:deploy` (`prisma migrate deploy`) applies
   only pending migrations and **never** resets or drops data. It runs from the manual
   [.github/workflows/db-migrate.yml](../../.github/workflows/db-migrate.yml)
-  (`workflow_dispatch`, `environment: production`), preceded by a readiness check and
+  (`workflow_dispatch`, selected reviewer-free `Development` or `Demo` environment), preceded by a readiness check and
   followed by `prisma migrate status`.
 - Destructive migrations are never run automatically in production.
 

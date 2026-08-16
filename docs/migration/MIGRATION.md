@@ -1391,3 +1391,32 @@ without reintroducing v2 or changing the surrounding application design.
 - **Validation.** PASS: unit `96/96`, Responsible AI `27/27`, integration `14/14`, production HTTP
   API `24/24`, retained-route E2E `24/24`, TypeScript, ESLint, production build, architecture drift,
   and seven Mermaid diagrams.
+
+### Step 36 - Adopt direct-main rapid-prototype delivery
+
+This step aligns repository automation and contributor guidance with the live, unprotected GitHub
+configuration while retaining automatic Azure deployment.
+
+- **Direct-main default.** Maintainers, Codespaces, and Copilot may create small Conventional Commits
+  directly on `main`. Pull requests remain optional for collaborative or risky work; the obsolete PR
+  template and required-PR/branch-protection guidance are removed.
+- **Non-blocking automation.** CI remains a push/manual quality signal. Pull-request triggers, the
+  separate Architecture Governance workflow, and its report-only dependency-audit job are removed.
+  Infrastructure and database workflows remain manually dispatchable through reviewer-free
+  `Development` or `Demo` environments.
+- **Deployment retained.** Every push to `main` still independently triggers `Deploy (Development)`
+  with the existing environment-bound OIDC identity, Bicep validation, immutable ACR image, health
+  check, and critical-journey verification. No Azure resource, RBAC, secret, model, prompt, route,
+  data, or clinical behavior changes.
+- **Governance boundary.** Architecture-first documentation, ADRs, change records, Mermaid
+  validation, tests, and the local drift validator remain mandatory. `GOV-CI` moves to `LEGACY`;
+  `RAI-ACCT-003` remains Active with the reduced server-enforcement boundary recorded as `LIM-011`.
+- **Architecture.** MAJOR impact; version `4.1.0 -> 5.0.0`; ADR-0012 and
+  `CHANGE-20260816-direct-main-prototype-workflow.md` record the decision.
+- **Files.** Added ADR-0012 and the change record; removed the Architecture Governance workflow and
+  PR template; modified active workflows, contributor/agent guidance, architecture/RAI inventories,
+  the database runbook, and this audit trail.
+- **Validation.** PASS: all five active workflow files parse; ESLint, TypeScript, unit `96/96`, RAI
+  `27/27`, integration `14/14`, production HTTP API `24/24`, and E2E `24/24`; two Prisma migrations;
+  production build; Bicep compilation; architecture drift; and all seven Mermaid diagrams. Push,
+  deployment verification, and live probes follow the commit.

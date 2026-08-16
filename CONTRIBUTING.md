@@ -26,7 +26,8 @@ The guiding rule for every change:
 
 1. Work in **small, reviewable commits** with clear, conventional messages
    (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`).
-2. Branch from `main`: `git switch -c <type>/<short-description>`.
+2. For this rapid-prototype repository, commit reviewed changes directly to `main`. Feature branches
+  and pull requests remain optional for risky or collaborative work.
 3. At the end of every migration step:
    1. Run all relevant checks (`npm run build`, `npm run lint`, tests).
    2. Report files added / modified / deleted.
@@ -34,7 +35,7 @@ The guiding rule for every change:
    4. List unresolved issues.
    5. Commit with a clear message.
    6. Update [docs/migration/MIGRATION.md](docs/migration/MIGRATION.md).
-4. Open a Pull Request into `main`. Do not push directly to `main`.
+4. Push `main`. This starts non-gating CI and the independent automated Development deployment.
 
 ## Local checks
 
@@ -45,27 +46,11 @@ npm run build      # must pass
 npm run lint       # advisory (source sets eslint.ignoreDuringBuilds)
 ```
 
-## Recommended branch protection rules for `main`
+## GitHub repository policy
 
-Configure these in **GitHub → Settings → Branches → Branch protection rules** (or via
-Rulesets) for the `main` branch. They are recommendations to be applied by a repo admin:
-
-- **Require a pull request before merging**
-  - Require at least **1 approving review**.
-  - Dismiss stale approvals when new commits are pushed.
-  - Require review from Code Owners (if a `CODEOWNERS` file is added).
-- **Require status checks to pass before merging**
-  - Require the **CI / build** check (`.github/workflows/ci.yml`) to pass.
-  - Require branches to be **up to date** before merging.
-- **Require conversation resolution before merging.**
-- **Require linear history** (squash or rebase merges).
-- **Do not allow force pushes** to `main`.
-- **Do not allow deletions** of `main`.
-- **Include administrators** in the above restrictions.
-- Optionally: **require signed commits**.
-
-> These rules cannot be committed as code; a repository administrator must enable them in
-> GitHub settings. This section is the authoritative record of the intended configuration.
+`main` intentionally has no branch protection, ruleset, required status check, or approval gate.
+Development and Demo environments intentionally have no required reviewers. This policy is limited
+to the prototype/demo lifecycle and must be reassessed before any production or clinical use.
 
 ## Commit message convention
 

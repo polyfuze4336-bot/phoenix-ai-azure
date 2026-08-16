@@ -444,12 +444,12 @@ export const RAI_CONTROLS: RaiControl[] = [
   },
   {
     id: 'RAI-ACCT-003',
-    title: 'Architecture governance (docs-sync)',
+    title: 'Architecture governance (docs-first)',
     principle: 'accountability',
     layer: 'operations',
     status: 'active',
     description:
-      'An architecture-first change policy and CI drift check keep architecture documentation synchronized with the implementation.',
+      'A mandatory architecture-first change policy and local drift validator keep architecture documentation synchronized before direct-main pushes. GitHub does not server-enforce this control in the rapid-prototype workflow.',
     evidence: [
       'docs/architecture/current-architecture.md',
       'nextjs_space/scripts/validate-architecture.mjs',
