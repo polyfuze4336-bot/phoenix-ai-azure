@@ -47,9 +47,9 @@ export function imageAnalysisFailure(error: unknown): {
     return {
       category: error.category,
       status: error.status,
-      contentFilterSource: error.contentFilter?.source,
-      contentFilterCategory: filtered?.category,
-      contentFilterSeverity: filtered?.severity,
+      ...(error.contentFilter?.source ? { contentFilterSource: error.contentFilter.source } : {}),
+      ...(filtered?.category ? { contentFilterCategory: filtered.category } : {}),
+      ...(filtered?.severity ? { contentFilterSeverity: filtered.severity } : {}),
     };
   }
   return { category: 'UNKNOWN', status: 500 };

@@ -121,7 +121,7 @@ test('Parkland is NOT computed from an assumed weight when an indicated adult re
   assert.equal(a.parkland.indicated, 'yes');
   assert.equal(a.parkland.requiresWeight, true);
   assert.equal(a.parkland.total24hMl, null);
-  assert.match(a.parkland.summary, /requires the patient/i);
+  assert.match(a.parkland.summary, /patient weight is required/i);
   // The summary must not present a COMPUTED fluid volume; it may name 70 kg only
   // to explain why a fixed estimate is unsafe.
   assert.doesNotMatch(a.parkland.summary, /\d[\d,]*\s?mL/i);

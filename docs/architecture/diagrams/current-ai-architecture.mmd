@@ -10,6 +10,7 @@ flowchart TB
     subgraph Routes["Next.js API Routes"]
         RHCPCHAT["/api/hcp-chat\n(validated EN/MS)"]
         RHCPAN["/api/analyze-wound\n(validated EN/MS)"]
+        RHCPTRANS["/api/analyze-wound/translate\n(text-only existing result)"]
         RCOMCHAT["/api/community-chat\n(validated EN/MS)"]
         RCOMAN["/api/community-analyze\n(validated EN/MS)"]
     end
@@ -57,11 +58,13 @@ flowchart TB
 
     HCPUI --> RHCPCHAT
     HCPUI --> RHCPAN
+    HCPUI -->|"language switch; no image"| RHCPTRANS
     COMMUI --> RCOMCHAT
     COMMUI --> RCOMAN
 
     RHCPCHAT --> PHCPCHAT --> FACTORY
     RHCPAN --> ORCH
+    RHCPTRANS --> LANG
     ORCH --> PS1 --> FACTORY
     ORCH --> PS2 --> FACTORY
     ORCH --> PS3 --> FACTORY

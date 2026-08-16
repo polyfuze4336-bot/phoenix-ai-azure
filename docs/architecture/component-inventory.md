@@ -24,6 +24,7 @@
 | APP-INSTRUMENTATION | Startup instrumentation | App | Next.js instrumentation hook | `instrumentation.ts` | Env validation + telemetry init | CFG-ENV, OBS-APPINSIGHTS | ACTIVE | Phoenix AI team |
 | API-HCP-CHAT | HCP chat route | API | Next.js route handler | `app/api/hcp-chat/route.ts` | HCP clinical chat; requires validated EN/MS selection and bounded output-language correction | AI-PROVIDER, AI-LANGUAGE-VALIDATION, PROMPT-HCP-CHAT | ACTIVE | Phoenix AI team |
 | API-HCP-ANALYSIS | HCP wound analysis route | API | Next.js route handler | `app/api/analyze-wound/route.ts` | Multimodal wound/burn assessment with consolidated TBSA, canonical enums, validated EN/MS narrative output, and privacy-safe lifecycle telemetry | AI-ANALYSIS-PIPELINE, AI-LANGUAGE-VALIDATION, AI-MODEL-SELECTOR, AI-PROVIDER, AI-VALIDATION, AI-TELEMETRY, PROMPT-HCP-ANALYSIS | ACTIVE | Phoenix AI team |
+| API-HCP-ANALYSIS-TRANSLATION | HCP analysis translation route | API | Next.js route handler | `app/api/analyze-wound/translate/route.ts` | Translate only an existing structured result between EN/MS; preserve protected canonical/numeric values and never receive the image | AI-PROVIDER, AI-LANGUAGE-VALIDATION, UI-HCP | ACTIVE | Phoenix AI team |
 | API-COMMUNITY-CHAT | Community chat route | API | Next.js route handler | `app/api/community-chat/route.ts` | Public plain-language chat | AI-PROVIDER, PROMPT-COMMUNITY-CHAT | ACTIVE | Phoenix AI team |
 | API-COMMUNITY-ANALYSIS | Community image-check route | API | Next.js route handler | `app/api/community-analyze/route.ts` | Simplified image guidance with validated EN/MS output | AI-PROVIDER, AI-LANGUAGE-VALIDATION, AI-VALIDATION, PROMPT-COMMUNITY-ANALYSIS | ACTIVE | Phoenix AI team |
 | API-AUTH-LOGIN | Demo login route | API | Next.js route handler | `app/api/auth/login/route.ts` | Server-verified demo login | AUTH-DEMO, AUTH-SESSION | ACTIVE | Phoenix AI team |
@@ -37,7 +38,7 @@
 | API-HEALTH-LIVE | Liveness | API | Next.js route handler | `app/api/health/live/route.ts` | Process liveness | — | ACTIVE | Phoenix AI team |
 | API-HEALTH-READY | Readiness | API | Next.js route handler | `app/api/health/ready/route.ts` | Runtime+AI+DB+Blob checks | HEALTH-READINESS, CFG-ENV | ACTIVE | Phoenix AI team |
 | API-HEALTH-DB | DB health | API | Next.js route handler | `app/api/health/db/route.ts` | Database check | DB-PRISMA | ACTIVE | Phoenix AI team |
-| AI-PROVIDER | AI provider abstraction | Lib | TypeScript | `lib/ai/ai-provider.ts`, `azure-foundry-provider.ts`, `openai-compatible.ts` | Categorized safe failures; bounded timeout and status-specific retry policy | AI-CREDENTIAL, AZ-FOUNDRY | ACTIVE | Phoenix AI team |
+| AI-PROVIDER | AI provider abstraction | Lib | TypeScript | `lib/ai/ai-provider.ts`, `azure-foundry-provider.ts`, `openai-compatible.ts`, `content-filter.ts` | Categorized safe failures including allowlisted Azure input/output filter evidence; bounded timeout and status-specific retry policy | AI-CREDENTIAL, AZ-FOUNDRY | ACTIVE | Phoenix AI team |
 | AI-CREDENTIAL | AI credential | Lib | @azure/identity | `lib/ai/azure-credential.ts` | Managed-identity token | INFRA-MI | ACTIVE | Phoenix AI team |
 | AI-STREAMING | AI streaming helpers | Lib | Web Streams/SSE | `lib/ai/streaming/*` | Process complete streams and categorize empty/interrupted structured completions | — | ACTIVE | Phoenix AI team |
 | AI-VALIDATION | AI input/output validation | Lib | Zod + image-size | `lib/ai/validation/*`, `lib/ai/streaming/collect.ts` | Image MIME/base64/signature/decoded-dimension/integrity/size checks; tolerant JSON extraction, one repair, and stable safe errors | — | ACTIVE | Phoenix AI team |
@@ -60,7 +61,7 @@
 | PROMPT-COMMUNITY-CHAT | Community chat prompt | Lib | TypeScript | `lib/ai/prompts/community-chat.ts` | Plain-language prompt | — | ACTIVE | Phoenix AI team |
 | PROMPT-COMMUNITY-ANALYSIS | Community analysis prompt | Lib | TypeScript | `lib/ai/prompts/community-wound-analysis.ts` | Simplified guidance prompt | — | ACTIVE | Phoenix AI team |
 | CLINICAL-TBSA | TBSA calculator | Lib | TypeScript | `lib/clinical/tbsa.ts` | Total body surface area | — | ACTIVE | Phoenix AI team |
-| CLINICAL-PARKLAND | Parkland calculator | Lib | TypeScript | `lib/clinical/parkland.ts` | Fluid resuscitation formula | — | ACTIVE | Phoenix AI team |
+| CLINICAL-PARKLAND | Parkland indication + calculator | Lib | TypeScript | `lib/clinical/parkland.ts` | Separate Image Analysis adult/child indication thresholds and reusable deterministic fluid formula | — | ACTIVE | Phoenix AI team |
 | DB-PRISMA | Prisma data access | Lib | Prisma 6 | `lib/db.ts` | DB client | DB-POSTGRES | ACTIVE | Phoenix AI team |
 | DB-POSTGRES | PostgreSQL database | Data | Azure PostgreSQL Flexible Server 17.10 | infra + `DATABASE_URL` | Relational store | INFRA-MI | ACTIVE | Phoenix AI team |
 | DB-ANALYSISRECORD | Analysis history model | Data | Prisma model | `prisma/schema.prisma` | Persist HCP analyses | DB-PRISMA | ACTIVE | Phoenix AI team |

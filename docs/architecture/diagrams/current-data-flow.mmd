@@ -26,6 +26,9 @@ flowchart TB
         F2 --> LV2["Language validation\nretry once if needed"]
         LV2 --> SV2["Structured response validation (wound-analysis-schema)"]
         SV2 --> UI2["Original HCP Result Panel"]
+        UI2 -->|"language switch: structured result only"| TR2["/api/analyze-wound/translate"]
+        TR2 --> TV2["Narrative translation\ncanonical/numeric validation"]
+        TV2 -->|"cached EN/MS; original retained on failure"| UI2
         R2 -.->|"Entra session only: persist AnalysisRecord"| DB2["PostgreSQL (lib/analysis/history)"]
         R2 -.->|"Entra session only: private image"| BLOB2["Azure Blob Storage"]
     end

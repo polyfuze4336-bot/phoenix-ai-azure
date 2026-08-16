@@ -165,12 +165,12 @@ export const RAI_CONTROLS: RaiControl[] = [
   },
   {
     id: 'RAI-SAFE-006',
-    title: 'Deterministic, weight-gated Parkland',
+    title: 'Deterministic, indication- and weight-gated Parkland',
     principle: 'reliabilitySafety',
     layer: 'analysis',
     status: 'active',
     description:
-      'Fluid resuscitation volumes are computed deterministically and only when a weight is supplied; the pipeline never invents a body weight.',
+      'The analysis applies explicit adult (TBSA >=15%) and child (TBSA >=10%) indication thresholds only after a clinician selects the category, then computes volumes deterministically only when weight is supplied; category and weight are never inferred.',
     evidence: ['lib/clinical/parkland.ts', 'lib/ai/analysis/pipeline.ts'],
     tests: ['tests/unit/parkland.test.ts', 'tests/rai/rai-safety.test.ts'],
     userVisible: true,
@@ -406,7 +406,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'operations',
     status: 'active',
     description:
-      'Telemetry records counts, latencies and bounded operational metadata only. Analysis lifecycle events may include image size bucket and MIME type, but blocked-key sanitisation prevents image bytes, Base64, patient identifiers, prompts, clinical responses, transcripts, tokens and secrets from being logged.',
+      'Telemetry records counts, latencies and bounded operational metadata only. Analysis events may include image size bucket, MIME type, and allowlisted Azure content-filter source/category/severity, while blocked-key sanitisation prevents image bytes, Base64, patient identifiers, raw provider errors, prompts, clinical responses, transcripts, tokens and secrets from being logged.',
     evidence: [
       'lib/telemetry/server.ts',
       'lib/telemetry/client.ts',
@@ -488,16 +488,18 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'output',
     status: 'active',
     description:
-      'Every AI route requires the selected language, applies a strict non-mixing instruction, checks completed output, and makes at most one language-only rewrite when a confident mismatch is detected.',
+      'Every AI route requires the selected language and validates completed output. Existing HCP analysis and History narratives use a text-only translation operation with per-session EN/MS caching; protected canonical and numeric clinical values are validated unchanged and the image is never resent.',
     evidence: [
       'lib/ai/language.ts',
       'lib/ai/analysis/pipeline.ts',
       'app/api/analyze-wound/route.ts',
+      'app/api/analyze-wound/translate/route.ts',
+      'lib/ai/analysis/translation.ts',
       'app/api/hcp-chat/route.ts',
       'app/api/community-chat/route.ts',
       'app/api/community-analyze/route.ts',
     ],
-    tests: ['tests/unit/ai-language.test.ts', 'tests/rai/rai-controls.test.ts'],
+    tests: ['tests/unit/ai-language.test.ts', 'tests/unit/analysis-translation.test.ts', 'tests/rai/rai-controls.test.ts'],
     userVisible: true,
   },
   {

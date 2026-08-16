@@ -16,6 +16,21 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [6.2.0] — 2026-08-16
+
+### Changed
+- Existing HCP analysis and History results translate through a text-only route without image
+  reanalysis; protected clinical/numeric values are validated unchanged and EN/MS results cached.
+- Image Analysis Parkland guidance now separates indication from calculation, using explicit adult
+  `>=15%` and child `>=10%` TBSA thresholds without inferred category or weight.
+- Azure input/output content-filter failures retain only safe source/category/severity evidence.
+- The redundant browser `MediaStream` camera path is removed; standard upload remains.
+
+### Boundaries
+- No Azure resource, live content-filter policy, identity, secret, database schema, dependency,
+  Community feature, deployment workflow, or standalone Parkland-calculator change. See
+  [CHANGE-20260816](./changes/CHANGE-20260816-hcp-image-analysis-fixes.md).
+
 ## [6.1.1] — 2026-08-16
 
 ### Verified
