@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
           latencyMs: Date.now() - requestStartedAt,
         });
         return createResultSseResponse({
-          result: { ...flat, structured: rich, meta },
+          result: { ...flat, structured: rich, meta, language },
           processingEvent: { status: 'processing', message: 'Analyzing' },
           correlationId,
         });
@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
       latencyMs: Date.now() - requestStartedAt,
     });
     return createResultSseResponse({
-      result: parseHcpWoundAnalysis(completion.text),
+      result: { ...parseHcpWoundAnalysis(completion.text), language },
       processingEvent: { status: 'processing', message: 'Analyzing' },
       correlationId,
     });

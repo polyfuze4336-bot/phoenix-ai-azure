@@ -118,6 +118,8 @@ const legacyTranslations: Record<string, LegacyTranslation> = {
   'analysis.camera': { en: 'Use Camera', bm: 'Guna Kamera' },
   'analysis.analyze': { en: 'Analyze Image', bm: 'Analisis Imej' },
   'analysis.analyzing': { en: 'Analyzing...', bm: 'Menganalisis...' },
+  'analysis.translating': { en: 'Translating the existing assessment...', bm: 'Menterjemah penilaian sedia ada...' },
+  'analysis.translation_failed': { en: 'The assessment could not be translated. The original result is still displayed.', bm: 'Penilaian tidak dapat diterjemah. Keputusan asal masih dipaparkan.' },
   'analysis.results': { en: 'Analysis Results', bm: 'Keputusan Analisis' },
   'analysis.wound_type': { en: 'Wound/Burn Type', bm: 'Jenis Luka/Kelecuran' },
   'analysis.burn_degree': { en: 'Burn Degree', bm: 'Darjah Kelecuran' },

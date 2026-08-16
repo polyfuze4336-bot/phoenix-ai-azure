@@ -6,10 +6,11 @@ import { motion } from 'framer-motion';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { StructuredAnalysis, type StructuredAnalysisData } from './structured-analysis';
-import { translateCanonicalValue } from '@/lib/i18n';
+import { translateCanonicalValue, type AppLanguage } from '@/lib/i18n';
 import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
 
 interface AnalysisResult {
+  language?: AppLanguage;
   fitzpatrickType: string;
   fitzpatrickNote: string;
   woundCategory: string;
@@ -107,11 +108,14 @@ export function AnalysisClient() {
   const [analysisFailed, setAnalysisFailed] = useState(false);
   const [analysisRetryCount, setAnalysisRetryCount] = useState(0);
   const [refining, setRefining] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translationError, setTranslationError] = useState(false);
   const [weightKg, setWeightKg] = useState('');
   const [mechanism, setMechanism] = useState('');
   const [loadingStage, setLoadingStage] = useState(0);
   const lastBase64Ref = useRef<string>('');
   const lastMimeRef = useRef<string>('image/jpeg');
+  const translationsRef = useRef<Partial<Record<AppLanguage, AnalysisResult>>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const analysisStages = lang === 'ms'
@@ -126,6 +130,41 @@ export function AnalysisClient() {
     const timer = window.setInterval(() => setLoadingStage((stage) => Math.min(stage + 1, 3)), 4500);
     return () => window.clearInterval(timer);
   }, [analyzing]);
+
+  useEffect(() => {
+    if (!result || result.language === lang) return;
+    const cached = translationsRef.current[lang];
+    if (cached) {
+      setResult(cached);
+      setTranslationError(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setTranslating(true);
+    setTranslationError(false);
+    void fetch('/api/analyze-wound/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ result, language: lang }),
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('TRANSLATION_FAILED');
+        const body = await response.json();
+        if (!body?.result) throw new Error('TRANSLATION_FAILED');
+        const translated = { ...body.result, language: lang } as AnalysisResult;
+        translationsRef.current[lang] = translated;
+        setResult(translated);
+      })
+      .catch((error) => {
+        if (error?.name !== 'AbortError') setTranslationError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setTranslating(false);
+      });
+    return () => controller.abort();
+  }, [lang, result]);
 
   const patientContext = useCallback((): PatientContext | undefined => {
     const w = parseFloat(weightKg);
@@ -225,7 +264,9 @@ export function AnalysisClient() {
 
       const completed = await readAnalysisStream(response);
       if (completed) {
-        setResult(completed);
+        const localized = { ...completed, language: lang };
+        translationsRef.current = { [lang]: localized };
+        setResult(localized);
         setAnalysisFailed(false);
         void saveAnalysisToHistory(completed, base64, mime);
       }
@@ -263,7 +304,9 @@ export function AnalysisClient() {
       if (!response?.ok) throw new Error(await responseError(response, t('analysis.refine_failed')));
       const completed = await readAnalysisStream(response);
       if (completed) {
-        setResult(completed);
+        const localized = { ...completed, language: lang };
+        translationsRef.current = { [lang]: localized };
+        setResult(localized);
         void saveAnalysisToHistory(completed, lastBase64Ref.current, lastMimeRef.current);
       }
     } catch (err: any) {
@@ -280,6 +323,8 @@ export function AnalysisClient() {
     setError(null);
     setAnalysisFailed(false);
     setAnalysisRetryCount(0);
+    setTranslationError(false);
+    translationsRef.current = {};
   }, []);
 
   const chooseAnotherImage = useCallback(() => {
@@ -407,6 +452,16 @@ export function AnalysisClient() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
               <h2 className="font-display text-lg font-bold text-gray-900">{t('analysis.results')}</h2>
               <ClinicalAiNotice />
+              {translating && (
+                <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t('analysis.translating')}
+                </div>
+              )}
+              {translationError && (
+                <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  {t('analysis.translation_failed')}
+                </div>
+              )}
 
               {/* Native skin type (Fitzpatrick) */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 overflow-hidden">
