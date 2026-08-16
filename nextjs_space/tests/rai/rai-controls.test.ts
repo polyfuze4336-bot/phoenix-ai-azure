@@ -7,6 +7,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   RAI_CONTROLS,
   ASSURANCE_STAGES,
@@ -71,6 +72,18 @@ test('presentation-dependent controls are partial and not user-visible', () => {
     assert.equal(control?.status, 'partial', id);
     assert.equal(control?.userVisible, false, id);
   }
+});
+
+test('RAI-PRIV-007 is active and states legal and clinical boundaries in both languages', () => {
+  const control = RAI_CONTROLS.find((item) => item.id === 'RAI-PRIV-007');
+  assert.equal(control?.status, 'active');
+  assert.equal(control?.userVisible, true);
+
+  const translations = readFileSync(new URL('../../lib/i18n.ts', import.meta.url), 'utf8');
+  assert.match(translations, /Personal Data Protection Act 2010/);
+  assert.match(translations, /clinical decision support only/);
+  assert.match(translations, /Akta Perlindungan Data Peribadi 2010/);
+  assert.match(translations, /sokongan keputusan klinikal sahaja/);
 });
 
 test('the five assurance stages are present and ordered', () => {

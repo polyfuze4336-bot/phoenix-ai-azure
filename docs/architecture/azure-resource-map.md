@@ -10,6 +10,8 @@
 > resource, SKU, network path, identity, secret, model deployment, or region.
 > The `4.0.0` single-experience and global-language change is also application-only. Removing retired
 > source and adding bounded output-language validation changes no Azure resource or deployment SKU.
+> The `4.1.0` bilingual HCP clinical notice is static application content and changes no Azure
+> resource, SKU, region, identity, secret, network path, data store, or model deployment.
 
 ## Environment
 

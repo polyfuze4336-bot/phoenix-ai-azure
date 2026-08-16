@@ -23,6 +23,7 @@ and `tests`).
 | `lib/clinical/parkland.ts`, `lib/clinical/tbsa.ts` | RAI-SAFE-006/011 |
 | `lib/telemetry/*.ts`, `lib/ai/telemetry.ts` | RAI-PRIV-003 |
 | `lib/ai/azure-credential.ts` | RAI-PRIV-001 |
+| `components/clinical-ai-notice.tsx`, Original HCP analysis and chat | RAI-PRIV-007 |
 | `lib/analysis/history.ts`, `prisma/schema.prisma` | RAI-ACCT-002 |
 | `lib/ai/model-config.ts` | RAI-ACCT-005 |
 | `tests/evaluation/burn-wound/*` | RAI-ACCT-004 |

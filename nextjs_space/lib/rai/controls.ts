@@ -416,6 +416,22 @@ export const RAI_CONTROLS: RaiControl[] = [
     userVisible: false,
   },
   {
+    id: 'RAI-PRIV-007',
+    title: 'Patient-data legal handling notice',
+    principle: 'privacySecurity',
+    layer: 'operations',
+    status: 'active',
+    description:
+      'HCP analysis and chat display a bilingual warning to use only authorized, preferably de-identified patient data and images and to handle them under Malaysia\'s PDPA 2010, applicable Malaysian law and professional confidentiality duties. This is a handling obligation, not a compliance-certification claim.',
+    evidence: [
+      'components/clinical-ai-notice.tsx',
+      'app/hcp/analysis/_components/analysis-client.tsx',
+      'app/hcp/chat/_components/hcp-chat-client.tsx',
+    ],
+    tests: ['tests/rai/rai-controls.test.ts', 'tests/e2e/bilingual-language.spec.ts'],
+    userVisible: true,
+  },
+  {
     id: 'RAI-ACCT-005',
     title: 'Configurable model governance',
     principle: 'accountability',

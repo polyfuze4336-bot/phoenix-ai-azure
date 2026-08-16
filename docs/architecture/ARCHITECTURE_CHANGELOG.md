@@ -16,6 +16,20 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting pull request MUST bump this version and add an entry, and SHOULD
 reference the relevant ADR and change record.
 
+## [4.1.0] — 2026-08-16
+
+### Changed
+- **HCP clinical notice** — the Original HCP analysis and chat surfaces display one concise,
+  bilingual reminder covering authorized/de-identified patient information, Malaysia's PDPA 2010,
+  professional confidentiality, and the decision-support limitation of AI output.
+- **Responsible AI evidence** — `RAI-PRIV-007` is restored as an Active, tested, user-visible
+  handling notice. It does not claim that the prototype or its users are legally compliant.
+
+### Boundaries
+- No route, external integration, Azure resource, identity, storage, database, model, prompt, or
+  clinical-calculation change. No ADR is required. See
+  [CHANGE-20260816](./changes/CHANGE-20260816-original-clinical-notice.md).
+
 ## [4.0.0] — 2026-08-15
 
 ### Changed

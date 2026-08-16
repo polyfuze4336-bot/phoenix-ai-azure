@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { localizedContent } from '@/lib/i18n/index';
+import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
 
 interface ChatMsg {
   role: 'user' | 'assistant';
@@ -116,6 +117,8 @@ export function HcpChatClient() {
           <AlertTriangle className="w-3.5 h-3.5" /> {t('chat.escalate')}
         </button>
       </div>
+
+      <ClinicalAiNotice className="mb-4" />
 
       {escalated && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 flex items-center gap-2">

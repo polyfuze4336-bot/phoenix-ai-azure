@@ -43,3 +43,6 @@
 > **The application-wide bilingual output contract adds no new integrations.** Language remains a
 > two-value request preference on `INT-BROWSER-APP`; output validation uses the existing
 > `INT-APP-FOUNDRY` channel. Azure resource and data-flow boundaries are unchanged.
+
+> **The HCP clinical notice adds no integration or data flow.** It is static bilingual content on
+> the existing `INT-BROWSER-APP` surface and sends, stores, or logs no patient information.

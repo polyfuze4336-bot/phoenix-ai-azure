@@ -149,6 +149,15 @@ test('POST /api/community-chat reaches a terminal response for a valid question'
 });
 
 for (const route of ['/api/analyze-wound', '/api/community-analyze', '/api/hcp-chat', '/api/community-chat']) {
+  test(`POST ${route} rejects a missing language with 400`, async ({ request }) => {
+    const payload = route.includes('chat')
+      ? { messages: [{ role: 'user', content: 'Test question' }] }
+      : { image: TINY_PNG_B64, mimeType: 'image/png' };
+    const res = await postJson(request, route, payload);
+    expect(res.status()).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({ error: expect.stringMatching(/"en" or "ms"/) });
+  });
+
   test(`POST ${route} rejects a non-canonical language with 400`, async ({ request }) => {
     const payload = route.includes('chat')
       ? { messages: [{ role: 'user', content: 'Test question' }], language: 'bm' }

@@ -9,6 +9,9 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 ## [Unreleased]
 
 ### Changed
+- Restored the concise bilingual patient-data and clinical-use notice on Original HCP analysis and
+  chat. The notice covers authorized/de-identified information, Malaysia's PDPA 2010, professional
+  confidentiality, and the decision-support limitation without claiming legal compliance.
 - Consolidated Phoenix AI into one application experience with direct HCP and Community entries.
   Added one persisted English/Bahasa Malaysia state across retained UI and all AI routes, strict
   output-language instructions, completed-output detection, and one bounded rewrite attempt.

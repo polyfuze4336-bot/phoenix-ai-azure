@@ -51,4 +51,24 @@ for (const language of ['en', 'ms'] as const) {
     await seedHcpAuth(page);
     await assertRoutes(page, language, hcpRoutes);
   });
+
+  test(`HCP AI input surfaces display the clinical notice in ${language}`, async ({ page }) => {
+    await seedLanguage(page, language);
+    await seedHcpAuth(page);
+    const label = language === 'en'
+      ? 'Patient data and clinical decision-support notice'
+      : 'Notis data pesakit dan sokongan keputusan klinikal';
+    const requiredText = language === 'en'
+      ? 'Personal Data Protection Act 2010'
+      : 'Akta Perlindungan Data Peribadi 2010';
+
+    for (const path of ['/hcp/analysis', '/hcp/chat']) {
+      await page.goto(path);
+      const notice = page.getByRole('note', { name: label });
+      await expect(notice).toContainText(requiredText);
+      await expect(notice).toContainText(
+        language === 'en' ? 'clinical decision support only' : 'sokongan keputusan klinikal sahaja',
+      );
+    }
+  });
 }

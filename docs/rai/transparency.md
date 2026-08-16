@@ -38,3 +38,11 @@ deployment **name** is configuration, not a secret.
 ## Guideline basis (honest limitation)
 Clinical guidance draws on curated general references that are **not yet version-pinned citations**
 (**RAI-TRANS-005**, Partial). This is disclosed rather than presented as a validated evidence base.
+
+## Patient data and clinical use
+The Original HCP analysis and chat surfaces display a bilingual notice requiring authorized and,
+where possible, de-identified patient information; professional confidentiality; and handling under
+Malaysia's PDPA 2010 and applicable Malaysian law (**RAI-PRIV-007**). It also states that AI output
+is decision support, not diagnosis or a replacement for examination, professional judgement, or
+appropriate escalation. The notice describes obligations and limitations; it is not a claim of
+legal compliance or production readiness.

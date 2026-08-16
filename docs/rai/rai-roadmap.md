@@ -15,6 +15,8 @@ Honest staging. **Implemented** items are in the product today; **Next** and **F
 - AI labelling + analysis metadata + prompt/pipeline/schema versioning (RAI-TRANS-003/004).
 - Human-in-the-loop review; audit persistence (RAI-ACCT-001/002).
 - Managed identity, server-side calls, privacy-safe telemetry (RAI-PRIV-001/002/003).
+- Bilingual patient-data, confidentiality, PDPA, and clinical decision-support notice on HCP AI
+  input surfaces (RAI-PRIV-007).
 - Structural evaluation harness + RAI test suite (RAI-ACCT-004).
 - All-route AI language propagation, strict non-mixing instructions, completed-output detection, and
   one bounded rewrite retry (RAI-INCL-003).

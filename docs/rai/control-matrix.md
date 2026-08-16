@@ -32,6 +32,7 @@ Status: **Active** (implemented + evidenced) · **Partial** · **Planned**.
 | RAI-PRIV-001 | Managed-identity access | Privacy & Security | Operations | Active |
 | RAI-PRIV-002 | Server-side model calls | Privacy & Security | Operations | Active |
 | RAI-PRIV-003 | Privacy-safe telemetry | Privacy & Security | Operations | Active |
+| RAI-PRIV-007 | Patient-data legal handling notice | Privacy & Security | Operations | Active |
 | RAI-ACCT-005 | Configurable model governance | Accountability | Operations | Active |
 | RAI-ACCT-003 | Architecture governance (docs-sync) | Accountability | Operations | Active |
 | RAI-ACCT-004 | Structural evaluation harness | Reliability & Safety | Operations | Active |

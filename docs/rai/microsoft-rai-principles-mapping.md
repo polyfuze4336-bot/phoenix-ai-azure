@@ -32,6 +32,7 @@ not implemented. The controls above prevent *unsupported inference*; they do not
 | RAI-PRIV-002 | Server-side model calls only | `app/api/analyze-wound/route.ts` | Active |
 | RAI-PRIV-003 | Privacy-safe telemetry (blocked-key sanitisation) | `lib/telemetry/server.ts`, `tests/rai/rai-telemetry.test.ts` | Active |
 | RAI-PRIV-006 | Request size limits | `lib/ai/validation/image-input.ts` | Active |
+| RAI-PRIV-007 | Bilingual patient-data handling and clinical-use notice; obligation, not compliance certification | `components/clinical-ai-notice.tsx`, `tests/rai/rai-controls.test.ts` | Active |
 
 ## Inclusiveness
 

@@ -7,6 +7,7 @@ import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { StructuredAnalysis, type StructuredAnalysisData } from './structured-analysis';
 import { translateCanonicalValue } from '@/lib/i18n';
+import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
 
 interface AnalysisResult {
   fitzpatrickType: string;
@@ -259,6 +260,8 @@ export function AnalysisClient() {
         <h1 className="font-display text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{t('analysis.title')}</h1>
         <p className="text-sm text-gray-500 mt-1">{t('analysis.subtitle')}</p>
       </div>
+
+      <ClinicalAiNotice />
 
       {/* Disclaimer */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">

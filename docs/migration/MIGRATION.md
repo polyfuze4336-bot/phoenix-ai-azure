@@ -1371,3 +1371,23 @@ integration layers remain intact.
   drift, and seven Mermaid diagrams. The final build publishes only the retained routes. Local AI and
   database checks exercised explicit unconfigured terminal states because credentials were not loaded;
   no test was skipped or allowed to hang.
+
+### Step 35 - Restore concise HCP confidentiality and clinical-use reminders
+
+This step restores the previously governed notice to the Original HCP analysis and chat surfaces
+without reintroducing v2 or changing the surrounding application design.
+
+- **Patient-data handling.** The bilingual notice asks clinicians to use only authorized and,
+  where possible, de-identified patient information and images, avoid unnecessary identifiers, and
+  follow Malaysia's PDPA 2010, applicable Malaysian law, and professional confidentiality duties.
+- **Clinical boundary.** The same notice states that AI output is decision support only, is not a
+  diagnosis, and does not replace examination, professional judgement, or appropriate escalation.
+- **Honest assurance.** `RAI-PRIV-007` is Active with source and browser evidence. The notice is a
+  handling obligation and limitation statement, not legal advice, data-loss prevention, or proof of
+  compliance.
+- **Architecture.** MEDIUM impact; version `4.0.0 -> 4.1.0`; `UI-CLINICAL-NOTICE` moves from
+  `PLANNED` to `ACTIVE`. No ADR, external integration, Azure resource, identity, storage, database,
+  model, prompt, or clinical-calculation change.
+- **Validation.** PASS: unit `96/96`, Responsible AI `27/27`, integration `14/14`, production HTTP
+  API `24/24`, retained-route E2E `24/24`, TypeScript, ESLint, production build, architecture drift,
+  and seven Mermaid diagrams.

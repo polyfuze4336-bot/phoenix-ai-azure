@@ -7,7 +7,7 @@
 > and MUST remain synchronized with the implementation (see
 > [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `4.0.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `4.1.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -58,7 +58,7 @@ flowchart TB
 
     subgraph CLIENT["Client Experience"]
         Landing["Phoenix AI Landing — ACTIVE"]
-        HCP["HCP Portal — ACTIVE"]
+        HCP["HCP Portal + bilingual clinical notice — ACTIVE"]
         Community["Community Portal + image check — ACTIVE"]
         PWA["PWA / Mobile + global EN/MS UI — ACTIVE"]
     end
@@ -153,6 +153,7 @@ Companion diagrams:
 | Retired alternate experience | Runtime source, components, libraries, flags, assets and tests removed; recoverable from Git history only | Removed |
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |
 | Global English / Bahasa Melayu UI | Root `LanguageProvider`, `components/language-toggle.tsx`, `lib/i18n/{en,ms,index}.ts`; persisted `AppLanguage` (`en`/`ms`) | Implemented |
+| Bilingual clinical/confidentiality notice | `components/clinical-ai-notice.tsx`; displayed on Original HCP analysis and chat | Implemented |
 | Responsive interface + theming | Tailwind + shadcn/ui, `components/theme-*` | Implemented |
 
 ### 3.2 Application Layer

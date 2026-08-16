@@ -58,6 +58,13 @@ const legacyTranslations: Record<string, LegacyTranslation> = {
   'hcp.portal': { en: 'HCP Portal', bm: 'Portal HCP' },
   'hcp.sign_out': { en: 'Sign Out', bm: 'Log Keluar' },
 
+  // Clinical AI notice
+  'clinical_notice.label': { en: 'Patient data and clinical decision-support notice', bm: 'Notis data pesakit dan sokongan keputusan klinikal' },
+  'clinical_notice.patient_data_title': { en: 'Patient data and images:', bm: 'Data dan imej pesakit:' },
+  'clinical_notice.patient_data_body': { en: 'Handle only authorized and, where possible, de-identified information in accordance with Malaysia’s Personal Data Protection Act 2010 (Act 709), other applicable Malaysian laws, and professional confidentiality duties. Do not upload unnecessary identifiers.', bm: 'Kendalikan hanya maklumat yang dibenarkan dan, jika boleh, dinyahpengenalan, selaras dengan Akta Perlindungan Data Peribadi 2010 (Akta 709), undang-undang Malaysia lain yang terpakai, serta kewajipan kerahsiaan profesional. Jangan muat naik pengecam yang tidak diperlukan.' },
+  'clinical_notice.clinical_use_title': { en: 'Clinical use:', bm: 'Kegunaan klinikal:' },
+  'clinical_notice.clinical_use_body': { en: 'AI output is for clinical decision support only. It is not a diagnosis and does not replace examination, professional judgement, or escalation by a qualified healthcare professional.', bm: 'Output AI adalah untuk sokongan keputusan klinikal sahaja. Ia bukan diagnosis dan tidak menggantikan pemeriksaan, pertimbangan profesional, atau eskalasi oleh profesional penjagaan kesihatan yang berkelayakan.' },
+
   // Community Navigation
   'community.home': { en: 'Home', bm: 'Utama' },
   'community.firstaid': { en: 'First Aid', bm: 'Pertolongan Cemas' },
