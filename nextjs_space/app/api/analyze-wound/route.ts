@@ -14,7 +14,7 @@ import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
 import { trackEvent } from '@/lib/telemetry/server';
 import { hcpWoundAnalysisSystemPrompt } from '@/lib/ai/prompts/hcp-wound-analysis';
 import { getAnalysisModelDeployment, getAnalysisPipelineMode } from '@/lib/ai/model-config';
-import { runAnalysisPipeline, type PatientContext } from '@/lib/ai/analysis/pipeline';
+import { getAnalysisTimeoutMs, runAnalysisPipeline, type PatientContext } from '@/lib/ai/analysis/pipeline';
 import { toFlatHcpAnalysis } from '@/lib/ai/schemas/burn-wound-analysis';
 import { buildAnalysisMetadata } from '@/lib/ai/analysis/metadata';
 import { completeWithLanguageValidation, parseRequestedLanguage } from '@/lib/ai/language';
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   try {
     const bodySize = checkRequestBodySize(request.headers.get('content-length'));
     if (!bodySize.ok) {
-      return new Response(JSON.stringify({ error: bodySize.error }), { status: 413 });
+      return new Response(JSON.stringify({ error: bodySize.error, code: 'IMAGE_TOO_LARGE' }), { status: 413 });
     }
 
     const body = await request.json();
@@ -51,7 +51,15 @@ export async function POST(request: NextRequest) {
 
     const validation = validateImageInput({ image, mimeType });
     if (!validation.ok) {
-      return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
+      const error = language === 'ms'
+        ? validation.code === 'IMAGE_TOO_LARGE'
+          ? 'Imej terlalu besar. Sila pilih imej yang lebih kecil.'
+          : 'Imej tidak dapat diproses. Sila cuba imej JPEG, PNG, WebP atau GIF yang lain.'
+        : validation.error;
+      return new Response(JSON.stringify({ error, code: validation.code }), {
+        status: validation.code === 'IMAGE_TOO_LARGE' ? 413 : 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const correlationId = getOrCreateCorrelationId(request.headers);
@@ -126,7 +134,7 @@ export async function POST(request: NextRequest) {
           responseFormat: 'json_object',
           correlationId,
           route: 'analyze-wound',
-          timeoutMs: 110_000,
+          timeoutMs: getAnalysisTimeoutMs(),
         })).body,
       });
     } catch (err) {
@@ -140,6 +148,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Analyze wound error:', error);
-    return new Response(JSON.stringify({ error: error?.message ?? 'Internal error' }), { status: 500 });
+    return new Response(JSON.stringify({
+      error: 'The AI assessment could not be completed. Please try again.',
+      code: 'UNKNOWN',
+    }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }

@@ -56,19 +56,21 @@ for (const language of ['en', 'ms'] as const) {
     await seedLanguage(page, language);
     await seedHcpAuth(page);
     const label = language === 'en'
-      ? 'Patient data and clinical decision-support notice'
-      : 'Notis data pesakit dan sokongan keputusan klinikal';
-    const requiredText = language === 'en'
-      ? 'Personal Data Protection Act 2010'
-      : 'Akta Perlindungan Data Peribadi 2010';
+      ? 'Clinical and personal-data notice'
+      : 'Notis klinikal dan data peribadi';
 
     for (const path of ['/hcp/analysis', '/hcp/chat']) {
       await page.goto(path);
-      const notice = page.getByRole('note', { name: label });
-      await expect(notice).toContainText(requiredText);
-      await expect(notice).toContainText(
-        language === 'en' ? 'clinical decision support only' : 'sokongan keputusan klinikal sahaja',
-      );
+      const notices = page.getByRole('note', { name: label });
+      await expect(notices.filter({ hasText: language === 'en'
+        ? 'does not replace professional clinical judgement'
+        : 'tidak menggantikan pertimbangan profesional klinikal' })).toHaveCount(1);
+      await expect(notices.filter({ hasText: language === 'en'
+        ? 'Avoid entering unnecessary patient identifiers'
+        : 'Elakkan memasukkan pengecam pesakit' })).toHaveCount(1);
+      await expect(notices.filter({ hasText: language === 'en'
+        ? 'applicable Malaysian personal data protection requirements'
+        : 'keperluan perlindungan data peribadi Malaysia yang berkenaan' })).toHaveCount(1);
     }
   });
 }

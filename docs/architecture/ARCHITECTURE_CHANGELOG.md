@@ -16,6 +16,28 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [5.1.0] — 2026-08-16
+
+### Changed
+- **HCP notices and demo boundary** — compact bilingual decision-support, confidentiality, personal-
+  data, and Demo Environment indicators are placed at relevant HCP interaction/result surfaces
+  without claiming compliance, legal advice, certification, or production approval.
+- **Image validation** — JPEG, PNG, WebP, and GIF payloads must decode with valid dimensions before
+  model submission; malformed, truncated, mismatched, empty, and oversized images return stable,
+  language-aware categorized errors.
+- **AI resilience** — image analysis uses configurable `AI_ANALYSIS_TIMEOUT_MS`, at most three total
+  attempts for 408/429/500/502/503/504 and transient network failures only, exponential backoff with
+  jitter, and `Retry-After` support.
+- **Structured completion safety** — fenced/commentary JSON is extracted, malformed JSON receives one
+  bounded repair, core observation/interpretation failures stop analysis, and non-core management/
+  critic failures preserve the core result with explicit unavailable sections.
+- **Loading transparency** — HCP analysis displays four factual bilingual stages without percentages.
+
+### Boundaries
+- No Azure resource, SKU, region, identity, RBAC, model deployment, storage, database, network, or
+  prompt-policy change. See
+  [CHANGE-20260816](./changes/CHANGE-20260816-image-analysis-resilience-and-notices.md).
+
 ## [5.0.0] — 2026-08-16
 
 ### Changed

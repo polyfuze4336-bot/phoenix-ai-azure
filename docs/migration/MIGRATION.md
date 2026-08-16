@@ -54,6 +54,19 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 ## Migration audit log
 
+### Step 22 — Image-analysis resilience and governed HCP notices
+- Added exact compact bilingual clinical decision-support, confidentiality, personal-data, and demo
+  environment indications to the retained HCP analysis, chat, TBSA, Parkland, and shared shell.
+- Added client decode/size/type preflight and server MIME/base64/signature/dimension/integrity/size
+  validation with stable `IMAGE_*` categories.
+- Added safe AI error categories, exact retry allowlist (408/429/500/502/503/504 plus transient
+  network failures), three-attempt ceiling, jittered backoff, `Retry-After`, and configurable bounded
+  `AI_ANALYSIS_TIMEOUT_MS`.
+- Added complete-stream detection, tolerant JSON extraction, one structured repair, required core
+  observation/interpretation, explicit non-core management/critic degradation, and four factual
+  bilingual loading stages without percentages.
+- Architecture version `5.0.0` -> `5.1.0`; no Azure resource or integration footprint change.
+
 ### Step 1 — Import source, analyse, establish repo & audit trail
 - Extracted source archive into the workspace; flattened to repo root
   (`nextjs_space/`, `Uploads/`, `Shared.zip`).

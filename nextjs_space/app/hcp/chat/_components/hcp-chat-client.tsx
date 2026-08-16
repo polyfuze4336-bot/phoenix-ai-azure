@@ -188,6 +188,10 @@ export function HcpChatClient() {
       )}
 
       {/* Input */}
+      <div className="mt-3 grid gap-2 md:grid-cols-2">
+        <ClinicalAiNotice variant="confidentiality" />
+        <ClinicalAiNotice variant="personal-data" />
+      </div>
       <div className="mt-4 flex items-end gap-2">
         <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} className="hidden" />
         <button onClick={() => fileRef?.current?.click?.()} className="p-2.5 text-gray-400 hover:text-[#0F9B8E] transition-colors">

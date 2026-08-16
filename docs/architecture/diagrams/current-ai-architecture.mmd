@@ -28,7 +28,7 @@ flowchart TB
     end
 
     subgraph Pipeline["Staged Analysis Pipeline (lib/ai/analysis)"]
-        ORCH["runAnalysisPipeline\n(flag AI_ANALYSIS_PIPELINE=staged, default)\n(overlap-aware TBSA, EN/MS narrative)"]
+        ORCH["runAnalysisPipeline\n(core observation + interpretation required)\n(optional management/critic degradation)"]
         DETCALC["Deterministic calc\nlib/clinical/parkland + tbsa\n(no assumed weight)"]
         SCHEMA["schemas/burn-wound-analysis\n(obs vs interp, confidence, gaps)"]
         MODELSEL["model-config\nAZURE_AI_ANALYSIS_MODEL_DEPLOYMENT"]
@@ -38,10 +38,10 @@ flowchart TB
         FACTORY["getAiProvider()"]
         AZPROV["AzureFoundryProvider"]
         CRED["azure-credential\n(DefaultAzureCredential)"]
-        OAICOMPAT["openai-compatible mapping"]
-        VALIN["validation/image-input\nJPEG/PNG/WebP/GIF + base64/signature checks\nexplicit 400 before model call"]
-        VALOUT["validation/wound-analysis-schema\n(+ flat back-compat adapter)"]
-        STREAM["streaming/sse + collect + text-stream"]
+        OAICOMPAT["openai-compatible mapping\n3 attempts + bounded timeout\nretry only transient status/network"]
+        VALIN["validation/image-input\nJPEG/PNG/WebP/GIF + MIME/base64/signature\ndecode/dimensions/integrity before model"]
+        VALOUT["Zod schemas + JSON extraction\none repair + explicit partial result"]
+        STREAM["streaming/sse + collect + text-stream\nempty/interrupted error categories"]
         TEL["ai/telemetry"]
         LANG["language\nstrict instruction + detection\none bounded rewrite"]
     end

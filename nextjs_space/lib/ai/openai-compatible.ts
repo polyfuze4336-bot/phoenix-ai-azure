@@ -40,6 +40,12 @@ const NOOP = () => {};
 const DEFAULT_RETRY_BASE_DELAY_MS = 500;
 /** Cap on any single backoff delay (including Retry-After). */
 const MAX_RETRY_DELAY_MS = 20_000;
+const MAX_RETRIES = 2;
+const RETRYABLE_HTTP_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
+
+export function isRetryableAiStatus(status: number): boolean {
+  return RETRYABLE_HTTP_STATUSES.has(status);
+}
 
 function randomCorrelationId(): string {
   try {
@@ -266,7 +272,7 @@ export async function streamOpenAiCompatible(
   config: OpenAiCompatibleConfig,
 ): Promise<AiStreamResponse> {
   const correlationId = request.correlationId ?? randomCorrelationId();
-  const maxRetries = Math.max(0, request.retries ?? 0);
+  const maxRetries = Math.min(MAX_RETRIES, Math.max(0, request.retries ?? 0));
   const baseDelayMs = request.retryBaseDelayMs ?? DEFAULT_RETRY_BASE_DELAY_MS;
   const startedAt = Date.now();
 
@@ -326,16 +332,33 @@ export async function streamOpenAiCompatible(
       });
 
       if (!response?.ok) {
-        const upstreamText = await safeText(response);
-        // 429 (rate limit) + 5xx are transient and retryable; other 4xx are not.
-        const retryable = response.status === 429 || response.status >= 500;
+        await safeText(response);
+        const retryable = isRetryableAiStatus(response.status);
+        const category = response.status === 429
+          ? 'AI_RATE_LIMIT' as const
+          : response.status === 408
+            ? 'AI_TIMEOUT' as const
+            : response.status === 401 || response.status === 403
+              ? 'AI_AUTH_ERROR' as const
+              : response.status >= 500
+                ? 'AI_UPSTREAM_5XX' as const
+                : 'UNKNOWN' as const;
+        const clientMessage = category === 'AI_RATE_LIMIT'
+          ? 'The AI service is busy. Please try again shortly.'
+          : category === 'AI_TIMEOUT'
+            ? 'The AI assessment timed out. Please try again.'
+            : category === 'AI_AUTH_ERROR'
+              ? 'The AI service is temporarily unavailable.'
+              : category === 'AI_UPSTREAM_5XX'
+                ? 'The AI service could not complete the assessment. Please try again.'
+                : 'The AI request could not be processed.';
         if (retryable && attempt < maxRetries) {
           cleanup();
           lastError = new AiError({
             code: 'upstream_error',
             status: response.status,
-            clientMessage: upstreamText,
-            upstreamText,
+            category,
+            clientMessage,
             correlationId,
           });
           await sleep(
@@ -346,12 +369,11 @@ export async function streamOpenAiCompatible(
         }
         cleanup();
         recordFailure('error', `http_${response.status}`, attempt + 1);
-        // Preserve the original routes' behaviour: any non-OK upstream → HTTP 500.
         throw new AiError({
           code: 'upstream_error',
-          status: 500,
-          clientMessage: upstreamText,
-          upstreamText,
+          category,
+          status: category === 'AI_RATE_LIMIT' ? 429 : category === 'AI_TIMEOUT' ? 504 : 502,
+          clientMessage,
           correlationId,
         });
       }
@@ -362,8 +384,9 @@ export async function streamOpenAiCompatible(
         recordFailure('error', 'no_body', attempt + 1);
         throw new AiError({
           code: 'upstream_error',
+          category: 'AI_EMPTY_RESPONSE',
           status: 500,
-          clientMessage: 'No response body from AI provider',
+          clientMessage: 'The AI service returned an empty response. Please try again.',
           correlationId,
         });
       }
@@ -384,21 +407,6 @@ export async function streamOpenAiCompatible(
       cleanup();
 
       if (err instanceof AiError) {
-        if (attempt < maxRetries && err.status >= 500) {
-          lastError = err;
-          try {
-            await sleep(backoffDelay(attempt, baseDelayMs), request.signal);
-          } catch {
-            recordFailure('cancelled', 'aborted_during_backoff', attempt + 1);
-            throw new AiError({
-              code: 'aborted',
-              status: 499,
-              clientMessage: 'AI request was cancelled.',
-              correlationId,
-            });
-          }
-          continue;
-        }
         recordFailure('error', err.code, attempt + 1);
         throw err;
       }
@@ -412,7 +420,8 @@ export async function streamOpenAiCompatible(
         );
         throw new AiError({
           code: aborted ? 'aborted' : 'timeout',
-          status: 499,
+          category: aborted ? 'UNKNOWN' : 'AI_TIMEOUT',
+          status: aborted ? 499 : 504,
           clientMessage: aborted ? 'AI request was cancelled.' : 'AI request timed out.',
           correlationId,
           cause: err,
@@ -438,8 +447,9 @@ export async function streamOpenAiCompatible(
       recordFailure('error', 'network', attempt + 1);
       throw new AiError({
         code: 'internal',
+        category: 'UNKNOWN',
         status: 500,
-        clientMessage: (err as { message?: string })?.message ?? 'AI request failed.',
+        clientMessage: 'The AI service could not be reached. Please try again.',
         correlationId,
         cause: err,
       });
@@ -449,5 +459,5 @@ export async function streamOpenAiCompatible(
   recordFailure('error', 'exhausted', maxRetries + 1);
   throw lastError instanceof AiError
     ? lastError
-    : new AiError({ code: 'internal', status: 500, clientMessage: 'AI request failed.', correlationId });
+    : new AiError({ code: 'internal', category: 'UNKNOWN', status: 500, clientMessage: 'The AI service could not be reached. Please try again.', correlationId });
 }

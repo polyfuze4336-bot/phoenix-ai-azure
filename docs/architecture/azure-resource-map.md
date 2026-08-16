@@ -15,6 +15,9 @@
 > The `5.0.0` direct-main repository workflow changes GitHub triggers and governance only. Existing
 > OIDC federated credentials, Azure RBAC, resources, regions, SKUs, secrets, and deployment targets
 > are unchanged.
+> The `5.1.0` image-analysis resilience and HCP notice change is application-only. It adds no Azure
+> resource, SKU, region, identity, RBAC, secret, model deployment, network path, database, or storage
+> change; `AI_ANALYSIS_TIMEOUT_MS` is an optional setting with a bounded code default.
 
 ## Environment
 

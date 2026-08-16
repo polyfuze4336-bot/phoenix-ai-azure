@@ -22,10 +22,10 @@ test('validateImageInput: missing/empty image is rejected', () => {
   assert.equal(validateImageInput({ image: 123 }).ok, false);
 });
 
-test('validateImageInput: defaults MIME to image/jpeg', () => {
+test('validateImageInput: rejects a truncated JPEG that only has a valid signature', () => {
   const result = validateImageInput({ image: jpegSignatureBase64 });
-  assert.equal(result.ok, true);
-  if (result.ok) assert.equal(result.mimeType, 'image/jpeg');
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.code, 'IMAGE_INVALID');
 });
 
 test('validateImageInput: normalizes a data URL and uses its MIME type', () => {
@@ -36,6 +36,7 @@ test('validateImageInput: normalizes a data URL and uses its MIME type', () => {
   if (result.ok) {
     assert.equal(result.mimeType, 'image/png');
     assert.equal(result.base64, tinyPngBase64);
+    assert.deepEqual([result.width, result.height], [1, 1]);
   }
 });
 
@@ -77,7 +78,10 @@ test('validateImageInput: oversized image is rejected', () => {
     const big = 'A'.repeat(1000); // ~750 decoded bytes
     const result = validateImageInput({ image: big, mimeType: 'image/png' });
     assert.equal(result.ok, false);
-    if (!result.ok) assert.match(result.error, /too large/i);
+    if (!result.ok) {
+      assert.equal(result.code, 'IMAGE_TOO_LARGE');
+      assert.match(result.error, /too large/i);
+    }
   } finally {
     if (saved === undefined) delete process.env.AZURE_AI_MAX_IMAGE_MB;
     else process.env.AZURE_AI_MAX_IMAGE_MB = saved;

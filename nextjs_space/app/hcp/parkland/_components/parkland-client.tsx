@@ -7,6 +7,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { trackClientEvent } from '@/lib/telemetry/client';
 import { calculateResuscitation, type ResuscitationFormula } from '@/lib/clinical/parkland';
+import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
 
 type Formula = ResuscitationFormula;
 
@@ -52,6 +53,8 @@ export function ParklandClient() {
         <h1 className="font-display text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{t('parkland.title')}</h1>
         <p className="text-sm text-gray-500 mt-1">{t('parkland.subtitle')}</p>
       </div>
+
+      <ClinicalAiNotice />
 
       {tbsaNum > 20 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">

@@ -24,7 +24,9 @@ covered by the RAI + unit tests:
    never remain on a routine pathway (**RAI-SAFE-008**).
 6. **Automated consistency review** flags contradictions, unsupported claims and false precision
    (**RAI-SAFE-005**).
-7. **Bounded execution** — each stage runs under a timeout (**RAI-REL-001**).
+7. **Bounded execution** — each stage uses configurable `AI_ANALYSIS_TIMEOUT_MS`; transport makes no
+   more than three total attempts and retries only 408, 429, 500, 502, 503, 504, or transient network
+   failures, honoring `Retry-After` where supplied (**RAI-REL-001**).
 
 ## Safe failure
 If the model or validation fails, the app returns an explicit, clearly-labelled
@@ -33,11 +35,19 @@ a result (**RAI-SAFE-010**,
 [`lib/ai/validation/wound-analysis-schema.ts`](../../nextjs_space/lib/ai/validation/wound-analysis-schema.ts)).
 
 Before model invocation, image input is limited to JPEG, PNG, WebP, and GIF; data URLs are
-normalized and MIME type, base64 syntax, decoded size, and file signature are checked. Unsupported
-HEIC/HEIF or malformed/mismatched payloads receive an actionable HTTP 400 and are not sent to the
-model (**RAI-SAFE-001**).
+normalized and MIME type, base64 syntax, decoded size, file signature, dimensions, and structural
+integrity are checked. Unsupported HEIC/HEIF or malformed, truncated, empty, or mismatched payloads
+receive an actionable HTTP 400 and are not sent to the model (**RAI-SAFE-001**).
+
+Structured output may be extracted from fences or surrounding commentary and receives one bounded
+repair attempt. Observation and interpretation are core stages: if either remains unavailable, no
+clinical result is returned. Management and critic are non-core stages: when either remains
+unavailable, the validated core result is retained and the missing subsection is labelled rather
+than invented (**RAI-SAFE-003**).
 
 ## Boundaries
 A single photograph cannot establish depth progression, infection, pain or sensation with certainty.
+Structural decoding does not establish that an image is clinically useful; focus, lighting, framing,
+occlusion and scale remain model-assessed and clinician-reviewed.
 These limits are disclosed per assessment (see [transparency.md](./transparency.md)) and in
 [known-limitations.md](./known-limitations.md).

@@ -80,10 +80,11 @@ test('RAI-PRIV-007 is active and states legal and clinical boundaries in both la
   assert.equal(control?.userVisible, true);
 
   const translations = readFileSync(new URL('../../lib/i18n.ts', import.meta.url), 'utf8');
-  assert.match(translations, /Personal Data Protection Act 2010/);
-  assert.match(translations, /clinical decision support only/);
-  assert.match(translations, /Akta Perlindungan Data Peribadi 2010/);
-  assert.match(translations, /sokongan keputusan klinikal sahaja/);
+  assert.match(translations, /applicable Malaysian personal data protection requirements/);
+  assert.match(translations, /does not replace professional clinical judgement/);
+  assert.match(translations, /keperluan perlindungan data peribadi Malaysia yang berkenaan/);
+  assert.match(translations, /tidak menggantikan pertimbangan profesional klinikal/);
+  assert.doesNotMatch(translations, /PDPA Compliant/);
 });
 
 test('the five assurance stages are present and ordered', () => {

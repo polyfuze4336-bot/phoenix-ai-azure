@@ -9,7 +9,12 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assembleAnalysis } from '../../lib/ai/analysis/pipeline';
+import {
+  assembleAnalysis,
+  getAnalysisTimeoutMs,
+  hasInterpretationSignal,
+  hasObservationSignal,
+} from '../../lib/ai/analysis/pipeline';
 import { toFlatHcpAnalysis, type Interpretation, type VisualObservation, type Management } from '../../lib/ai/schemas/burn-wound-analysis';
 
 function field(interpretation: string, confidence: any = 'high') {
@@ -71,6 +76,34 @@ function baseManagement(over: Partial<Management> = {}): Management {
 }
 
 const critic = { pass: true, issues: [], recommendedCorrections: [] };
+
+test('core stage signal gates reject empty tolerant-schema inputs', () => {
+  assert.equal(hasObservationSignal({}), false);
+  assert.equal(hasObservationSignal({ visibleFindings: ['blister'], anatomicalLocation: 'arm' }), true);
+  assert.equal(hasInterpretationSignal({}), false);
+  assert.equal(hasInterpretationSignal({
+    isBurn: true,
+    woundCategory: { interpretation: 'Burn' },
+    burnDepth: { interpretation: 'Superficial partial thickness' },
+  }), true);
+});
+
+test('analysis timeout is configurable and bounded', () => {
+  const saved = process.env.AI_ANALYSIS_TIMEOUT_MS;
+  try {
+    delete process.env.AI_ANALYSIS_TIMEOUT_MS;
+    assert.equal(getAnalysisTimeoutMs(), 90_000);
+    process.env.AI_ANALYSIS_TIMEOUT_MS = '1000';
+    assert.equal(getAnalysisTimeoutMs(), 10_000);
+    process.env.AI_ANALYSIS_TIMEOUT_MS = '999999';
+    assert.equal(getAnalysisTimeoutMs(), 180_000);
+    process.env.AI_ANALYSIS_TIMEOUT_MS = '120000';
+    assert.equal(getAnalysisTimeoutMs(), 120_000);
+  } finally {
+    if (saved === undefined) delete process.env.AI_ANALYSIS_TIMEOUT_MS;
+    else process.env.AI_ANALYSIS_TIMEOUT_MS = saved;
+  }
+});
 
 test('Parkland is NOT computed from an assumed weight when weight is absent', () => {
   const a = assembleAnalysis({ observation: baseObservation(), interpretation: baseInterpretation(), management: baseManagement(), critic });

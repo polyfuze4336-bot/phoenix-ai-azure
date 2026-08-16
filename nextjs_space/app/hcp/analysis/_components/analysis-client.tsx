@@ -1,9 +1,9 @@
 'use client';
 
 import { useLanguage } from '@/components/language-provider';
-import { Upload, Camera, AlertTriangle, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette } from 'lucide-react';
+import { Upload, Camera, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { StructuredAnalysis, type StructuredAnalysisData } from './structured-analysis';
 import { translateCanonicalValue } from '@/lib/i18n';
@@ -69,8 +69,32 @@ async function saveAnalysisToHistory(result: AnalysisResult, image: string, mime
 }
 
 async function responseError(response: Response, fallback: string): Promise<string> {
-  await response.json().catch(() => undefined);
-  return fallback;
+  const body = await response.json().catch(() => undefined);
+  return typeof body?.error === 'string' ? body.error : fallback;
+}
+
+const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const MAX_CLIENT_IMAGE_BYTES = 10 * 1024 * 1024;
+
+function readImageFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('IMAGE_ENCODING_FAILED'));
+    reader.onload = () => {
+      if (typeof reader.result !== 'string' || !reader.result.includes(',')) {
+        reject(new Error('IMAGE_ENCODING_FAILED'));
+        return;
+      }
+      const image = new window.Image();
+      image.onerror = () => reject(new Error('IMAGE_INVALID'));
+      image.onload = () => {
+        if (image.naturalWidth < 1 || image.naturalHeight < 1) reject(new Error('IMAGE_INVALID'));
+        else resolve(reader.result as string);
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 export function AnalysisClient() {
@@ -84,12 +108,26 @@ export function AnalysisClient() {
   const [refining, setRefining] = useState(false);
   const [weightKg, setWeightKg] = useState('');
   const [mechanism, setMechanism] = useState('');
+  const [loadingStage, setLoadingStage] = useState(0);
   const lastBase64Ref = useRef<string>('');
   const lastMimeRef = useRef<string>('image/jpeg');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  const analysisStages = lang === 'ms'
+    ? ['Menyediakan imej', 'Menganalisis ciri luka', 'Menyemak penilaian', 'Menyediakan keputusan']
+    : ['Preparing image', 'Analysing wound characteristics', 'Reviewing assessment', 'Preparing result'];
+
+  useEffect(() => {
+    if (!analyzing) {
+      setLoadingStage(0);
+      return;
+    }
+    const timer = window.setInterval(() => setLoadingStage((stage) => Math.min(stage + 1, 3)), 4500);
+    return () => window.clearInterval(timer);
+  }, [analyzing]);
 
   const patientContext = useCallback((): PatientContext | undefined => {
     const w = parseFloat(weightKg);
@@ -122,19 +160,36 @@ export function AnalysisClient() {
         }
       }
     }
-    return null;
-  }, []);
+    throw new Error(t('analysis.stream_interrupted'));
+  }, [t]);
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e?.target?.files?.[0];
     if (!file) return;
-    setImageFile(file);
     setResult(null);
     setError(null);
-    const reader = new FileReader();
-    reader.onload = (ev: any) => setImagePreview(ev?.target?.result as string);
-    reader.readAsDataURL(file);
-  }, []);
+    setImageFile(null);
+    setImagePreview(null);
+    if (file.size === 0 || !ACCEPTED_IMAGE_TYPES.has(file.type)) {
+      setError(t('analysis.image_invalid'));
+      return;
+    }
+    if (file.size > MAX_CLIENT_IMAGE_BYTES) {
+      setError(t('analysis.image_too_large'));
+      return;
+    }
+    try {
+      const dataUrl = await readImageFile(file);
+      setImageFile(file);
+      setImagePreview(dataUrl);
+    } catch (error) {
+      setError(error instanceof Error && error.message === 'IMAGE_ENCODING_FAILED'
+        ? t('analysis.image_encoding_failed')
+        : t('analysis.image_invalid'));
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }, [t]);
 
   const startCamera = useCallback(async () => {
     try {
@@ -179,8 +234,12 @@ export function AnalysisClient() {
     try {
       const reader = new FileReader();
       const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve((reader?.result as string)?.split(',')?.[1] ?? '');
-        reader.onerror = reject;
+        reader.onload = () => {
+          const encoded = (reader?.result as string)?.split(',')?.[1] ?? '';
+          if (encoded) resolve(encoded);
+          else reject(new Error(t('analysis.image_encoding_failed')));
+        };
+        reader.onerror = () => reject(new Error(t('analysis.image_encoding_failed')));
         reader.readAsDataURL(imageFile);
       });
 
@@ -261,17 +320,13 @@ export function AnalysisClient() {
         <p className="text-sm text-gray-500 mt-1">{t('analysis.subtitle')}</p>
       </div>
 
-      <ClinicalAiNotice />
-
-      {/* Disclaimer */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-        <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
-        <p className="text-sm text-amber-800">{t('analysis.disclaimer')}</p>
-      </div>
+      {!result && <ClinicalAiNotice />}
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Upload Section */}
         <div className="space-y-4">
+          <ClinicalAiNotice variant="confidentiality" />
+          <ClinicalAiNotice variant="personal-data" />
           {!imagePreview && !cameraActive && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
               <div
@@ -349,7 +404,7 @@ export function AnalysisClient() {
                 disabled={analyzing}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#8B0000] text-white rounded-xl font-medium hover:bg-[#7a0000] transition-colors disabled:opacity-50"
               >
-                {analyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> {t('analysis.analyzing')}</> : <><FileText className="w-5 h-5" /> {t('analysis.analyze')}</>}
+                {analyzing ? <><Loader2 className="w-5 h-5 animate-spin" /> {analysisStages[loadingStage]}</> : <><FileText className="w-5 h-5" /> {t('analysis.analyze')}</>}
               </button>
             </div>
           )}
@@ -362,6 +417,7 @@ export function AnalysisClient() {
           {result && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
               <h2 className="font-display text-lg font-bold text-gray-900">{t('analysis.results')}</h2>
+              <ClinicalAiNotice />
 
               {/* Native skin type (Fitzpatrick) */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 overflow-hidden">

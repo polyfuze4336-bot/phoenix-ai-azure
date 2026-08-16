@@ -84,7 +84,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'input',
     status: 'active',
     description:
-      'Uploaded JPEG, PNG, WebP, and GIF images are normalized and validated for MIME type, base64 syntax, content signature, and size before any model call; malformed, mismatched, oversized, or unsupported payloads are rejected with an explicit user-visible error.',
+      'Uploaded JPEG, PNG, WebP, and GIF images are normalized and validated for MIME type, base64 syntax, content signature, decoded dimensions and integrity, and size before any model call; malformed, truncated, mismatched, oversized, empty, or unsupported payloads receive a categorized user-visible error.',
     evidence: ['lib/ai/validation/image-input.ts', 'app/api/analyze-wound/route.ts', 'app/api/community-analyze/route.ts'],
     tests: ['tests/unit/image-input.test.ts', 'tests/api/routes.spec.ts', 'tests/rai/rai-safety.test.ts'],
     userVisible: true,
@@ -219,7 +219,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'output',
     status: 'active',
     description:
-      'Model output is validated against a Zod schema; invalid or empty output yields an explicit, clearly-labelled "assessment could not be completed" state rather than a fabricated result.',
+      'Model output is extracted and validated against a Zod schema. Fenced or commentary-wrapped JSON is accepted and malformed structured output receives one bounded repair attempt. Core observation or interpretation failure stops the analysis; non-core management or critic failure is marked unavailable without fabricating clinical information.',
     evidence: [
       'lib/ai/validation/wound-analysis-schema.ts',
       'lib/ai/schemas/burn-wound-analysis.ts',
@@ -422,7 +422,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'operations',
     status: 'active',
     description:
-      'HCP analysis and chat display a bilingual warning to use only authorized, preferably de-identified patient data and images and to handle them under Malaysia\'s PDPA 2010, applicable Malaysian law and professional confidentiality duties. This is a handling obligation, not a compliance-certification claim.',
+      'HCP interaction surfaces display compact bilingual confidentiality and Malaysian personal-data reminders, including that this demo must not receive real identifiable patient data unless explicitly authorized. The wording is a handling obligation, not legal advice or a compliance-certification claim.',
     evidence: [
       'components/clinical-ai-notice.tsx',
       'app/hcp/analysis/_components/analysis-client.tsx',
@@ -516,7 +516,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'operations',
     status: 'active',
     description:
-      'Each pipeline stage runs under a timeout so a stalled model call fails safe rather than hanging the assessment.',
+      'Each pipeline stage uses configurable AI_ANALYSIS_TIMEOUT_MS with a bounded default and at most three attempts for explicitly retryable status or network failures, so stalled or transient calls fail safely without unlimited retry.',
     evidence: ['lib/ai/analysis/pipeline.ts'],
     userVisible: false,
   },

@@ -15,6 +15,7 @@ Documented, honestly. Each has a stable ID in the governed control register and 
 | LIM-009 | The runtime does not currently provide an in-product AI Assurance page; reviewers must use this governed documentation and test evidence. |
 | LIM-010 | AI output-language detection is heuristic: short or highly technical output may be classified as ambiguous and accepted. A confidently mismatched response is rewritten once only; retries are deliberately bounded to prevent loops. |
 | LIM-011 | Architecture documentation synchronization is required by repository policy and checked locally, but is not enforced by a GitHub status check in the rapid-prototype direct-main workflow. |
+| LIM-012 | Decoding verifies structural image integrity and dimensions but does not prove that an image is clinically useful; focus, lighting, framing, occlusion and scale adequacy remain model-assessed and clinician-reviewed. |
 
 These limitations are not defects to hide — they define the responsible scope of the tool. See
 [rai-roadmap.md](./rai-roadmap.md) for what is planned.

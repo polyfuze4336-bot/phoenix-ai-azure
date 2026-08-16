@@ -8,6 +8,8 @@
  * `createStructuredSseResponse` to accumulate `choices[0].delta.content`.
  */
 
+import { AiError } from '../types';
+
 export interface CollectedCompletion {
   /** Full accumulated assistant text. */
   text: string;
@@ -24,6 +26,26 @@ export async function collectCompletion(
   let partial = '';
   let usage: CollectedCompletion['usage'];
 
+  const processLine = (line: string): boolean => {
+    if (!line.startsWith('data: ')) return false;
+    const data = line.slice(6).trim();
+    if (data === '[DONE]') return true;
+    try {
+      const parsed = JSON.parse(data);
+      buffer += parsed?.choices?.[0]?.delta?.content ?? '';
+      if (parsed?.usage) {
+        usage = {
+          prompt: parsed.usage.prompt_tokens,
+          completion: parsed.usage.completion_tokens,
+          total: parsed.usage.total_tokens,
+        };
+      }
+    } catch {
+      /* ignore non-JSON keep-alive lines */
+    }
+    return false;
+  };
+
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -32,28 +54,43 @@ export async function collectCompletion(
       const lines = partial.split('\n');
       partial = lines.pop() ?? '';
       for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6);
-        if (data === '[DONE]') return { text: buffer, usage };
-        try {
-          const parsed = JSON.parse(data);
-          buffer += parsed?.choices?.[0]?.delta?.content ?? '';
-          if (parsed?.usage) {
-            usage = {
-              prompt: parsed.usage.prompt_tokens,
-              completion: parsed.usage.completion_tokens,
-              total: parsed.usage.total_tokens,
-            };
+        if (processLine(line)) {
+          if (!buffer.trim()) {
+            throw new AiError({
+              code: 'upstream_error',
+              category: 'AI_EMPTY_RESPONSE',
+              status: 502,
+              clientMessage: 'The AI service returned an empty response. Please try again.',
+            });
           }
-        } catch {
-          /* ignore non-JSON keep-alive lines */
+          return { text: buffer, usage };
         }
       }
     }
+    partial += decoder.decode();
+    for (const line of partial.split('\n')) {
+      if (processLine(line)) return { text: buffer, usage };
+    }
+    throw new AiError({
+      code: 'upstream_error',
+      category: buffer.trim() ? 'AI_STREAM_INTERRUPTED' : 'AI_EMPTY_RESPONSE',
+      status: 502,
+      clientMessage: buffer.trim()
+        ? 'The AI response was interrupted. Please try again.'
+        : 'The AI service returned an empty response. Please try again.',
+    });
+  } catch (error) {
+    if (error instanceof AiError) throw error;
+    throw new AiError({
+      code: 'upstream_error',
+      category: 'AI_STREAM_INTERRUPTED',
+      status: 502,
+      clientMessage: 'The AI response was interrupted. Please try again.',
+      cause: error,
+    });
   } finally {
     reader.releaseLock?.();
   }
-  return { text: buffer, usage };
 }
 
 /** Best-effort parse of a model JSON object, tolerating code fences / prose. */

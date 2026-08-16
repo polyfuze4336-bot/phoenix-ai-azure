@@ -57,13 +57,16 @@ const legacyTranslations: Record<string, LegacyTranslation> = {
   'hcp.history': { en: 'Analysis History', bm: 'Sejarah Analisis' },
   'hcp.portal': { en: 'HCP Portal', bm: 'Portal HCP' },
   'hcp.sign_out': { en: 'Sign Out', bm: 'Log Keluar' },
+  'hcp.demo_environment': { en: 'Demo Environment', bm: 'Persekitaran Demo' },
 
   // Clinical AI notice
-  'clinical_notice.label': { en: 'Patient data and clinical decision-support notice', bm: 'Notis data pesakit dan sokongan keputusan klinikal' },
-  'clinical_notice.patient_data_title': { en: 'Patient data and images:', bm: 'Data dan imej pesakit:' },
-  'clinical_notice.patient_data_body': { en: 'Handle only authorized and, where possible, de-identified information in accordance with Malaysia’s Personal Data Protection Act 2010 (Act 709), other applicable Malaysian laws, and professional confidentiality duties. Do not upload unnecessary identifiers.', bm: 'Kendalikan hanya maklumat yang dibenarkan dan, jika boleh, dinyahpengenalan, selaras dengan Akta Perlindungan Data Peribadi 2010 (Akta 709), undang-undang Malaysia lain yang terpakai, serta kewajipan kerahsiaan profesional. Jangan muat naik pengecam yang tidak diperlukan.' },
-  'clinical_notice.clinical_use_title': { en: 'Clinical use:', bm: 'Kegunaan klinikal:' },
-  'clinical_notice.clinical_use_body': { en: 'AI output is for clinical decision support only. It is not a diagnosis and does not replace examination, professional judgement, or escalation by a qualified healthcare professional.', bm: 'Output AI adalah untuk sokongan keputusan klinikal sahaja. Ia bukan diagnosis dan tidak menggantikan pemeriksaan, pertimbangan profesional, atau eskalasi oleh profesional penjagaan kesihatan yang berkelayakan.' },
+  'clinical_notice.label': { en: 'Clinical and personal-data notice', bm: 'Notis klinikal dan data peribadi' },
+  'clinical_notice.decision_title': { en: 'Clinical Decision Support', bm: 'Sokongan Keputusan Klinikal' },
+  'clinical_notice.decision_body': { en: 'Phoenix AI provides AI-assisted clinical decision support and does not replace professional clinical judgement. Findings should be reviewed by a qualified healthcare professional before clinical action.', bm: 'Phoenix AI menyediakan sokongan keputusan klinikal berbantukan AI dan tidak menggantikan pertimbangan profesional klinikal. Semua penemuan perlu disemak oleh profesional penjagaan kesihatan yang berkelayakan sebelum tindakan klinikal diambil.' },
+  'clinical_notice.confidentiality_title': { en: 'Confidentiality', bm: 'Kerahsiaan' },
+  'clinical_notice.confidentiality_body': { en: 'Use only authorised clinical information. Avoid entering unnecessary patient identifiers or sensitive information not required for the assessment.', bm: 'Gunakan hanya maklumat klinikal yang dibenarkan. Elakkan memasukkan pengecam pesakit atau maklumat sensitif yang tidak diperlukan untuk penilaian.' },
+  'clinical_notice.personal_data_title': { en: 'Personal Data', bm: 'Data Peribadi' },
+  'clinical_notice.personal_data_body': { en: "Handle personal data in accordance with your organisation's privacy policies and applicable Malaysian personal data protection requirements. This demonstration environment should not be used for real identifiable patient data unless explicitly authorised.", bm: 'Kendalikan data peribadi mengikut dasar privasi organisasi anda dan keperluan perlindungan data peribadi Malaysia yang berkenaan. Persekitaran demonstrasi ini tidak boleh digunakan untuk data pesakit sebenar yang boleh dikenal pasti melainkan dibenarkan secara khusus.' },
 
   // Community Navigation
   'community.home': { en: 'Home', bm: 'Utama' },
@@ -159,6 +162,10 @@ const legacyTranslations: Record<string, LegacyTranslation> = {
   'analysis.cancel': { en: 'Cancel', bm: 'Batal' },
   'analysis.camera_denied': { en: 'Camera access denied. Please allow camera access.', bm: 'Akses kamera ditolak. Sila benarkan akses kamera.' },
   'analysis.failed': { en: 'Analysis failed', bm: 'Analisis gagal' },
+  'analysis.image_invalid': { en: 'The image could not be processed. Please try another JPEG, PNG, WebP, or GIF image.', bm: 'Imej tidak dapat diproses. Sila cuba imej JPEG, PNG, WebP atau GIF yang lain.' },
+  'analysis.image_too_large': { en: 'The image is too large. Please select an image smaller than 10 MB.', bm: 'Imej terlalu besar. Sila pilih imej yang lebih kecil daripada 10 MB.' },
+  'analysis.image_encoding_failed': { en: 'The image could not be encoded. Please select it again.', bm: 'Imej tidak dapat dikodkan. Sila pilih imej sekali lagi.' },
+  'analysis.stream_interrupted': { en: 'The AI response was interrupted. Please try again.', bm: 'Respons AI telah terganggu. Sila cuba lagi.' },
   'analysis.refine_failed': { en: 'Refinement failed', bm: 'Proses memperhalusi gagal' },
   'analysis.patient_details': { en: 'Patient details (optional — improves accuracy)', bm: 'Butiran pesakit (pilihan — meningkatkan ketepatan)' },
   'analysis.weight': { en: 'Weight (kg)', bm: 'Berat (kg)' },

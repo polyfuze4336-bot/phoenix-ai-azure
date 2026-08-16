@@ -7,7 +7,7 @@
 > and MUST remain synchronized with the implementation (see
 > [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `5.0.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `5.1.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -153,7 +153,7 @@ Companion diagrams:
 | Retired alternate experience | Runtime source, components, libraries, flags, assets and tests removed; recoverable from Git history only | Removed |
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |
 | Global English / Bahasa Melayu UI | Root `LanguageProvider`, `components/language-toggle.tsx`, `lib/i18n/{en,ms,index}.ts`; persisted `AppLanguage` (`en`/`ms`) | Implemented |
-| Bilingual clinical/confidentiality notice | `components/clinical-ai-notice.tsx`; displayed on Original HCP analysis and chat | Implemented |
+| Bilingual clinical/data notices + demo boundary | `components/clinical-ai-notice.tsx`, `components/demo-environment-badge.tsx`; contextual notices on analysis/upload/results, chat/input, TBSA and Parkland | Implemented |
 | Responsive interface + theming | Tailwind + shadcn/ui, `components/theme-*` | Implemented |
 
 ### 3.2 Application Layer
@@ -173,7 +173,7 @@ Companion diagrams:
 
 | Element | Location | Status |
 | --- | --- | --- |
-| AI provider factory | `lib/ai/ai-provider.ts` → `getAiProvider()` returns `AzureFoundryProvider` (single provider; abstraction retained) | Implemented |
+| AI provider factory | `lib/ai/ai-provider.ts` → `getAiProvider()` returns `AzureFoundryProvider`; categorized safe errors and retry policy remain provider-neutral | Implemented |
 | Model endpoint | Environment-owned Azure AI Services, `gpt-4o` `2024-11-20` Global Standard, api-version `2024-10-21` | Implemented |
 | Model selection (purpose-specific) | `lib/ai/model-config.ts` — `AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT` / `AZURE_AI_CHAT_MODEL_DEPLOYMENT` (default to `AZURE_AI_MODEL_DEPLOYMENT`) | Implemented |
 | Credential | `lib/ai/azure-credential.ts` (`DefaultAzureCredential`, key fallback) | Implemented |
@@ -184,9 +184,10 @@ Companion diagrams:
 | Staged analysis pipeline | `lib/ai/analysis/pipeline.ts` (`runAnalysisPipeline`, `assembleAnalysis`) — default for `/api/analyze-wound`; preserves canonical structured enums while localizing narrative EN/MS; flag `AI_ANALYSIS_PIPELINE=single` reverts | Implemented |
 | Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — Parkland is indication/age-threshold/weight gated; no assumed patient weight | Implemented |
 | Rich analysis schema + adapter | `lib/ai/schemas/burn-wound-analysis.ts` (observation vs interpretation, field confidence, gaps) + flat back-compat adapter | Implemented |
-| Streaming | `lib/ai/streaming/{sse,collect,text-stream}.ts` | Implemented |
-| Image analysis input | `lib/ai/validation/image-input.ts` accepts model-compatible JPEG, PNG, WebP, and GIF; normalizes data URLs and rejects malformed, mismatched, HEIC, or HEIF payloads before model invocation | Implemented |
-| Structured response validation | `lib/ai/validation/wound-analysis-schema.ts` (Zod, 22-field contract) | Implemented |
+| Streaming | `lib/ai/streaming/{sse,collect,text-stream}.ts`; interrupted/empty structured streams are categorized | Implemented |
+| Image analysis input | `lib/ai/validation/image-input.ts` accepts JPEG, PNG, WebP, and GIF; validates MIME, base64, signature, decoded dimensions/integrity, and size before model invocation | Implemented |
+| Structured response validation | Zod contracts plus fenced/commentary JSON extraction, one repair attempt, required core stages, and explicit non-core fallbacks | Implemented |
+| Analysis timeout/retries | `AI_ANALYSIS_TIMEOUT_MS` bounded default; maximum three attempts for 408/429/500/502/503/504 and transient network errors, honoring `Retry-After` | Implemented |
 | Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
 | AI telemetry | `lib/ai/telemetry.ts` | Implemented |
 

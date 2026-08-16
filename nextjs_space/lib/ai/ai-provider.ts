@@ -27,17 +27,16 @@ export function getAiProvider(): AiProvider {
  * message; anything unexpected falls back to a generic 500 (matching the
  * routes' original outer catch).
  */
-export function aiErrorResponse(err: unknown, upstreamPrefix: string): Response {
+export function aiErrorResponse(err: unknown, _upstreamPrefix?: string): Response {
   if (err instanceof AiError) {
-    if (err.code === 'upstream_error') {
-      const detail = err.upstreamText ?? err.clientMessage;
-      return jsonError(`${upstreamPrefix}: ${detail}`, err.status);
-    }
-    return jsonError(err.clientMessage, err.status);
+    return jsonError(err.clientMessage, err.status, err.category);
   }
-  return jsonError((err as { message?: string })?.message ?? 'Internal error', 500);
+  return jsonError('The AI assessment could not be completed. Please try again.', 500, 'UNKNOWN');
 }
 
-function jsonError(message: string, status: number): Response {
-  return new Response(JSON.stringify({ error: message }), { status });
+function jsonError(message: string, status: number, code: string): Response {
+  return new Response(JSON.stringify({ error: message, code }), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }

@@ -87,8 +87,20 @@ export type AiErrorCode =
   | 'aborted'
   | 'internal';
 
+export type AiErrorCategory =
+  | 'AI_TIMEOUT'
+  | 'AI_RATE_LIMIT'
+  | 'AI_AUTH_ERROR'
+  | 'AI_UPSTREAM_5XX'
+  | 'AI_STREAM_INTERRUPTED'
+  | 'AI_INVALID_JSON'
+  | 'AI_SCHEMA_VALIDATION_FAILED'
+  | 'AI_EMPTY_RESPONSE'
+  | 'UNKNOWN';
+
 export interface AiErrorOptions {
   code: AiErrorCode;
+  category?: AiErrorCategory;
   /** HTTP status the API route should return. */
   status?: number;
   /** Safe, user-facing message placed in the JSON `{ error }` body. */
@@ -103,6 +115,7 @@ export interface AiErrorOptions {
  *  JSON error response without leaking provider internals or credentials. */
 export class AiError extends Error {
   readonly code: AiErrorCode;
+  readonly category: AiErrorCategory;
   readonly status: number;
   readonly clientMessage: string;
   readonly upstreamText?: string;
@@ -112,6 +125,7 @@ export class AiError extends Error {
     super(opts.clientMessage);
     this.name = 'AiError';
     this.code = opts.code;
+    this.category = opts.category ?? 'UNKNOWN';
     this.status = opts.status ?? 500;
     this.clientMessage = opts.clientMessage;
     this.upstreamText = opts.upstreamText;

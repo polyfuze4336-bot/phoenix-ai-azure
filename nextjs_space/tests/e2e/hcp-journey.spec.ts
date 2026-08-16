@@ -59,7 +59,7 @@ test('hcp journey', async ({ page }) => {
   await analyzeBtn.click();
 
   // 7. Confirm loading state (the analyze button is disabled while analyzing).
-  await expect(page.getByRole('button', { name: /Analyzing/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Preparing image/i })).toBeVisible();
 
   // 8. Confirm structured result (real result OR the explicit unavailable state).
   await expectAiTerminalState(

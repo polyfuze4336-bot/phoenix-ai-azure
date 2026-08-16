@@ -15,7 +15,7 @@ Clinical input
 ```
 
 ## 1. Input Assurance
-- **RAI-SAFE-001** image MIME/size validation before any model call.
+- **RAI-SAFE-001** image MIME/base64/signature/decoded-dimension/integrity/size validation before any model call.
 - **RAI-SAFE-002** stage-1 image-quality assessment (focus, lighting, framing, scale).
 - **RAI-PRIV-006** request-size limits.
 
@@ -27,7 +27,7 @@ Clinical input
 - **RAI-SAFE-007** no fabricated measurements without a scale reference.
 
 ## 3. Output Validation
-- **RAI-SAFE-003** Zod schema validation with an explicit safe-failure state (**RAI-SAFE-010**).
+- **RAI-SAFE-003** complete-stream detection, one structured repair, core-stage Zod validation, and explicit non-core unavailable states (**RAI-SAFE-010**).
 - **RAI-SAFE-005** automated consistency review (critic stage).
 - **RAI-SAFE-008/009** special-site escalation and confidence capping.
 - **RAI-TRANS-002/003** limitations, missing information and AI-generated metadata.

@@ -3,6 +3,7 @@
 import { useLanguage } from '@/components/language-provider';
 import { LanguageToggleDark } from '@/components/language-toggle';
 import { PhoenixLogo } from '@/components/phoenix-logo';
+import { DemoEnvironmentBadge } from '@/components/demo-environment-badge';
 import { LayoutDashboard, Brain, Calculator, Droplets, BookOpen, MessageSquare, History, ArrowLeft, Menu, X, LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -208,6 +209,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <DemoEnvironmentBadge />
               <LanguageToggleDark />
               {/* User Profile */}
               <div className="relative">

@@ -15,7 +15,7 @@ and `tests`).
 ## Pre-existing implementation (surfaced, not created here)
 | Path | Controls |
 | --- | --- |
-| `lib/ai/analysis/pipeline.ts` | RAI-SAFE-002/005/006/007/008/009/011, RAI-FAIR-001, RAI-REL-001, RAI-TRANS-002 |
+| `lib/ai/analysis/pipeline.ts`, `lib/ai/openai-compatible.ts`, `lib/ai/streaming/collect.ts` | RAI-SAFE-002/003/005/006/007/008/009/011, RAI-FAIR-001, RAI-REL-001, RAI-TRANS-002 |
 | `lib/ai/schemas/burn-wound-analysis.ts` | RAI-SAFE-004, RAI-TRANS-001 |
 | `lib/ai/validation/image-input.ts`, `app/api/analyze-wound/route.ts`, `app/api/community-analyze/route.ts` | RAI-SAFE-001, RAI-PRIV-006 |
 | `lib/ai/validation/wound-analysis-schema.ts`, retained analysis clients | RAI-SAFE-003/010 |
@@ -23,7 +23,7 @@ and `tests`).
 | `lib/clinical/parkland.ts`, `lib/clinical/tbsa.ts` | RAI-SAFE-006/011 |
 | `lib/telemetry/*.ts`, `lib/ai/telemetry.ts` | RAI-PRIV-003 |
 | `lib/ai/azure-credential.ts` | RAI-PRIV-001 |
-| `components/clinical-ai-notice.tsx`, Original HCP analysis and chat | RAI-PRIV-007 |
+| `components/clinical-ai-notice.tsx`, `components/demo-environment-badge.tsx`, Original HCP analysis/chat/TBSA/Parkland | RAI-PRIV-007 |
 | `lib/analysis/history.ts`, `prisma/schema.prisma` | RAI-ACCT-002 |
 | `lib/ai/model-config.ts` | RAI-ACCT-005 |
 | `tests/evaluation/burn-wound/*` | RAI-ACCT-004 |

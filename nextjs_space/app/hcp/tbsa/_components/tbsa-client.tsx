@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { trackClientEvent } from '@/lib/telemetry/client';
+import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
 import {
   REGION_KEYS,
   getSeverity,
@@ -358,6 +359,8 @@ export function TbsaClient() {
         <h1 className="font-display text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{t('tbsa.title')}</h1>
         <p className="text-sm text-gray-500 mt-1">{t('tbsa.instructions')}</p>
       </div>
+
+      <ClinicalAiNotice />
 
       {/* Controls */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-wrap items-center gap-x-6 gap-y-3">

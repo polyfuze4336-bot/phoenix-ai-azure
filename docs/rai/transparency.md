@@ -40,9 +40,9 @@ Clinical guidance draws on curated general references that are **not yet version
 (**RAI-TRANS-005**, Partial). This is disclosed rather than presented as a validated evidence base.
 
 ## Patient data and clinical use
-The Original HCP analysis and chat surfaces display a bilingual notice requiring authorized and,
-where possible, de-identified patient information; professional confidentiality; and handling under
-Malaysia's PDPA 2010 and applicable Malaysian law (**RAI-PRIV-007**). It also states that AI output
-is decision support, not diagnosis or a replacement for examination, professional judgement, or
-appropriate escalation. The notice describes obligations and limitations; it is not a claim of
-legal compliance or production readiness.
+The Original HCP interaction surfaces display compact bilingual confidentiality and applicable
+Malaysian personal-data reminders, including that the demo must not receive real identifiable
+patient data unless explicitly authorized (**RAI-PRIV-007**). A separate bilingual notice states
+that Phoenix AI is decision support and does not replace professional clinical judgement. These
+notices describe obligations and limitations; they are not legal advice or claims of compliance,
+certification, or production readiness.
