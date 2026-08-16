@@ -44,8 +44,10 @@ function collectEntries(value: unknown, path: string[] = [], entries: Translatio
     return entries;
   }
   if (value && typeof value === 'object') {
-    Object.entries(value as Record<string, unknown>).forEach(([key, item]) =>
-      collectEntries(item, [...path, key], entries));
+    Object.entries(value as Record<string, unknown>).forEach(([key, item]) => {
+      if (UNSAFE_PATH_KEYS.has(key)) throw new Error('Translation output contains an unsafe result path.');
+      collectEntries(item, [...path, key], entries);
+    });
   }
   return entries;
 }
@@ -54,21 +56,26 @@ function numericTokens(value: string): string[] {
   return value.match(/\d+(?:[.,]\d+)?/g) ?? [];
 }
 
-function setPath(target: Record<string, unknown>, path: string, value: string): void {
-  const parts = path.split('.');
-  if (parts.some((part) => UNSAFE_PATH_KEYS.has(part))) {
-    throw new Error('Translation output contains an unsafe result path.');
+function applyTranslatedEntries(
+  value: unknown,
+  translatedById: ReadonlyMap<string, string>,
+  path: string[] = [],
+): unknown {
+  if (typeof value === 'string') {
+    return translatedById.get(path.join('.')) ?? value;
   }
-  let current: unknown = target;
-  for (let index = 0; index < parts.length - 1; index += 1) {
-    const key = parts[index];
-    current = Array.isArray(current)
-      ? current[Number(key)]
-      : (current as Record<string, unknown>)[key];
+  if (Array.isArray(value)) {
+    return value.map((item, index) => applyTranslatedEntries(item, translatedById, [...path, String(index)]));
   }
-  const finalKey = parts[parts.length - 1];
-  if (Array.isArray(current)) current[Number(finalKey)] = value;
-  else (current as Record<string, unknown>)[finalKey] = value;
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, item]) => [
+        key,
+        applyTranslatedEntries(item, translatedById, [...path, key]),
+      ]),
+    );
+  }
+  return value;
 }
 
 export function applyAnalysisTranslations(
@@ -95,8 +102,7 @@ export function applyAnalysisTranslations(
     translatedById.set(id, text);
   }
 
-  const translated = structuredClone(source);
-  for (const [id, text] of translatedById) setPath(translated, id, text);
+  const translated = applyTranslatedEntries(source, translatedById) as Record<string, unknown>;
   translated.language = targetLanguage;
   return translated;
 }
