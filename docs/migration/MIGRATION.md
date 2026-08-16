@@ -1418,5 +1418,22 @@ configuration while retaining automatic Azure deployment.
   the database runbook, and this audit trail.
 - **Validation.** PASS: all five active workflow files parse; ESLint, TypeScript, unit `96/96`, RAI
   `27/27`, integration `14/14`, production HTTP API `24/24`, and E2E `24/24`; two Prisma migrations;
-  production build; Bicep compilation; architecture drift; and all seven Mermaid diagrams. Push,
-  deployment verification, and live probes follow the commit.
+  production build; Bicep compilation; architecture drift; and all seven Mermaid diagrams.
+
+### Step 37 - Verify direct-main CI and Azure deployment
+
+- **Promotion.** Fast-forwarded `main` from `6fceacd` to `3cec995`, promoting the five validated
+  commits without rewriting history.
+- **Expected trigger set.** Exactly two push workflows were created for `3cec995`: CI run
+  `31929174358` and Development deployment run `31929174360`. No Architecture Governance run was
+  created, confirming that the retired gate no longer participates.
+- **CI.** PASS: all three CI jobs completed successfully.
+- **Azure deployment.** PASS: the Development workflow completed its OIDC login, Bicep validation
+  and what-if, immutable ACR build, Container App deployment, health check, smoke test, and critical
+  HCP/community journeys.
+- **Independent live probe.** PASS at
+  `https://ca-phoenixai-oaprp7dte7bw2.braveflower-8e754aba.eastus2.azurecontainerapps.io`:
+  `/api/health/live` returned `alive`; `/` returned HTTP 200 and Phoenix AI content.
+- **Local Azure context note.** The local Azure CLI subscription did not contain deployment
+  `phoenixai-dev-13`; deployment outputs were therefore not queried locally. The authenticated
+  environment-bound GitHub deployment and independent public endpoint probes provide the evidence.
