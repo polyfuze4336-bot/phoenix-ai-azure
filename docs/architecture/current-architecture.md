@@ -4,10 +4,9 @@
 > implemented in the repository at the current HEAD. The current customer deployment target is
 > `rg-phoenixai-bfgs-demo` in `eastus2`, with all workload resources including Azure AI owned by
 > that environment. It is part of the source code
-> and MUST remain synchronized with the implementation (see
-> [ARCHITECTURE-FIRST CHANGE POLICY](../../.github/copilot-instructions.md)).
+> and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `5.1.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `6.0.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -43,7 +42,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Authentication | Server-verified **demo** login by default; Microsoft Entra ID **opt-in** placeholder — **Mock/demo + Optional** |
 | Storage | Azure Blob provider present + infra provisioned; no UI workflow persists files — **Configured but unused** |
 | Monitoring | Application Insights + Log Analytics + health probes + metric alerts — **Implemented** |
-| Deployment | Direct pushes to `main` start GitHub Actions Development deployment through environment-bound OIDC; Demo/infrastructure are manual; no PR, status-check, or reviewer gate — **Implemented** |
+| Deployment | Direct pushes to `main` run one approval-free `deploy.yml` path using GitHub OIDC; infrastructure is manual-only; `Development` scopes existing secrets but has zero protection rules; no PR, status-check, or reviewer gate — **Implemented** |
 
 ---
 
@@ -89,7 +88,7 @@ flowchart TB
 
     subgraph DEVOPS["Engineering"]
         GitHub["GitHub Repository — ACTIVE"]
-        Actions["Direct-main GitHub Actions (OIDC) — ACTIVE"]
+        Actions["Single direct-main deploy.yml (OIDC) — ACTIVE"]
         DeployIdentity["Entra deployment principal — ACTIVE"]
         Bicep["Bicep IaC (13 files) — ACTIVE"]
     end
@@ -128,7 +127,7 @@ flowchart TB
     MI --> Blob
 
     GitHub --> Actions
-    Actions -->|"Demo / Development OIDC"| DeployIdentity
+    Actions -->|"reviewer-free Development OIDC"| DeployIdentity
     DeployIdentity -->|"subscription Contributor"| Bicep
     Actions -->|"OIDC / remote image build"| ACR
     Actions -->|"OIDC / Bicep"| ContainerApp
@@ -154,6 +153,7 @@ Companion diagrams:
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |
 | Global English / Bahasa Melayu UI | Root `LanguageProvider`, `components/language-toggle.tsx`, `lib/i18n/{en,ms,index}.ts`; persisted `AppLanguage` (`en`/`ms`) | Implemented |
 | Bilingual clinical/data notices + demo boundary | `components/clinical-ai-notice.tsx`, `components/demo-environment-badge.tsx`; contextual notices on analysis/upload/results, chat/input, TBSA and Parkland | Implemented |
+| Analysis failure recovery | `app/hcp/analysis/_components/analysis-client.tsx`; selected image and form context remain available with exact bilingual retry/replacement actions | Implemented |
 | Responsive interface + theming | Tailwind + shadcn/ui, `components/theme-*` | Implemented |
 
 ### 3.2 Application Layer
@@ -181,15 +181,16 @@ Companion diagrams:
 | System prompts (HCP vs Community, strict EN/MS response instruction) | `lib/ai/prompts/{hcp-chat,hcp-wound-analysis,community-chat,community-wound-analysis}.ts`, `lib/ai/language.ts` | Implemented |
 | Staged analysis prompts | `lib/ai/prompts/{wound-visual-observation,wound-clinical-interpretation,wound-management,wound-analysis-critic}.ts`; receive the selected output language | Implemented |
 | AI output-language validation | `lib/ai/language.ts`; detects predominantly wrong-language completions, retries once with a rewrite instruction, logs language codes only | Implemented |
-| Staged analysis pipeline | `lib/ai/analysis/pipeline.ts` (`runAnalysisPipeline`, `assembleAnalysis`) — default for `/api/analyze-wound`; preserves canonical structured enums while localizing narrative EN/MS; flag `AI_ANALYSIS_PIPELINE=single` reverts | Implemented |
+| Staged analysis pipeline | `lib/ai/analysis/pipeline.ts` (`runAnalysisPipeline`, `assembleAnalysis`) — default for `/api/analyze-wound`; rejects empty/malformed core output, retains explicit unreadable/non-burn output as a low-information result, preserves canonical structured enums while localizing narrative EN/MS; flag `AI_ANALYSIS_PIPELINE=single` reverts | Implemented |
 | Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — Parkland is indication/age-threshold/weight gated; no assumed patient weight | Implemented |
 | Rich analysis schema + adapter | `lib/ai/schemas/burn-wound-analysis.ts` (observation vs interpretation, field confidence, gaps) + flat back-compat adapter | Implemented |
 | Streaming | `lib/ai/streaming/{sse,collect,text-stream}.ts`; interrupted/empty structured streams are categorized | Implemented |
 | Image analysis input | `lib/ai/validation/image-input.ts` accepts JPEG, PNG, WebP, and GIF; validates MIME, base64, signature, decoded dimensions/integrity, and size before model invocation | Implemented |
-| Structured response validation | Zod contracts plus fenced/commentary JSON extraction, one repair attempt, required core stages, and explicit non-core fallbacks | Implemented |
+| Structured response validation | Zod contracts plus fenced/commentary JSON extraction, one repair attempt, empty/malformed core-output rejection, explicit unreadable/non-burn degradation, and non-core fallbacks | Implemented |
 | Analysis timeout/retries | `AI_ANALYSIS_TIMEOUT_MS` bounded default; maximum three attempts for 408/429/500/502/503/504 and transient network errors, honoring `Retry-After` | Implemented |
 | Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
-| AI telemetry | `lib/ai/telemetry.ts` | Implemented |
+| API reliability harness | `tests/reliability/image-analysis-reliability.ts` with safe demo-image inputs; sequential and optional concurrent execution | Implemented; live execution operator-triggered |
+| AI telemetry | `lib/ai/telemetry.ts`, `lib/telemetry/analysis-events.ts`; privacy-safe analysis lifecycle events | Implemented |
 
 **Wound image analysis flow (`/api/analyze-wound`).** The Original HCP client sends image data to
 the API and consumes its SSE completion. The default `staged` pipeline runs four
@@ -245,7 +246,7 @@ tokens remain stable.
 
 | Element | Location | Status |
 | --- | --- | --- |
-| Application Insights (server + browser) | `lib/telemetry/{server,client,correlation}.ts`, `components/telemetry-provider.tsx`, `instrumentation.ts` | Implemented |
+| Application Insights (server + browser) | `lib/telemetry/{server,client,correlation,analysis-events}.ts`, `components/telemetry-provider.tsx`, `instrumentation.ts`; analysis lifecycle dimensions exclude image/content data | Implemented |
 | Log Analytics | Azure (App Insights workspace-based) | Implemented |
 | Health checks | `app/api/health/{route,live,ready,db}.ts`, `lib/health/readiness.ts` | Implemented |
 | Metric alerts + action group | `infra/modules/alerts.bicep` | Implemented |
@@ -256,8 +257,8 @@ tokens remain stable.
 | Element | Location | Status |
 | --- | --- | --- |
 | GitHub repository | remote `origin` | Implemented |
-| GitHub Actions | `.github/workflows/{ci,deploy-demo,deploy-dev,infrastructure,db-migrate}.yml`; push-to-main CI and Development deploy, manual Demo/infra/DB operations | Implemented; no PR/reviewer/status-check gate |
-| OIDC federation | Entra app/service principal `github-phoenixai-deploy`; GitHub environments `Demo` and `Development` | Implemented; no client secret |
+| GitHub Actions | `.github/workflows/deploy.yml` automatically validates, builds, deploys, and verifies every `main` push; `infrastructure.yml` is manual-only | Implemented; no PR/reviewer/status-check gate |
+| OIDC federation | Entra app/service principal `github-phoenixai-deploy`; reviewer-free `Development` environment scopes existing secret values | Implemented; zero environment protection rules; no client secret |
 | Bicep IaC | `infra/main.bicep`, `infra/main.bicepparam`, `infra/modules/*` | Implemented |
 | Azure Container Apps | `ca-phoenixai-<environment-token>` (deployment output) | Implemented |
 | Azure Container Registry remote build | `acrphx<environment-token>` / `phoenixai:<deployment-tag>` | Implemented |

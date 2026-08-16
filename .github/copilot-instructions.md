@@ -32,12 +32,9 @@ visible UX and **document the assumption** in `docs/migration/MIGRATION.md`.
 ## Architecture facts
 
 - Stack: Next.js 14 (App Router), React 18, TypeScript 5, Tailwind + shadcn/ui. Node 22.
-- The **only live backend dependency** is the LLM used by `app/api/*` routes
-  (`analyze-wound`, `hcp-chat`, `community-chat`, `community-analyze`). Migrate it to
-  **Azure OpenAI** (vision, OpenAI-compatible, streaming) — preserve request/response shape.
-- Prisma/PostgreSQL and AWS S3 helpers exist but are **not wired into the UI**; do not assume
-  a database or object store is required for parity.
-- Auth is **mock/client-side** (`sessionStorage`, hardcoded users in `app/hcp-login/page.tsx`).
+- AI routes use Azure AI/OpenAI-compatible vision and streaming through managed identity.
+- PostgreSQL stores authorized HCP analysis history; Blob Storage remains optional and unwired.
+- Authentication defaults to server-verified demo sessions; Entra remains opt-in.
 
 ## Workflow
 
@@ -46,12 +43,15 @@ visible UX and **document the assumption** in `docs/migration/MIGRATION.md`.
 - Prefer **reuse** of existing Azure resources; new resource group only for what can't be reused.
 - At the end of every migration step: run checks, report added/modified/deleted files, report
   tests, list unresolved issues, commit, and update `docs/migration/MIGRATION.md`.
+- Prototype loop: open Codespace -> edit with Copilot -> test locally -> commit -> push directly
+   to `main` -> `.github/workflows/deploy.yml` updates Azure automatically.
+- Pull requests, reviewer signoff, architecture approval, RAI approval, and manual deployment
+   approval are not required for this prototype.
 
-## ARCHITECTURE-FIRST CHANGE POLICY (mandatory)
+## Architecture maintenance (prototype mode)
 
-**NO MATERIAL CHANGE MAY BE IMPLEMENTED UNTIL THE CURRENT ARCHITECTURE IS UNDERSTOOD, DOCUMENTED
-AND IMPACT-ASSESSED. Architecture documentation is part of the source code and must remain
-synchronized with implementation.**
+Keep architecture documentation reasonably current as part of the same development task. There is
+no pre-change approval, pull-request, reviewer, or deployment gate.
 
 Before implementing any change that touches components, integrations, data/identity/storage/
 observability strategy, or the Azure resource footprint, follow these steps in order:
@@ -64,27 +64,24 @@ observability strategy, or the Azure resource footprint, follow these steps in o
    [`integration-inventory.md`](../docs/architecture/integration-inventory.md).
 3. **Assess impact** — determine the impact level (NONE / LOW / MEDIUM / HIGH / MAJOR) and whether
    a new [ADR](../docs/architecture/decisions/README.md) is required.
-4. **Document first** — update `current-architecture.md`, the affected `.mmd` diagrams, the
-   inventories, and `azure-resource-map.md` in the SAME change. Bump
+4. **Document in the task** — update `current-architecture.md`, affected `.mmd` diagrams,
+   inventories, and `azure-resource-map.md` where the implementation changes them. Bump
    [`ARCHITECTURE_VERSION`](../docs/architecture/ARCHITECTURE_VERSION) and add an entry to
    [`ARCHITECTURE_CHANGELOG.md`](../docs/architecture/ARCHITECTURE_CHANGELOG.md).
 5. **Record** — add a `docs/architecture/changes/CHANGE-YYYYMMDD-*.md` record for
    architecture-impacting changes; add/accept an ADR when the decision is significant.
 6. **Implement** the code change, keeping it consistent with the documented architecture.
-7. **Validate** — run typecheck, build, tests, Mermaid validation, and
-   `scripts/validate-architecture`. **STOP if documentation lags implementation** — do not push
-   `main` until docs and code agree.
+7. **Validate proportionately** — run relevant typecheck, build, tests, Mermaid validation, and
+   `scripts/validate-architecture` when architecture files change.
 
 End every architecture-impacting task with an **Architecture Review** block: impact level,
 version before/after, files reviewed/changed, ADR reference, change record, and validation
-PASS/FAIL. The local drift validator is mandatory; GitHub does not enforce docs-sync for this
-rapid-prototype repository.
+PASS/FAIL. The local drift validator is a useful maintenance aid, not a GitHub deployment gate.
 
-## RESPONSIBLE AI CHANGE POLICY (mandatory)
+## Responsible AI maintenance
 
-**AI behaviour is a governed surface. No change to AI behaviour, prompts, models, confidence/limitation
-handling, human oversight, transparency, telemetry, or any Responsible AI control may be implemented
-without keeping the RAI control register and its documentation/evidence synchronized.**
+AI behaviour is a governed surface. Keep the RAI control register, documentation, and evidence
+honestly synchronized in the same task. No separate approval or reviewer signoff is required.
 
 When a change touches AI behaviour or a Responsible AI control, follow these steps in order:
 
@@ -104,12 +101,11 @@ When a change touches AI behaviour or a Responsible AI control, follow these ste
    approved" unless independently evidenced. Keep AI-generated labelling and limitations truthful and
    visible.
 7. **Implement** the change consistent with the documented, evidenced control.
-8. **Validate** — run `npm run test:rai` (and the evaluation harness if analysis behaviour changed);
-   confirm the in-product AI Assurance page (`/v2/hcp/ai-assurance`) still reflects reality.
+8. **Validate** — run `npm run test:rai` and the relevant evaluation harness when analysis behaviour
+   changes.
 
-End every RAI-impacting task with a **Responsible AI Review** block: controls added/changed (by ID),
-status before/after, evidence (code + tests), any new limitation, and validation PASS/FAIL. The
-Pull Request template's **Responsible AI Impact** section enforces this on pull requests.
+End every RAI-impacting task with a concise **Responsible AI Review**: controls changed, status,
+evidence, limitations, and validation result.
 
 ## Key paths
 

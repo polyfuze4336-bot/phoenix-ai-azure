@@ -157,13 +157,13 @@ function clinicalFieldHasValue(value: unknown): boolean {
 }
 
 export function hasObservationSignal(value: Record<string, unknown>): boolean {
-  return Array.isArray(value.visibleFindings) && value.visibleFindings.length > 0 &&
-    typeof value.anatomicalLocation === 'string' && value.anatomicalLocation.trim().length > 0;
+  return typeof value.imageQualityAdequate === 'boolean' &&
+    typeof value.scalePresent === 'boolean' && Array.isArray(value.visibleFindings);
 }
 
 export function hasInterpretationSignal(value: Record<string, unknown>): boolean {
-  return typeof value.isBurn === 'boolean' && clinicalFieldHasValue(value.woundCategory) &&
-    clinicalFieldHasValue(value.burnDepth);
+  return typeof value.isBurn === 'boolean' && (!value.isBurn ||
+    (clinicalFieldHasValue(value.woundCategory) && clinicalFieldHasValue(value.burnDepth)));
 }
 
 function hasManagementSignal(value: Record<string, unknown>): boolean {

@@ -79,8 +79,13 @@ const critic = { pass: true, issues: [], recommendedCorrections: [] };
 
 test('core stage signal gates reject empty tolerant-schema inputs', () => {
   assert.equal(hasObservationSignal({}), false);
-  assert.equal(hasObservationSignal({ visibleFindings: ['blister'], anatomicalLocation: 'arm' }), true);
+  assert.equal(hasObservationSignal({
+    imageQualityAdequate: false,
+    scalePresent: false,
+    visibleFindings: [],
+  }), true);
   assert.equal(hasInterpretationSignal({}), false);
+  assert.equal(hasInterpretationSignal({ isBurn: false }), true);
   assert.equal(hasInterpretationSignal({
     isBurn: true,
     woundCategory: { interpretation: 'Burn' },

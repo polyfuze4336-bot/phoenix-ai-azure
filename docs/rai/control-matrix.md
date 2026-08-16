@@ -39,3 +39,4 @@ Status: **Active** (implemented + evidenced) · **Partial** · **Planned**.
 | RAI-INCL-001 | Bilingual application experience | Inclusiveness | Operations | Active |
 | RAI-INCL-002 | Responsive, installable access | Inclusiveness | Operations | Partial |
 | RAI-REL-001 | Bounded stage execution | Reliability & Safety | Operations | Active |
+| RAI-REL-002 | Recoverable analysis failure and API reliability evidence | Reliability & Safety | Operations | Active |

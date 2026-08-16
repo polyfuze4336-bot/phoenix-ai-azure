@@ -26,6 +26,24 @@ Separately, [`tests/rai/`](../../nextjs_space/tests/rai/) unit-tests the determi
 guarantees (safety rules, unsupported-inference guardrails, metadata/versioning, privacy-safe
 telemetry, control-register integrity). Run with `npm run test:rai`.
 
+## Image-analysis API reliability test
+
+`npm run test:reliability:analysis` sends safe demo images to `/api/analyze-wound` repeatedly. The
+default is 10 sequential requests; operators may add 5 concurrent requests. The report includes
+successes, failures, timeouts, parsing failures, average latency, and observed completion rate. The
+demo target is `>= 95%` completed analyses under reasonable test conditions.
+
+This is an **API reliability** test only. It does not score diagnosis, wound classification, burn
+depth, TBSA, treatment correctness, clinical accuracy, regulatory fitness, or an availability SLA.
+The script requires an explicit base URL and safe fixture path; it does not run automatically during
+deployment because repeated live model calls add latency and cost.
+
+The 2026-08-16 pre-fix live baseline completed 2/10 requests (20%). The other eight requests returned
+`AI_SCHEMA_VALIDATION_FAILED`; none timed out and none failed response parsing. This is recorded as
+operational evidence, not hidden or interpreted as a clinical result. The signal gate was then
+changed to retain structurally explicit unreadable-image/non-burn responses as low-information
+results while still rejecting empty or malformed core output. Post-deployment evidence is pending.
+
 ## CI summary artifact
 `npm run rai:summary` produces `rai-evaluation-summary.{json,md}` from the governance snapshot and the
 latest evaluation run, intended to be published as a **CI artifact** (it is git-ignored, not committed,

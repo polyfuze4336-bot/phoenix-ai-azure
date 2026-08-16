@@ -51,11 +51,9 @@ The application source lives under [`nextjs_space/`](nextjs_space/) exactly as i
 
 ## Runtime dependency on Azure
 
-The **only live backend dependency** is the LLM used by the API routes
-(`app/api/analyze-wound`, `hcp-chat`, `community-chat`, `community-analyze`). In the source
-it targets Abacus.AI's OpenAI-compatible endpoint; on Azure it is migrated to **Azure OpenAI**
-(vision-capable deployment). Prisma/PostgreSQL and AWS S3 helpers exist in the codebase but
-are **not wired into the running UI** — see the migration audit trail for details.
+AI routes use an Azure AI/OpenAI-compatible vision deployment through managed identity. Azure
+PostgreSQL supports authorized HCP analysis history; private Blob Storage is provisioned but remains
+unwired to the current UI. See the current architecture for exact runtime boundaries.
 
 The deployed application does **not** depend on a developer laptop, local database, local file
 share or `localhost` service.
@@ -87,15 +85,15 @@ Container Apps app settings, with secrets sourced from Azure Key Vault.
 
 ## Architecture
 
-> Architecture version: **1.0.0** (see [docs/architecture/ARCHITECTURE_VERSION](docs/architecture/ARCHITECTURE_VERSION)).
+> Architecture version: **6.0.0** (see [docs/architecture/ARCHITECTURE_VERSION](docs/architecture/ARCHITECTURE_VERSION)).
 
-Phoenix AI runs as a Next.js standalone server on Azure App Service, calling Azure OpenAI
-(Microsoft Foundry `gpt-4o`) via a managed identity, with PostgreSQL, Blob Storage, Key Vault,
-Application Insights and Log Analytics in `rg-phoenixai-demo`.
+Phoenix AI runs as a Next.js standalone server on Azure Container Apps, calling the environment-owned
+Azure AI Services `gpt-4o` deployment through managed identity, with PostgreSQL, Blob Storage, Key
+Vault, Application Insights and Log Analytics in `rg-phoenixai-bfgs-demo`.
 
 ```mermaid
 flowchart LR
-    Users["Users (Clinicians & Public)"] --> App["Phoenix AI (Next.js on Azure App Service)"]
+    Users["Users (Clinicians & Public)"] --> App["Phoenix AI (Next.js on Azure Container Apps)"]
     App -->|"managed identity"| Foundry["Microsoft Foundry / Azure OpenAI (gpt-4o)"]
     App -->|"sslmode=require"| PostgreSQL["Azure PostgreSQL Flexible Server"]
     App -.->|"optional, not wired to UI"| Blob["Azure Blob Storage"]
@@ -104,9 +102,8 @@ flowchart LR
     GitHub["GitHub Actions (OIDC)"] --> App
 ```
 
-This project follows an **architecture-first change policy**: no material change is implemented
-until the current architecture is understood, documented and impact-assessed, and the docs stay
-synchronized with the code (validated locally before a direct `main` push).
+This is explicitly a **PROTOTYPE / DEMO DEVELOPMENT MODE** repository. Keep architecture and RAI
+documentation reasonably current in the same task; there is no pre-change approval or PR gate.
 
 - **Current architecture (AS-IS):** [docs/architecture/current-architecture.md](docs/architecture/current-architecture.md)
 - **Component inventory:** [docs/architecture/component-inventory.md](docs/architecture/component-inventory.md)
@@ -150,10 +147,9 @@ Full documentation: [docs/rai/](docs/rai/README.md) (start with the
 │  ├─ rai/                  # Responsible AI framework, controls, evidence & limitations
 │  └─ testing/              # Test & UI-parity strategy
 ├─ .github/
-│  ├─ workflows/            # Non-gating CI + automated/manual Azure deployment
-│  ├─ PULL_REQUEST_TEMPLATE.md
+│  ├─ workflows/            # One automatic deploy + manual infrastructure
 │  └─ copilot-instructions.md
-├─ AGENTS.md                # Architecture-first change policy for agents & contributors
+├─ AGENTS.md                # Prototype contributor guidance
 ├─ .editorconfig
 ├─ .nvmrc
 ├─ .env.example             # Config template (no secrets)
@@ -162,8 +158,9 @@ Full documentation: [docs/rai/](docs/rai/README.md) (start with the
 
 ## Contributing & repository workflow
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the direct-main rapid-prototype workflow. Pull requests
-remain optional, and pushes to `main` retain automated Development deployment to Azure.
+Open a Codespace, edit with Copilot, test locally, commit, and push directly to `main`. The single
+deployment workflow validates the app and updates Azure automatically. Pull requests and manual
+approvals are optional, not required. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License / status
 

@@ -18,6 +18,13 @@ import { getAnalysisTimeoutMs, runAnalysisPipeline, type PatientContext } from '
 import { toFlatHcpAnalysis } from '@/lib/ai/schemas/burn-wound-analysis';
 import { buildAnalysisMetadata } from '@/lib/ai/analysis/metadata';
 import { completeWithLanguageValidation, parseRequestedLanguage } from '@/lib/ai/language';
+import {
+  imageAnalysisFailure,
+  imageSizeBucket,
+  readAnalysisRetryCount,
+  recordImageAnalysisEvent,
+  type ImageAnalysisTelemetryContext,
+} from '@/lib/telemetry/analysis-events';
 
 /** Coerce an untrusted patient-context object into the typed shape (no invented values). */
 function readPatientContext(raw: unknown): PatientContext | undefined {
@@ -36,6 +43,8 @@ function readPatientContext(raw: unknown): PatientContext | undefined {
 }
 
 export async function POST(request: NextRequest) {
+  const requestStartedAt = Date.now();
+  let analysisTelemetry: Omit<ImageAnalysisTelemetryContext, 'errorCategory' | 'httpStatus' | 'latencyMs'> | undefined;
   try {
     const bodySize = checkRequestBodySize(request.headers.get('content-length'));
     if (!bodySize.ok) {
@@ -69,6 +78,21 @@ export async function POST(request: NextRequest) {
     // Privacy-safe marker: an HCP image-analysis request started. No image bytes,
     // base64 or clinical text are recorded — only the correlation ID + flags.
     const pipelineMode = getAnalysisPipelineMode();
+    const retryCount = readAnalysisRetryCount(request.headers.get('x-analysis-retry-count'));
+    analysisTelemetry = {
+      modelDeployment: getAnalysisModelDeployment() ?? 'default',
+      retryCount,
+      imageSizeBucket: imageSizeBucket(validation.bytes),
+      imageMimeType: validation.mimeType,
+      requestedLanguage: language,
+    };
+    const startedContext = {
+      ...analysisTelemetry,
+      httpStatus: 0,
+      latencyMs: 0,
+    };
+    if (retryCount > 0) recordImageAnalysisEvent('image_analysis_retry', startedContext);
+    recordImageAnalysisEvent('image_analysis_started', startedContext);
     trackEvent('hcp_analysis_requested', {
       correlationId,
       hasImage: true,
@@ -98,13 +122,26 @@ export async function POST(request: NextRequest) {
           overallConfidence: rich.overallConfidence,
           parklandIndicated: rich.parkland?.total24hMl != null,
         });
+        recordImageAnalysisEvent('image_analysis_completed', {
+          ...analysisTelemetry,
+          httpStatus: 200,
+          latencyMs: Date.now() - requestStartedAt,
+        });
         return createResultSseResponse({
           result: { ...flat, structured: rich, meta },
           processingEvent: { status: 'processing', message: 'Analyzing' },
           correlationId,
         });
       } catch (err) {
-        return aiErrorResponse(err, 'LLM API error');
+        const response = aiErrorResponse(err, 'LLM API error');
+        const failure = imageAnalysisFailure(err);
+        recordImageAnalysisEvent('image_analysis_failed', {
+          ...analysisTelemetry,
+          errorCategory: failure.category,
+          httpStatus: response.status,
+          latencyMs: Date.now() - requestStartedAt,
+        });
+        return response;
       }
     }
 
@@ -138,9 +175,22 @@ export async function POST(request: NextRequest) {
         })).body,
       });
     } catch (err) {
-      return aiErrorResponse(err, 'LLM API error');
+      const response = aiErrorResponse(err, 'LLM API error');
+      const failure = imageAnalysisFailure(err);
+      recordImageAnalysisEvent('image_analysis_failed', {
+        ...analysisTelemetry,
+        errorCategory: failure.category,
+        httpStatus: response.status,
+        latencyMs: Date.now() - requestStartedAt,
+      });
+      return response;
     }
 
+    recordImageAnalysisEvent('image_analysis_completed', {
+      ...analysisTelemetry,
+      httpStatus: 200,
+      latencyMs: Date.now() - requestStartedAt,
+    });
     return createResultSseResponse({
       result: parseHcpWoundAnalysis(completion.text),
       processingEvent: { status: 'processing', message: 'Analyzing' },
@@ -148,6 +198,14 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Analyze wound error:', error);
+    if (analysisTelemetry) {
+      recordImageAnalysisEvent('image_analysis_failed', {
+        ...analysisTelemetry,
+        errorCategory: 'UNKNOWN',
+        httpStatus: 500,
+        latencyMs: Date.now() - requestStartedAt,
+      });
+    }
     return new Response(JSON.stringify({
       error: 'The AI assessment could not be completed. Please try again.',
       code: 'UNKNOWN',

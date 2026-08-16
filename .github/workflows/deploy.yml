@@ -1,0 +1,168 @@
+name: Deploy
+
+# Prototype/demo delivery: every push to main validates, builds, and deploys.
+# Development is used only to scope existing secrets; it has no protection rules
+# or required reviewers and therefore introduces no approval gate.
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+env:
+  IMAGE_TAG: ${{ github.sha }}
+  AZURE_RESOURCE_GROUP: rg-phoenixai-bfgs-demo
+
+jobs:
+  deploy:
+    name: Validate, build, deploy and verify
+    runs-on: ubuntu-latest
+    environment: Development
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: nextjs_space/package-lock.json
+
+      - name: Install dependencies
+        working-directory: nextjs_space
+        run: npm ci --legacy-peer-deps
+
+      - name: Generate Prisma client
+        working-directory: nextjs_space
+        run: npm run db:generate
+
+      - name: Type check
+        working-directory: nextjs_space
+        run: npm run typecheck
+
+      - name: Essential unit tests
+        working-directory: nextjs_space
+        run: npm run test:unit
+
+      - name: Production build
+        working-directory: nextjs_space
+        env:
+          NEXTAUTH_URL: http://localhost:3000
+          NEXT_OUTPUT_MODE: standalone
+        run: npm run build
+
+      - name: Azure login with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Resolve existing Azure resources
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+          ACR=$(az acr list --resource-group "${AZURE_RESOURCE_GROUP}" --query "[?tags.Application=='PhoenixAI'].name | [0]" -o tsv)
+          APP=$(az containerapp list --resource-group "${AZURE_RESOURCE_GROUP}" --query "[?tags.Application=='PhoenixAI'].name | [0]" -o tsv)
+          if [ -z "${ACR}" ] || [ -z "${APP}" ]; then
+            echo "Existing Phoenix AI registry or Container App was not found." >&2
+            exit 1
+          fi
+          LOGIN_SERVER=$(az acr show --resource-group "${AZURE_RESOURCE_GROUP}" --name "${ACR}" --query loginServer -o tsv)
+          echo "ACR=${ACR}" >> "$GITHUB_ENV"
+          echo "APP=${APP}" >> "$GITHUB_ENV"
+          echo "LOGIN_SERVER=${LOGIN_SERVER}" >> "$GITHUB_ENV"
+
+      - name: Build and push immutable container
+        run: |
+          az acr build \
+            --registry "${ACR}" \
+            --image "phoenixai:${IMAGE_TAG}" \
+            --file nextjs_space/Dockerfile \
+            nextjs_space
+
+      - name: Run committed database migrations
+        working-directory: nextjs_space
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "DATABASE_URL is not configured; skipping database migrations."
+            exit 0
+          fi
+          npm run db:readiness
+          npm run db:migrate:deploy
+
+      - name: Deploy Container App revision
+        run: |
+          SUFFIX="${GITHUB_SHA:0:7}-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          REVISION=$(az containerapp update \
+            --resource-group "${AZURE_RESOURCE_GROUP}" \
+            --name "${APP}" \
+            --image "${LOGIN_SERVER}/phoenixai:${IMAGE_TAG}" \
+            --revision-suffix "${SUFFIX}" \
+            --query properties.latestRevisionName \
+            --output tsv)
+          FQDN=$(az containerapp show --resource-group "${AZURE_RESOURCE_GROUP}" --name "${APP}" --query properties.configuration.ingress.fqdn -o tsv)
+          echo "APP_URL=https://${FQDN}" >> "$GITHUB_ENV"
+          echo "REVISION=${REVISION}" >> "$GITHUB_ENV"
+
+      - name: Wait for the new revision
+        run: |
+          for attempt in $(seq 1 30); do
+            state=$(az containerapp revision show \
+              --resource-group "${AZURE_RESOURCE_GROUP}" \
+              --name "${APP}" \
+              --revision "${REVISION}" \
+              --query "join('|', [properties.provisioningState, properties.runningState, properties.healthState])" \
+              --output tsv 2>/dev/null || true)
+            if [ "${state}" = "Provisioned|Running|Healthy" ]; then
+              echo "Revision ${REVISION} is ready."
+              exit 0
+            fi
+            echo "Attempt ${attempt}: revision state '${state:-not found}'; retrying in 10 seconds."
+            sleep 10
+          done
+          echo "Revision ${REVISION} did not become healthy." >&2
+          az containerapp revision show \
+            --resource-group "${AZURE_RESOURCE_GROUP}" \
+            --name "${APP}" \
+            --revision "${REVISION}" \
+            --output table || true
+          exit 1
+
+      - name: Check public health
+        run: |
+          for attempt in $(seq 1 30); do
+            code=$(curl --silent --output /dev/null --write-out "%{http_code}" "${APP_URL}/api/health/live" || true)
+            if [ "${code}" = "200" ]; then
+              echo "Container App is ready."
+              exit 0
+            fi
+            echo "Attempt ${attempt}: HTTP ${code}; retrying in 10 seconds."
+            sleep 10
+          done
+          echo "Container App health check failed." >&2
+          exit 1
+
+      - name: Smoke test HCP and Community
+        run: |
+          curl --fail --silent --show-error --location "${APP_URL}/hcp" > /dev/null
+          curl --fail --silent --show-error --location "${APP_URL}/community" > /dev/null
+
+      - name: Report deployment
+        run: |
+          {
+            echo "## Phoenix AI deployment"
+            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Revision: \`${REVISION}\`"
+            echo "- URL: ${APP_URL}"
+            echo "- Health: ${APP_URL}/api/health/live"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -15,6 +15,7 @@
     "test:rai": "tsx --test \"tests/rai/*.test.ts\"",
     "test:e2e": "playwright test --config=playwright.e2e.config.ts",
     "eval:analysis": "tsx tests/evaluation/burn-wound/evaluate.ts",
+    "test:reliability:analysis": "tsx tests/reliability/image-analysis-reliability.ts",
     "rai:summary": "tsx scripts/rai-evaluation-summary.ts",
     "test:smoke": "playwright test --config=playwright.e2e.config.ts tests/e2e/public-landing.spec.ts",
     "test:journeys": "playwright test --config=playwright.e2e.config.ts tests/e2e/hcp-journey.spec.ts tests/e2e/community-journey.spec.ts",

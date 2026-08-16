@@ -18,6 +18,9 @@
 > The `5.1.0` image-analysis resilience and HCP notice change is application-only. It adds no Azure
 > resource, SKU, region, identity, RBAC, secret, model deployment, network path, database, or storage
 > change; `AI_ANALYSIS_TIMEOUT_MS` is an optional setting with a bounded code default.
+> The `6.0.0` safe-retry, telemetry, reliability-test, and workflow consolidation changes application
+> and GitHub delivery code only. Existing Azure resources, OIDC identity, RBAC, secrets, model,
+> database, storage, network, SKU, and region remain unchanged.
 
 ## Environment
 
@@ -51,7 +54,7 @@
 | Alerting | Action Group | `ag-phoenixai-ops` | `infra/modules/alerts.bicep` | INFRA-ALERTS | demo |
 | RBAC | Role assignments (MI → AI/ACR/Storage/KV) | (scoped assignments) | `infra/modules/role-assignments.bicep`, `container-registry.bicep` | INFRA-ROLES | demo |
 | Operator RBAC | Azure role assignment (`BFG Solutions` → `Owner`) | Scope: `rg-phoenixai-bfgs-demo` | Operational assignment; `CHANGE-20260810-demo-rg-owner-access.md` | OPS-DEMO-OWNER-RBAC | bfgs-demo |
-| Deployment identity | Entra app/service principal + federated credentials | `github-phoenixai-deploy`; GitHub environments `Demo` and `Development` | Operational assignment; `CHANGE-20260812-github-oidc-deployment-identity.md` | OPS-GHA-OIDC-RBAC / DEVOPS-GHA | bfgs-demo |
+| Deployment identity | Entra app/service principal + federated credentials | `github-phoenixai-deploy`; reviewer-free `Development` environment OIDC | Operational assignment; `CHANGE-20260812-github-oidc-deployment-identity.md` | OPS-GHA-OIDC-RBAC / DEVOPS-GHA | bfgs-demo |
 
 ## Notes
 
@@ -67,5 +70,7 @@
 - GitHub Actions uses a dedicated OIDC workload identity rather than a human account. Its
   subscription `Contributor` role supports the subscription-scoped Bicep deployment; its ability
   to create role assignments is limited to `rg-phoenixai-bfgs-demo`.
-- The `Demo` and `Development` GitHub environments intentionally have no required reviewers or
-  protection rules for rapid prototyping. Demo deployment still requires manual dispatch.
+- Active workflows bind `Development` only because the working secrets are scoped there. GitHub API
+  inspection on 2026-08-16 confirmed zero protection rules and no required reviewers. Repository
+  owners should verify `Settings → Environments → Development → Deployment protection rules`;
+  workflow YAML cannot disable account-level environment rules.

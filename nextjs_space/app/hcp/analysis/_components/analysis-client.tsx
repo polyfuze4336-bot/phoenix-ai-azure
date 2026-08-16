@@ -1,7 +1,7 @@
 'use client';
 
 import { useLanguage } from '@/components/language-provider';
-import { Upload, Camera, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette } from 'lucide-react';
+import { Upload, Camera, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette, RefreshCw, Images } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
@@ -105,6 +105,8 @@ export function AnalysisClient() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [analysisFailed, setAnalysisFailed] = useState(false);
+  const [analysisRetryCount, setAnalysisRetryCount] = useState(0);
   const [refining, setRefining] = useState(false);
   const [weightKg, setWeightKg] = useState('');
   const [mechanism, setMechanism] = useState('');
@@ -168,6 +170,8 @@ export function AnalysisClient() {
     if (!file) return;
     setResult(null);
     setError(null);
+    setAnalysisFailed(false);
+    setAnalysisRetryCount(0);
     setImageFile(null);
     setImagePreview(null);
     if (file.size === 0 || !ACCEPTED_IMAGE_TYPES.has(file.type)) {
@@ -202,6 +206,8 @@ export function AnalysisClient() {
       setCameraActive(true);
       setResult(null);
       setError(null);
+      setAnalysisFailed(false);
+      setAnalysisRetryCount(0);
     } catch (err: any) {
       setError(t('analysis.camera_denied'));
     }
@@ -221,16 +227,19 @@ export function AnalysisClient() {
     ctx?.drawImage(videoRef.current, 0, 0);
     const dataUrl = canvas?.toDataURL('image/jpeg', 0.8);
     setImagePreview(dataUrl);
+    setAnalysisFailed(false);
+    setAnalysisRetryCount(0);
     canvas?.toBlob((blob: any) => {
       if (blob) setImageFile(new File([blob], 'capture.jpg', { type: 'image/jpeg' }));
     }, 'image/jpeg', 0.8);
     stopCamera();
   }, [stopCamera]);
 
-  const analyzeImage = useCallback(async () => {
+  const analyzeImage = useCallback(async (retryCount: number) => {
     if (!imageFile) return;
     setAnalyzing(true);
     setError(null);
+    setAnalysisFailed(false);
     try {
       const reader = new FileReader();
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -249,7 +258,10 @@ export function AnalysisClient() {
 
       const response = await fetch('/api/analyze-wound', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-analysis-retry-count': String(retryCount),
+        },
         body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext(), language: lang }),
       });
 
@@ -258,14 +270,21 @@ export function AnalysisClient() {
       const completed = await readAnalysisStream(response);
       if (completed) {
         setResult(completed);
+        setAnalysisFailed(false);
         void saveAnalysisToHistory(completed, base64, mime);
       }
     } catch (err: any) {
-      setError(err?.message ?? t('analysis.failed'));
+      setAnalysisFailed(true);
     } finally {
       setAnalyzing(false);
     }
   }, [imageFile, lang, patientContext, readAnalysisStream, t]);
+
+  const retryAnalysis = useCallback(() => {
+    const retryCount = Math.min(10, analysisRetryCount + 1);
+    setAnalysisRetryCount(retryCount);
+    void analyzeImage(retryCount);
+  }, [analysisRetryCount, analyzeImage]);
 
   /** Second pass: re-run the pipeline with clinician answers, no re-upload. */
   const refineAnalysis = useCallback(async (answers: string) => {
@@ -303,7 +322,14 @@ export function AnalysisClient() {
     setImageFile(null);
     setResult(null);
     setError(null);
+    setAnalysisFailed(false);
+    setAnalysisRetryCount(0);
   }, []);
+
+  const chooseAnotherImage = useCallback(() => {
+    clearImage();
+    window.setTimeout(() => fileInputRef.current?.click(), 0);
+  }, [clearImage]);
 
   const severityColor = (s: string) => {
     const lower = s?.toLowerCase?.() ?? '';
@@ -327,6 +353,7 @@ export function AnalysisClient() {
         <div className="space-y-4">
           <ClinicalAiNotice variant="confidentiality" />
           <ClinicalAiNotice variant="personal-data" />
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileSelect} className="hidden" />
           {!imagePreview && !cameraActive && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
               <div
@@ -337,7 +364,6 @@ export function AnalysisClient() {
                 <p className="font-medium text-gray-600">{t('analysis.upload')}</p>
                 <p className="text-xs text-gray-400 mt-1">{t('analysis.file_hint')}</p>
               </div>
-                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileSelect} className="hidden" />
               <button
                 onClick={startCamera}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#0F9B8E] text-white rounded-xl font-medium hover:bg-[#0e8a7e] transition-colors"
@@ -400,7 +426,7 @@ export function AnalysisClient() {
                 <p className="text-[11px] text-gray-400">{t('analysis.weight_help')}</p>
               </div>
               <button
-                onClick={analyzeImage}
+                onClick={() => void analyzeImage(0)}
                 disabled={analyzing}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#8B0000] text-white rounded-xl font-medium hover:bg-[#7a0000] transition-colors disabled:opacity-50"
               >
@@ -409,7 +435,33 @@ export function AnalysisClient() {
             </div>
           )}
 
-          {error && <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">{error}</div>}
+          {analysisFailed && (
+            <div role="alert" className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
+              <div>
+                <h2 className="font-display text-base font-bold text-red-800">{t('analysis.failure_title')}</h2>
+                <p className="text-sm text-red-700 mt-1 leading-relaxed">{t('analysis.failure_message')}</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  onClick={retryAnalysis}
+                  disabled={analyzing}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#8B0000] text-white rounded-lg text-sm font-medium hover:bg-[#7a0000] disabled:opacity-50"
+                >
+                  <RefreshCw className="w-4 h-4" /> {t('analysis.retry')}
+                </button>
+                <button
+                  type="button"
+                  onClick={chooseAnotherImage}
+                  disabled={analyzing}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <Images className="w-4 h-4" /> {t('analysis.choose_another')}
+                </button>
+              </div>
+            </div>
+          )}
+          {error && <div role="alert" className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">{error}</div>}
         </div>
 
         {/* Results Section */}

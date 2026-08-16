@@ -14,8 +14,9 @@ Documented, honestly. Each has a stable ID in the governed control register and 
 | LIM-008 | AI-assisted output is **decision-support only** and must be confirmed by a qualified clinician. |
 | LIM-009 | The runtime does not currently provide an in-product AI Assurance page; reviewers must use this governed documentation and test evidence. |
 | LIM-010 | AI output-language detection is heuristic: short or highly technical output may be classified as ambiguous and accepted. A confidently mismatched response is rewritten once only; retries are deliberately bounded to prevent loops. |
-| LIM-011 | Architecture documentation synchronization is required by repository policy and checked locally, but is not enforced by a GitHub status check in the rapid-prototype direct-main workflow. |
+| LIM-011 | Architecture documentation currency relies on contributor practice and optional local drift validation; it is not enforced by a GitHub status check in the rapid-prototype direct-main workflow. |
 | LIM-012 | Decoding verifies structural image integrity and dimensions but does not prove that an image is clinically useful; focus, lighting, framing, occlusion and scale adequacy remain model-assessed and clinician-reviewed. |
+| LIM-013 | The `>=95%` image-analysis reliability target measures API completion for safe demo images under the recorded test conditions only. It is not a clinical-accuracy result, production SLA, or assurance that all images will complete. |
 
 These limitations are not defects to hide — they define the responsible scope of the tool. See
 [rai-roadmap.md](./rai-roadmap.md) for what is planned.

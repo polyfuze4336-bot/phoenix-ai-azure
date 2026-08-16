@@ -21,7 +21,8 @@ and `tests`).
 | `lib/ai/validation/wound-analysis-schema.ts`, retained analysis clients | RAI-SAFE-003/010 |
 | `lib/ai/prompts/*.ts` | RAI-FAIR-002, prompt guardrails |
 | `lib/clinical/parkland.ts`, `lib/clinical/tbsa.ts` | RAI-SAFE-006/011 |
-| `lib/telemetry/*.ts`, `lib/ai/telemetry.ts` | RAI-PRIV-003 |
+| `lib/telemetry/*.ts`, `lib/ai/telemetry.ts`, `app/api/analyze-wound/route.ts` | RAI-PRIV-003 |
+| `app/hcp/analysis/_components/analysis-client.tsx`, `tests/reliability/image-analysis-reliability.ts` | RAI-REL-002 |
 | `lib/ai/azure-credential.ts` | RAI-PRIV-001 |
 | `components/clinical-ai-notice.tsx`, `components/demo-environment-badge.tsx`, Original HCP analysis/chat/TBSA/Parkland | RAI-PRIV-007 |
 | `lib/analysis/history.ts`, `prisma/schema.prisma` | RAI-ACCT-002 |
@@ -41,3 +42,5 @@ and `tests`).
 | [`nextjs_space/tests/unit/ai-language.test.ts`](../../nextjs_space/tests/unit/ai-language.test.ts) | Strict language instructions, value-only JSON detection, and one-rewrite ceiling |
 | [`nextjs_space/tests/unit/image-input.test.ts`](../../nextjs_space/tests/unit/image-input.test.ts) | Model-compatible image MIME, data-URL normalization, base64, signature, and size validation |
 | [`nextjs_space/tests/api/routes.spec.ts`](../../nextjs_space/tests/api/routes.spec.ts) | HTTP safe-failure behavior before model invocation |
+| [`nextjs_space/tests/e2e/hcp-analysis-retry.spec.ts`](../../nextjs_space/tests/e2e/hcp-analysis-retry.spec.ts) | Retained-context bilingual analysis retry and replacement actions |
+| [`nextjs_space/tests/unit/analysis-reliability.test.ts`](../../nextjs_space/tests/unit/analysis-reliability.test.ts) | Reliability summary counts, latency and target evaluation |

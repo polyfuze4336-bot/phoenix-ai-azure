@@ -54,6 +54,42 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 ## Migration audit log
 
+### Steps 23-34 — Safe retry, reliability telemetry/testing, and prototype delivery simplification
+- Failed HCP analysis now retains the selected image and entered context, displays the exact English
+  or Malay recovery guidance, and provides Retry Analysis / Choose Another Image actions without
+  restarting the form. Retry requests carry a bounded retry count.
+- Added privacy-safe `image_analysis_started`, `image_analysis_completed`,
+  `image_analysis_retry`, and `image_analysis_failed` events. Dimensions are limited to category,
+  HTTP status, configured model deployment, user retry count, latency, image-size bucket, MIME type,
+  and requested language. Image bytes/Base64, identifiers, prompts, and clinical responses remain
+  blocked by tests.
+- Added `npm run test:reliability:analysis`: 10 sequential safe synthetic-image requests by default,
+  optional concurrent requests, completion/failure/timeout/parsing counts, category breakdown,
+  average latency, and a `>=95%` demo API-completion target. It makes no clinical-accuracy or SLA
+  claim and is not an automatic deployment cost gate.
+- The first live 10-run baseline completed 2/10 requests (20%); all eight failures were
+  `AI_SCHEMA_VALIDATION_FAILED`, with no timeout or parsing failure. The core-stage signal gate now
+  accepts structurally explicit unreadable-image/non-burn responses as honest low-information
+  results while continuing to reject empty or malformed core output. A post-deployment rerun is
+  required before recording whether the demo target is met.
+- Declared PROTOTYPE / DEMO DEVELOPMENT MODE and retained the direct Codespaces -> edit -> local test
+  -> commit -> push `main` -> automatic Azure deployment loop. Pull requests and manual approvals
+  are optional.
+- Replaced overlapping `ci.yml`, `deploy-dev.yml`, `deploy-demo.yml`, and `db-migrate.yml` with one
+  push-to-main `.github/workflows/deploy.yml`. It installs, generates Prisma, type-checks, runs unit
+  tests, builds, authenticates using existing OIDC, builds/pushes an immutable ACR image, applies
+  configured migrations, updates the existing Container App, waits for the named new revision to be
+  provisioned/running/healthy, verifies public liveness, smoke-tests `/hcp` and `/community`, and
+  reports the revision and URL. Build failure stops deployment.
+- Kept `infrastructure.yml` manual-only. The `Development` GitHub Environment is retained solely
+  because the working OIDC/database secrets are scoped there; GitHub API inspection confirmed zero
+  protection rules and no required reviewers. No repository ruleset or `main` branch protection is
+  present. Secret hygiene and managed identity/OIDC remain unchanged.
+- `architecture-governance.yml` and the PR template were already absent. Contributor guidance now
+  asks that architecture and RAI documentation be kept reasonably current in the task without
+  requiring pre-change approval or reviewer signoff.
+- Architecture version `5.1.0` -> `6.0.0`; ADR-0013 records the single deployment workflow.
+
 ### Step 22 — Image-analysis resilience and governed HCP notices
 - Added exact compact bilingual clinical decision-support, confidentiality, personal-data, and demo
   environment indications to the retained HCP analysis, chat, TBSA, Parkland, and shared shell.

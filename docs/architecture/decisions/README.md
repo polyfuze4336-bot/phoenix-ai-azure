@@ -43,7 +43,8 @@ Trivial changes (copy edits, dependency patch bumps, non-structural refactors) d
 | [ADR-0009](./ADR-0009-authorize-retained-analysis-records.md) | Authorize access to retained analysis records | Accepted | 2026-08-14 |
 | [ADR-0010](./ADR-0010-restore-original-only-experience.md) | Restore the Original-only Phoenix AI experience | Accepted | 2026-08-15 |
 | [ADR-0011](./ADR-0011-single-experience-global-language.md) | One Phoenix AI experience with global language enforcement | Accepted | 2026-08-15 |
-| [ADR-0012](./ADR-0012-direct-main-prototype-workflow.md) | Direct-main rapid-prototype workflow | Accepted | 2026-08-16 |
+| [ADR-0012](./ADR-0012-direct-main-prototype-workflow.md) | Direct-main rapid-prototype workflow | Superseded in delivery details by ADR-0013 | 2026-08-16 |
+| [ADR-0013](./ADR-0013-single-prototype-deployment-workflow.md) | Single approval-free prototype deployment workflow | Accepted | 2026-08-16 |
 
 ## Template
 

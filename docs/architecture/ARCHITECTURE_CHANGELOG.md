@@ -16,6 +16,32 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [6.0.0] — 2026-08-16
+
+### Changed
+- **Safe analysis recovery** — a failed HCP analysis retains the selected image and patient context,
+  presents exact bilingual recovery guidance, and offers retry or replacement without restarting the
+  form.
+- **Privacy-safe reliability telemetry** — analysis started, completed, retried, and failed events
+  record bounded operational metadata only; image bytes, Base64, identifiers, prompts, and clinical
+  responses remain prohibited.
+- **API reliability evidence** — a demo-image harness measures repeated sequential and optional
+  concurrent API completion, failure categories, timeouts, parsing failures, and latency. Its target
+  is operational reliability only and is not a clinical-accuracy claim.
+- **Low-information analysis completion** — structurally explicit unreadable-image and non-burn
+  model responses pass through the tolerant schema as low-information results; empty or malformed
+  core output still fails safely.
+- **Prototype delivery consolidation** — `.github/workflows/deploy.yml` is the only automatic
+  push-to-`main` build/deploy path. Infrastructure remains manual-only; overlapping CI, Development,
+  Demo, and database-migration workflows are retired.
+- **Approval-free OIDC delivery** — `Development` remains only as the existing secret scope and has
+  zero protection rules or required reviewers. Existing secrets and Azure OIDC remain unchanged.
+
+### Boundaries
+- No Azure resource, SKU, region, identity, RBAC, model, database schema, storage, or network change.
+  See [ADR-0013](./decisions/ADR-0013-single-prototype-deployment-workflow.md) and
+  [CHANGE-20260816](./changes/CHANGE-20260816-safe-retry-telemetry-prototype-delivery.md).
+
 ## [5.1.0] — 2026-08-16
 
 ### Changed

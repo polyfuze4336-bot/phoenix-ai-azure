@@ -40,7 +40,7 @@ flowchart TB
 
     subgraph DEVOPS["Engineering"]
         GitHub["GitHub Repository — ACTIVE"]
-        Actions["Direct-main GitHub Actions (OIDC) — ACTIVE"]
+        Actions["Single direct-main deploy.yml (OIDC) — ACTIVE"]
         DeployIdentity["Entra deployment principal\ngithub-phoenixai-deploy — ACTIVE"]
         Bicep["Bicep IaC — ACTIVE"]
     end
@@ -50,7 +50,7 @@ flowchart TB
     Users --> Community
     Users --> PWA
     Operators -->|"Owner on rg-phoenixai-bfgs-demo only"| ARM
-    Actions -->|"Demo / Development OIDC"| DeployIdentity
+    Actions -->|"reviewer-free Development OIDC"| DeployIdentity
     DeployIdentity -->|"subscription Contributor\nRBAC Admin on demo RG only"| ARM
 
     Landing --> Next

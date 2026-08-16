@@ -43,6 +43,9 @@ const BLOCKED_KEY_PATTERNS = [
   'prompt',
   'transcript',
   'description',
+  'clinicalresponse',
+  'patient',
+  'identifier',
   'token',
   'password',
   'secret',
@@ -55,10 +58,14 @@ const BLOCKED_KEY_PATTERNS = [
   'sas',
 ];
 
+/** Explicitly permitted operational metadata; values never contain image data. */
+const SAFE_IMAGE_METADATA_KEYS = new Set(['imageSizeBucket', 'imageMimeType']);
+
 /** Any string property longer than this is truncated (belt-and-braces vs. leaks). */
 const MAX_PROP_LENGTH = 256;
 
 function isBlockedKey(key: string): boolean {
+  if (SAFE_IMAGE_METADATA_KEYS.has(key)) return false;
   const k = key.toLowerCase();
   return BLOCKED_KEY_PATTERNS.some((pattern) => k.includes(pattern));
 }

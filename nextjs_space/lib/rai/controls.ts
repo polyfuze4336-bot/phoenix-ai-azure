@@ -219,12 +219,12 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'output',
     status: 'active',
     description:
-      'Model output is extracted and validated against a Zod schema. Fenced or commentary-wrapped JSON is accepted and malformed structured output receives one bounded repair attempt. Core observation or interpretation failure stops the analysis; non-core management or critic failure is marked unavailable without fabricating clinical information.',
+      'Model output is extracted and validated against a Zod schema. Fenced or commentary-wrapped JSON is accepted and malformed structured output receives one bounded repair attempt. Empty or malformed core output stops the analysis; explicit unreadable-image or non-burn output is retained as a low-information result instead of inventing clinical findings. Non-core management or critic failure is marked unavailable.',
     evidence: [
       'lib/ai/validation/wound-analysis-schema.ts',
       'lib/ai/schemas/burn-wound-analysis.ts',
     ],
-    tests: ['tests/unit/wound-schema.test.ts', 'tests/unit/ai-parsing.test.ts'],
+    tests: ['tests/unit/wound-schema.test.ts', 'tests/unit/ai-parsing.test.ts', 'tests/unit/analysis-pipeline.test.ts'],
     userVisible: false,
   },
   {
@@ -406,11 +406,13 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'operations',
     status: 'active',
     description:
-      'Telemetry records counts, latencies and metadata only. A blocked-key list prevents image bytes, prompts, transcripts, tokens and secrets from ever being logged.',
+      'Telemetry records counts, latencies and bounded operational metadata only. Analysis lifecycle events may include image size bucket and MIME type, but blocked-key sanitisation prevents image bytes, Base64, patient identifiers, prompts, clinical responses, transcripts, tokens and secrets from being logged.',
     evidence: [
       'lib/telemetry/server.ts',
       'lib/telemetry/client.ts',
+      'lib/telemetry/analysis-events.ts',
       'lib/ai/telemetry.ts',
+      'app/api/analyze-wound/route.ts',
     ],
     tests: ['tests/rai/rai-telemetry.test.ts'],
     userVisible: false,
@@ -444,12 +446,12 @@ export const RAI_CONTROLS: RaiControl[] = [
   },
   {
     id: 'RAI-ACCT-003',
-    title: 'Architecture governance (docs-first)',
+    title: 'Architecture documentation maintenance',
     principle: 'accountability',
     layer: 'operations',
     status: 'active',
     description:
-      'A mandatory architecture-first change policy and local drift validator keep architecture documentation synchronized before direct-main pushes. GitHub does not server-enforce this control in the rapid-prototype workflow.',
+      'Prototype tasks keep architecture documentation reasonably current and may use the local drift validator. This is a contributor practice, not a pre-change approval or GitHub deployment gate.',
     evidence: [
       'docs/architecture/current-architecture.md',
       'nextjs_space/scripts/validate-architecture.mjs',
@@ -519,6 +521,25 @@ export const RAI_CONTROLS: RaiControl[] = [
       'Each pipeline stage uses configurable AI_ANALYSIS_TIMEOUT_MS with a bounded default and at most three attempts for explicitly retryable status or network failures, so stalled or transient calls fail safely without unlimited retry.',
     evidence: ['lib/ai/analysis/pipeline.ts'],
     userVisible: false,
+  },
+  {
+    id: 'RAI-REL-002',
+    title: 'Recoverable analysis failure and API reliability evidence',
+    principle: 'reliabilitySafety',
+    layer: 'operations',
+    status: 'active',
+    description:
+      'Failed analysis retains the selected image and form context for an explicit bilingual retry or replacement action. A safe-demo-image repeatability harness reports API completion, timeout, parsing failure and latency against a 95% demo target without claiming clinical accuracy or an SLA.',
+    evidence: [
+      'app/hcp/analysis/_components/analysis-client.tsx',
+      'tests/reliability/image-analysis-reliability.ts',
+      'docs/rai/evaluation-framework.md',
+    ],
+    tests: [
+      'tests/e2e/hcp-analysis-retry.spec.ts',
+      'tests/unit/analysis-reliability.test.ts',
+    ],
+    userVisible: true,
   },
 ];
 

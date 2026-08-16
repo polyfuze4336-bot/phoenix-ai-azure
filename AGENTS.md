@@ -3,8 +3,8 @@
 Guidance for AI agents and human contributors working in this repository. Phoenix AI is a
 **faithful parity migration** of the Phoenix AI — Burn & Wound Care Assessment Tool from
 Abacus.AI to Microsoft Azure. The detailed guardrails live in
-[`.github/copilot-instructions.md`](./.github/copilot-instructions.md); this file restates the
-**mandatory architecture-first change policy**.
+[`.github/copilot-instructions.md`](./.github/copilot-instructions.md); this file summarizes the
+prototype documentation and Responsible AI maintenance practices.
 
 ## Prime directive
 
@@ -12,11 +12,10 @@ Preserve the original visible user experience and behaviour. This is a migration
 Never replace or alter the Phoenix AI logo (`nextjs_space/public/logo.png`) or branding. Never
 commit secrets.
 
-## ARCHITECTURE-FIRST CHANGE POLICY (mandatory)
+## Architecture maintenance (prototype mode)
 
-**NO MATERIAL CHANGE MAY BE IMPLEMENTED UNTIL THE CURRENT ARCHITECTURE IS UNDERSTOOD, DOCUMENTED
-AND IMPACT-ASSESSED. Architecture documentation is part of the source code and must remain
-synchronized with implementation.**
+Keep architecture documentation reasonably current in the same task. No pre-change approval, pull
+request, reviewer signoff, or manual deployment approval is required.
 
 Before implementing any change that touches components, integrations, data/identity/storage/
 observability strategy, or the Azure resource footprint, follow these steps in order:
@@ -28,26 +27,24 @@ observability strategy, or the Azure resource footprint, follow these steps in o
    [`integration-inventory.md`](./docs/architecture/integration-inventory.md).
 3. **Assess impact** — impact level (NONE / LOW / MEDIUM / HIGH / MAJOR) and whether a new
    [ADR](./docs/architecture/decisions/README.md) is required.
-4. **Document first** — update `current-architecture.md`, the affected `.mmd` diagrams, the
-   inventories, and [`azure-resource-map.md`](./docs/architecture/azure-resource-map.md) in the
-   SAME change. Bump [`ARCHITECTURE_VERSION`](./docs/architecture/ARCHITECTURE_VERSION) and add an
+4. **Document in the task** — update `current-architecture.md`, affected `.mmd` diagrams,
+   inventories, and [`azure-resource-map.md`](./docs/architecture/azure-resource-map.md) where
+   implementation changes them. Bump [`ARCHITECTURE_VERSION`](./docs/architecture/ARCHITECTURE_VERSION) and add an
    entry to [`ARCHITECTURE_CHANGELOG.md`](./docs/architecture/ARCHITECTURE_CHANGELOG.md).
 5. **Record** — add a `docs/architecture/changes/CHANGE-YYYYMMDD-*.md` record; add/accept an ADR
    for significant decisions.
 6. **Implement** the code change consistent with the documented architecture.
-7. **Validate** — typecheck, build, tests, Mermaid validation, and `scripts/validate-architecture`.
-   **STOP if documentation lags implementation** — do not push `main` until docs and code agree.
+7. **Validate proportionately** — typecheck, build, relevant tests, Mermaid validation, and
+   `scripts/validate-architecture` when architecture files change.
 
 End every architecture-impacting task with an **Architecture Review** block: impact level, version
 before/after, files reviewed/changed, ADR reference, change record, and validation PASS/FAIL. Local
-drift validation is mandatory; GitHub does not enforce documentation synchronization for this
-rapid-prototype repository.
+drift validation is a local maintenance aid and does not gate direct-main deployment.
 
-## RESPONSIBLE AI CHANGE POLICY (mandatory)
+## Responsible AI maintenance
 
-**AI behaviour is a governed surface. No change to AI behaviour, prompts, models, confidence/limitation
-handling, human oversight, transparency, telemetry, or any Responsible AI control may be implemented
-without keeping the RAI control register and its documentation/evidence synchronized.**
+Keep AI behaviour, prompts, telemetry, controls, evidence, and limitations honestly synchronized in
+the same task. No separate Responsible AI approval or reviewer signoff is required.
 
 1. **Understand** — read [`docs/rai/README.md`](./docs/rai/README.md) and the relevant document.
 2. **Locate** the affected control(s) by stable ID in
@@ -63,8 +60,8 @@ without keeping the RAI control register and its documentation/evidence synchron
    claims like "100% safe", "bias free", "hallucination free", "clinically certified" or "regulatory
    approved" unless independently evidenced.
 7. **Implement** consistent with the documented, evidenced control.
-8. **Validate** — run `npm run test:rai` (and the evaluation harness if analysis behaviour changed);
-   confirm `/v2/hcp/ai-assurance` still reflects reality.
+8. **Validate** — run `npm run test:rai` and the relevant evaluation harness when analysis behaviour
+   changes.
 
 End every RAI-impacting task with a **Responsible AI Review** block: controls added/changed (by ID),
 status before/after, evidence (code + tests), any new limitation, and validation PASS/FAIL.
@@ -74,6 +71,7 @@ status before/after, evidence (code + tests), any new limitation, and validation
 - App source is in `nextjs_space/`. Use `npm install --legacy-peer-deps` (pre-existing peer
   conflict). `npm run build` must pass.
 - Work in small, reviewable commits using Conventional Commit messages.
+- Push reviewed prototype changes directly to `main`; pull requests remain optional.
 
 ## Key architecture paths
 

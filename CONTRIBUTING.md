@@ -35,7 +35,8 @@ The guiding rule for every change:
    4. List unresolved issues.
    5. Commit with a clear message.
    6. Update [docs/migration/MIGRATION.md](docs/migration/MIGRATION.md).
-4. Push `main`. This starts non-gating CI and the independent automated Development deployment.
+4. Push `main`. The single `deploy.yml` workflow type-checks, unit-tests, builds, deploys an immutable
+  Container App revision, verifies health, and smoke-tests HCP and Community automatically.
 
 ## Local checks
 
@@ -49,8 +50,14 @@ npm run lint       # advisory (source sets eslint.ignoreDuringBuilds)
 ## GitHub repository policy
 
 `main` intentionally has no branch protection, ruleset, required status check, or approval gate.
-Development and Demo environments intentionally have no required reviewers. This policy is limited
-to the prototype/demo lifecycle and must be reassessed before any production or clinical use.
+The `Development` environment is retained only because the working OIDC and database secrets are
+scoped there. GitHub currently reports zero protection rules and no required reviewers, so it does
+not create an approval gate. Repository owners should verify this at
+`Settings → Environments → Development → Deployment protection rules`. Workflow code cannot disable
+account-level environment rules. This policy must be reassessed before production or clinical use.
+
+Infrastructure changes use the manual-only `infrastructure.yml` workflow. Normal application pushes
+do not require infrastructure, architecture, RAI, PR, reviewer, or release approval.
 
 ## Commit message convention
 

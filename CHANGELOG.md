@@ -9,6 +9,12 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 ## [Unreleased]
 
 ### Changed
+- Added retained-context bilingual recovery actions for failed HCP image analysis and privacy-safe
+  lifecycle telemetry for started, completed, retried, and failed analysis requests.
+- Consolidated GitHub Actions into one automatic direct-main `deploy.yml` plus manual-only
+  `infrastructure.yml`; existing reviewer-free Development-scoped OIDC secrets remain unchanged.
+- Replaced blocking governance language with same-task architecture and Responsible AI maintenance
+  guidance for explicit prototype/demo development mode.
 - Restored the concise bilingual patient-data and clinical-use notice on Original HCP analysis and
   chat. The notice covers authorized/de-identified information, Malaysia's PDPA 2010, professional
   confidentiality, and the decision-support limitation without claiming legal compliance.
@@ -19,6 +25,8 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
   Historical architecture decisions and change records remain as the immutable decision trail.
 
 ### Added
+- Added a safe synthetic-image API reliability harness with sequential/concurrent execution,
+  completion/failure/timeout/parsing metrics, latency, and an explicitly non-clinical 95% demo target.
 - Documented the complete Phoenix AI source-to-Azure transformation as an evidence-based audit
   under `docs/migration/`, `docs/architecture/`, and `docs/testing/`. The consolidated entry
   point is [docs/migration/phoenix-ai-azure-migration-report.md](docs/migration/phoenix-ai-azure-migration-report.md),

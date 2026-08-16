@@ -4,19 +4,12 @@ name: Infrastructure
 #
 # Authenticates to Azure with GitHub OIDC (federated credentials) — NO stored
 # Azure client secrets. Validation and optional deployment run only on manual
-# dispatch and use the selected reviewer-free GitHub Environment (Development or
-# Demo) for rapid prototyping.
+# dispatch and use the reviewer-free Development environment only to access the
+# existing OIDC and PostgreSQL secret scope.
 
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'Target GitHub Environment to deploy.'
-        type: choice
-        options:
-          - Development
-          - Demo
-        default: Development
       deploy:
         description: 'Run the deployment (subscription-scoped) after what-if.'
         type: boolean
@@ -40,7 +33,7 @@ jobs:
   validate:
     name: Lint, build & what-if
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment: Development
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -73,7 +66,7 @@ jobs:
     needs: validate
     if: github.event_name == 'workflow_dispatch' && inputs.deploy
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment: Development
     steps:
       - name: Checkout
         uses: actions/checkout@v4

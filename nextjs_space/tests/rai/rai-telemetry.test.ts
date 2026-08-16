@@ -7,6 +7,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { sanitizeProperties } from '../../lib/telemetry/server';
+import {
+  imageAnalysisFailure,
+  imageSizeBucket,
+  readAnalysisRetryCount,
+} from '../../lib/telemetry/analysis-events';
+import { AiError } from '../../lib/ai/types';
 
 test('RAI-PRIV-003: blocked keys are stripped from telemetry properties', () => {
   const out = sanitizeProperties({
@@ -26,4 +32,30 @@ test('RAI-PRIV-003: blocked keys are stripped from telemetry properties', () => 
   }
   assert.equal(out.correlationId, 'abc');
   assert.equal(out.latencyMs, '1200');
+});
+
+test('RAI-PRIV-003: safe image metadata survives while image content remains blocked', () => {
+  const out = sanitizeProperties({
+    imageSizeBucket: '1_mb_to_5_mb',
+    imageMimeType: 'image/png',
+    imageContents: 'never-send-this',
+    completeClinicalResponse: 'never-send-this-either',
+  });
+  assert.equal(out.imageSizeBucket, '1_mb_to_5_mb');
+  assert.equal(out.imageMimeType, 'image/png');
+  assert.equal(out.imageContents, undefined);
+  assert.equal(out.completeClinicalResponse, undefined);
+});
+
+test('RAI-PRIV-003: lifecycle dimensions are bounded and categorized without payloads', () => {
+  assert.equal(imageSizeBucket(100), 'under_256_kb');
+  assert.equal(imageSizeBucket(2 * 1024 * 1024), '1_mb_to_5_mb');
+  assert.equal(readAnalysisRetryCount('999'), 10);
+  assert.equal(readAnalysisRetryCount('invalid'), 0);
+  assert.deepEqual(imageAnalysisFailure(new AiError({
+    code: 'timeout',
+    category: 'AI_TIMEOUT',
+    status: 504,
+    clientMessage: 'Timed out',
+  })), { category: 'AI_TIMEOUT', status: 504 });
 });

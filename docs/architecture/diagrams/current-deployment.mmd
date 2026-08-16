@@ -24,11 +24,11 @@ flowchart LR
 
     DEV -->|"direct commit / push to main"| GH
     OPS -->|"Owner (demo RG scope only)"| AZURE
-    GH -->|"push: CI signal + automatic Development deploy"| GHA
-    GHA -->|"Demo / Development OIDC"| DEPLOY_ID
+    GH -->|"push main: validate, build, deploy, verify"| GHA
+    GHA -->|"Development OIDC; zero protection rules"| DEPLOY_ID
     DEPLOY_ID -->|"subscription Contributor\nRBAC Admin on demo RG only"| AZURE
     GHA -->|"ACR remote build"| ACR
-    GHA -->|"Bicep deployment"| APP
+    GHA -->|"deploy immutable revision + health/smoke"| APP
 
     ENV --> APP
     ACR -->|"AcrPull via managed identity"| APP
