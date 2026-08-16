@@ -28,7 +28,7 @@
 
 ## Validation
 
-PASS: unit `120/120`, RAI `31/31`, integration `14/14`, API `26/26`, bilingual HCP/Community
+PASS: unit `121/121`, RAI `31/31`, integration `14/14`, API `26/26`, bilingual HCP/Community
 journeys `4/4`, HCP retry E2E `1/1`, typecheck, lint, production build, and architecture/Mermaid
 drift validation. The build used Next.js's temporary test-only Google-font response hook because
 the sandbox could not resolve `fonts.googleapis.com`; production source is unchanged.

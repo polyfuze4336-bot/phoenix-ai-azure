@@ -12,6 +12,7 @@ interface TranslationEntry {
 
 const MAX_TRANSLATION_ENTRIES = 250;
 const MAX_TRANSLATION_CHARACTERS = 40_000;
+const UNSAFE_PATH_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 const PROTECTED_KEYS = new Set([
   'language',
   'schemaVersion',
@@ -55,6 +56,9 @@ function numericTokens(value: string): string[] {
 
 function setPath(target: Record<string, unknown>, path: string, value: string): void {
   const parts = path.split('.');
+  if (parts.some((part) => UNSAFE_PATH_KEYS.has(part))) {
+    throw new Error('Translation output contains an unsafe result path.');
+  }
   let current: unknown = target;
   for (let index = 0; index < parts.length - 1; index += 1) {
     const key = parts[index];

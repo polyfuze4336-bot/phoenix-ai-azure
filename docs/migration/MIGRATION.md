@@ -73,7 +73,7 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
   least-permissive supported healthcare configuration.
 - Architecture `6.1.1` → `6.2.0`; no authentication, credential, dependency, Community, database
   schema, deployment workflow, or Azure resource change.
-- Validation PASS: unit `120/120`, RAI `31/31`, integration `14/14`, API `26/26`, bilingual
+- Validation PASS: unit `121/121`, RAI `31/31`, integration `14/14`, API `26/26`, bilingual
   HCP/Community journeys `4/4`, HCP retry E2E `1/1`, typecheck, lint, production build, and
   architecture/Mermaid drift checks. The sandbox build used Next.js's temporary Google-font mock
   hook because `fonts.googleapis.com` DNS was unavailable; no font or runtime source changed.

@@ -60,3 +60,11 @@ test('translation is rejected if fields are omitted or duplicated', () => {
     { id: 'characteristics', text: 'Lepuh pada 15.0% TBSA' },
   ], 'ms'), /preserve the result structure/);
 });
+
+test('translation is rejected for unsafe object paths', () => {
+  const unsafeSource = JSON.parse('{"__proto__":{"guidance":"Keep clean"}}') as Record<string, unknown>;
+
+  assert.throws(() => applyAnalysisTranslations(unsafeSource, [
+    { id: '__proto__.guidance', text: 'Pastikan bersih' },
+  ], 'ms'), /unsafe result path/);
+});
