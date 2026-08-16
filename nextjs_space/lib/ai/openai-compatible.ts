@@ -11,6 +11,7 @@
  */
 
 import { AiChatRequest, AiError, AiMessage, AiStreamResponse } from './types';
+import { extractContentFilterDetails } from './content-filter';
 import {
   estimateTokens,
   logAiRequest,
@@ -332,7 +333,28 @@ export async function streamOpenAiCompatible(
       });
 
       if (!response?.ok) {
-        await safeText(response);
+        const upstreamText = await safeText(response);
+        let upstreamError: unknown;
+        try {
+          upstreamError = JSON.parse(upstreamText);
+        } catch {
+          upstreamError = undefined;
+        }
+        const contentFilter = extractContentFilterDetails(upstreamError, 'input');
+        if (contentFilter) {
+          cleanup();
+          recordFailure('error', 'content_filter_input', attempt + 1);
+          throw new AiError({
+            code: 'bad_request',
+            category: 'AI_CONTENT_FILTER',
+            status: 422,
+            clientMessage:
+              'Azure AI could not process this clinical image under the configured content filter. ' +
+              'The image was not analyzed. Contact the Azure administrator if legitimate clinical images are consistently blocked.',
+            correlationId,
+            contentFilter,
+          });
+        }
         const retryable = isRetryableAiStatus(response.status);
         const category = response.status === 429
           ? 'AI_RATE_LIMIT' as const

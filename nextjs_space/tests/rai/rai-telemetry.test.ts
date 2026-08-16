@@ -59,3 +59,23 @@ test('RAI-PRIV-003: lifecycle dimensions are bounded and categorized without pay
     clientMessage: 'Timed out',
   })), { category: 'AI_TIMEOUT', status: 504 });
 });
+
+test('RAI-PRIV-003: content-filter telemetry contains only safe structured classification', () => {
+  assert.deepEqual(imageAnalysisFailure(new AiError({
+    code: 'bad_request',
+    category: 'AI_CONTENT_FILTER',
+    status: 422,
+    clientMessage: 'Blocked',
+    upstreamText: 'raw response must not be returned',
+    contentFilter: {
+      source: 'input',
+      categories: [{ category: 'sexual', filtered: true, severity: 'high' }],
+    },
+  })), {
+    category: 'AI_CONTENT_FILTER',
+    status: 422,
+    contentFilterSource: 'input',
+    contentFilterCategory: 'sexual',
+    contentFilterSeverity: 'high',
+  });
+});

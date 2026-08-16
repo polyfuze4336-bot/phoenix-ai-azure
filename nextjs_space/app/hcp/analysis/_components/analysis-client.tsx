@@ -275,6 +275,7 @@ export function AnalysisClient() {
       }
     } catch (err: any) {
       setAnalysisFailed(true);
+      setError(err?.message ?? t('analysis.failed'));
     } finally {
       setAnalyzing(false);
     }

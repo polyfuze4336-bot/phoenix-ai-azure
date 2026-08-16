@@ -88,6 +88,7 @@ export type AiErrorCode =
   | 'internal';
 
 export type AiErrorCategory =
+  | 'AI_CONTENT_FILTER'
   | 'AI_TIMEOUT'
   | 'AI_RATE_LIMIT'
   | 'AI_AUTH_ERROR'
@@ -107,6 +108,7 @@ export interface AiErrorOptions {
   clientMessage: string;
   /** Raw upstream error text (never contains our credentials). */
   upstreamText?: string;
+  contentFilter?: import('./content-filter').ContentFilterDetails;
   correlationId?: string;
   cause?: unknown;
 }
@@ -119,6 +121,7 @@ export class AiError extends Error {
   readonly status: number;
   readonly clientMessage: string;
   readonly upstreamText?: string;
+  readonly contentFilter?: import('./content-filter').ContentFilterDetails;
   readonly correlationId?: string;
 
   constructor(opts: AiErrorOptions) {
@@ -129,6 +132,7 @@ export class AiError extends Error {
     this.status = opts.status ?? 500;
     this.clientMessage = opts.clientMessage;
     this.upstreamText = opts.upstreamText;
+    this.contentFilter = opts.contentFilter;
     this.correlationId = opts.correlationId;
     if (opts.cause !== undefined) {
       (this as { cause?: unknown }).cause = opts.cause;

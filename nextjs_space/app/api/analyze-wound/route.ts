@@ -143,6 +143,9 @@ export async function POST(request: NextRequest) {
         recordImageAnalysisEvent('image_analysis_failed', {
           ...analysisTelemetry,
           errorCategory: failure.category,
+          contentFilterSource: failure.contentFilterSource,
+          contentFilterCategory: failure.contentFilterCategory,
+          contentFilterSeverity: failure.contentFilterSeverity,
           httpStatus: response.status,
           latencyMs: Date.now() - requestStartedAt,
         });
@@ -185,6 +188,9 @@ export async function POST(request: NextRequest) {
       recordImageAnalysisEvent('image_analysis_failed', {
         ...analysisTelemetry,
         errorCategory: failure.category,
+        contentFilterSource: failure.contentFilterSource,
+        contentFilterCategory: failure.contentFilterCategory,
+        contentFilterSeverity: failure.contentFilterSeverity,
         httpStatus: response.status,
         latencyMs: Date.now() - requestStartedAt,
       });
