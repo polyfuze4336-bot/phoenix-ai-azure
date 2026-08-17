@@ -3,7 +3,7 @@
 import { useLanguage } from '@/components/language-provider';
 import { motion } from 'framer-motion';
 import { Clock, ImageOff, Loader2, RefreshCw, Flame, Stethoscope, ChevronRight } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { translateCanonicalValue, type AppLanguage } from '@/lib/i18n';
 
 interface RecordSummary {
@@ -51,6 +51,9 @@ export function HistoryClient() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<RecordDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [detailTranslating, setDetailTranslating] = useState(false);
+  const [translationError, setTranslationError] = useState(false);
+  const translatedResultsRef = useRef<Record<string, Partial<Record<AppLanguage, Record<string, any>>>>>({});
 
   const loadList = useCallback(async () => {
     setLoading(true);
@@ -72,15 +75,60 @@ export function HistoryClient() {
     loadList();
   }, [loadList]);
 
+  useEffect(() => {
+    if (!detail?.result || detail.result.language === lang) return;
+    const cached = translatedResultsRef.current[detail.id]?.[lang];
+    if (cached) {
+      setDetail((current) => current ? { ...current, result: cached } : current);
+      setTranslationError(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setDetailTranslating(true);
+    setTranslationError(false);
+    void fetch('/api/analyze-wound/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ result: detail.result, language: lang }),
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('TRANSLATION_FAILED');
+        const body = await response.json();
+        if (!body?.result) throw new Error('TRANSLATION_FAILED');
+        translatedResultsRef.current[detail.id] = {
+          ...translatedResultsRef.current[detail.id],
+          [lang]: body.result,
+        };
+        setDetail((current) => current?.id === detail.id ? { ...current, result: body.result } : current);
+      })
+      .catch((error) => {
+        if (error?.name !== 'AbortError') setTranslationError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setDetailTranslating(false);
+      });
+    return () => controller.abort();
+  }, [detail, lang]);
+
   const selectRecord = useCallback(async (id: string) => {
     setSelectedId(id);
     setDetail(null);
     setDetailLoading(true);
+    setTranslationError(false);
     try {
       const res = await fetch(`/api/hcp/analyses/${id}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(t('history.detail_error'));
-      setDetail(data?.record ?? null);
+      const record = data?.record ?? null;
+      if (record?.result?.language === 'en' || record?.result?.language === 'ms') {
+        translatedResultsRef.current[record.id] = {
+          ...translatedResultsRef.current[record.id],
+          [record.result.language]: record.result,
+        };
+      }
+      setDetail(record);
     } catch {
       setDetail(null);
     } finally {
@@ -207,6 +255,16 @@ export function HistoryClient() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
+              {detailTranslating && (
+                <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t('analysis.translating')}
+                </div>
+              )}
+              {translationError && (
+                <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  {t('analysis.translation_failed')}
+                </div>
+              )}
               {detail.imageUrl ? (
                 <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video">
                   {/* eslint-disable-next-line @next/next/no-img-element */}

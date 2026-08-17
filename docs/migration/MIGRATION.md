@@ -54,6 +54,32 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 ## Migration audit log
 
+### Step 44 — HCP image-analysis clinical fixes
+
+- Removed the redundant dedicated camera stream UI while retaining the standard upload control,
+  preview, validation, retry, and compatible mobile camera/photo chooser behavior.
+- Existing live and retained History results now switch between English and Bahasa Malaysia through
+  a text-only translation operation. The patient image is not resent, protected canonical/numeric
+  values are validated unchanged, both language representations are cached, and the original result
+  remains visible if translation fails. Language metadata stays in the existing JSON result, so no
+  database migration is required.
+- Image Analysis now separates Parkland indication from the unchanged deterministic formula:
+  adult `TBSA >=15%`, child `TBSA >=10%`, explicit clinician-selected category, no inferred category
+  or weight, and localized indicated/missing-weight/not-required/uncertain states. The standalone
+  Parkland calculator is unchanged.
+- Azure request and streamed-output filter stops are classified from allowlisted source, category,
+  and severity fields only. Bicep declares `Microsoft.Default`; no live Azure policy was changed.
+  Operators must verify the deployed policy and actual blocking category before manually applying a
+  least-permissive supported healthcare configuration.
+- Architecture `6.1.1` → `6.2.0`; no authentication, credential, dependency, Community, database
+  schema, deployment workflow, or Azure resource change.
+- Validation PASS: unit `121/121`, RAI `31/31`, integration `14/14`, API `26/26`, bilingual
+  HCP/Community journeys `4/4`, HCP retry E2E `1/1`, typecheck, lint, production build, and
+  architecture/Mermaid drift checks. The sandbox build used Next.js's temporary Google-font mock
+  hook because `fonts.googleapis.com` DNS was unavailable; no font or runtime source changed.
+- Manual live-Azure checks remain for de-identified clinical images, filter-category evidence,
+  mobile chooser behavior, translated clinical wording, and Parkland result presentation.
+
 ### Step 43 — Audit PostgreSQL version and prototype workflows
 
 - Read-only Azure control-plane and SQL checks verified the deployed server as PostgreSQL `17.10`,

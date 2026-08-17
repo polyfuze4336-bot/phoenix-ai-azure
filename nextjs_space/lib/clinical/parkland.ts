@@ -14,6 +14,20 @@
  */
 
 export type ResuscitationFormula = 'parkland' | 'brooke';
+export type PatientCategory = 'adult' | 'child';
+export type ParklandIndication = 'yes' | 'no' | 'uncertain';
+
+export interface ParklandIndicationInput {
+  isBurn: boolean;
+  tbsaPercent: number | null;
+  patientCategory?: PatientCategory;
+}
+
+export interface ParklandIndicationResult {
+  indicated: ParklandIndication;
+  thresholdPercent: number | null;
+  reason: 'non_burn_or_zero' | 'category_required' | 'below_threshold' | 'at_or_above_threshold';
+}
 
 export interface ResuscitationInput {
   /** Patient weight in kilograms. */
@@ -39,6 +53,20 @@ export interface ResuscitationResult {
   urineTarget: number;
   /** True when the patient is treated as a child (<30 kg). */
   isChild: boolean;
+}
+
+export function determineParklandIndication(input: ParklandIndicationInput): ParklandIndicationResult {
+  const { isBurn, tbsaPercent, patientCategory } = input;
+  if (!isBurn || tbsaPercent == null || tbsaPercent <= 0) {
+    return { indicated: 'no', thresholdPercent: null, reason: 'non_burn_or_zero' };
+  }
+  if (!patientCategory) {
+    return { indicated: 'uncertain', thresholdPercent: null, reason: 'category_required' };
+  }
+  const thresholdPercent = patientCategory === 'child' ? 10 : 15;
+  return tbsaPercent >= thresholdPercent
+    ? { indicated: 'yes', thresholdPercent, reason: 'at_or_above_threshold' }
+    : { indicated: 'no', thresholdPercent, reason: 'below_threshold' };
 }
 
 /**

@@ -9,6 +9,7 @@
  */
 
 import { AiError } from '../types';
+import { extractContentFilterDetails } from '../content-filter';
 
 export interface CollectedCompletion {
   /** Full accumulated assistant text. */
@@ -30,18 +31,32 @@ export async function collectCompletion(
     if (!line.startsWith('data: ')) return false;
     const data = line.slice(6).trim();
     if (data === '[DONE]') return true;
+    let parsed: any;
     try {
-      const parsed = JSON.parse(data);
-      buffer += parsed?.choices?.[0]?.delta?.content ?? '';
-      if (parsed?.usage) {
-        usage = {
-          prompt: parsed.usage.prompt_tokens,
-          completion: parsed.usage.completion_tokens,
-          total: parsed.usage.total_tokens,
-        };
-      }
+      parsed = JSON.parse(data);
     } catch {
       /* ignore non-JSON keep-alive lines */
+      return false;
+    }
+    const choice = parsed?.choices?.[0];
+    if (choice?.finish_reason === 'content_filter') {
+      throw new AiError({
+        code: 'upstream_error',
+        category: 'AI_CONTENT_FILTER',
+        status: 422,
+        clientMessage:
+          'Azure AI stopped the assessment under the configured content filter. ' +
+          'The clinical result is unavailable. Contact the Azure administrator if legitimate clinical images are consistently blocked.',
+        contentFilter: extractContentFilterDetails(choice, 'output') ?? { source: 'output', categories: [] },
+      });
+    }
+    buffer += choice?.delta?.content ?? '';
+    if (parsed?.usage) {
+      usage = {
+        prompt: parsed.usage.prompt_tokens,
+        completion: parsed.usage.completion_tokens,
+        total: parsed.usage.total_tokens,
+      };
     }
     return false;
   };

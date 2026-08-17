@@ -30,6 +30,18 @@ test('collectCompletion classifies empty and interrupted responses', async () =>
   );
 });
 
+test('collectCompletion classifies an Azure output content-filter stop', async () => {
+  await assert.rejects(
+    collectCompletion(stream(
+      'data: {"choices":[{"delta":{},"finish_reason":"content_filter","content_filter_results":{"violence":{"filtered":true,"severity":"medium"}}}]}\n\ndata: [DONE]\n',
+    )),
+    (error: unknown) => error instanceof AiError &&
+      error.category === 'AI_CONTENT_FILTER' &&
+      error.contentFilter?.source === 'output' &&
+      error.contentFilter.categories[0]?.category === 'violence',
+  );
+});
+
 test('parseJsonObject tolerates markdown fences and leading commentary', () => {
   assert.deepEqual(parseJsonObject('Result follows:\n```json\n{"ok":true}\n```'), { ok: true });
 });

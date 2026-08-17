@@ -22,7 +22,11 @@ import { getAiProvider } from '../ai-provider';
 import { getAnalysisModelDeployment } from '../model-config';
 import { collectCompletion, parseJsonObject } from '../streaming/collect';
 import { AiError, type AiErrorCategory, type AiMessage } from '../types';
-import { calculateResuscitation } from '@/lib/clinical/parkland';
+import {
+  calculateResuscitation,
+  determineParklandIndication,
+  type PatientCategory,
+} from '@/lib/clinical/parkland';
 import {
   burnWoundAnalysisSchema,
   criticSchema,
@@ -45,7 +49,7 @@ import type { AppLanguage } from '@/lib/i18n';
 /** Optional patient context supplied by the clinician (never invented). */
 export interface PatientContext {
   weightKg?: number;
-  ageGroup?: string;
+  ageGroup?: PatientCategory;
   fitzpatrickType?: string;
   mechanism?: string;
   timeSinceInjury?: string;
@@ -222,29 +226,74 @@ function isSpecialSite(text: string): boolean {
   return SPECIAL_SITES.some((s) => t.includes(s));
 }
 
-function computeParkland(isBurn: boolean, tbsa: number | null, weightKg?: number) {
-  if (!isBurn || !tbsa || tbsa <= 0) {
-    return { indicated: 'no' as const, requiresWeight: false, summary: 'Not applicable (not a burn or no estimable TBSA).', total24hMl: null, first8hMl: null, next16hMl: null };
-  }
-  if (!weightKg || weightKg <= 0) {
+export function computeParkland(
+  isBurn: boolean,
+  tbsa: number | null,
+  patientCategory: PatientCategory | undefined,
+  weightKg: number | undefined,
+  language: AppLanguage,
+) {
+  const normalizedTbsa = tbsa != null && Number.isFinite(tbsa) ? tbsa : null;
+  const indication = determineParklandIndication({ isBurn, tbsaPercent: normalizedTbsa, patientCategory });
+  if (indication.reason === 'non_burn_or_zero') {
     return {
-      indicated: 'uncertain' as const,
-      requiresWeight: true,
-      summary:
-        'Parkland fluid resuscitation may be indicated, but requires the patient\'s weight to calculate. ' +
-        'Enter the weight in the Parkland Calculator. (No weight is assumed — a fixed 70 kg estimate is clinically unsafe.)',
+      indicated: 'no' as const,
+      requiresWeight: false,
+      summary: language === 'ms'
+        ? 'Regimen Parkland tidak berkenaan kerana ini bukan kelecuran atau TBSA tidak dapat dianggarkan.'
+        : 'Parkland regimen is not applicable because this is not a burn or TBSA cannot be estimated.',
       total24hMl: null,
       first8hMl: null,
       next16hMl: null,
     };
   }
-  const r = calculateResuscitation({ weightKg, tbsaPercent: tbsa, formula: 'parkland' });
-  if (!r) return { indicated: 'uncertain' as const, requiresWeight: true, summary: 'Unable to calculate.', total24hMl: null, first8hMl: null, next16hMl: null };
-  const summary =
-    `Parkland (4 mL x ${weightKg} kg x ${tbsa}% TBSA) = ${Math.round(r.total24h)} mL over 24h. ` +
-    `First 8h: ${Math.round(r.first8h)} mL (~${Math.round(r.rate8h)} mL/h). ` +
-    `Next 16h: ${Math.round(r.next16h)} mL (~${Math.round(r.rate16h)} mL/h). ` +
-    `Titrate to urine output ~${r.urineTarget} mL/h.`;
+  if (indication.indicated === 'uncertain') {
+    return {
+      indicated: 'uncertain' as const,
+      requiresWeight: false,
+      summary: language === 'ms'
+        ? 'Indikasi regimen Parkland tidak pasti. Pilih kategori pesakit dewasa atau kanak-kanak untuk menggunakan ambang TBSA yang sesuai.'
+        : 'Parkland regimen indication is uncertain. Select whether the patient is an adult or child to apply the appropriate TBSA threshold.',
+      total24hMl: null,
+      first8hMl: null,
+      next16hMl: null,
+    };
+  }
+  if (indication.indicated === 'no') {
+    return {
+      indicated: 'no' as const,
+      requiresWeight: false,
+      summary: language === 'ms'
+        ? 'Regimen Parkland tidak diperlukan. Teruskan resusitasi cecair atau cecair penyelenggaraan mengikut indikasi klinikal berdasarkan garis panduan yang berkenaan dan perkembangan klinikal pesakit.'
+        : "Parkland regimen not required. Continue fluid resuscitation or maintenance as clinically indicated according to the applicable guideline and the patient's clinical progress.",
+      total24hMl: null,
+      first8hMl: null,
+      next16hMl: null,
+    };
+  }
+  if (!weightKg || weightKg <= 0) {
+    return {
+      indicated: 'yes' as const,
+      requiresWeight: true,
+      summary: language === 'ms'
+        ? 'Regimen Parkland diindikasikan, tetapi berat pesakit diperlukan untuk mengira regimen. Tiada berat diandaikan.'
+        : 'Parkland regimen is indicated, but patient weight is required to calculate the regimen. No weight is assumed.',
+      total24hMl: null,
+      first8hMl: null,
+      next16hMl: null,
+    };
+  }
+  const r = calculateResuscitation({ weightKg, tbsaPercent: normalizedTbsa!, formula: 'parkland' });
+  if (!r) return { indicated: 'uncertain' as const, requiresWeight: false, summary: language === 'ms' ? 'Regimen tidak dapat dikira.' : 'Unable to calculate the regimen.', total24hMl: null, first8hMl: null, next16hMl: null };
+  const summary = language === 'ms'
+    ? `Parkland (4 mL x ${weightKg} kg x ${tbsa}% TBSA) = ${Math.round(r.total24h)} mL untuk 24 jam. ` +
+      `8 jam pertama: ${Math.round(r.first8h)} mL (~${Math.round(r.rate8h)} mL/j). ` +
+      `16 jam seterusnya: ${Math.round(r.next16h)} mL (~${Math.round(r.rate16h)} mL/j). ` +
+      `Titrasi kepada pengeluaran urin ~${r.urineTarget} mL/j.`
+    : `Parkland (4 mL x ${weightKg} kg x ${tbsa}% TBSA) = ${Math.round(r.total24h)} mL over 24h. ` +
+      `First 8h: ${Math.round(r.first8h)} mL (~${Math.round(r.rate8h)} mL/h). ` +
+      `Next 16h: ${Math.round(r.next16h)} mL (~${Math.round(r.rate16h)} mL/h). ` +
+      `Titrate to urine output ~${r.urineTarget} mL/h.`;
   return { indicated: 'yes' as const, requiresWeight: false, summary, total24hMl: Math.round(r.total24h), first8hMl: Math.round(r.first8h), next16hMl: Math.round(r.next16h) };
 }
 
@@ -331,7 +380,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
   const criticResult = criticStage.value ? criticSchema.safeParse(criticStage.value) : null;
   const critic = criticResult?.success ? criticResult.data : unavailableCritic(language);
 
-  return assemble({ observation, interpretation, management, critic, patient });
+  return assemble({ observation, interpretation, management, critic, patient, language });
 }
 
 /* ------------------------------------------------- deterministic assembly */
@@ -348,6 +397,7 @@ export function assembleAnalysis(args: {
   management: Management;
   critic: { pass: boolean; issues: string[]; recommendedCorrections: string[] };
   patient?: PatientContext;
+  language?: AppLanguage;
 }): BurnWoundAnalysis {
   return assemble(args);
 }
@@ -358,8 +408,10 @@ function assemble(args: {
   management: Management;
   critic: { pass: boolean; issues: string[]; recommendedCorrections: string[] };
   patient?: PatientContext;
+  language?: AppLanguage;
 }): BurnWoundAnalysis {
   const { observation, patient } = args;
+  const language = args.language ?? 'en';
   const interpretation = { ...args.interpretation };
   const management = { ...args.management };
 
@@ -404,7 +456,13 @@ function assemble(args: {
   }
 
   // --- Deterministic Parkland (never from an assumed weight).
-  const parkland = computeParkland(interpretation.isBurn, interpretation.tbsaEstimate, patient?.weightKg);
+  const parkland = computeParkland(
+    interpretation.isBurn,
+    interpretation.tbsaEstimate,
+    patient?.ageGroup,
+    patient?.weightKg,
+    language,
+  );
 
   // --- Analysis-quality band.
   const analysisQuality: BurnWoundAnalysis['analysisQuality'] = inadequate
@@ -427,14 +485,30 @@ function assemble(args: {
 
   // --- Missing information + follow-up questions (deterministic, honest).
   const missing: string[] = [];
-  if (!patient?.weightKg && interpretation.isBurn) missing.push('Patient weight — required to calculate fluid resuscitation.');
+  if (parkland.indicated === 'uncertain') {
+    missing.push(language === 'ms'
+      ? 'Kategori pesakit dewasa atau kanak-kanak — diperlukan untuk memilih ambang resusitasi cecair.'
+      : 'Adult or child patient category — required to select the fluid-resuscitation threshold.');
+  }
+  if (parkland.indicated === 'yes' && !patient?.weightKg) {
+    missing.push(language === 'ms'
+      ? 'Berat pesakit — diperlukan untuk mengira resusitasi cecair.'
+      : 'Patient weight — required to calculate fluid resuscitation.');
+  }
   if (!observation.scalePresent) missing.push('A size reference (ruler/coin) — needed to measure real dimensions.');
   if (interpretation.isBurn && !patient?.mechanism) missing.push('Burn mechanism (scald/flame/chemical/electrical) and time since injury.');
   if (!patient?.freeText) missing.push('Relevant history: comorbidities (e.g. diabetes), pain, sensation, tetanus status.');
   missing.push(...(interpretation.tbsaLimitations ?? []));
 
   const followUpQuestions: string[] = [];
-  if (!patient?.weightKg && interpretation.isBurn) followUpQuestions.push('What is the patient\'s weight (kg)?');
+  if (parkland.indicated === 'uncertain') {
+    followUpQuestions.push(language === 'ms'
+      ? 'Adakah pesakit dewasa atau kanak-kanak?'
+      : 'Is the patient an adult or child?');
+  }
+  if (parkland.indicated === 'yes' && !patient?.weightKg) {
+    followUpQuestions.push(language === 'ms' ? 'Berapakah berat pesakit (kg)?' : 'What is the patient\'s weight (kg)?');
+  }
   if (interpretation.isBurn && !patient?.mechanism) followUpQuestions.push('What caused the burn, and how long ago did it happen?');
   followUpQuestions.push('Is there loss of sensation, deep pain, or reduced capillary refill in the affected area?');
   if (interpretation.infectionSigns.confidence !== 'insufficient') followUpQuestions.push('Are there systemic signs of infection (fever, spreading redness, increasing pain, purulent discharge)?');

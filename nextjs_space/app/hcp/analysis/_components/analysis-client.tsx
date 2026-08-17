@@ -1,15 +1,16 @@
 'use client';
 
 import { useLanguage } from '@/components/language-provider';
-import { Upload, Camera, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette, RefreshCw, Images } from 'lucide-react';
+import { Upload, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette, RefreshCw, Images } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { StructuredAnalysis, type StructuredAnalysisData } from './structured-analysis';
-import { translateCanonicalValue } from '@/lib/i18n';
+import { translateCanonicalValue, type AppLanguage } from '@/lib/i18n';
 import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
 
 interface AnalysisResult {
+  language?: AppLanguage;
   fitzpatrickType: string;
   fitzpatrickNote: string;
   woundCategory: string;
@@ -39,6 +40,7 @@ interface AnalysisResult {
 /** Optional patient context the clinician can supply to improve accuracy. */
 interface PatientContext {
   weightKg?: number;
+  ageGroup?: 'adult' | 'child';
   mechanism?: string;
 }
 
@@ -103,20 +105,20 @@ export function AnalysisClient() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [cameraActive, setCameraActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisFailed, setAnalysisFailed] = useState(false);
   const [analysisRetryCount, setAnalysisRetryCount] = useState(0);
   const [refining, setRefining] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translationError, setTranslationError] = useState(false);
   const [weightKg, setWeightKg] = useState('');
+  const [patientCategory, setPatientCategory] = useState('');
   const [mechanism, setMechanism] = useState('');
   const [loadingStage, setLoadingStage] = useState(0);
   const lastBase64Ref = useRef<string>('');
   const lastMimeRef = useRef<string>('image/jpeg');
+  const translationsRef = useRef<Partial<Record<AppLanguage, AnalysisResult>>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
   const analysisStages = lang === 'ms'
     ? ['Menyediakan imej', 'Menganalisis ciri luka', 'Menyemak penilaian', 'Menyediakan keputusan']
@@ -131,14 +133,50 @@ export function AnalysisClient() {
     return () => window.clearInterval(timer);
   }, [analyzing]);
 
+  useEffect(() => {
+    if (!result || result.language === lang) return;
+    const cached = translationsRef.current[lang];
+    if (cached) {
+      setResult(cached);
+      setTranslationError(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setTranslating(true);
+    setTranslationError(false);
+    void fetch('/api/analyze-wound/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ result, language: lang }),
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('TRANSLATION_FAILED');
+        const body = await response.json();
+        if (!body?.result) throw new Error('TRANSLATION_FAILED');
+        const translated = { ...body.result, language: lang } as AnalysisResult;
+        translationsRef.current[lang] = translated;
+        setResult(translated);
+      })
+      .catch((error) => {
+        if (error?.name !== 'AbortError') setTranslationError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setTranslating(false);
+      });
+    return () => controller.abort();
+  }, [lang, result]);
+
   const patientContext = useCallback((): PatientContext | undefined => {
     const w = parseFloat(weightKg);
     const ctx: PatientContext = {
       weightKg: Number.isFinite(w) && w > 0 ? w : undefined,
+      ageGroup: patientCategory === 'adult' || patientCategory === 'child' ? patientCategory : undefined,
       mechanism: mechanism.trim() || undefined,
     };
-    return ctx.weightKg || ctx.mechanism ? ctx : undefined;
-  }, [weightKg, mechanism]);
+    return ctx.weightKg || ctx.ageGroup || ctx.mechanism ? ctx : undefined;
+  }, [weightKg, patientCategory, mechanism]);
 
   /** Read the SSE stream from /api/analyze-wound and resolve the completed result. */
   const readAnalysisStream = useCallback(async (response: Response): Promise<AnalysisResult | null> => {
@@ -195,46 +233,6 @@ export function AnalysisClient() {
     }
   }, [t]);
 
-  const startCamera = useCallback(async () => {
-    try {
-      const stream = await navigator?.mediaDevices?.getUserMedia({ video: { facingMode: 'environment' } });
-      streamRef.current = stream;
-      if (videoRef?.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      setCameraActive(true);
-      setResult(null);
-      setError(null);
-      setAnalysisFailed(false);
-      setAnalysisRetryCount(0);
-    } catch (err: any) {
-      setError(t('analysis.camera_denied'));
-    }
-  }, [t]);
-
-  const stopCamera = useCallback(() => {
-    streamRef?.current?.getTracks()?.forEach((track: any) => track?.stop?.());
-    setCameraActive(false);
-  }, []);
-
-  const capturePhoto = useCallback(() => {
-    if (!videoRef?.current || !canvasRef?.current) return;
-    const canvas = canvasRef.current;
-    canvas.width = videoRef.current.videoWidth ?? 640;
-    canvas.height = videoRef.current.videoHeight ?? 480;
-    const ctx = canvas?.getContext('2d');
-    ctx?.drawImage(videoRef.current, 0, 0);
-    const dataUrl = canvas?.toDataURL('image/jpeg', 0.8);
-    setImagePreview(dataUrl);
-    setAnalysisFailed(false);
-    setAnalysisRetryCount(0);
-    canvas?.toBlob((blob: any) => {
-      if (blob) setImageFile(new File([blob], 'capture.jpg', { type: 'image/jpeg' }));
-    }, 'image/jpeg', 0.8);
-    stopCamera();
-  }, [stopCamera]);
-
   const analyzeImage = useCallback(async (retryCount: number) => {
     if (!imageFile) return;
     setAnalyzing(true);
@@ -269,12 +267,15 @@ export function AnalysisClient() {
 
       const completed = await readAnalysisStream(response);
       if (completed) {
-        setResult(completed);
+        const localized = { ...completed, language: lang };
+        translationsRef.current = { [lang]: localized };
+        setResult(localized);
         setAnalysisFailed(false);
         void saveAnalysisToHistory(completed, base64, mime);
       }
     } catch (err: any) {
       setAnalysisFailed(true);
+      setError(err?.message ?? t('analysis.failed'));
     } finally {
       setAnalyzing(false);
     }
@@ -307,7 +308,9 @@ export function AnalysisClient() {
       if (!response?.ok) throw new Error(await responseError(response, t('analysis.refine_failed')));
       const completed = await readAnalysisStream(response);
       if (completed) {
-        setResult(completed);
+        const localized = { ...completed, language: lang };
+        translationsRef.current = { [lang]: localized };
+        setResult(localized);
         void saveAnalysisToHistory(completed, lastBase64Ref.current, lastMimeRef.current);
       }
     } catch (err: any) {
@@ -324,6 +327,8 @@ export function AnalysisClient() {
     setError(null);
     setAnalysisFailed(false);
     setAnalysisRetryCount(0);
+    setTranslationError(false);
+    translationsRef.current = {};
   }, []);
 
   const chooseAnotherImage = useCallback(() => {
@@ -354,7 +359,7 @@ export function AnalysisClient() {
           <ClinicalAiNotice variant="confidentiality" />
           <ClinicalAiNotice variant="personal-data" />
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileSelect} className="hidden" />
-          {!imagePreview && !cameraActive && (
+          {!imagePreview && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
               <div
                 onClick={() => fileInputRef?.current?.click?.()}
@@ -364,26 +369,7 @@ export function AnalysisClient() {
                 <p className="font-medium text-gray-600">{t('analysis.upload')}</p>
                 <p className="text-xs text-gray-400 mt-1">{t('analysis.file_hint')}</p>
               </div>
-              <button
-                onClick={startCamera}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#0F9B8E] text-white rounded-xl font-medium hover:bg-[#0e8a7e] transition-colors"
-              >
-                <Camera className="w-5 h-5" /> {t('analysis.camera')}
-              </button>
             </motion.div>
-          )}
-
-          {cameraActive && (
-            <div className="space-y-3">
-              <div className="relative rounded-xl overflow-hidden bg-black aspect-video">
-                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-              </div>
-              <div className="flex gap-3">
-                <button onClick={capturePhoto} className="flex-1 px-4 py-3 bg-[#8B0000] text-white rounded-xl font-medium hover:bg-[#7a0000] transition-colors">{t('analysis.capture')}</button>
-                <button onClick={stopCamera} className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors">{t('analysis.cancel')}</button>
-              </div>
-              <canvas ref={canvasRef} className="hidden" />
-            </div>
           )}
 
           {imagePreview && (
@@ -399,7 +385,19 @@ export function AnalysisClient() {
               {/* Optional patient context — improves accuracy; nothing is assumed when blank. */}
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
                 <p className="text-xs font-semibold text-gray-500">{t('analysis.patient_details')}</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">{t('analysis.patient_category')}</label>
+                    <select
+                      value={patientCategory}
+                      onChange={(e) => setPatientCategory(e.target.value)}
+                      className="w-full text-sm border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#8B0000]/30"
+                    >
+                      <option value="">{t('analysis.category_select')}</option>
+                      <option value="adult">{t('analysis.category_adult')}</option>
+                      <option value="child">{t('analysis.category_child')}</option>
+                    </select>
+                  </div>
                   <div>
                     <label className="text-xs text-gray-500 block mb-1">{t('analysis.weight')}</label>
                     <input
@@ -470,6 +468,16 @@ export function AnalysisClient() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
               <h2 className="font-display text-lg font-bold text-gray-900">{t('analysis.results')}</h2>
               <ClinicalAiNotice />
+              {translating && (
+                <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t('analysis.translating')}
+                </div>
+              )}
+              {translationError && (
+                <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  {t('analysis.translation_failed')}
+                </div>
+              )}
 
               {/* Native skin type (Fitzpatrick) */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 overflow-hidden">
@@ -580,12 +588,8 @@ export function AnalysisClient() {
                       </div>
                       <div className="p-4">
                         <p className="text-sm text-gray-800 whitespace-pre-line">{result?.parklandFluid}</p>
-                        {result?.structured ? (
-                          result?.structured?.parkland?.requiresWeight ? (
-                            <p className="text-xs text-gray-500 mt-3 italic">{t('analysis.parkland_weight_help')}</p>
-                          ) : null
-                        ) : (
-                          <p className="text-xs text-gray-500 mt-3 italic">{t('analysis.parkland_assumed_help')}</p>
+                        {result?.structured?.parkland?.requiresWeight && (
+                          <p className="text-xs text-gray-500 mt-3 italic">{t('analysis.parkland_weight_help')}</p>
                         )}
                       </div>
                       <div className="px-4 pb-4">

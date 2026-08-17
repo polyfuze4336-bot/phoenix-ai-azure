@@ -26,6 +26,10 @@
 > no Azure resource, RBAC, secret, model, database, network, SKU, or region changes.
 > The `6.1.1` live audit confirms PostgreSQL 17.10 and the existing two-workflow prototype delivery
 > shape. It is documentation-only and changes no Azure or GitHub resource.
+> The `6.2.0` HCP analysis fixes are application-only. They reuse the existing `gpt-4o` deployment
+> and `Microsoft.Default` policy declared by Bicep; no Azure policy or resource is changed
+> automatically. The live attached policy must be verified manually before any least-permissive
+> healthcare-specific filter adjustment.
 
 ## Environment
 
@@ -69,6 +73,9 @@
   persists files** — see [current-architecture.md §4](./current-architecture.md#4-source-vs-deployment).
 - The application authenticates to Azure AI and Storage using the **user-assigned managed
   identity** (`id-phoenixai-<token>`); no keys are stored in application settings.
+- Bicep declares `raiPolicyName: Microsoft.Default` for `gpt-4o`. Repository evidence cannot prove
+  that the live deployment has not drifted or identify a blocking category before a real rejection;
+  operators must inspect the deployment and its safe filter evidence in Azure.
 - The `BFG Solutions` security group has `Owner` only on the dedicated demo resource group. This
   covers its three current members, not all 42 tenant users, and does not elevate the group at
   subscription scope.

@@ -17,6 +17,8 @@ Documented, honestly. Each has a stable ID in the governed control register and 
 | LIM-011 | Architecture documentation currency relies on contributor practice and optional local drift validation; it is not enforced by a GitHub status check in the rapid-prototype direct-main workflow. |
 | LIM-012 | Decoding verifies structural image integrity and dimensions but does not prove that an image is clinically useful; focus, lighting, framing, occlusion and scale adequacy remain model-assessed and clinician-reviewed. |
 | LIM-013 | The `>=95%` image-analysis reliability target measures API completion for safe demo images under the recorded test conditions only. It is not a clinical-accuracy result, production SLA, or assurance that all images will complete. |
+| LIM-014 | Azure content filtering may block legitimate clinical burn/wound imagery. The app classifies safe structured filter evidence, but only an Azure administrator can verify the live policy and apply a least-permissive supported healthcare configuration; Phoenix AI does not bypass the filter. |
+| LIM-015 | Existing-result translation is model-assisted and structurally validated to preserve protected canonical and numeric values, but clinical wording still requires clinician review. If validation or translation fails, the original result remains visible. |
 
 These limitations are not defects to hide — they define the responsible scope of the tool. See
 [rai-roadmap.md](./rai-roadmap.md) for what is planned.

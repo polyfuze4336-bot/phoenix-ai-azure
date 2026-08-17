@@ -5,7 +5,9 @@ set of deterministic safety rules run after every analysis.
 
 ## Deterministic calculations
 - **Parkland fluid resuscitation** — [`lib/clinical/parkland.ts`](../../nextjs_space/lib/clinical/parkland.ts).
-  Computed only when a weight is supplied; the pipeline **never invents a body weight** (**RAI-SAFE-006**).
+  Image Analysis first applies the approved adult `TBSA >=15%` or child `TBSA >=10%` indication
+  threshold after the clinician explicitly selects the patient category. It then computes volumes
+  only when weight is supplied; the pipeline never infers category or weight (**RAI-SAFE-006**).
   Verified by [`tests/unit/parkland.test.ts`](../../nextjs_space/tests/unit/parkland.test.ts) and
   [`tests/rai/rai-safety.test.ts`](../../nextjs_space/tests/rai/rai-safety.test.ts).
 - **TBSA** — Lund & Browder age-adjusted chart
@@ -27,6 +29,9 @@ covered by the RAI + unit tests:
 7. **Bounded execution** — each stage uses configurable `AI_ANALYSIS_TIMEOUT_MS`; transport makes no
    more than three total attempts and retries only 408, 429, 500, 502, 503, 504, or transient network
    failures, honoring `Retry-After` where supplied (**RAI-REL-001**).
+8. **Parkland indication before calculation** — below-threshold burns receive a bilingual
+   not-required state without volumes; missing category is uncertain, and indicated cases without
+   weight request weight without calculating a placeholder (**RAI-SAFE-006**).
 
 ## Safe failure
 If the model or validation fails, the app returns an explicit, clearly-labelled
@@ -44,6 +49,10 @@ repair attempt. Observation and interpretation are core stages: if either remain
 clinical result is returned. Management and critic are non-core stages: when either remains
 unavailable, the validated core result is retained and the missing subsection is labelled rather
 than invented (**RAI-SAFE-003**).
+
+Azure input and output content-filter stops are classified from allowlisted structured fields
+(source, category, severity) without recording raw provider errors or image content. The repository
+provisions `Microsoft.Default`; a live policy/category must still be verified manually in Azure.
 
 ## Boundaries
 A single photograph cannot establish depth progression, infection, pain or sensation with certainty.

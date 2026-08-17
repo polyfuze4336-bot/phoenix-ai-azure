@@ -91,6 +91,19 @@ test('POST /api/analyze-wound reaches a terminal response for a valid image', as
   expectTerminalResponse(res.status());
 });
 
+test('POST /api/analyze-wound/translate requires a structured result', async ({ request }) => {
+  const res = await postJson(request, '/api/analyze-wound/translate', { language: 'ms' });
+  expect(res.status()).toBe(400);
+});
+
+test('POST /api/analyze-wound/translate rejects a non-canonical language', async ({ request }) => {
+  const res = await postJson(request, '/api/analyze-wound/translate', {
+    language: 'bm',
+    result: { characteristics: 'No change' },
+  });
+  expect(res.status()).toBe(400);
+});
+
 // --- /api/community-analyze --------------------------------------------------
 
 test('POST /api/community-analyze rejects a missing image with 400', async ({ request }) => {

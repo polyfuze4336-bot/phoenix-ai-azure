@@ -16,6 +16,9 @@ export interface ImageAnalysisTelemetryContext {
   imageSizeBucket: string;
   imageMimeType: string;
   requestedLanguage: 'en' | 'ms';
+  contentFilterSource?: string;
+  contentFilterCategory?: string;
+  contentFilterSeverity?: string;
 }
 
 export function imageSizeBucket(bytes: number): string {
@@ -31,8 +34,24 @@ export function readAnalysisRetryCount(value: string | null): number {
   return Number.isFinite(parsed) ? Math.min(10, Math.max(0, parsed)) : 0;
 }
 
-export function imageAnalysisFailure(error: unknown): { category: string; status: number } {
-  if (error instanceof AiError) return { category: error.category, status: error.status };
+export function imageAnalysisFailure(error: unknown): {
+  category: string;
+  status: number;
+  contentFilterSource?: string;
+  contentFilterCategory?: string;
+  contentFilterSeverity?: string;
+} {
+  if (error instanceof AiError) {
+    const filtered = error.contentFilter?.categories.find((item) => item.filtered) ??
+      error.contentFilter?.categories[0];
+    return {
+      category: error.category,
+      status: error.status,
+      ...(error.contentFilter?.source ? { contentFilterSource: error.contentFilter.source } : {}),
+      ...(filtered?.category ? { contentFilterCategory: filtered.category } : {}),
+      ...(filtered?.severity ? { contentFilterSeverity: filtered.severity } : {}),
+    };
+  }
   return { category: 'UNKNOWN', status: 500 };
 }
 
@@ -49,6 +68,9 @@ export function recordImageAnalysisEvent(
     imageSizeBucket: context.imageSizeBucket,
     imageMimeType: context.imageMimeType,
     requestedLanguage: context.requestedLanguage,
+    contentFilterSource: context.contentFilterSource,
+    contentFilterCategory: context.contentFilterCategory,
+    contentFilterSeverity: context.contentFilterSeverity,
   };
   trackEvent(name, properties, { latencyMs: context.latencyMs });
 }

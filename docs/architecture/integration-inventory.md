@@ -9,7 +9,7 @@
 
 | Integration ID | Source | Destination | Protocol | Purpose | Authentication | Data | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| INT-BROWSER-APP | Browser (client) | Next.js server (`app/`) | HTTPS | Serve one Phoenix AI experience; submit all chat/image requests with validated `en`/`ms`; reject unsupported images and invalid language values explicitly | Signed session cookie (demo) | Persisted UI language, chat text, ephemeral JPEG/PNG/WebP/GIF base64 image payloads | ACTIVE |
+| INT-BROWSER-APP | Browser (client) | Next.js server (`app/`) | HTTPS | Serve one Phoenix AI experience; submit all chat/image requests with validated `en`/`ms`; translate existing structured HCP results without resending images; reject unsupported images and invalid language values explicitly | Signed session cookie (demo) | Persisted UI language, chat text, ephemeral JPEG/PNG/WebP/GIF base64 image payloads, existing structured result for text-only translation | ACTIVE |
 | INT-APP-FOUNDRY | Next.js AI provider (`lib/ai`) | Environment-owned Microsoft Foundry / Azure AI Services account | HTTPS (OpenAI-compatible) | Chat + multimodal wound analysis under strict selected-language instructions; completed output is checked and retried once when predominantly wrong-language | Managed identity (Bearer, `cognitiveservices.azure.com`) | Prompts, language instruction, image content, model completions; telemetry records language codes only | ACTIVE |
 | INT-APP-POSTGRES | Next.js data layer (`lib/db.ts` / Prisma) | Azure PostgreSQL Flexible Server 17.10 (`phoenix`) | PostgreSQL wire (TLS, `sslmode=require`) | Persist/read HCP AnalysisRecord after server-verified Entra session authorization; unavailable in demo auth | Direct `DATABASE_URL` credentials | Authorized retained analysis records | ACTIVE |
 | INT-APP-BLOB | Next.js storage provider (`lib/storage`) | Azure Blob Storage (`stphxyun55ezsi4yoq`, `clinical-uploads`) | HTTPS (Blob REST) | File persistence capability | Managed identity | (none in current UI) | OPTIONAL |
@@ -48,3 +48,7 @@
 
 > **The HCP clinical notice adds no integration or data flow.** It is static bilingual content on
 > the existing `INT-BROWSER-APP` surface and sends, stores, or logs no patient information.
+>
+> **Existing-result translation adds no external integration.** It reuses `INT-BROWSER-APP` and
+> `INT-APP-FOUNDRY`, sends only the existing structured result, never resends the image, validates
+> numeric/canonical values unchanged, and caches EN/MS representations in the browser session.

@@ -29,13 +29,13 @@ export function getAiProvider(): AiProvider {
  */
 export function aiErrorResponse(err: unknown, _upstreamPrefix?: string): Response {
   if (err instanceof AiError) {
-    return jsonError(err.clientMessage, err.status, err.category);
+    return jsonError(err.clientMessage, err.status, err.category, err.contentFilter);
   }
   return jsonError('The AI assessment could not be completed. Please try again.', 500, 'UNKNOWN');
 }
 
-function jsonError(message: string, status: number, code: string): Response {
-  return new Response(JSON.stringify({ error: message, code }), {
+function jsonError(message: string, status: number, code: string, contentFilter?: AiError['contentFilter']): Response {
+  return new Response(JSON.stringify({ error: message, code, ...(contentFilter ? { contentFilter } : {}) }), {
     status,
     headers: { 'Content-Type': 'application/json' },
   });

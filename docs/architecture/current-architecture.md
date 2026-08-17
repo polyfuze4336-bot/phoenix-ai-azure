@@ -6,7 +6,7 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `6.1.1`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `6.2.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -66,7 +66,7 @@ flowchart TB
     subgraph APP["Phoenix AI Application (Next.js 14 App Router)"]
         Next["Next.js Server (standalone) — ACTIVE"]
         MW["middleware.ts route protection — ACTIVE"]
-        API["API Routes (15) — ACTIVE"]
+        API["API Routes (16) — ACTIVE"]
         Auth["Auth Layer: demo default — DEMO / Entra — OPTIONAL"]
         AIProvider["AI Provider Layer (lib/ai) — ACTIVE"]
         Data["Data Access Layer (lib/db, Prisma) — ACTIVE"]
@@ -157,6 +157,7 @@ Companion diagrams:
 | Global English / Bahasa Melayu UI | Root `LanguageProvider`, `components/language-toggle.tsx`, `lib/i18n/{en,ms,index}.ts`; persisted `AppLanguage` (`en`/`ms`) | Implemented |
 | Bilingual clinical/data notices + demo boundary | `components/clinical-ai-notice.tsx`, `components/demo-environment-badge.tsx`; contextual notices on analysis/upload/results, chat/input, TBSA and Parkland | Implemented |
 | Analysis failure recovery | `app/hcp/analysis/_components/analysis-client.tsx`; selected image and form context remain available with exact bilingual retry/replacement actions | Implemented |
+| Existing-result language switching | HCP analysis and History clients call text-only `/api/analyze-wound/translate`, cache EN/MS representations, retain the original on failure, and never resend the image | Implemented |
 | Responsive interface + theming | Tailwind + shadcn/ui, `components/theme-*` | Implemented |
 
 ### 3.2 Application Layer
@@ -165,7 +166,7 @@ Companion diagrams:
 | --- | --- | --- |
 | Next.js App Router | `app/` | Implemented |
 | Server + client components | `app/**/_components/*`, layouts | Implemented |
-| API routes (15) | `app/api/**/route.ts` | Implemented |
+| API routes (16) | `app/api/**/route.ts` | Implemented |
 | Middleware (route protection) | `middleware.ts` | Implemented |
 | Instrumentation hook (startup env validation) | `instrumentation.ts` | Implemented |
 | Providers (language, theme, telemetry) | `components/*-provider.tsx` | Implemented |
@@ -184,8 +185,9 @@ Companion diagrams:
 | System prompts (HCP vs Community, strict EN/MS response instruction) | `lib/ai/prompts/{hcp-chat,hcp-wound-analysis,community-chat,community-wound-analysis}.ts`, `lib/ai/language.ts` | Implemented |
 | Staged analysis prompts | `lib/ai/prompts/{wound-visual-observation,wound-clinical-interpretation,wound-management,wound-analysis-critic}.ts`; receive the selected output language | Implemented |
 | AI output-language validation | `lib/ai/language.ts`; detects predominantly wrong-language completions, retries once with a rewrite instruction, logs language codes only | Implemented |
+| Existing-analysis translation | `lib/ai/analysis/translation.ts`, `/api/analyze-wound/translate`; translates narrative text only, validates protected canonical/numeric values unchanged, and receives no image | Implemented |
 | Staged analysis pipeline | `lib/ai/analysis/pipeline.ts` (`runAnalysisPipeline`, `assembleAnalysis`) — default for `/api/analyze-wound`; rejects empty/malformed core output, retains explicit unreadable/non-burn output as a low-information result, preserves canonical structured enums while localizing narrative EN/MS; flag `AI_ANALYSIS_PIPELINE=single` reverts | Implemented |
-| Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — Parkland is indication/age-threshold/weight gated; no assumed patient weight | Implemented |
+| Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — Image Analysis requires an explicit adult/child category, applies >=15%/>=10% indication thresholds, and calculates only with supplied weight | Implemented |
 | Rich analysis schema + adapter | `lib/ai/schemas/burn-wound-analysis.ts` (observation vs interpretation, field confidence, gaps) + flat back-compat adapter | Implemented |
 | Streaming | `lib/ai/streaming/{sse,collect,text-stream}.ts`; interrupted/empty structured streams are categorized | Implemented |
 | Image analysis input | `lib/ai/validation/image-input.ts` accepts JPEG, PNG, WebP, and GIF; validates MIME, base64, signature, decoded dimensions/integrity, and size before model invocation | Implemented |
@@ -194,12 +196,14 @@ Companion diagrams:
 | Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
 | API reliability harness | `tests/reliability/image-analysis-reliability.ts` with safe demo-image inputs; sequential and optional concurrent execution | Implemented; live execution operator-triggered |
 | AI telemetry | `lib/ai/telemetry.ts`, `lib/telemetry/analysis-events.ts`; privacy-safe analysis lifecycle events | Implemented |
+| Azure filter classification | `lib/ai/content-filter.ts`, transport and stream collection; records only allowlisted input/output category/severity metadata, never raw errors or image content | Implemented |
 
 **Wound image analysis flow (`/api/analyze-wound`).** The Original HCP client sends image data to
 the API and consumes its SSE completion. The default `staged` pipeline runs four
 sequential model stages — visual observation → clinical interpretation + quantification →
 management & referral → consistency/safety critic — then applies deterministic post-processing:
-Parkland is computed in app code from a supplied weight (never an assumed 70 kg), Fitzpatrick is
+Parkland indication is determined in app code from explicit adult/child category and TBSA
+(adult `>=15%`, child `>=10%`), then volumes are computed from supplied weight only. Fitzpatrick is
 reported only when the clinician supplies it (otherwise `unknown`), measurements are `unavailable`
 without a visible scale reference, confidence is capped on poor-quality images, and special-site
 burns are escalated. HCP requests now accept **one or more images** for the same case; overlapping
@@ -210,6 +214,12 @@ travels under `result.structured` for the enhanced UI and the REFINE (second-pas
 `AI_ANALYSIS_PIPELINE=single` restores the original single-pass call. Requests carry only validated
 `en` or `ms`; narrative and deterministic guidance follow that selection while JSON keys and enum
 tokens remain stable.
+
+Changing language after completion does not rerun image analysis. The client submits only the
+existing structured result to the nested translation route, which replaces translatable narrative
+leaves after validating identifiers and numeric tokens, caches both language representations, and
+keeps the original visible if translation fails. History uses the same operation without a schema
+migration because language metadata is stored inside the existing JSON result.
 
 ### 3.4 Data Layer
 
