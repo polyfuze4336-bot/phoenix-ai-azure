@@ -80,6 +80,13 @@ async function expectViewportContained(page: Page, width: number) {
     mainClientWidth: document.querySelector('main')?.clientWidth ?? 0,
     navWidth: document.querySelector('nav.fixed')?.scrollWidth ?? 0,
     navClientWidth: document.querySelector('nav.fixed')?.clientWidth ?? 0,
+    navLabelsContained: Array.from(document.querySelectorAll('nav.fixed a')).every((link) => {
+      const label = link.querySelector('span');
+      if (!label) return true;
+      const linkBox = link.getBoundingClientRect();
+      const labelBox = label.getBoundingClientRect();
+      return labelBox.left >= linkBox.left && labelBox.right <= linkBox.right;
+    }),
   }));
 
   expect(dimensions.viewportWidth).toBe(width);
@@ -87,6 +94,7 @@ async function expectViewportContained(page: Page, width: number) {
   expect(dimensions.mainWidth).toBeLessThanOrEqual(dimensions.mainClientWidth);
   if (width < 1024) {
     expect(dimensions.navWidth).toBeLessThanOrEqual(dimensions.navClientWidth);
+    expect(dimensions.navLabelsContained).toBe(true);
   }
 }
 

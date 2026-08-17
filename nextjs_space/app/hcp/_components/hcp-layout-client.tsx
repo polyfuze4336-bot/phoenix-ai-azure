@@ -261,6 +261,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
               <Link
                 key={item?.href}
                 href={item?.href}
+                aria-label={t(item?.labelKey)}
                 className={`flex min-w-0 flex-1 flex-col items-center justify-center rounded-xl px-1 py-2 transition-all sm:px-2 ${
                   active
                     ? 'text-[#8B0000]'
@@ -268,7 +269,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
                 }`}
               >
                 <item.icon className={`w-5 h-5 ${active ? 'stroke-[2.5]' : ''}`} />
-                <span className={`text-[10px] mt-0.5 leading-tight text-center font-medium ${
+                <span className={`mt-0.5 w-full truncate text-center text-[10px] font-medium leading-tight ${
                   active ? 'text-[#8B0000]' : 'text-gray-400'
                 }`}>
                   {t(item?.shortKey)?.split(' ')?.[0]}
