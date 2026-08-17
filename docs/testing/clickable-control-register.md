@@ -133,7 +133,7 @@ Rendered on every `/community/*` route.
 
 | Route | Control | Label | Expected action | Actual action | Status | Automated test | Defect | Resolution |
 |-------|---------|-------|-----------------|---------------|--------|----------------|--------|------------|
-| /community | Quick-action card link | First Aid / Assessment / Ask Expert | Navigate to the section | `next/link` per action | ✅ | tests/e2e/community-journey.spec.ts | None | No change required |
+| /community | Quick-action card link | First Aid / Assessment / Ask AI Expert | Navigate to the section | `next/link` per action | ✅ | tests/e2e/community-journey.spec.ts | None | No change required |
 | /community | Emergency link | Call 999 | Dial emergency services | `<a href="tel:999">` | ✅ | tests/e2e/clickable-controls.spec.ts (anchor check) | None | No change required |
 
 ## Route: `/community/first-aid` — First aid (`app/community/first-aid/_components/first-aid-client.tsx`)

@@ -15,7 +15,7 @@ const navItems = [
   { href: '/hcp/tbsa', icon: Calculator, labelKey: 'hcp.tbsa', shortKey: 'hcp.tbsa' },
   { href: '/hcp/parkland', icon: Droplets, labelKey: 'hcp.parkland', shortKey: 'hcp.parkland' },
   { href: '/hcp/guidelines', icon: BookOpen, labelKey: 'hcp.guidelines', shortKey: 'hcp.guidelines' },
-  { href: '/hcp/chat', icon: MessageSquare, labelKey: 'hcp.chat', shortKey: 'hcp.chat' },
+  { href: '/hcp/chat', icon: MessageSquare, labelKey: 'hcp.chat', shortKey: 'hcp.chat_short' },
   { href: '/hcp/history', icon: History, labelKey: 'hcp.history', shortKey: 'hcp.history' },
 ];
 
