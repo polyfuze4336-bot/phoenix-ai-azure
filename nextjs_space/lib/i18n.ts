@@ -53,7 +53,8 @@ const legacyTranslations: Record<string, LegacyTranslation> = {
   'hcp.tbsa': { en: 'TBSA Calculator', bm: 'Kalkulator TBSA' },
   'hcp.parkland': { en: 'Parkland Formula', bm: 'Formula Parkland' },
   'hcp.guidelines': { en: 'Guidelines', bm: 'Garis Panduan' },
-  'hcp.chat': { en: 'Specialist Chat', bm: 'Sembang Pakar' },
+  'hcp.chat': { en: 'AI Specialist Chat', bm: 'Sembang Pakar AI' },
+  'hcp.chat_short': { en: 'Chat', bm: 'Sembang' },
   'hcp.history': { en: 'Analysis History', bm: 'Sejarah Analisis' },
   'hcp.portal': { en: 'HCP Portal', bm: 'Portal HCP' },
   'hcp.sign_out': { en: 'Sign Out', bm: 'Log Keluar' },
@@ -74,7 +75,7 @@ const legacyTranslations: Record<string, LegacyTranslation> = {
   'community.assessment': { en: 'Self-Assessment', bm: 'Penilaian Kendiri' },
   'community.imagecheck': { en: 'Image Check', bm: 'Semakan Imej' },
   'community.articles': { en: 'Articles', bm: 'Artikel' },
-  'community.chat': { en: 'Ask Expert', bm: 'Tanya Pakar' },
+  'community.chat': { en: 'Ask AI Expert', bm: 'Tanya Pakar AI' },
   'community.portal': { en: 'Community Portal', bm: 'Portal Komuniti' },
 
   // Dashboard
@@ -328,14 +329,16 @@ const legacyTranslations: Record<string, LegacyTranslation> = {
   'chat.send': { en: 'Send', bm: 'Hantar' },
   'chat.attach': { en: 'Attach Image', bm: 'Lampirkan Imej' },
   'chat.escalate': { en: 'Escalate to Human Specialist', bm: 'Naiktaraf ke Pakar Manusia' },
-  'chat.specialist_title': { en: 'Specialist Consultation', bm: 'Perundingan Pakar' },
-  'chat.community_title': { en: 'Ask an Expert', bm: 'Tanya Pakar' },
+  'chat.specialist_title': { en: 'AI Specialist Consultation', bm: 'Perundingan Pakar AI' },
+  'chat.community_title': { en: 'Ask AI Expert', bm: 'Tanya Pakar AI' },
   'chat.quick_prompts': { en: 'Quick Actions', bm: 'Tindakan Pantas' },
   'chat.error': { en: 'Sorry, an error occurred. Please try again.', bm: 'Maaf, ralat berlaku. Sila cuba lagi.' },
   'chat.hcp_description': { en: 'AI-powered burn & wound specialist consultation', bm: 'Perundingan pakar kelecuran & luka berkuasa AI' },
   'chat.escalated': { en: 'Escalation flag raised. A human specialist will review this consultation.', bm: 'Tanda eskalasi telah ditetapkan. Pakar manusia akan menyemak perundingan ini.' },
   'chat.community_description': { en: 'Friendly health guidance for burns and wounds', bm: 'Panduan kesihatan mesra untuk kelecuran dan luka' },
   'chat.emergency_detected': { en: '⚠️ This sounds like an emergency!', bm: '⚠️ Ini kedengaran seperti kecemasan!' },
+  'chat.community_disclaimer_title': { en: 'AI-Generated Responses', bm: 'Jawapan Dijana AI' },
+  'chat.community_disclaimer_body': { en: 'AI-generated responses are provided for reference only and do not replace professional medical advice, diagnosis, or consultation with a doctor or qualified healthcare professional.', bm: 'Jawapan yang dijana oleh AI disediakan untuk rujukan sahaja dan tidak menggantikan nasihat perubatan profesional, diagnosis, atau konsultasi dengan doktor atau profesional penjagaan kesihatan yang berkelayakan.' },
 
   // Community
   'community.welcome': { en: 'Welcome to Phoenix AI Community Health', bm: 'Selamat Datang ke Kesihatan Komuniti Phoenix AI' },
