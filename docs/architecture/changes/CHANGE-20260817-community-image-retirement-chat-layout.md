@@ -26,7 +26,13 @@
 
 ## Validation
 
-Typecheck, lint, production build, targeted mobile notice and bilingual Community journeys, full
-unit/RAI/integration/API suites, architecture/Mermaid validation, secret scan, review and CodeQL.
-Manual responsive checks remain required for device-specific viewport and bottom-navigation
-behavior.
+PASS: typecheck, lint, production build, unit `121/121`, RAI `31/31`, integration `14/14`, API
+`22/22`, Community journeys `2/2`, HCP journeys `2/2`, responsive chat layout `1/1`, clickable
+controls `13/13`, and architecture drift validation. The build used a temporary test-only Google
+font response because sandbox DNS could not resolve `fonts.googleapis.com`.
+
+The full bilingual route suite is `5/7`: its two HCP route cases have a pre-existing stale Image
+Analysis expectation (“Upload or capture” versus the current “Upload”). That unrelated, explicitly
+out-of-scope HCP Image Analysis language check is unchanged. Mermaid CLI is not installed, so
+changed diagrams received source review and repository drift validation but not CLI rendering.
+Manual device-specific viewport and bottom-navigation confirmation remains required.

@@ -68,6 +68,16 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
   and RAI evidence links. RAI control statuses and notice wording are unchanged.
 - No authentication, credentials, dependencies, Parkland/TBSA logic, AI prompts, Azure resources,
   GitHub Actions, deployment workflow, merge or deployment changes.
+- Validation PASS: typecheck, lint, production build, unit `121/121`, RAI `31/31`, integration
+  `14/14`, API `22/22`, Community journeys `2/2`, HCP journeys `2/2`, responsive chat layout `1/1`,
+  clickable controls `13/13`, and architecture drift validation. The sandbox build used Next.js's
+  temporary Google-font response hook because `fonts.googleapis.com` DNS was unavailable; production
+  source is unchanged.
+- The full bilingual route suite has a pre-existing stale HCP Image Analysis copy expectation:
+  `5/7` pass, while EN/MS expect “Upload or capture” but the current untouched UI says “Upload”.
+  HCP Image Analysis language copy is explicitly outside this step; targeted Community, notice and
+  responsive checks pass. Mermaid CLI is not installed, so changed diagrams received source review
+  plus the repository's architecture validator but not CLI rendering.
 
 ### Step 44 — HCP image-analysis clinical fixes
 
