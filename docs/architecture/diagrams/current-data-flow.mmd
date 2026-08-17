@@ -43,15 +43,3 @@ flowchart TB
         LV3 --> S3["Response"]
         S3 --> UI3
     end
-
-    subgraph CommImage["Community Image Check"]
-        U4["User"] --> IMG4["Image (JPEG/PNG/WebP/GIF base64)"]
-        IMG4 --> R4["/api/community-analyze"]
-        R4 --> V4["Image validation (MIME + base64 + content signature)"]
-        V4 -.->|"invalid: actionable HTTP 400"| UI4
-        V4 --> AP4["AI Provider (multimodal)"]
-        AP4 --> F4["Microsoft Foundry (gpt-4o vision)"]
-        F4 --> LV4["Language validation\nretry once if needed"]
-        LV4 --> SG4["Safe simplified guidance (community schema)"]
-        SG4 --> UI4["Community interface"]
-    end

@@ -151,13 +151,11 @@ Rendered on every `/community/*` route.
 | /community/assessment | Button | Start over / Reset | Restart the wizard | Resets step + answers | ✅ | tests/e2e/community-journey.spec.ts | None | No change required |
 | /community/assessment | Emergency link | Call 999 | Dial emergency services | `<a href="tel:999">` (shown on severe result) | ✅ | manual | None | No change required |
 
-## Route: `/community/image-check` — Image check (`app/community/image-check/_components/image-check-client.tsx`)
+## Retired route: `/community/image-check`
 
-| Route | Control | Label | Expected action | Actual action | Status | Automated test | Defect | Resolution |
-|-------|---------|-------|-----------------|---------------|--------|----------------|--------|------------|
-| /community/image-check | Upload area | Upload image | Select an image to check | Reads file → preview | ✅ | tests/e2e/community-journey.spec.ts | None | No change required |
-| /community/image-check | Button | Analyze / Check image | Run community AI check | POST `/api/community-analyze`, renders guidance or explicit error | ✅ | tests/e2e/community-journey.spec.ts (`expectAiTerminalState`) | None | No change required |
-| /community/image-check | Icon button | Remove image | Clear selected image | Clears image + result state | ✅ | manual | None | No change required |
+The former Community image controls and links are removed. Direct navigation redirects to
+`/community`; `tests/e2e/community-journey.spec.ts` guards the redirect and absence of desktop/mobile
+entry points.
 
 ## Route: `/community/articles` — Articles (`app/community/articles/_components/articles-client.tsx`)
 
@@ -225,8 +223,8 @@ constraint), because adding them would be a redesign, not a faithful migration.
   toggles, accordions, filters, and the AI-backed flows (asserting a deterministic terminal
   state, never skipping).
 - **API coverage:** `tests/api/routes.spec.ts` verifies the endpoints behind the submit/send
-  controls (`/api/auth/login`, `/api/analyze-wound`, `/api/hcp-chat`, `/api/community-chat`,
-  `/api/community-analyze`).
+  controls (`/api/auth/login`, `/api/analyze-wound`, `/api/hcp-chat`, `/api/community-chat`) and
+  verifies that retired `/api/community-analyze` is unavailable.
 - **Manual-only controls:** camera capture, canvas painting, image attach/remove, PWA install,
   and the external Entra IdP redirect are marked "manual" above because they depend on
   hardware, pointer gestures, or third-party UX that is out of scope for headless automation.

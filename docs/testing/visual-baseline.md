@@ -44,7 +44,6 @@ All 14 accessible routes:
 | `/community/assessment` | public | Burn self-assessment quiz |
 | `/community/chat` | public | Community AI chat |
 | `/community/first-aid` | public | First-aid guidance |
-| `/community/image-check` | public | Community image check |
 
 ### HCP authentication during capture
 

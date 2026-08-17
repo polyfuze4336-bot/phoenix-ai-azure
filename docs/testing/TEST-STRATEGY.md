@@ -29,13 +29,12 @@ Routes in scope:
 | --- | --- |
 | Landing | `/`, `/hcp-login` |
 | HCP | `/hcp`, `/hcp/analysis`, `/hcp/chat`, `/hcp/guidelines`, `/hcp/parkland`, `/hcp/tbsa` |
-| Community | `/community`, `/community/articles`, `/community/assessment`, `/community/chat`, `/community/first-aid`, `/community/image-check` |
+| Community | `/community`, `/community/articles`, `/community/assessment`, `/community/chat`, `/community/first-aid`; `/community/image-check` redirects home |
 
 ### 3. Functional checks (AI cutover)
 When the LLM is migrated to Azure OpenAI, verify identical behaviour of the API routes:
 - `POST /api/analyze-wound` — streaming SSE, JSON result schema unchanged.
 - `POST /api/hcp-chat`, `POST /api/community-chat` — streaming text responses.
-- `POST /api/community-analyze` — response shape unchanged.
 Vision (image) inputs and streaming must continue to work end-to-end.
 
 ## Tooling (planned)

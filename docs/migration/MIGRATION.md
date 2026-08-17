@@ -54,6 +54,21 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 ## Migration audit log
 
+### Step 45 — Retire Community Image Check and free HCP chat space
+
+- Removed the Community Home Image Check card and desktop/mobile navigation entry, deleted its
+  client and dedicated `/api/community-analyze` handler, and redirected the former
+  `/community/image-check` page to Community Home.
+- Community chat is independent and has no image attachment; it remains unchanged. HCP Image
+  Analysis, HCP History and HCP chat image attachment remain separate and untouched.
+- Moved the unchanged bilingual Confidentiality and Personal Data notice cards below and outside
+  the fixed-height HCP Specialist Chat panel. The message region now receives the freed space; the
+  mobile panel uses dynamic viewport height while desktop keeps its existing viewport calculation.
+- Updated route/journey tests, current testing records, architecture `6.2.0` → `7.0.0`, ADR-0015,
+  and RAI evidence links. RAI control statuses and notice wording are unchanged.
+- No authentication, credentials, dependencies, Parkland/TBSA logic, AI prompts, Azure resources,
+  GitHub Actions, deployment workflow, merge or deployment changes.
+
 ### Step 44 — HCP image-analysis clinical fixes
 
 - Removed the redundant dedicated camera stream UI while retaining the standard upload control,
