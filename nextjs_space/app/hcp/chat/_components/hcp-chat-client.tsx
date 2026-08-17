@@ -106,7 +106,7 @@ export function HcpChatClient() {
   return (
     <div className="space-y-4">
       <div
-        className="flex h-[calc(100dvh-140px)] flex-col lg:h-[calc(100vh-120px)]"
+        className="flex h-[calc(100dvh-152px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] flex-col lg:h-[calc(100vh-120px)]"
         data-testid="hcp-chat-panel"
       >
       <div className="flex items-center justify-between mb-4">
