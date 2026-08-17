@@ -386,7 +386,7 @@ export function AnalysisClient() {
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
                 <p className="text-xs font-semibold text-gray-500">{t('analysis.patient_details')}</p>
                 <div className="grid sm:grid-cols-3 gap-3">
-                  <div className="min-w-0">
+                  <div>
                     <label className="text-xs text-gray-500 block mb-1">{t('analysis.patient_category')}</label>
                     <select
                       value={patientCategory}
@@ -398,7 +398,7 @@ export function AnalysisClient() {
                       <option value="child">{t('analysis.category_child')}</option>
                     </select>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className="text-xs text-gray-500 block mb-1">{t('analysis.weight')}</label>
                     <input
                       type="number"

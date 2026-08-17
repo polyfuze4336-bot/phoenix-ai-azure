@@ -66,6 +66,10 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
   and 1280 px, including long clinical text and the expanded “Why this assessment?” content.
 - No clinical calculations, prompts, schemas, translation, authentication, Azure resources,
   dependencies, merge, or deployment behavior changed.
+- Validation PASS: typecheck, lint, production build, the responsive mocked-result check at all nine
+  required widths, and the existing image-analysis retry journey. The sandbox build used Next.js's
+  temporary test-only Google-font response hook because `fonts.googleapis.com` DNS was unavailable;
+  production source is unchanged.
 
 ### Step 45 — Retire Community Image Check and free HCP chat space
 

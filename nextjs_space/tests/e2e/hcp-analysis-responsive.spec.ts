@@ -117,7 +117,7 @@ test('analysis results remain contained at phone, tablet, and desktop widths', a
     await page.getByRole('button', { name: 'Analyze Image' }).click();
     await expect(page.getByRole('heading', { name: 'Analysis Results' })).toBeVisible();
     await expect(page.getByText('TBSA Estimation')).toBeVisible();
-    await expect(page.getByText('Parkland Formula')).toBeVisible();
+    await expect(page.getByText('Parkland Formula (Fluid Resuscitation)', { exact: true })).toBeVisible();
     await expect(page.getByText('Management Recommendations')).toBeVisible();
     await expect(page.getByText('Why this assessment?')).toBeVisible();
 
