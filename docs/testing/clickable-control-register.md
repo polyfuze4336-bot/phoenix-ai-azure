@@ -49,7 +49,6 @@ Rendered on every `/community/*` route.
 | /community/* | Sidebar nav link | Home | Navigate to `/community` | `next/link` → `/community` | ✅ | tests/e2e/community-journey.spec.ts; tests/e2e/clickable-controls.spec.ts | None | No change required |
 | /community/* | Sidebar nav link | First Aid | Navigate to `/community/first-aid` | `next/link` | ✅ | tests/e2e/community-journey.spec.ts | None | No change required |
 | /community/* | Sidebar nav link | Self Assessment | Navigate to `/community/assessment` | `next/link` | ✅ | tests/e2e/community-journey.spec.ts | None | No change required |
-| /community/* | Sidebar nav link | Image Check | Navigate to `/community/image-check` | `next/link` | ✅ | tests/e2e/community-journey.spec.ts | None | No change required |
 | /community/* | Sidebar nav link | Articles | Navigate to `/community/articles` | `next/link` | ✅ | tests/e2e/community-journey.spec.ts | None | No change required |
 | /community/* | Sidebar nav link | Ask Phoenix | Navigate to `/community/chat` | `next/link` | ✅ | tests/e2e/community-journey.spec.ts | None | No change required |
 | /community/* | Back link | Back to Home | Navigate to `/` | `next/link` → `/` | ✅ | tests/e2e/clickable-controls.spec.ts | None | No change required |
@@ -134,7 +133,7 @@ Rendered on every `/community/*` route.
 
 | Route | Control | Label | Expected action | Actual action | Status | Automated test | Defect | Resolution |
 |-------|---------|-------|-----------------|---------------|--------|----------------|--------|------------|
-| /community | Quick-action card link | First Aid / Assessment / Image Check / Articles / Chat | Navigate to the section | `next/link` per action | ✅ | tests/e2e/community-journey.spec.ts | None | No change required |
+| /community | Quick-action card link | First Aid / Assessment / Ask Expert | Navigate to the section | `next/link` per action | ✅ | tests/e2e/community-journey.spec.ts | None | No change required |
 | /community | Emergency link | Call 999 | Dial emergency services | `<a href="tel:999">` | ✅ | tests/e2e/clickable-controls.spec.ts (anchor check) | None | No change required |
 
 ## Route: `/community/first-aid` — First aid (`app/community/first-aid/_components/first-aid-client.tsx`)

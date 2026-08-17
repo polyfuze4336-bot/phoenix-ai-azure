@@ -1,4 +1,4 @@
-const CACHE_NAME = 'phoenix-ai-v1';
+const CACHE_NAME = 'phoenix-ai-v2';
 const STATIC_ASSETS = [
   '/',
   '/logo.png',

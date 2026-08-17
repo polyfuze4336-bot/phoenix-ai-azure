@@ -10,6 +10,8 @@
 
 - Removed Community Image Check home/navigation entry points, client and
   `/api/community-analyze`; `/community/image-check` redirects to Community Home.
+- Invalidated the prior PWA cache so installed clients cannot keep serving the retired page or
+  navigation.
 - Kept Community chat independent and unchanged; it has no image attachment.
 - Kept HCP Image Analysis and HCP chat image attachments unchanged.
 - Moved the bilingual Confidentiality and Personal Data notices below and outside the fixed-height

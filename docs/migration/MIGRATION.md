@@ -58,7 +58,8 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 - Removed the Community Home Image Check card and desktop/mobile navigation entry, deleted its
   client and dedicated `/api/community-analyze` handler, and redirected the former
-  `/community/image-check` page to Community Home.
+  `/community/image-check` page to Community Home. Bumped the PWA cache name so existing
+  installations discard cached copies of the retired UI.
 - Community chat is independent and has no image attachment; it remains unchanged. HCP Image
   Analysis, HCP History and HCP chat image attachment remain separate and untouched.
 - Moved the unchanged bilingual Confidentiality and Personal Data notice cards below and outside
