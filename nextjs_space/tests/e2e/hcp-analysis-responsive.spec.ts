@@ -85,7 +85,12 @@ async function expectViewportContained(page: Page, width: number) {
       if (!label) return true;
       const linkBox = link.getBoundingClientRect();
       const labelBox = label.getBoundingClientRect();
-      return labelBox.left >= linkBox.left && labelBox.right <= linkBox.right;
+      const styles = window.getComputedStyle(label);
+      return labelBox.left >= linkBox.left
+        && labelBox.right <= linkBox.right
+        && styles.overflowX === 'hidden'
+        && styles.whiteSpace === 'nowrap'
+        && styles.textOverflow === 'ellipsis';
     }),
   }));
 
