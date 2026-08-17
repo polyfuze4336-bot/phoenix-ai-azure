@@ -1,5 +1,5 @@
-import { ImageCheckClient } from './_components/image-check-client';
+import { redirect } from 'next/navigation';
 
 export default function ImageCheckPage() {
-  return <ImageCheckClient />;
+  redirect('/community');
 }

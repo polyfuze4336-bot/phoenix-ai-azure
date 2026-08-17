@@ -4,8 +4,8 @@ import { defineConfig } from '@playwright/test';
  * Playwright configuration for Phoenix AI HTTP API integration tests.
  *
  * Drives the real Next.js route handlers over HTTP against the PRODUCTION build:
- * health probes and the four AI routes (hcp-chat, community-chat, analyze-wound,
- * community-analyze). Input-validation paths (400/413) are exercised WITHOUT a model
+ * health probes and the three AI routes (hcp-chat, community-chat, and analyze-wound).
+ * Input-validation paths (400/413) are exercised WITHOUT a model
  * call, and well-formed requests are asserted to reach a deterministic terminal
  * response (a stream when Azure OpenAI is configured, or an explicit error status
  * otherwise) — never a hang, and never skipped.

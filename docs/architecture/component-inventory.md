@@ -11,7 +11,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | UI-LANDING | Public landing | UI | Next.js/React | `app/page.tsx`, `app/_components/landing-client.tsx` | Single Phoenix AI public entry and original supplied brand | APP-NEXT | ACTIVE | Phoenix AI team |
 | UI-HCP | HCP portal | UI | Next.js/React | `app/hcp/*` | Clinician chat, analysis, TBSA, Parkland, guidelines, history | APP-NEXT, AUTH-DEMO, API-* | ACTIVE | Phoenix AI team |
-| UI-COMMUNITY | Community portal | UI | Next.js/React | `app/community/*` | Public chat, assessment, image check, articles, first-aid | APP-NEXT, API-* | ACTIVE | Phoenix AI team |
+| UI-COMMUNITY | Community portal | UI | Next.js/React | `app/community/*` | Public chat, assessment, articles, first-aid; retired image route redirects home | APP-NEXT, API-COMMUNITY-CHAT | ACTIVE | Phoenix AI team |
 | UI-V2-HCP | Retired alternate HCP workspace | UI | Git history only | Removed from runtime source | Historical component ID; implementation removed | — | LEGACY | Phoenix AI team |
 | UI-V2-COMMUNITY | Retired alternate community portal | UI | Git history only | Removed from runtime source | Historical component ID; implementation removed | — | LEGACY | Phoenix AI team |
 | UI-V2-SHELL | Retired alternate shell | UI | Git history only | Removed from runtime source | Historical component ID; implementation removed | — | LEGACY | Phoenix AI team |
@@ -26,7 +26,7 @@
 | API-HCP-ANALYSIS | HCP wound analysis route | API | Next.js route handler | `app/api/analyze-wound/route.ts` | Multimodal wound/burn assessment with consolidated TBSA, canonical enums, validated EN/MS narrative output, and privacy-safe lifecycle telemetry | AI-ANALYSIS-PIPELINE, AI-LANGUAGE-VALIDATION, AI-MODEL-SELECTOR, AI-PROVIDER, AI-VALIDATION, AI-TELEMETRY, PROMPT-HCP-ANALYSIS | ACTIVE | Phoenix AI team |
 | API-HCP-ANALYSIS-TRANSLATION | HCP analysis translation route | API | Next.js route handler | `app/api/analyze-wound/translate/route.ts` | Translate only an existing structured result between EN/MS; preserve protected canonical/numeric values and never receive the image | AI-PROVIDER, AI-LANGUAGE-VALIDATION, UI-HCP | ACTIVE | Phoenix AI team |
 | API-COMMUNITY-CHAT | Community chat route | API | Next.js route handler | `app/api/community-chat/route.ts` | Public plain-language chat | AI-PROVIDER, PROMPT-COMMUNITY-CHAT | ACTIVE | Phoenix AI team |
-| API-COMMUNITY-ANALYSIS | Community image-check route | API | Next.js route handler | `app/api/community-analyze/route.ts` | Simplified image guidance with validated EN/MS output | AI-PROVIDER, AI-LANGUAGE-VALIDATION, AI-VALIDATION, PROMPT-COMMUNITY-ANALYSIS | ACTIVE | Phoenix AI team |
+| API-COMMUNITY-ANALYSIS | Community image-check route | API | Next.js route handler | Git history only | Historical Community image-analysis endpoint; removed from runtime | — | LEGACY | Phoenix AI team |
 | API-AUTH-LOGIN | Demo login route | API | Next.js route handler | `app/api/auth/login/route.ts` | Server-verified demo login | AUTH-DEMO, AUTH-SESSION | ACTIVE | Phoenix AI team |
 | API-AUTH-LOGOUT | Logout route | API | Next.js route handler | `app/api/auth/logout/route.ts` | Clear session | AUTH-SESSION | ACTIVE | Phoenix AI team |
 | API-AUTH-SESSION | Session route | API | Next.js route handler | `app/api/auth/session/route.ts` | Current session state | AUTH-SESSION | ACTIVE | Phoenix AI team |
@@ -59,7 +59,7 @@
 | PROMPT-HCP-ANALYSIS | HCP analysis prompt (single-pass fallback) | Lib | TypeScript | `lib/ai/prompts/hcp-wound-analysis.ts` | Structured clinical prompt (used when `AI_ANALYSIS_PIPELINE=single`) | — | ACTIVE | Phoenix AI team |
 | PROMPT-ANALYSIS-STAGES | Staged analysis prompts | Lib | TypeScript | `lib/ai/prompts/{wound-visual-observation,wound-clinical-interpretation,wound-management,wound-analysis-critic}.ts` | Per-stage observation/interpretation/management/critic prompts | — | ACTIVE | Phoenix AI team |
 | PROMPT-COMMUNITY-CHAT | Community chat prompt | Lib | TypeScript | `lib/ai/prompts/community-chat.ts` | Plain-language prompt | — | ACTIVE | Phoenix AI team |
-| PROMPT-COMMUNITY-ANALYSIS | Community analysis prompt | Lib | TypeScript | `lib/ai/prompts/community-wound-analysis.ts` | Simplified guidance prompt | — | ACTIVE | Phoenix AI team |
+| PROMPT-COMMUNITY-ANALYSIS | Community analysis prompt | Lib | TypeScript | `lib/ai/prompts/community-wound-analysis.ts` | Retained source prompt for the retired Community analysis route; no runtime caller | — | LEGACY | Phoenix AI team |
 | CLINICAL-TBSA | TBSA calculator | Lib | TypeScript | `lib/clinical/tbsa.ts` | Total body surface area | — | ACTIVE | Phoenix AI team |
 | CLINICAL-PARKLAND | Parkland indication + calculator | Lib | TypeScript | `lib/clinical/parkland.ts` | Separate Image Analysis adult/child indication thresholds and reusable deterministic fluid formula | — | ACTIVE | Phoenix AI team |
 | DB-PRISMA | Prisma data access | Lib | Prisma 6 | `lib/db.ts` | DB client | DB-POSTGRES | ACTIVE | Phoenix AI team |

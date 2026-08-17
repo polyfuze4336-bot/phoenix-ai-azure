@@ -12,7 +12,6 @@ const communityRoutes: RouteExpectation[] = [
   { path: '/community', en: 'Welcome to Phoenix AI Community Health', ms: 'Selamat Datang ke Kesihatan Komuniti Phoenix AI' },
   { path: '/community/first-aid', en: 'First Aid Education', ms: 'Pendidikan Pertolongan Cemas' },
   { path: '/community/assessment', en: 'Burn Severity Self-Assessment', ms: 'Penilaian Kendiri Keterukan Kelecuran' },
-  { path: '/community/image-check', en: 'Upload a photo of your wound', ms: 'Muat naik gambar luka anda' },
   { path: '/community/articles', en: 'Health Articles', ms: 'Artikel Kesihatan' },
   { path: '/community/chat', en: 'Friendly health guidance for burns and wounds', ms: 'Panduan kesihatan mesra untuk kelecuran dan luka' },
 ];
@@ -75,3 +74,49 @@ for (const language of ['en', 'ms'] as const) {
     }
   });
 }
+
+test('HCP chat keeps privacy notices outside the responsive conversation panel', async ({ page }) => {
+  await seedLanguage(page, 'en');
+  await seedHcpAuth(page);
+  const viewports = [
+    { width: 360, height: 640 },
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+    { width: 1280, height: 900 },
+  ];
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await page.goto('/hcp/chat');
+
+    const panel = page.getByTestId('hcp-chat-panel');
+    const messages = page.getByTestId('hcp-chat-messages');
+    const privacyNotices = page.getByTestId('hcp-chat-privacy-notices');
+    const composer = page.getByPlaceholder('Type your message...');
+
+    if (viewport.height < 800) {
+      await composer.fill('Responsive layout check');
+      await composer.press('Enter');
+      await expect(page.getByText('Responsive layout check', { exact: true })).toBeVisible();
+    }
+
+    await expect(panel.getByText('Confidentiality', { exact: true })).toHaveCount(0);
+    await expect(panel.getByText('Personal Data', { exact: true })).toHaveCount(0);
+    await expect(privacyNotices.getByText('Confidentiality', { exact: true })).toBeVisible();
+    await expect(privacyNotices.getByText('Personal Data', { exact: true })).toBeVisible();
+
+    const noticesBox = await privacyNotices.boundingBox();
+    const messagesBox = await messages.boundingBox();
+    const composerBox = await composer.boundingBox();
+
+    expect(noticesBox).not.toBeNull();
+    expect(messagesBox?.height ?? 0).toBeGreaterThan(viewport.height >= 800 ? 200 : 40);
+    expect(noticesBox!.y).toBeGreaterThanOrEqual(composerBox!.y + composerBox!.height);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+
+    if (viewport.width < 1024) {
+      const navigationBox = await page.locator('nav.fixed.bottom-0').boundingBox();
+      expect(composerBox!.y + composerBox!.height).toBeLessThanOrEqual(navigationBox!.y);
+    }
+  }
+});

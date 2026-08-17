@@ -49,6 +49,10 @@
 > **The HCP clinical notice adds no integration or data flow.** It is static bilingual content on
 > the existing `INT-BROWSER-APP` surface and sends, stores, or logs no patient information.
 >
+> **Community Image Check retirement removes one caller from existing integrations.** The
+> `/api/community-analyze` path no longer uses `INT-BROWSER-APP` or `INT-APP-FOUNDRY`; retained HCP
+> image analysis and HCP/Community chat continue on those integrations without contract changes.
+>
 > **Existing-result translation adds no external integration.** It reuses `INT-BROWSER-APP` and
 > `INT-APP-FOUNDRY`, sends only the existing structured result, never resends the image, validates
 > numeric/canonical values unchanged, and caches EN/MS representations in the browser session.

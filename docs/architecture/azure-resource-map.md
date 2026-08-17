@@ -30,6 +30,9 @@
 > and `Microsoft.Default` policy declared by Bicep; no Azure policy or resource is changed
 > automatically. The live attached policy must be verified manually before any least-permissive
 > healthcare-specific filter adjustment.
+> The `7.0.0` Community image-analysis retirement and HCP chat layout change are application-only.
+> They add, remove, or reconfigure no Azure resource, identity, secret, model deployment, database,
+> storage, network path, SKU, or region.
 
 ## Environment
 

@@ -6,7 +6,7 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `6.2.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `7.0.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -35,7 +35,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Concern | Current state |
 | --- | --- |
 | Application runtime | Next.js 14 (App Router), React 18, TypeScript 5, standalone Node server (`node server.js`) — **Implemented** |
-| Major portals | One Phoenix AI landing, HCP routes, Community routes including `/community/image-check`, PWA, and global English/Bahasa Melayu UI — **Implemented** |
+| Major portals | One Phoenix AI landing, HCP routes, Community routes for first aid, self-assessment, articles and chat, PWA, and global English/Bahasa Melayu UI — **Implemented** |
 | Hosting | Azure Container Apps Consumption, `eastus2`; image in Azure Container Registry Basic — **Implemented** |
 | AI processing | Environment-owned Azure AI Services S0 account with `gpt-4o` via `lib/ai`, managed identity — **Implemented** |
 | Data handling | Azure PostgreSQL Flexible Server 17.10 via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
@@ -59,14 +59,14 @@ flowchart TB
     subgraph CLIENT["Client Experience"]
         Landing["Phoenix AI Landing — ACTIVE"]
         HCP["HCP Portal + bilingual clinical notice — ACTIVE"]
-        Community["Community Portal + image check — ACTIVE"]
+        Community["Community Portal — ACTIVE"]
         PWA["PWA / Mobile + global EN/MS UI — ACTIVE"]
     end
 
     subgraph APP["Phoenix AI Application (Next.js 14 App Router)"]
         Next["Next.js Server (standalone) — ACTIVE"]
         MW["middleware.ts route protection — ACTIVE"]
-        API["API Routes (16) — ACTIVE"]
+        API["API Routes (15) — ACTIVE"]
         Auth["Auth Layer: demo default — DEMO / Entra — OPTIONAL"]
         AIProvider["AI Provider Layer (lib/ai) — ACTIVE"]
         Data["Data Access Layer (lib/db, Prisma) — ACTIVE"]
@@ -151,7 +151,7 @@ Companion diagrams:
 | --- | --- | --- |
 | Public landing (single Phoenix AI entry) | `app/page.tsx`, `app/_components/landing-client.tsx` | Implemented |
 | HCP portal (chat, analysis, TBSA, Parkland, guidelines, history) | `app/hcp/*` | Implemented |
-| Community portal (chat, assessment, image check, articles, first-aid) | `app/community/*` | Implemented |
+| Community portal (chat, assessment, articles, first-aid; retired image route redirects home) | `app/community/*` | Implemented |
 | Retired alternate experience | Runtime source, components, libraries, flags, assets and tests removed; recoverable from Git history only | Removed |
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |
 | Global English / Bahasa Melayu UI | Root `LanguageProvider`, `components/language-toggle.tsx`, `lib/i18n/{en,ms,index}.ts`; persisted `AppLanguage` (`en`/`ms`) | Implemented |
@@ -166,7 +166,7 @@ Companion diagrams:
 | --- | --- | --- |
 | Next.js App Router | `app/` | Implemented |
 | Server + client components | `app/**/_components/*`, layouts | Implemented |
-| API routes (16) | `app/api/**/route.ts` | Implemented |
+| API routes (15) | `app/api/**/route.ts` | Implemented |
 | Middleware (route protection) | `middleware.ts` | Implemented |
 | Instrumentation hook (startup env validation) | `instrumentation.ts` | Implemented |
 | Providers (language, theme, telemetry) | `components/*-provider.tsx` | Implemented |
@@ -182,7 +182,7 @@ Companion diagrams:
 | Model selection (purpose-specific) | `lib/ai/model-config.ts` — `AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT` / `AZURE_AI_CHAT_MODEL_DEPLOYMENT` (default to `AZURE_AI_MODEL_DEPLOYMENT`) | Implemented |
 | Credential | `lib/ai/azure-credential.ts` (`DefaultAzureCredential`, key fallback) | Implemented |
 | OpenAI-compatible mapping | `lib/ai/openai-compatible.ts` | Implemented |
-| System prompts (HCP vs Community, strict EN/MS response instruction) | `lib/ai/prompts/{hcp-chat,hcp-wound-analysis,community-chat,community-wound-analysis}.ts`, `lib/ai/language.ts` | Implemented |
+| Active system prompts (HCP analysis/chat and Community chat, strict EN/MS response instruction) | `lib/ai/prompts/{hcp-chat,hcp-wound-analysis,community-chat}.ts`, `lib/ai/language.ts` | Implemented |
 | Staged analysis prompts | `lib/ai/prompts/{wound-visual-observation,wound-clinical-interpretation,wound-management,wound-analysis-critic}.ts`; receive the selected output language | Implemented |
 | AI output-language validation | `lib/ai/language.ts`; detects predominantly wrong-language completions, retries once with a rewrite instruction, logs language codes only | Implemented |
 | Existing-analysis translation | `lib/ai/analysis/translation.ts`, `/api/analyze-wound/translate`; translates narrative text only, validates protected canonical/numeric values unchanged, and receives no image | Implemented |

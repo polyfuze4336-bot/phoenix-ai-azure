@@ -4,7 +4,7 @@
 flowchart TB
     subgraph Interfaces["Client Interfaces"]
         HCPUI["HCP Interface"]
-        COMMUI["Community Interface\n(chat + image check)"]
+        COMMUI["Community Interface\n(chat)"]
     end
 
     subgraph Routes["Next.js API Routes"]
@@ -12,14 +12,12 @@ flowchart TB
         RHCPAN["/api/analyze-wound\n(validated EN/MS)"]
         RHCPTRANS["/api/analyze-wound/translate\n(text-only existing result)"]
         RCOMCHAT["/api/community-chat\n(validated EN/MS)"]
-        RCOMAN["/api/community-analyze\n(validated EN/MS)"]
     end
 
     subgraph Prompts["Prompt Layer (lib/ai/prompts)"]
         PHCPCHAT["hcp-chat\n(clinical, detailed, EN/MS narrative)"]
         PHCPAN["hcp-wound-analysis\n(single-pass fallback, EN/MS narrative)"]
         PCOMCHAT["community-chat\n(plain-language, safe)"]
-        PCOMAN["community-wound-analysis\n(simplified guidance)"]
         subgraph StagedPrompts["Staged analysis prompts"]
             PS1["wound-visual-observation"]
             PS2["wound-clinical-interpretation"]
@@ -60,7 +58,6 @@ flowchart TB
     HCPUI --> RHCPAN
     HCPUI -->|"language switch; no image"| RHCPTRANS
     COMMUI --> RCOMCHAT
-    COMMUI --> RCOMAN
 
     RHCPCHAT --> PHCPCHAT --> FACTORY
     RHCPAN --> ORCH
@@ -75,10 +72,8 @@ flowchart TB
     MODELSEL --> AZPROV
     RHCPAN -.->|"AI_ANALYSIS_PIPELINE=single"| PHCPAN --> FACTORY
     RCOMCHAT --> PCOMCHAT --> FACTORY
-    RCOMAN --> PCOMAN --> FACTORY
 
     RHCPAN --> VALIN
-    RCOMAN --> VALIN
     VALIN --> FACTORY
 
     FACTORY --> LANG --> AZPROV
@@ -94,7 +89,6 @@ flowchart TB
     SCHEMA --> VALOUT
     MODEL --> VALOUT
     VALOUT --> HCPUI
-    VALOUT --> COMMUI
 
     AZPROV --> TEL
     TEL --> APPINS

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'phoenix-ai-v1';
+const CACHE_NAME = 'phoenix-ai-v2';
 const STATIC_ASSETS = [
   '/',
   '/logo.png',
@@ -15,11 +15,16 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    caches.keys().then(async (keys) => {
+      const staleKeys = keys.filter((key) => key !== CACHE_NAME);
+      await Promise.all(staleKeys.map((key) => caches.delete(key)));
+      await self.clients.claim();
+      if (staleKeys.length === 0) return;
+
+      const windows = await self.clients.matchAll({ type: 'window' });
+      await Promise.all(windows.map((client) => client.navigate(client.url)));
+    })
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {

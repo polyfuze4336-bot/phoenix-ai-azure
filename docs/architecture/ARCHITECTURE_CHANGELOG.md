@@ -16,6 +16,22 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [7.0.0] — 2026-08-17
+
+### Changed
+- Retired the standalone Community Image Check client and `/api/community-analyze` route while
+  preserving a redirect from `/community/image-check` to Community Home.
+- Removed Community Image Check home and navigation entry points; all other Community features and
+  the separate Community chat remain active.
+- Placed HCP Specialist Chat confidentiality and personal-data notices outside the fixed-height chat
+  panel so the message viewport no longer allocates space to them.
+
+### Boundaries
+- HCP Image Analysis, HCP chat image attachment, authentication, prompts, clinical calculations,
+  dependencies, data, Azure resources and deployment workflows are unchanged. See
+  [ADR-0015](./decisions/ADR-0015-retire-community-image-analysis.md) and
+  [CHANGE-20260817](./changes/CHANGE-20260817-community-image-retirement-chat-layout.md).
+
 ## [6.2.0] — 2026-08-16
 
 ### Changed

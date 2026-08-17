@@ -85,7 +85,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     status: 'active',
     description:
       'Uploaded JPEG, PNG, WebP, and GIF images are normalized and validated for MIME type, base64 syntax, content signature, decoded dimensions and integrity, and size before any model call; malformed, truncated, mismatched, oversized, empty, or unsupported payloads receive a categorized user-visible error.',
-    evidence: ['lib/ai/validation/image-input.ts', 'app/api/analyze-wound/route.ts', 'app/api/community-analyze/route.ts'],
+    evidence: ['lib/ai/validation/image-input.ts', 'app/api/analyze-wound/route.ts'],
     tests: ['tests/unit/image-input.test.ts', 'tests/api/routes.spec.ts', 'tests/rai/rai-safety.test.ts'],
     userVisible: true,
   },
@@ -271,7 +271,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     status: 'active',
     description:
       'On model or validation failure the app returns a labelled unavailable state or actionable input error that preserves the medical disclaimer instead of guessing a clinical result.',
-    evidence: ['lib/ai/validation/wound-analysis-schema.ts', 'app/hcp/analysis/_components/analysis-client.tsx', 'app/community/image-check/_components/image-check-client.tsx'],
+    evidence: ['lib/ai/validation/wound-analysis-schema.ts', 'app/hcp/analysis/_components/analysis-client.tsx'],
     tests: ['tests/unit/ai-parsing.test.ts', 'tests/api/routes.spec.ts'],
     userVisible: true,
   },
@@ -396,7 +396,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     status: 'active',
     description:
       'Images are sent to the model only from server-side API routes; the browser never calls the model provider directly.',
-    evidence: ['app/api/analyze-wound/route.ts', 'app/api/community-analyze/route.ts'],
+    evidence: ['app/api/analyze-wound/route.ts'],
     userVisible: false,
   },
   {
@@ -488,7 +488,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'output',
     status: 'active',
     description:
-      'Every AI route requires the selected language and validates completed output. Existing HCP analysis and History narratives use a text-only translation operation with per-session EN/MS caching; protected canonical and numeric clinical values are validated unchanged and the image is never resent.',
+      'Every active AI route requires the selected language and validates completed output. Existing HCP analysis and History narratives use a text-only translation operation with per-session EN/MS caching; protected canonical and numeric clinical values are validated unchanged and the image is never resent.',
     evidence: [
       'lib/ai/language.ts',
       'lib/ai/analysis/pipeline.ts',
@@ -497,7 +497,6 @@ export const RAI_CONTROLS: RaiControl[] = [
       'lib/ai/analysis/translation.ts',
       'app/api/hcp-chat/route.ts',
       'app/api/community-chat/route.ts',
-      'app/api/community-analyze/route.ts',
     ],
     tests: ['tests/unit/ai-language.test.ts', 'tests/unit/analysis-translation.test.ts', 'tests/rai/rai-controls.test.ts'],
     userVisible: true,

@@ -3,8 +3,7 @@
  *
  * The model is asked to return a structured JSON object. Here we validate that
  * output with Zod against the EXACT fields the front-end renders (see
- * `app/hcp/analysis/_components/analysis-client.tsx` and
- * `app/community/image-check/_components/image-check-client.tsx`).
+ * `app/hcp/analysis/_components/analysis-client.tsx`).
  *
  * Validation is deliberately *tolerant of type variance* (a number or boolean
  * where a string is expected is coerced) so a usable model result is not

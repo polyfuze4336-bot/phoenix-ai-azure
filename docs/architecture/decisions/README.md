@@ -46,6 +46,7 @@ Trivial changes (copy edits, dependency patch bumps, non-structural refactors) d
 | [ADR-0012](./ADR-0012-direct-main-prototype-workflow.md) | Direct-main rapid-prototype workflow | Superseded in delivery details by ADR-0013 | 2026-08-16 |
 | [ADR-0013](./ADR-0013-single-prototype-deployment-workflow.md) | Single approval-free prototype deployment workflow | Accepted | 2026-08-16 |
 | [ADR-0014](./ADR-0014-codespaces-immutable-image-rollback.md) | Codespaces development and immutable-image rollback | Accepted | 2026-08-16 |
+| [ADR-0015](./ADR-0015-retire-community-image-analysis.md) | Retire standalone Community image analysis | Accepted | 2026-08-17 |
 
 ## Template
 

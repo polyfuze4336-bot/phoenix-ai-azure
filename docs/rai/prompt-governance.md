@@ -14,7 +14,7 @@ Version identifiers live in
 | `WOUND_ANALYSIS_CRITIC_PROMPT_VERSION` | Stage 4 — consistency / safety review |
 | `HCP_WOUND_ANALYSIS_PROMPT_VERSION` | Single-pass fallback |
 | `HCP_CHAT_PROMPT_VERSION` | HCP clinical chat |
-| `COMMUNITY_WOUND_ANALYSIS_PROMPT_VERSION` | Community analysis + chat |
+| `COMMUNITY_WOUND_ANALYSIS_PROMPT_VERSION` | Retained Community analysis prompt (no active route) |
 | `ANALYSIS_PIPELINE_VERSION` | Staged pipeline as a whole |
 | `ANALYSIS_SCHEMA_VERSION` | Structured output schema |
 
@@ -31,7 +31,7 @@ confidently in the wrong language. Detection and telemetry must operate on langu
 never prompts, transcripts, images, or clinical output.
 
 This behaviour is implemented by
-[`lib/ai/language.ts`](../../nextjs_space/lib/ai/language.ts), applied by all four AI API routes and
+[`lib/ai/language.ts`](../../nextjs_space/lib/ai/language.ts), applied by all three active AI API routes and
 every staged analysis call, and evidenced by `RAI-INCL-003` tests in
 [`tests/rai/rai-controls.test.ts`](../../nextjs_space/tests/rai/rai-controls.test.ts) and
 [`tests/unit/ai-language.test.ts`](../../nextjs_space/tests/unit/ai-language.test.ts).

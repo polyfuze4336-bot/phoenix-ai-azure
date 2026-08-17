@@ -1,7 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
-  TINY_PNG,
-  expectAiTerminalState,
   seedLanguage,
   setMobileViewport,
   setDesktopViewport,
@@ -10,14 +8,14 @@ import {
 /**
  * Community journey (verbatim steps):
  *  1. Load /community.        2. Navigate to first aid.   3. Navigate to articles.
- *  4. Navigate to assessment. 5. Navigate to image check. 6. Upload an image.
- *  7. Confirm simplified advice.
- *  8. Navigate to chat.       9. Send a question.        10. Confirm response.
- * 11. Confirm selected-language controls. 12. Test mobile navigation.
+ *  4. Navigate to assessment. 5. Confirm image check is absent.
+ *  6. Confirm the former image route redirects home.
+ *  7. Navigate to chat.       8. Send a question.        9. Confirm response.
+ * 10. Confirm selected-language controls. 11. Test mobile navigation.
  *
- * AI-backed steps (6-7, 9-10) assert a deterministic terminal state — a real
- * simplified result when Azure OpenAI is configured, or the app's explicit
- * failure/fallback state otherwise. They are never skipped.
+ * The AI-backed chat steps assert a deterministic terminal state — a real
+ * response when Azure OpenAI is configured, or the app's explicit failure
+ * state otherwise. They are never skipped.
  */
 
 /** Click the visible desktop-sidebar nav link for a community route and await the URL. */
@@ -32,18 +30,12 @@ test(`community journey in ${language}`, async ({ page }) => {
   await seedLanguage(page, language);
   const labels = language === 'en'
     ? {
-      check: /Check My Wound/i,
-      checking: /Checking/i,
-      result: /What We Found/i,
-      failure: /Analysis failed|could not be completed/i,
+      imageCheck: 'Image Check',
       placeholder: 'Type your message...',
       question: 'How do I treat a minor kitchen burn at home?',
     }
     : {
-      check: /Periksa Luka Saya/i,
-      checking: /Memeriksa/i,
-      result: /Apa Yang Kami Temui/i,
-      failure: /Analisis gagal|tidak dapat diselesaikan/i,
+      imageCheck: 'Semakan Imej',
       placeholder: 'Taip mesej anda...',
       question: 'Bagaimanakah saya merawat kelecuran kecil di dapur di rumah?',
     };
@@ -63,52 +55,42 @@ test(`community journey in ${language}`, async ({ page }) => {
   // 4. Navigate to assessment.
   await navTo(page, '/community/assessment', /\/community\/assessment$/);
 
-  // 5. Navigate to image check.
-  await navTo(page, '/community/image-check', /\/community\/image-check$/);
+  // 5. Confirm Image Check is absent from the home cards and portal navigation.
+  await page.goto('/community');
+  await expect(page.getByText(labels.imageCheck, { exact: true })).toHaveCount(0);
+  await expect(page.locator('a[href="/community/image-check"]')).toHaveCount(0);
 
-  // 6. Upload an image (hidden file input).
-  await page.locator('input[type="file"]').setInputFiles({
-    name: 'wound.png',
-    mimeType: 'image/png',
-    buffer: TINY_PNG,
-  });
-  const checkBtn = page.getByRole('button', { name: labels.check });
-  await expect(checkBtn).toBeVisible();
-  await page.route('**/api/community-analyze', async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    await route.continue();
-  });
-  await checkBtn.click();
-  // Loading state.
-  await expect(page.getByRole('button', { name: labels.checking })).toBeVisible();
+  // 6. Confirm the retired route redirects to Community Home.
+  await page.goto('/community/image-check');
+  await expect(page).toHaveURL(/\/community$/);
 
-  // 7. Confirm simplified advice (real "What We Found" result OR explicit failure).
-  await expectAiTerminalState(page, labels.result, labels.failure);
-
-  // 8. Navigate to chat.
+  // 7. Navigate to chat.
   await navTo(page, '/community/chat', /\/community\/chat$/);
   const chatInput = page.getByPlaceholder(labels.placeholder);
   await expect(chatInput).toBeVisible();
 
-  // 9. Send a question.
+  // 8. Send a question.
   const question = labels.question;
   await chatInput.fill(question);
   await chatInput.press('Enter');
   await expect(page.getByText(question).first()).toBeVisible(); // user message rendered
 
-  // 10. Confirm response (assistant bubble gains content OR the error fallback).
+  // 9. Confirm response (assistant bubble gains content OR the error fallback).
   const assistantBubbles = page.locator('div.justify-start');
   await expect(assistantBubbles.last()).toBeVisible();
   await expect
     .poll(async () => (await assistantBubbles.last().innerText()).trim(), { timeout: 90_000 })
     .not.toMatch(/^\.*$/);
 
-  // 11. Confirm the selected-language chat control remains consistent.
+  // 10. Confirm the selected-language chat control remains consistent.
   await expect(page.getByPlaceholder(labels.placeholder)).toBeVisible();
 
-  // 12. Test mobile navigation (open the drawer, jump to first aid).
+  // 11. Test mobile navigation (open the drawer, confirm Image Check remains
+  //     absent, then jump to first aid).
   await setMobileViewport(page);
+  await expect(page.locator('nav a[href="/community/image-check"]')).toHaveCount(0);
   await page.locator('header button.lg\\:hidden').first().click(); // hamburger
+  await expect(page.locator('aside a[href="/community/image-check"]')).toHaveCount(0);
   const drawerFirstAid = page.locator('aside a[href="/community/first-aid"]').last();
   await expect(drawerFirstAid).toBeVisible();
   await drawerFirstAid.click();

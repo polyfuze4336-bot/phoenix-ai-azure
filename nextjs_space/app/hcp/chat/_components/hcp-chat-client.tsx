@@ -104,7 +104,11 @@ export function HcpChatClient() {
   }, []);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)]">
+    <div className="space-y-4">
+      <div
+        className="flex h-[calc(100dvh-152px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] flex-col lg:h-[calc(100vh-120px)]"
+        data-testid="hcp-chat-panel"
+      >
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="font-display text-xl font-bold text-gray-900">{t('chat.specialist_title')}</h1>
@@ -150,7 +154,7 @@ export function HcpChatClient() {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-none">
+      <div className="min-h-0 flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-none" data-testid="hcp-chat-messages">
         {messages?.map((msg: ChatMsg, i: number) => (
           <motion.div
             key={i}
@@ -188,10 +192,6 @@ export function HcpChatClient() {
       )}
 
       {/* Input */}
-      <div className="mt-3 grid gap-2 md:grid-cols-2">
-        <ClinicalAiNotice variant="confidentiality" />
-        <ClinicalAiNotice variant="personal-data" />
-      </div>
       <div className="mt-4 flex items-end gap-2">
         <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} className="hidden" />
         <button onClick={() => fileRef?.current?.click?.()} className="p-2.5 text-gray-400 hover:text-[#0F9B8E] transition-colors">
@@ -215,6 +215,12 @@ export function HcpChatClient() {
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
           </button>
         </div>
+      </div>
+      </div>
+
+      <div className="grid gap-2 md:grid-cols-2" data-testid="hcp-chat-privacy-notices">
+        <ClinicalAiNotice variant="confidentiality" />
+        <ClinicalAiNotice variant="personal-data" />
       </div>
     </div>
   );
