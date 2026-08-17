@@ -74,3 +74,34 @@ for (const language of ['en', 'ms'] as const) {
     }
   });
 }
+
+test('HCP chat keeps privacy notices outside the mobile conversation panel', async ({ page }) => {
+  await seedLanguage(page, 'en');
+  await seedHcpAuth(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/hcp/chat');
+
+  const panel = page.getByTestId('hcp-chat-panel');
+  const messages = page.getByTestId('hcp-chat-messages');
+  const privacyNotices = page.getByTestId('hcp-chat-privacy-notices');
+  const bottomNavigation = page.locator('nav.fixed.bottom-0');
+  const composer = page.getByPlaceholder('Type your message...');
+
+  await expect(panel.getByText('Confidentiality', { exact: true })).toHaveCount(0);
+  await expect(panel.getByText('Personal Data', { exact: true })).toHaveCount(0);
+  await expect(privacyNotices.getByText('Confidentiality', { exact: true })).toBeVisible();
+  await expect(privacyNotices.getByText('Personal Data', { exact: true })).toBeVisible();
+
+  const panelBox = await panel.boundingBox();
+  const noticesBox = await privacyNotices.boundingBox();
+  const messagesBox = await messages.boundingBox();
+  const composerBox = await composer.boundingBox();
+  const navigationBox = await bottomNavigation.boundingBox();
+
+  expect(panelBox).not.toBeNull();
+  expect(noticesBox).not.toBeNull();
+  expect(messagesBox?.height ?? 0).toBeGreaterThan(200);
+  expect(noticesBox!.y).toBeGreaterThanOrEqual(composerBox!.y + composerBox!.height);
+  expect(composerBox!.y + composerBox!.height).toBeLessThanOrEqual(navigationBox!.y);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+});
