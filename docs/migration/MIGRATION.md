@@ -54,6 +54,23 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 ## Migration audit log
 
+### Step 46 — Preserve HCP Image Analysis mobile result containment
+
+- Kept the HCP Image Analysis grid on an explicit shrinkable single-column track below the existing
+  desktop breakpoint, allowed result and shell flex/grid children to shrink, and wrapped long
+  generated result text without clipping clinical content.
+- Kept the existing seven-item HCP bottom navigation within narrow phone viewports by distributing
+  items across the available width; the header, cards, TBSA, Parkland, management, explanation, and
+  desktop two-column presentation remain visually unchanged.
+- Added deterministic mocked-result browser coverage for 320, 360, 375, 390, 412, 430, 768, 1024,
+  and 1280 px, including long clinical text and the expanded “Why this assessment?” content.
+- No clinical calculations, prompts, schemas, translation, authentication, Azure resources,
+  dependencies, merge, or deployment behavior changed.
+- Validation PASS: typecheck, lint, production build, the responsive mocked-result check at all nine
+  required widths, and the existing image-analysis retry journey. The sandbox build used Next.js's
+  temporary test-only Google-font response hook because `fonts.googleapis.com` DNS was unavailable;
+  production source is unchanged.
+
 ### Step 45 — Retire Community Image Check and free HCP chat space
 
 - Removed the Community Home Image Check card and desktop/mobile navigation entry, deleted its

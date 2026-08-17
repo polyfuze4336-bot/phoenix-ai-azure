@@ -195,7 +195,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 lg:ml-64">
+      <div className="min-w-0 flex-1 lg:ml-64">
         {/* Top header */}
         <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200 safe-area-top">
           <div className="px-4 lg:px-8 py-3 flex items-center justify-between">
@@ -247,7 +247,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
         </header>
 
         {/* Page content with bottom padding for mobile nav */}
-        <main className="p-4 lg:p-8 max-w-[1200px] mx-auto pb-24 lg:pb-8">
+        <main className="mx-auto w-full min-w-0 max-w-[1200px] p-4 pb-24 lg:p-8 lg:pb-8">
           {children}
         </main>
       </div>
@@ -261,14 +261,15 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
               <Link
                 key={item?.href}
                 href={item?.href}
-                className={`flex flex-col items-center justify-center py-2 px-2 rounded-xl min-w-[56px] transition-all ${
+                aria-label={t(item?.labelKey)}
+                className={`flex min-w-0 flex-1 flex-col items-center justify-center rounded-xl px-1 py-2 transition-all sm:px-2 ${
                   active
                     ? 'text-[#8B0000]'
                     : 'text-gray-400 active:text-gray-600'
                 }`}
               >
                 <item.icon className={`w-5 h-5 ${active ? 'stroke-[2.5]' : ''}`} />
-                <span className={`text-[10px] mt-0.5 leading-tight text-center font-medium ${
+                <span className={`mt-0.5 w-full truncate text-center text-[10px] font-medium leading-tight ${
                   active ? 'text-[#8B0000]' : 'text-gray-400'
                 }`}>
                   {t(item?.shortKey)?.split(' ')?.[0]}

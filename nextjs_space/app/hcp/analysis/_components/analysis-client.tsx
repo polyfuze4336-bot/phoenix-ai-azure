@@ -345,7 +345,7 @@ export function AnalysisClient() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div>
         <h1 className="font-display text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{t('analysis.title')}</h1>
         <p className="text-sm text-gray-500 mt-1">{t('analysis.subtitle')}</p>
@@ -353,9 +353,9 @@ export function AnalysisClient() {
 
       {!result && <ClinicalAiNotice />}
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Upload Section */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <ClinicalAiNotice variant="confidentiality" />
           <ClinicalAiNotice variant="personal-data" />
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileSelect} className="hidden" />
@@ -398,7 +398,7 @@ export function AnalysisClient() {
                       <option value="child">{t('analysis.category_child')}</option>
                     </select>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className="text-xs text-gray-500 block mb-1">{t('analysis.weight')}</label>
                     <input
                       type="number"
@@ -465,7 +465,7 @@ export function AnalysisClient() {
         {/* Results Section */}
         <div>
           {result && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="min-w-0 max-w-full space-y-4 break-words">
               <h2 className="font-display text-lg font-bold text-gray-900">{t('analysis.results')}</h2>
               <ClinicalAiNotice />
               {translating && (
@@ -483,7 +483,7 @@ export function AnalysisClient() {
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 overflow-hidden">
                 <div className="p-4 flex items-center justify-between">
                   <span className="flex items-center gap-2 text-sm font-medium text-gray-600"><Palette className="w-4 h-4 text-[#E67E22]" /> {t('analysis.native_skin_type')}</span>
-                  <span className="text-sm font-bold text-[#8B0000]">{translateCanonicalValue(result?.fitzpatrickType, lang)}</span>
+                  <span className="ml-3 min-w-0 break-words text-right text-sm font-bold text-[#8B0000]">{translateCanonicalValue(result?.fitzpatrickType, lang)}</span>
                 </div>
                 {result?.fitzpatrickNote && result?.fitzpatrickNote !== 'N/A' && (
                   <div className="px-4 pb-4 -mt-1">
@@ -495,15 +495,15 @@ export function AnalysisClient() {
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y">
                 <div className="p-4 flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500">{t('analysis.wound_category')}</span>
-                  <span className="text-sm font-semibold text-gray-900 text-right">{translateCanonicalValue(result?.woundCategory, lang)}</span>
+                  <span className="ml-3 min-w-0 break-words text-right text-sm font-semibold text-gray-900">{translateCanonicalValue(result?.woundCategory, lang)}</span>
                 </div>
                 <div className="p-4 flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500">{t('analysis.wound_type')}</span>
-                  <span className="text-sm font-semibold text-gray-900 text-right">{translateCanonicalValue(result?.woundType, lang)}</span>
+                  <span className="ml-3 min-w-0 break-words text-right text-sm font-semibold text-gray-900">{translateCanonicalValue(result?.woundType, lang)}</span>
                 </div>
                 <div className="p-4 flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500">{t('analysis.burn_degree')}</span>
-                  <span className="text-sm font-semibold text-gray-900">{translateCanonicalValue(result?.burnDegree, lang)}</span>
+                  <span className="ml-3 min-w-0 break-words text-right text-sm font-semibold text-gray-900">{translateCanonicalValue(result?.burnDegree, lang)}</span>
                 </div>
                 <div className="p-4 flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500">{t('analysis.severity')}</span>
@@ -515,7 +515,7 @@ export function AnalysisClient() {
                 </div>
                 <div className="p-4 flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500">{t('analysis.confidence')}</span>
-                  <span className="text-sm font-semibold text-[#0F9B8E]">{translateCanonicalValue(result?.confidence, lang)}</span>
+                  <span className="ml-3 min-w-0 break-words text-right text-sm font-semibold text-[#0F9B8E]">{translateCanonicalValue(result?.confidence, lang)}</span>
                 </div>
               </div>
 
@@ -566,7 +566,7 @@ export function AnalysisClient() {
                     <div className="divide-y divide-orange-100">
                       <div className="p-4 flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-600">{t('analysis.tbsa_range')}</span>
-                        <span className="text-sm font-semibold text-gray-900">{result?.tbsaRange ?? 'N/A'}</span>
+                        <span className="ml-3 min-w-0 break-words text-right text-sm font-semibold text-gray-900">{result?.tbsaRange ?? 'N/A'}</span>
                       </div>
                       <div className="p-4">
                         <span className="text-sm font-medium text-gray-600 block mb-1">{t('analysis.affected_regions')}</span>
@@ -574,7 +574,7 @@ export function AnalysisClient() {
                       </div>
                       <div className="p-4 flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-600">{t('analysis.estimation_method')}</span>
-                        <span className="text-xs font-medium px-2 py-1 bg-orange-100 text-orange-700 rounded-full">{result?.tbsaMethod ?? 'N/A'}</span>
+                        <span className="ml-3 min-w-0 break-words rounded-full bg-orange-100 px-2 py-1 text-right text-xs font-medium text-orange-700">{result?.tbsaMethod ?? 'N/A'}</span>
                       </div>
                     </div>
                   </div>
@@ -587,7 +587,7 @@ export function AnalysisClient() {
                         <span className="text-white font-medium text-sm">{t('analysis.parkland_title')}</span>
                       </div>
                       <div className="p-4">
-                        <p className="text-sm text-gray-800 whitespace-pre-line">{result?.parklandFluid}</p>
+                        <p className="whitespace-pre-line break-words text-sm text-gray-800">{result?.parklandFluid}</p>
                         {result?.structured?.parkland?.requiresWeight && (
                           <p className="text-xs text-gray-500 mt-3 italic">{t('analysis.parkland_weight_help')}</p>
                         )}
