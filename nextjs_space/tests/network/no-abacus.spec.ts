@@ -31,7 +31,6 @@ const ROUTES = [
   '/community/assessment',
   '/community/chat',
   '/community/first-aid',
-  '/community/image-check',
 ];
 
 const DEMO_HCP_SESSION = JSON.stringify({

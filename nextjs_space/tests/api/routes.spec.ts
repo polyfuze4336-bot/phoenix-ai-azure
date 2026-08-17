@@ -104,25 +104,9 @@ test('POST /api/analyze-wound/translate rejects a non-canonical language', async
   expect(res.status()).toBe(400);
 });
 
-// --- /api/community-analyze --------------------------------------------------
-
-test('POST /api/community-analyze rejects a missing image with 400', async ({ request }) => {
+test('POST /api/community-analyze is unavailable', async ({ request }) => {
   const res = await postJson(request, '/api/community-analyze', { language: 'en' });
-  expect(res.status()).toBe(400);
-});
-
-test('POST /api/community-analyze rejects an oversized body with 413', async ({ request }) => {
-  const res = await postJson(request, '/api/community-analyze', { image: OVERSIZED_B64, mimeType: 'image/png', language: 'en' });
-  expect(res.status()).toBe(413);
-});
-
-test('POST /api/community-analyze reaches a terminal response for a valid image', async ({ request }) => {
-  const res = await postJson(request, '/api/community-analyze', {
-    image: TINY_PNG_B64,
-    mimeType: 'image/png',
-    language: 'en',
-  });
-  expectTerminalResponse(res.status());
+  expect(res.status()).toBe(404);
 });
 
 // --- /api/hcp-chat -----------------------------------------------------------
@@ -161,7 +145,7 @@ test('POST /api/community-chat reaches a terminal response for a valid question'
   expectTerminalResponse(res.status());
 });
 
-for (const route of ['/api/analyze-wound', '/api/community-analyze', '/api/hcp-chat', '/api/community-chat']) {
+for (const route of ['/api/analyze-wound', '/api/hcp-chat', '/api/community-chat']) {
   test(`POST ${route} rejects a missing language with 400`, async ({ request }) => {
     const payload = route.includes('chat')
       ? { messages: [{ role: 'user', content: 'Test question' }] }

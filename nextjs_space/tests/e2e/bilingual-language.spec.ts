@@ -12,7 +12,6 @@ const communityRoutes: RouteExpectation[] = [
   { path: '/community', en: 'Welcome to Phoenix AI Community Health', ms: 'Selamat Datang ke Kesihatan Komuniti Phoenix AI' },
   { path: '/community/first-aid', en: 'First Aid Education', ms: 'Pendidikan Pertolongan Cemas' },
   { path: '/community/assessment', en: 'Burn Severity Self-Assessment', ms: 'Penilaian Kendiri Keterukan Kelecuran' },
-  { path: '/community/image-check', en: 'Upload a photo of your wound', ms: 'Muat naik gambar luka anda' },
   { path: '/community/articles', en: 'Health Articles', ms: 'Artikel Kesihatan' },
   { path: '/community/chat', en: 'Friendly health guidance for burns and wounds', ms: 'Panduan kesihatan mesra untuk kelecuran dan luka' },
 ];
