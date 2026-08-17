@@ -68,7 +68,7 @@ const QUALITY_STYLE: Record<string, string> = {
 
 function ConfidenceBadge({ level }: { level: Confidence }) {
   const { lang } = useLanguage();
-  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full uppercase ${CONF_STYLE[level] ?? CONF_STYLE.low}`}>{translateCanonicalValue(level, lang)}</span>;
+  return <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase ${CONF_STYLE[level] ?? CONF_STYLE.low}`}>{translateCanonicalValue(level, lang)}</span>;
 }
 
 function WhyField({ label, field }: { label: string; field: Field }) {
@@ -77,14 +77,14 @@ function WhyField({ label, field }: { label: string; field: Field }) {
   if (!field || (!field.interpretation && !field.observation)) return null;
   return (
     <div className="border-b last:border-b-0">
-      <button onClick={() => setOpen((v) => !v)} className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors">
-        <span className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">{label}</span>
+      <button onClick={() => setOpen((v) => !v)} className="flex w-full min-w-0 items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-gray-50">
+        <span className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="min-w-0 break-words text-sm font-medium text-gray-500">{label}</span>
           <ConfidenceBadge level={field.confidence} />
         </span>
-        <span className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-900 text-right max-w-[45%] truncate">{field.interpretation || field.observation}</span>
-          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <span className="flex min-w-0 flex-1 items-center justify-end gap-2">
+          <span className="min-w-0 max-w-[45%] truncate text-right text-sm font-semibold text-gray-900">{field.interpretation || field.observation}</span>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
         </span>
       </button>
       {open && (
@@ -123,7 +123,7 @@ export function StructuredAnalysis({
   const i = data.interpretation;
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 max-w-full space-y-4 break-words">
       {/* Analysis quality banner — honest gating */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
         <span className="flex items-center gap-2 text-sm font-medium text-gray-600"><Gauge className="w-4 h-4 text-[#8B0000]" /> {t('analysis.quality')}</span>
