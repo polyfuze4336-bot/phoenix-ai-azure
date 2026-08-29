@@ -43,3 +43,12 @@ flowchart TB
         LV3 --> S3["Response"]
         S3 --> UI3
     end
+
+    subgraph CommEducation["Community First Aid Video"]
+        U4["User"] --> UI4["First Aid Video UI + global EN/MS content"]
+        UI4 --> R4["Dynamic Next.js Server Component"]
+        R4 --> C4["Read FIRST_AID_VIDEO_URL at request time"]
+        C4 --> V4["Exact YouTube host + video ID validation"]
+        V4 -.->|"missing or invalid"| A4["Bilingual unavailable state; key points remain"]
+        V4 -->|"normalized video ID only"| E4["youtube-nocookie.com iframe"]
+    end

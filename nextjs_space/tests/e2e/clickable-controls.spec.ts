@@ -20,6 +20,8 @@ const PUBLIC_ROUTES = [
   '/hcp-login',
   '/community',
   '/community/first-aid',
+  '/community/first-aid-video',
+  '/community/burn-prevention',
   '/community/assessment',
   '/community/articles',
   '/community/chat',

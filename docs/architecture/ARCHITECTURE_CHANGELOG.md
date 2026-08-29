@@ -16,6 +16,19 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.0.0] — 2026-08-29
+
+### Added
+- Added bilingual Community First Aid Video and Burn Injury Prevention routes.
+- Added optional browser playback from a validated `youtube-nocookie.com` embed URL derived
+  server-side from the runtime-only `FIRST_AID_VIDEO_URL` setting.
+
+### Boundaries
+- No Azure resource, identity, credential, database, storage, AI behavior, clinical calculation,
+  dependency, deployment workflow or HCP behavior changed. See
+  [ADR-0016](./decisions/ADR-0016-runtime-community-first-aid-video.md) and
+  [CHANGE-20260829](./changes/CHANGE-20260829-community-education.md).
+
 ## [7.0.0] — 2026-08-17
 
 ### Changed

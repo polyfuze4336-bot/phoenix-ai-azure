@@ -21,8 +21,11 @@ flowchart TB
         AIProvider["AI Provider Layer (lib/ai) — ACTIVE"]
         Data["Data Access Layer (lib/db, Prisma) — ACTIVE"]
         Storage["Storage Provider Layer (lib/storage) — OPTIONAL"]
+        RuntimeConfig["Runtime video config validation — ACTIVE"]
         Telemetry["Telemetry Layer (lib/telemetry) — ACTIVE"]
     end
+
+    YouTube["YouTube privacy-enhanced embed — OPTIONAL"]
 
     subgraph AZURE["Microsoft Azure (rg-phoenixai-bfgs-demo, eastus2)"]
         ContainerApp["Azure Container Apps (Consumption) — ACTIVE"]
@@ -57,6 +60,7 @@ flowchart TB
     Landing --> Next
     HCP --> Next
     Community --> Next
+    Community -.->|"validated video ID; first-aid-video page only"| YouTube
     PWA --> Next
 
     Next --> MW
@@ -66,6 +70,7 @@ flowchart TB
     API --> Data
     API --> Storage
     Next --> Telemetry
+    Next --> RuntimeConfig
 
     AIProvider -->|"managed identity"| Foundry
     Data -->|"sslmode=require"| PostgreSQL

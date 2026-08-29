@@ -3,7 +3,7 @@
 import { useLanguage } from '@/components/language-provider';
 import { LanguageToggleDark } from '@/components/language-toggle';
 import { PhoenixLogo } from '@/components/phoenix-logo';
-import { Home, Heart, ClipboardCheck, BookOpen, MessageCircle, ArrowLeft, Menu, X } from 'lucide-react';
+import { Home, Heart, ClipboardCheck, BookOpen, MessageCircle, ArrowLeft, Menu, X, PlayCircle, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, ReactNode } from 'react';
@@ -11,10 +11,16 @@ import { useState, ReactNode } from 'react';
 const navItems = [
   { href: '/community', icon: Home, labelKey: 'community.home' },
   { href: '/community/first-aid', icon: Heart, labelKey: 'community.firstaid' },
+  { href: '/community/first-aid-video', icon: PlayCircle, labelKey: 'community.firstaid_video' },
+  { href: '/community/burn-prevention', icon: ShieldCheck, labelKey: 'community.burn_prevention' },
   { href: '/community/assessment', icon: ClipboardCheck, labelKey: 'community.assessment' },
   { href: '/community/articles', icon: BookOpen, labelKey: 'community.articles' },
   { href: '/community/chat', icon: MessageCircle, labelKey: 'community.chat' },
 ];
+
+const mobileBottomNavItems = navItems.filter(({ href }) =>
+  ['/community', '/community/first-aid', '/community/assessment', '/community/articles', '/community/chat'].includes(href),
+);
 
 export function CommunityLayoutClient({ children }: { children: ReactNode }) {
   const { t } = useLanguage();
@@ -108,7 +114,7 @@ export function CommunityLayoutClient({ children }: { children: ReactNode }) {
       {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white border-t border-gray-200 safe-area-bottom">
         <div className="flex items-center justify-around px-1 py-1">
-          {navItems?.map((item: any) => {
+          {mobileBottomNavItems?.map((item: any) => {
             const active = pathname === item?.href;
             return (
               <Link

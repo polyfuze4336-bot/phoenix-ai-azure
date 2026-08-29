@@ -47,6 +47,19 @@ Legacy fallbacks: `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI
 `APPLICATIONINSIGHTS_CONNECTION_STRING` (server),
 `NEXT_PUBLIC_APPLICATIONINSIGHTS_CONNECTION_STRING` (browser).
 
+### Community education
+`FIRST_AID_VIDEO_URL` is the unlisted YouTube URL used by the Community First Aid Video page.
+It is a non-secret, server-side runtime setting and must not use a `NEXT_PUBLIC_` prefix.
+`app/community/first-aid-video/page.tsx` calls `lib/config/first-aid-video.ts` on every request.
+The helper accepts only recognized HTTPS YouTube hosts and valid 11-character video IDs, then sends
+only a normalized `youtube-nocookie.com` embed URL to the browser. Missing or invalid values produce
+the bilingual unavailable state without an iframe.
+
+To replace the video, update `FIRST_AID_VIDEO_URL` in the Azure Container App configuration and
+create/restart the revision as required for the container process to receive its changed
+environment. Refreshing the page is sufficient after the server has the new value. This requires no
+source change and no frontend rebuild merely to replace the URL.
+
 All new variables default to safe no-ops when unset (telemetry off, auth = demo, storage/AI
 tolerant), so local development and demo runs need no secrets.
 

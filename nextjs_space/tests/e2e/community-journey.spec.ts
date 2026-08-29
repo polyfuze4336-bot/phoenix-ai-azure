@@ -45,9 +45,14 @@ test(`community journey in ${language}`, async ({ page }) => {
   await expect(page).toHaveURL(/\/community$/);
   await expect(page.locator('html')).toHaveAttribute('lang', language);
   await expect(page.locator('aside a[href="/community/first-aid"]').first()).toBeVisible();
+  await expect(page.locator('aside a[href="/community/first-aid-video"]').first()).toBeVisible();
+  await expect(page.locator('aside a[href="/community/burn-prevention"]').first()).toBeVisible();
 
   // 2. Navigate to first aid.
   await navTo(page, '/community/first-aid', /\/community\/first-aid$/);
+
+  await navTo(page, '/community/first-aid-video', /\/community\/first-aid-video$/);
+  await navTo(page, '/community/burn-prevention', /\/community\/burn-prevention$/);
 
   // 3. Navigate to articles.
   await navTo(page, '/community/articles', /\/community\/articles$/);
@@ -91,6 +96,8 @@ test(`community journey in ${language}`, async ({ page }) => {
   await expect(page.locator('nav a[href="/community/image-check"]')).toHaveCount(0);
   await page.locator('header button.lg\\:hidden').first().click(); // hamburger
   await expect(page.locator('aside a[href="/community/image-check"]')).toHaveCount(0);
+  await expect(page.locator('aside a[href="/community/first-aid-video"]').last()).toBeVisible();
+  await expect(page.locator('aside a[href="/community/burn-prevention"]').last()).toBeVisible();
   const drawerFirstAid = page.locator('aside a[href="/community/first-aid"]').last();
   await expect(drawerFirstAid).toBeVisible();
   await drawerFirstAid.click();
