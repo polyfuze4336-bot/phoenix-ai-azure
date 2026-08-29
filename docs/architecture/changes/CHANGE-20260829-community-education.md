@@ -28,5 +28,11 @@
 
 Parser unit tests cover missing, valid watch/share/embed formats, invalid origins and runtime value
 changes. Community browser tests cover exact content, immediate EN/MS switching, all five prevention
-categories, First Aid navigation and viewport containment from 320 px through desktop. Typecheck,
-lint, build, existing tests and architecture validation are run before completion.
+categories, First Aid navigation and viewport containment from 320 px through desktop.
+
+PASS: typecheck, lint, production build, unit `124/124`, RAI `31/31`, integration `14/14`, new
+Community education `3/3`, Community/clickable-control regressions `17/17`, bilingual Community
+routes `2/2`, HCP journeys `2/2`, and architecture drift validation. A two-process runtime check
+returned two different normalized video IDs after changing only `FIRST_AID_VIDEO_URL` and restarting
+the server. The sandbox build used Next.js's temporary test-only Google-font response hook because
+Google Fonts DNS was unavailable; production source is unchanged.

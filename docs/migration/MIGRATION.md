@@ -68,6 +68,11 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
   deployment behavior changed.
 - Architecture `7.0.0` → `8.0.0` records the new optional browser-to-YouTube integration. See
   ADR-0016 and the related architecture change record.
+- Validation PASS: typecheck, lint, production build, unit `124/124`, RAI `31/31`, integration
+  `14/14`, new Community education `3/3`, Community/clickable-control regressions `17/17`,
+  bilingual Community routes `2/2`, HCP journeys `2/2`, and architecture drift validation.
+  The sandbox build used Next.js's temporary test-only Google-font response hook because
+  `fonts.googleapis.com` DNS was unavailable; production source is unchanged.
 
 ### Step 46 — Preserve HCP Image Analysis mobile result containment
 

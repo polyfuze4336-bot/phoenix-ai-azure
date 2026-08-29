@@ -19,14 +19,13 @@ test('First Aid Video renders approved content and switches language immediately
   await expect(page.locator('strong em').filter({ hasText: 'Remember: Cool → Cover → Seek Treatment' })).toBeVisible();
   await expect(page.getByRole('link', { name: /download/i })).toHaveCount(0);
 
-  const toggle = page.getByRole('button', { name: 'Toggle language' });
-  await toggle.click();
+  await page.getByRole('button', { name: 'Switch to Bahasa Malaysia' }).click();
   await expect(page.getByRole('heading', { name: 'Video Pertolongan Cemas' })).toBeVisible();
   await expect(page.getByText('Video pertolongan cemas tidak tersedia buat masa ini.')).toBeVisible();
   await expect(page.locator('strong').filter({ hasText: '20–30 minit' })).toBeVisible();
   await expect(page.getByText('Video ini adalah untuk tujuan pendidikan sahaja', { exact: false })).toBeVisible();
 
-  await toggle.click();
+  await page.getByRole('button', { name: 'Tukar kepada bahasa Inggeris' }).click();
   await expect(page.getByRole('heading', { name: 'First Aid Video' })).toBeVisible();
   await expect(page.getByText('This video is for educational purposes only', { exact: false })).toBeVisible();
 });
@@ -45,7 +44,7 @@ test('Burn Injury Prevention has five bilingual categories and links to First Ai
     await expect(page.getByRole('heading', { name: heading })).toBeVisible();
   }
 
-  await page.getByRole('button', { name: 'Toggle language' }).click();
+  await page.getByRole('button', { name: 'Switch to Bahasa Malaysia' }).click();
   for (const heading of [
     'Orang Awam',
     'Ibu Bapa & Penjaga',
