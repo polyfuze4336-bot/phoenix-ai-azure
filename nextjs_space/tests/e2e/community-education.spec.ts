@@ -8,8 +8,17 @@ test('First Aid Video renders approved content and switches language immediately
   await page.goto('/community/first-aid-video');
 
   await expect(page.getByRole('heading', { name: 'First Aid Video' })).toBeVisible();
-  await expect(page.getByText('First aid video is currently unavailable.')).toBeVisible();
-  await expect(page.locator('iframe')).toHaveCount(0);
+  const iframe = page.locator('iframe');
+  if (await iframe.count()) {
+    await expect(iframe).toHaveAttribute('title', 'Burn First Aid Educational Video');
+    await expect(iframe).toHaveAttribute(
+      'src',
+      /^https:\/\/www\.youtube-nocookie\.com\/embed\/[A-Za-z0-9_-]{11}\?autoplay=0&controls=1$/,
+    );
+    await expect(page.getByText('First aid video is currently unavailable.')).toHaveCount(0);
+  } else {
+    await expect(page.getByText('First aid video is currently unavailable.')).toBeVisible();
+  }
   await expect(page.getByRole('heading', { name: 'Burn First Aid' })).toBeVisible();
   await expect(page.locator('strong').filter({ hasText: 'Cool the burn' })).toBeVisible();
   await expect(page.locator('strong').filter({ hasText: '20–30 minutes' })).toBeVisible();

@@ -59,6 +59,9 @@ To replace the video, update `FIRST_AID_VIDEO_URL` in the Azure Container App co
 create/restart the revision as required for the container process to receive its changed
 environment. Refreshing the page is sufficient after the server has the new value. This requires no
 source change and no frontend rebuild merely to replace the URL.
+Because the prototype IaC intentionally remains unchanged in this step, operators should preserve
+or reapply this runtime setting when a later Container App deployment replaces the revision
+template.
 
 All new variables default to safe no-ops when unset (telemetry off, auth = demo, storage/AI
 tolerant), so local development and demo runs need no secrets.
