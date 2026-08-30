@@ -28,6 +28,25 @@ export interface FirstAidGuideResource {
   steps: string[];
 }
 
+export interface FirstAidVideoPointResource {
+  strong: string;
+  text: string;
+  secondaryStrong?: string;
+  suffix?: string;
+}
+
+export interface PreventionSectionResource {
+  title: string;
+  points: string[];
+}
+
+export interface PreventionCategoryResource {
+  id: string;
+  title: string;
+  points?: string[];
+  sections?: PreventionSectionResource[];
+}
+
 export interface GuidelineResource {
   id: string;
   category: string;
@@ -55,6 +74,28 @@ export interface LocalizedContent {
     firstAid: {
       stepsLabel: string;
       guides: FirstAidGuideResource[];
+    };
+    firstAidVideo: {
+      title: string;
+      introduction: string;
+      iframeTitle: string;
+      unavailable: string;
+      keyPointsHeading: string;
+      keyPoints: FirstAidVideoPointResource[];
+      misconceptions: string;
+      reminder: string;
+      disclaimer: string;
+    };
+    burnPrevention: {
+      title: string;
+      introduction: string;
+      categories: PreventionCategoryResource[];
+      callout: {
+        heading: string;
+        text: string;
+        button: string;
+      };
+      disclaimer: string;
     };
   };
   hcp: {

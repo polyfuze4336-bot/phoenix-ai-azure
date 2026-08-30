@@ -35,7 +35,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Concern | Current state |
 | --- | --- |
 | Application runtime | Next.js 14 (App Router), React 18, TypeScript 5, standalone Node server (`node server.js`) — **Implemented** |
-| Major portals | One Phoenix AI landing, HCP routes, Community routes for first aid, self-assessment, articles and chat, PWA, and global English/Bahasa Melayu UI — **Implemented** |
+| Major portals | One Phoenix AI landing, HCP routes, Community routes for first aid, first-aid video, burn prevention, self-assessment, articles and chat, PWA, and global English/Bahasa Melayu UI — **Implemented** |
 | Hosting | Azure Container Apps Consumption, `eastus2`; image in Azure Container Registry Basic — **Implemented** |
 | AI processing | Environment-owned Azure AI Services S0 account with `gpt-4o` via `lib/ai`, managed identity — **Implemented** |
 | Data handling | Azure PostgreSQL Flexible Server 17.10 via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
@@ -71,8 +71,11 @@ flowchart TB
         AIProvider["AI Provider Layer (lib/ai) — ACTIVE"]
         Data["Data Access Layer (lib/db, Prisma) — ACTIVE"]
         Storage["Storage Provider Layer (lib/storage) — OPTIONAL"]
+        RuntimeConfig["Runtime video config validation — ACTIVE"]
         Telemetry["Telemetry Layer (lib/telemetry) — ACTIVE"]
     end
+
+    YouTube["YouTube privacy-enhanced embed — OPTIONAL"]
 
     subgraph AZURE["Microsoft Azure (rg-phoenixai-bfgs-demo, eastus2)"]
         ContainerApp["Azure Container Apps (Consumption) — ACTIVE"]
@@ -103,6 +106,7 @@ flowchart TB
     Landing --> Next
     HCP --> Next
     Community --> Next
+    Community -.->|"validated video ID; first-aid-video page only"| YouTube
     PWA --> Next
 
     Next --> MW
@@ -112,6 +116,7 @@ flowchart TB
     API --> Data
     API --> Storage
     Next --> Telemetry
+    Next --> RuntimeConfig
 
     AIProvider -->|"managed identity"| Foundry
     Data -->|"sslmode=require"| PostgreSQL
@@ -151,7 +156,7 @@ Companion diagrams:
 | --- | --- | --- |
 | Public landing (single Phoenix AI entry) | `app/page.tsx`, `app/_components/landing-client.tsx` | Implemented |
 | HCP portal (chat, analysis, TBSA, Parkland, guidelines, history) | `app/hcp/*` | Implemented |
-| Community portal (chat, assessment, articles, first-aid; retired image route redirects home) | `app/community/*` | Implemented |
+| Community portal (chat, assessment, articles, first-aid, first-aid video and burn prevention; retired image route redirects home) | `app/community/*` | Implemented |
 | Retired alternate experience | Runtime source, components, libraries, flags, assets and tests removed; recoverable from Git history only | Removed |
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |
 | Global English / Bahasa Melayu UI | Root `LanguageProvider`, `components/language-toggle.tsx`, `lib/i18n/{en,ms,index}.ts`; persisted `AppLanguage` (`en`/`ms`) | Implemented |
@@ -169,6 +174,7 @@ Companion diagrams:
 | API routes (15) | `app/api/**/route.ts` | Implemented |
 | Middleware (route protection) | `middleware.ts` | Implemented |
 | Instrumentation hook (startup env validation) | `instrumentation.ts` | Implemented |
+| Runtime Community video normalization | `lib/config/first-aid-video.ts`; reads `FIRST_AID_VIDEO_URL` per dynamic page request and returns only an allowlisted privacy-enhanced embed URL | Implemented; optional |
 | Providers (language, theme, telemetry) | `components/*-provider.tsx` | Implemented |
 | Hooks | `hooks/use-toast.ts` | Implemented |
 | Shared types | `types/next-auth.d.ts`, `lib/types.ts` | Implemented |

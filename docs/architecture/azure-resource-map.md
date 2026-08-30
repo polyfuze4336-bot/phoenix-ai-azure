@@ -33,6 +33,9 @@
 > The `7.0.0` Community image-analysis retirement and HCP chat layout change are application-only.
 > They add, remove, or reconfigure no Azure resource, identity, secret, model deployment, database,
 > storage, network path, SKU, or region.
+> The `8.0.0` Community education change adds only a non-secret Container App runtime setting and an
+> optional browser-to-YouTube embed. It provisions or changes no Azure resource, identity, secret,
+> model deployment, database, storage, network configuration, SKU, region or workflow.
 
 ## Environment
 

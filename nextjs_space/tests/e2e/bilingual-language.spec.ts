@@ -11,6 +11,8 @@ const communityRoutes: RouteExpectation[] = [
   { path: '/', en: 'AI-powered clinical decision support for healthcare professionals and health education for the community.', ms: 'Sokongan keputusan klinikal berkuasa AI untuk profesional penjagaan kesihatan dan pendidikan kesihatan untuk komuniti.' },
   { path: '/community', en: 'Welcome to Phoenix AI Community Health', ms: 'Selamat Datang ke Kesihatan Komuniti Phoenix AI' },
   { path: '/community/first-aid', en: 'First Aid Education', ms: 'Pendidikan Pertolongan Cemas' },
+  { path: '/community/first-aid-video', en: 'First Aid Video', ms: 'Video Pertolongan Cemas' },
+  { path: '/community/burn-prevention', en: 'Burn Injury Prevention', ms: 'Pencegahan Kecederaan Melecur' },
   { path: '/community/assessment', en: 'Burn Severity Self-Assessment', ms: 'Penilaian Kendiri Keterukan Kelecuran' },
   { path: '/community/articles', en: 'Health Articles', ms: 'Artikel Kesihatan' },
   { path: '/community/chat', en: 'Friendly health guidance for burns and wounds', ms: 'Panduan kesihatan mesra untuk kelecuran dan luka' },

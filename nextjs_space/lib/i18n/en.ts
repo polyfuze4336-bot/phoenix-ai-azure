@@ -116,6 +116,125 @@ export const en: LocalizedContent = {
         },
       },
     },
+    firstAidVideo: {
+      title: 'First Aid Video',
+      introduction: 'Watch a short educational video on immediate first aid for burn injuries.',
+      iframeTitle: 'Burn First Aid Educational Video',
+      unavailable: 'First aid video is currently unavailable.',
+      keyPointsHeading: 'Burn First Aid',
+      keyPoints: [
+        {
+          strong: 'Cool the burn',
+          text: ' with clean, cool running water for ',
+          secondaryStrong: '20–30 minutes',
+          suffix: '.',
+        },
+        {
+          strong: 'Cover the burn',
+          text: ' gently with a clean cloth or dressing.',
+        },
+        {
+          strong: 'Seek medical treatment',
+          text: ' when appropriate.',
+        },
+        {
+          strong: 'Do not apply',
+          text: ' ice, toothpaste, oil, butter, creams, traditional remedies, or other substances to the burn.',
+        },
+      ],
+      misconceptions: 'Avoid common misconceptions or home remedies that may worsen the injury.',
+      reminder: 'Remember: Cool → Cover → Seek Treatment',
+      disclaimer: 'This video is for educational purposes only and does not replace professional medical advice, diagnosis, or treatment. Seek appropriate medical care for significant or concerning burn injuries.',
+    },
+    burnPrevention: {
+      title: 'Burn Injury Prevention',
+      introduction: 'Practical steps to reduce the risk of burn injuries at home, around children, and in the workplace.',
+      categories: [
+        {
+          id: 'general-public',
+          title: 'General Public',
+          points: [
+            'Recognise common heat, fire, and scald hazards, and keep a safe distance from hot surfaces and open flames.',
+            'Handle hot liquids carefully and use appropriate protection when handling hot objects.',
+            'Check electrical appliances and cables for obvious damage, and follow equipment and safety instructions.',
+            'Use safer practices when handling flammable materials.',
+            'Know where emergency exits and basic safety equipment are located where relevant.',
+          ],
+        },
+        {
+          id: 'parents-caregivers',
+          title: 'Parents & Caregivers',
+          points: [
+            'Keep hot drinks and liquids away from table edges and keep children away from cooking areas where practical.',
+            'Turn pot and pan handles away from accessible edges.',
+            'Supervise children around heat, flames, and hot water.',
+            'Keep matches and lighters out of reach.',
+            'Check bath and washing water temperature before use.',
+            'Keep appliance cords where children cannot easily pull them.',
+            'Teach age-appropriate burn and fire safety.',
+          ],
+        },
+        {
+          id: 'children',
+          title: 'Children',
+          points: [
+            'Do not touch hot surfaces, and stay away from fires and flames.',
+            'Ask an adult before handling hot food or drinks.',
+            'Do not play with matches or lighters.',
+            'Tell an adult if an electrical item looks damaged.',
+            'Follow adult instructions in an emergency.',
+          ],
+        },
+        {
+          id: 'home-safety',
+          title: 'Home / Domestic Safety',
+          sections: [
+            {
+              title: 'Kitchen',
+              points: [
+                'Handle hot liquids carefully and keep cooking surfaces, pots, pans, and heated appliances safely positioned.',
+              ],
+            },
+            {
+              title: 'Bathroom',
+              points: [
+                'Reduce hot-water exposure and check water temperature before bathing or washing.',
+              ],
+            },
+            {
+              title: 'Electrical',
+              points: [
+                'Do not use damaged cables or plugs, avoid unsafe or overloaded electrical setups, and use appliances as instructed.',
+              ],
+            },
+            {
+              title: 'Fire Safety',
+              points: [
+                'Use smoke or fire detection where appropriate, keep exits accessible, and store ignition sources safely.',
+              ],
+            },
+          ],
+        },
+        {
+          id: 'workplace-safety',
+          title: 'Workplace Safety',
+          points: [
+            'Follow applicable workplace safety procedures and requirements.',
+            'Use appropriate personal protective equipment where required.',
+            'Identify hot-surface, steam, chemical, and electrical hazards, and follow equipment instructions.',
+            'Maintain safe work areas and report damaged equipment or unsafe conditions.',
+            'Keep emergency access and equipment unobstructed, and follow workplace emergency procedures.',
+            'Receive appropriate training before carrying out hazardous tasks.',
+          ],
+        },
+      ],
+      callout: {
+        heading: 'If a burn injury occurs',
+        text: 'Learn what to do immediately in the First Aid section.',
+        button: 'View First Aid',
+      },
+      disclaimer: 'This information is for general educational purposes. It does not guarantee prevention and does not replace applicable workplace, fire, or building safety requirements.',
+    },
     firstAid: {
       stepsLabel: 'Steps',
       guides: [

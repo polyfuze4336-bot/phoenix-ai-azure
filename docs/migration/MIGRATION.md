@@ -54,6 +54,26 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 ## Migration audit log
 
+### Step 47 — Add bilingual Community education sections
+
+- Added First Aid Video and Burn Injury Prevention routes to the existing Community experience and
+  global EN/MS language state. Both are available from Community Home, desktop navigation and the
+  mobile drawer; the existing five-item mobile bottom row remains unchanged to preserve readable,
+  touch-friendly labels.
+- `FIRST_AID_VIDEO_URL` is read server-side per request, restricted to recognized HTTPS YouTube
+  formats, and normalized to a privacy-enhanced embed URL. Missing or invalid values show a
+  bilingual unavailable state while approved first-aid key points remain visible.
+- Added five bilingual prevention categories and a callout to the existing First Aid route. No HCP,
+  authentication, AI, prompt, database, clinical calculation, workflow, Azure resource or
+  deployment behavior changed.
+- Architecture `7.0.0` → `8.0.0` records the new optional browser-to-YouTube integration. See
+  ADR-0016 and the related architecture change record.
+- Validation PASS: typecheck, lint, production build, unit `124/124`, RAI `31/31`, integration
+  `14/14`, new Community education `3/3`, Community/clickable-control regressions `17/17`,
+  bilingual Community routes `2/2`, HCP journeys `2/2`, and architecture drift validation.
+  The sandbox build used Next.js's temporary test-only Google-font response hook because
+  `fonts.googleapis.com` DNS was unavailable; production source is unchanged.
+
 ### Step 46 — Preserve HCP Image Analysis mobile result containment
 
 - Kept the HCP Image Analysis grid on an explicit shrinkable single-column track below the existing

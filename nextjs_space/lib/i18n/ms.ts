@@ -116,6 +116,125 @@ export const ms: LocalizedContent = {
         },
       },
     },
+    firstAidVideo: {
+      title: 'Video Pertolongan Cemas',
+      introduction: 'Tonton video pendidikan ringkas mengenai pertolongan cemas segera untuk kecederaan melecur.',
+      iframeTitle: 'Video Pendidikan Pertolongan Cemas Melecur',
+      unavailable: 'Video pertolongan cemas tidak tersedia buat masa ini.',
+      keyPointsHeading: 'Pertolongan Cemas Melecur',
+      keyPoints: [
+        {
+          strong: 'Sejukkan kawasan melecur',
+          text: ' dengan air bersih yang sejuk dan mengalir selama ',
+          secondaryStrong: '20–30 minit',
+          suffix: '.',
+        },
+        {
+          strong: 'Tutup kawasan melecur',
+          text: ' secara perlahan dengan kain atau balutan yang bersih.',
+        },
+        {
+          strong: 'Dapatkan rawatan perubatan',
+          text: ' apabila sesuai.',
+        },
+        {
+          strong: 'Jangan sapukan',
+          text: ' ais, ubat gigi, minyak, mentega, krim, rawatan tradisional atau bahan-bahan lain pada kawasan melecur.',
+        },
+      ],
+      misconceptions: 'Elakkan salah faham biasa atau rawatan di rumah yang boleh memburukkan kecederaan.',
+      reminder: 'Ingat: Sejukkan → Tutup → Dapatkan Rawatan',
+      disclaimer: 'Video ini adalah untuk tujuan pendidikan sahaja dan tidak menggantikan nasihat, diagnosis atau rawatan perubatan profesional. Dapatkan rawatan perubatan yang sesuai bagi kecederaan melecur yang serius atau membimbangkan.',
+    },
+    burnPrevention: {
+      title: 'Pencegahan Kecederaan Melecur',
+      introduction: 'Langkah praktikal untuk mengurangkan risiko kecederaan melecur di rumah, di sekitar kanak-kanak dan di tempat kerja.',
+      categories: [
+        {
+          id: 'general-public',
+          title: 'Orang Awam',
+          points: [
+            'Kenal pasti bahaya haba, api dan cecair panas yang biasa, serta kekalkan jarak selamat daripada permukaan panas dan nyalaan terbuka.',
+            'Kendalikan cecair panas dengan berhati-hati dan gunakan perlindungan yang sesuai ketika mengendalikan objek panas.',
+            'Periksa peralatan dan kabel elektrik untuk kerosakan yang jelas, serta ikut arahan peralatan dan keselamatan.',
+            'Amalkan cara yang lebih selamat ketika mengendalikan bahan mudah terbakar.',
+            'Ketahui lokasi pintu keluar kecemasan dan peralatan keselamatan asas jika berkenaan.',
+          ],
+        },
+        {
+          id: 'parents-caregivers',
+          title: 'Ibu Bapa & Penjaga',
+          points: [
+            'Jauhkan minuman dan cecair panas daripada tepi meja serta jauhkan kanak-kanak dari kawasan memasak jika praktikal.',
+            'Pusingkan pemegang periuk dan kuali jauh daripada tepi yang boleh dicapai.',
+            'Awasi kanak-kanak di sekitar haba, nyalaan dan air panas.',
+            'Simpan mancis dan pemetik api di luar jangkauan.',
+            'Periksa suhu air mandi dan basuhan sebelum digunakan.',
+            'Letakkan kabel peralatan supaya tidak mudah ditarik oleh kanak-kanak.',
+            'Ajarkan keselamatan melecur dan kebakaran yang sesuai mengikut umur.',
+          ],
+        },
+        {
+          id: 'children',
+          title: 'Kanak-kanak',
+          points: [
+            'Jangan sentuh permukaan panas dan jauhi api serta nyalaan.',
+            'Minta bantuan orang dewasa sebelum mengendalikan makanan atau minuman panas.',
+            'Jangan bermain dengan mancis atau pemetik api.',
+            'Beritahu orang dewasa jika peralatan elektrik kelihatan rosak.',
+            'Ikut arahan orang dewasa semasa kecemasan.',
+          ],
+        },
+        {
+          id: 'home-safety',
+          title: 'Keselamatan Rumah / Domestik',
+          sections: [
+            {
+              title: 'Dapur',
+              points: [
+                'Kendalikan cecair panas dengan berhati-hati dan letakkan permukaan memasak, periuk, kuali serta peralatan panas dengan selamat.',
+              ],
+            },
+            {
+              title: 'Bilik Mandi',
+              points: [
+                'Kurangkan pendedahan kepada air panas dan periksa suhu air sebelum mandi atau membasuh.',
+              ],
+            },
+            {
+              title: 'Elektrik',
+              points: [
+                'Jangan gunakan kabel atau palam yang rosak, elakkan susunan elektrik yang tidak selamat atau terlebih beban, dan gunakan peralatan mengikut arahan.',
+              ],
+            },
+            {
+              title: 'Keselamatan Kebakaran',
+              points: [
+                'Gunakan pengesan asap atau kebakaran jika sesuai, pastikan pintu keluar mudah diakses dan simpan sumber pencucuhan dengan selamat.',
+              ],
+            },
+          ],
+        },
+        {
+          id: 'workplace-safety',
+          title: 'Keselamatan Tempat Kerja',
+          points: [
+            'Ikut prosedur dan keperluan keselamatan tempat kerja yang berkenaan.',
+            'Gunakan peralatan perlindungan diri yang sesuai apabila diperlukan.',
+            'Kenal pasti bahaya permukaan panas, wap, bahan kimia dan elektrik, serta ikut arahan peralatan.',
+            'Kekalkan kawasan kerja yang selamat dan laporkan peralatan rosak atau keadaan tidak selamat.',
+            'Pastikan akses dan peralatan kecemasan tidak terhalang, serta ikut prosedur kecemasan tempat kerja.',
+            'Dapatkan latihan yang sesuai sebelum menjalankan tugas berbahaya.',
+          ],
+        },
+      ],
+      callout: {
+        heading: 'Jika kecederaan melecur berlaku',
+        text: 'Ketahui tindakan segera yang perlu dilakukan di bahagian Pertolongan Cemas.',
+        button: 'Lihat Pertolongan Cemas',
+      },
+      disclaimer: 'Maklumat ini adalah untuk tujuan pendidikan umum. Ia tidak menjamin pencegahan dan tidak menggantikan keperluan keselamatan tempat kerja, kebakaran atau bangunan yang berkenaan.',
+    },
     firstAid: {
       stepsLabel: 'Langkah',
       guides: [
