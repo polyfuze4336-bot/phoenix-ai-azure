@@ -1,13 +1,14 @@
 'use client';
 
 import { useLanguage } from '@/components/language-provider';
-import { Upload, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette, RefreshCw, Images } from 'lucide-react';
+import { Upload, FileText, X, Loader2, Flame, Droplets, Calculator, Layers, Palette, RefreshCw, Images, FlaskConical } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { StructuredAnalysis, type StructuredAnalysisData } from './structured-analysis';
 import { translateCanonicalValue, type AppLanguage } from '@/lib/i18n';
 import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
+import { ingestImage } from '@/lib/images/ingest-image';
 
 interface AnalysisResult {
   language?: AppLanguage;
@@ -73,30 +74,6 @@ async function saveAnalysisToHistory(result: AnalysisResult, image: string, mime
 async function responseError(response: Response, fallback: string): Promise<string> {
   const body = await response.json().catch(() => undefined);
   return typeof body?.error === 'string' ? body.error : fallback;
-}
-
-const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
-const MAX_CLIENT_IMAGE_BYTES = 10 * 1024 * 1024;
-
-function readImageFile(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('IMAGE_ENCODING_FAILED'));
-    reader.onload = () => {
-      if (typeof reader.result !== 'string' || !reader.result.includes(',')) {
-        reject(new Error('IMAGE_ENCODING_FAILED'));
-        return;
-      }
-      const image = new window.Image();
-      image.onerror = () => reject(new Error('IMAGE_INVALID'));
-      image.onload = () => {
-        if (image.naturalWidth < 1 || image.naturalHeight < 1) reject(new Error('IMAGE_INVALID'));
-        else resolve(reader.result as string);
-      };
-      image.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
 }
 
 export function AnalysisClient() {
@@ -203,6 +180,24 @@ export function AnalysisClient() {
     throw new Error(t('analysis.stream_interrupted'));
   }, [t]);
 
+  const applyIngestedImage = useCallback(async (file: File) => {
+    const result = await ingestImage(file);
+    if (!result.ok) {
+      const msgKey =
+        result.error.code === 'IMAGE_TOO_LARGE' ? 'analysis.image_too_large' :
+        result.error.code === 'FILE_TYPE_UNSUPPORTED' ? 'analysis.image_type_unsupported' :
+        result.error.code === 'IMAGE_DECODE_FAILED' ? 'analysis.image_decode_failed' :
+        result.error.code === 'IMAGE_NORMALIZATION_FAILED' ? 'analysis.image_normalization_failed' :
+        'analysis.image_invalid';
+      setError(t(msgKey));
+      return;
+    }
+    lastBase64Ref.current = result.image.base64;
+    lastMimeRef.current = 'image/jpeg';
+    setImageFile(file);
+    setImagePreview(result.image.previewDataUrl);
+  }, [t]);
+
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e?.target?.files?.[0];
     if (!file) return;
@@ -212,47 +207,39 @@ export function AnalysisClient() {
     setAnalysisRetryCount(0);
     setImageFile(null);
     setImagePreview(null);
-    if (file.size === 0 || !ACCEPTED_IMAGE_TYPES.has(file.type)) {
-      setError(t('analysis.image_invalid'));
-      return;
-    }
-    if (file.size > MAX_CLIENT_IMAGE_BYTES) {
-      setError(t('analysis.image_too_large'));
-      return;
-    }
     try {
-      const dataUrl = await readImageFile(file);
-      setImageFile(file);
-      setImagePreview(dataUrl);
-    } catch (error) {
-      setError(error instanceof Error && error.message === 'IMAGE_ENCODING_FAILED'
-        ? t('analysis.image_encoding_failed')
-        : t('analysis.image_invalid'));
+      await applyIngestedImage(file);
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  }, [t]);
+  }, [applyIngestedImage]);
+
+  const loadDemoImage = useCallback(async () => {
+    setResult(null);
+    setError(null);
+    setAnalysisFailed(false);
+    setAnalysisRetryCount(0);
+    setImageFile(null);
+    setImagePreview(null);
+    try {
+      const resp = await fetch('/demo-image.png');
+      const blob = await resp.blob();
+      const file = new File([blob], 'demo-image.png', { type: 'image/png' });
+      await applyIngestedImage(file);
+    } catch {
+      setError(t('analysis.image_invalid'));
+    }
+  }, [applyIngestedImage, t]);
 
   const analyzeImage = useCallback(async (retryCount: number) => {
-    if (!imageFile) return;
+    if (!imageFile || !lastBase64Ref.current) return;
     setAnalyzing(true);
     setError(null);
     setAnalysisFailed(false);
     try {
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => {
-          const encoded = (reader?.result as string)?.split(',')?.[1] ?? '';
-          if (encoded) resolve(encoded);
-          else reject(new Error(t('analysis.image_encoding_failed')));
-        };
-        reader.onerror = () => reject(new Error(t('analysis.image_encoding_failed')));
-        reader.readAsDataURL(imageFile);
-      });
-
-      const mime = imageFile?.type ?? 'image/jpeg';
-      lastBase64Ref.current = base64;
-      lastMimeRef.current = mime;
+      // Use pre-normalized canonical JPEG — set during ingestImage, consistent across retries.
+      const base64 = lastBase64Ref.current;
+      const mime = lastMimeRef.current;
 
       const response = await fetch('/api/analyze-wound', {
         method: 'POST',
@@ -358,7 +345,7 @@ export function AnalysisClient() {
         <div className="min-w-0 space-y-4">
           <ClinicalAiNotice variant="confidentiality" />
           <ClinicalAiNotice variant="personal-data" />
-          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileSelect} className="hidden" />
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif" onChange={handleFileSelect} className="hidden" />
           {!imagePreview && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
               <div
@@ -369,6 +356,13 @@ export function AnalysisClient() {
                 <p className="font-medium text-gray-600">{t('analysis.upload')}</p>
                 <p className="text-xs text-gray-400 mt-1">{t('analysis.file_hint')}</p>
               </div>
+              <button
+                type="button"
+                onClick={() => { void loadDemoImage(); }}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded-xl text-xs text-gray-500 hover:bg-gray-50 hover:border-gray-400 transition-all"
+              >
+                <FlaskConical className="w-3.5 h-3.5" /> {t('analysis.use_demo_image')} <span className="text-gray-400">— {t('analysis.demo_image_label')}</span>
+              </button>
             </motion.div>
           )}
 

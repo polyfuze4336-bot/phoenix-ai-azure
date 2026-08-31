@@ -5,7 +5,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 220;
 
 import { NextRequest } from 'next/server';
-import { AiMessage } from '@/lib/ai/types';
+import { AiMessage, AiError } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
 import { createResultSseResponse } from '@/lib/ai/streaming/sse';
 import { parseHcpWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
@@ -138,6 +138,50 @@ export async function POST(request: NextRequest) {
           correlationId,
         });
       } catch (err) {
+        // Transient failures fall back to single-pass for demo resilience.
+        const isTransient = err instanceof AiError &&
+          ['AI_TIMEOUT', 'AI_RATE_LIMIT', 'AI_UPSTREAM_5XX', 'AI_STREAM_INTERRUPTED'].includes(err.category);
+        if (isTransient && !refineAnswers) {
+          try {
+            const fallbackMessages: AiMessage[] = [
+              { role: 'system', content: hcpWoundAnalysisSystemPrompt(language) },
+              { role: 'user', content: [
+                { type: 'text', text: 'Please analyze this wound/burn image and provide a structured clinical assessment in JSON format.' },
+                { type: 'image_url', image_url: { url: imageDataUrl } },
+              ]},
+            ];
+            const fallback = await completeWithLanguageValidation({
+              messages: fallbackMessages,
+              language,
+              route: 'analyze-wound',
+              correlationId,
+              complete: async (msgs) => (await getAiProvider().streamChatCompletion({
+                messages: msgs,
+                model: getAnalysisModelDeployment(),
+                maxOutputTokens: 2000,
+                responseFormat: 'json_object',
+                correlationId,
+                route: 'analyze-wound',
+                timeoutMs: getAnalysisTimeoutMs(),
+              })).body,
+            });
+            const parsed = parseHcpWoundAnalysis(fallback.text);
+            const parkland = computeParkland(
+              parsed.isBurn, Number.parseFloat(parsed.tbsaEstimate),
+              patient?.ageGroup, patient?.weightKg, language,
+            );
+            recordImageAnalysisEvent('image_analysis_completed', {
+              ...analysisTelemetry!,
+              httpStatus: 200,
+              latencyMs: Date.now() - requestStartedAt,
+            });
+            return createResultSseResponse({
+              result: { ...parsed, parklandFluid: parkland.summary, language, pipelineUsed: 'single-fallback' },
+              processingEvent: { status: 'processing', message: 'Analyzing' },
+              correlationId,
+            });
+          } catch { /* fall through to original error */ }
+        }
         const response = aiErrorResponse(err, 'LLM API error');
         const failure = imageAnalysisFailure(err);
         recordImageAnalysisEvent('image_analysis_failed', {

@@ -23,7 +23,7 @@ export function FirstAidVideoClient({ embedUrl }: { embedUrl: string | null }) {
             className="h-full w-full border-0"
             src={embedUrl}
             title={content.iframeTitle}
-            allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+            allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen
           />
         </div>

@@ -101,7 +101,8 @@ function hasExpectedSignature(bytes: Buffer, mimeType: string): boolean {
 }
 
 function readJpegDimensions(bytes: Buffer): ImageDimensions | null {
-  if (bytes.length < 4 || bytes[bytes.length - 2] !== 0xff || bytes[bytes.length - 1] !== 0xd9) {
+  // Require SOI marker but not strict EOI position — trailing data after FF D9 is valid.
+  if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) {
     return null;
   }
 
@@ -130,19 +131,19 @@ function readJpegDimensions(bytes: Buffer): ImageDimensions | null {
 }
 
 function readPngDimensions(bytes: Buffer): ImageDimensions | null {
+  // Check PNG signature and IHDR; skip IEND check — ancillary chunks may follow.
   if (bytes.length < 33 || bytes.toString('ascii', 12, 16) !== 'IHDR') return null;
-  const iend = bytes.subarray(bytes.length - 12);
-  if (iend.readUInt32BE(0) !== 0 || iend.toString('ascii', 4, 8) !== 'IEND') return null;
   return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
 }
 
 function readGifDimensions(bytes: Buffer): ImageDimensions | null {
-  if (bytes.length < 14 || bytes[bytes.length - 1] !== 0x3b) return null;
+  if (bytes.length < 14) return null;
   return { width: bytes.readUInt16LE(6), height: bytes.readUInt16LE(8) };
 }
 
 function readWebpDimensions(bytes: Buffer): ImageDimensions | null {
-  if (bytes.length < 30 || bytes.readUInt32LE(4) + 8 !== bytes.length) return null;
+  // Check RIFF/WEBP header; skip exact file-size match — trailing data is allowed.
+  if (bytes.length < 30) return null;
   const chunk = bytes.toString('ascii', 12, 16);
   if (chunk === 'VP8X') {
     return {
