@@ -135,16 +135,24 @@ jobs:
       - name: Deploy Container App revision
         run: |
           SUFFIX="${IMAGE_TAG:0:7}-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          # Pass optional first-aid video URL if configured as a repo variable.
+          ENV_ARGS=()
+          if [ -n "${FIRST_AID_VIDEO_URL:-}" ]; then
+            ENV_ARGS+=(--set-env-vars "FIRST_AID_VIDEO_URL=${FIRST_AID_VIDEO_URL}")
+          fi
           REVISION=$(az containerapp update \
             --resource-group "${AZURE_RESOURCE_GROUP}" \
             --name "${APP}" \
             --image "${LOGIN_SERVER}/phoenixai:${IMAGE_TAG}" \
             --revision-suffix "${SUFFIX}" \
+            "${ENV_ARGS[@]}" \
             --query properties.latestRevisionName \
             --output tsv)
           FQDN=$(az containerapp show --resource-group "${AZURE_RESOURCE_GROUP}" --name "${APP}" --query properties.configuration.ingress.fqdn -o tsv)
           echo "APP_URL=https://${FQDN}" >> "$GITHUB_ENV"
           echo "REVISION=${REVISION}" >> "$GITHUB_ENV"
+        env:
+          FIRST_AID_VIDEO_URL: ${{ vars.FIRST_AID_VIDEO_URL }}
 
       - name: Wait for the new revision
         run: |

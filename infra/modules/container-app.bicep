@@ -52,6 +52,9 @@ param databaseUrlSecretUri string
 ])
 param authMode string = 'demo'
 
+@description('YouTube URL for the community first aid video (optional).')
+param firstAidVideoUrl string = ''
+
 @description('Minimum number of active replicas. Zero enables scale-to-zero.')
 @minValue(0)
 param minReplicas int = 0
@@ -169,6 +172,10 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               name: 'DATABASE_URL'
               secretRef: 'database-url'
             }
+            ...(firstAidVideoUrl != '' ? [{
+              name: 'FIRST_AID_VIDEO_URL'
+              value: firstAidVideoUrl
+            }] : [])
           ]
           probes: [
             {

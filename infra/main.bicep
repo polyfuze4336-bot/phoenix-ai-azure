@@ -63,6 +63,9 @@ param postgresDatabaseName string = 'phoenix'
 ])
 param authMode string = 'demo'
 
+@description('YouTube URL for the community first aid video. Leave empty to show the unavailable state.')
+param firstAidVideoUrl string = ''
+
 @description('Immutable tag of the Phoenix AI image built in this environment ACR.')
 param containerImageTag string = 'latest'
 
@@ -278,6 +281,7 @@ module containerApp 'modules/container-app.bicep' = if (deployContainerApp) {
     storageContainerName: storage.outputs.containerName
     databaseUrlSecretUri: keyVault.outputs.databaseUrlSecretUri
     authMode: authMode
+    firstAidVideoUrl: firstAidVideoUrl
     minReplicas: containerMinReplicas
     maxReplicas: containerMaxReplicas
   }

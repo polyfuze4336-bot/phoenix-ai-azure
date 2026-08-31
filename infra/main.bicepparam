@@ -25,6 +25,8 @@ param postgresDatabaseName = 'phoenix'
 
 // App
 param authMode = 'demo'
+// Set a YouTube URL to show a video on the first-aid page; leave empty for the unavailable state.
+param firstAidVideoUrl = readEnvironmentVariable('FIRST_AID_VIDEO_URL', '')
 param containerImageTag = 'latest'
 param deployContainerApp = true
 param containerMinReplicas = 0
