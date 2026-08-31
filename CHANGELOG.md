@@ -9,6 +9,8 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 ## [Unreleased]
 
 ### Changed
+- Reused the Burn Prevention page's bilingual red First Aid callout, internal First Aid link, and
+  educational disclaimer on the Community First Aid Video page.
 - Clarified the Community First Aid Video cooling instruction to use running tap water, with the
   corresponding Bahasa Malaysia translation and exact bilingual browser coverage.
 - Added the curated Community first-aid YouTube video library with `qcADGBwSgC8` as the enabled

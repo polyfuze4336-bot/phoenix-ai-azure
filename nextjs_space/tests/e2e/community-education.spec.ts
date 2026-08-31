@@ -35,6 +35,10 @@ test('First Aid Video renders approved content and switches language immediately
   await expect(page.locator('strong').filter({ hasText: 'Seek medical treatment' })).toBeVisible();
   await expect(page.locator('strong').filter({ hasText: 'Do not apply' })).toBeVisible();
   await expect(page.locator('strong em').filter({ hasText: 'Remember: Cool → Cover → Seek Treatment' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'If a burn injury occurs' })).toBeVisible();
+  await expect(page.getByText('Learn what to do immediately in the First Aid section.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'View First Aid' })).toHaveAttribute('href', '/community/first-aid');
+  await expect(page.getByText('This information is for general educational purposes. It does not guarantee prevention and does not replace applicable workplace, fire, or building safety requirements.', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: /download/i })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Switch to Bahasa Malaysia' }).click();
@@ -48,11 +52,19 @@ test('First Aid Video renders approved content and switches language immediately
   await expect(
     page.getByText('Sejukkan kawasan melecur dengan air paip yang mengalir selama 20–30 minit.', { exact: true }),
   ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Jika kecederaan melecur berlaku' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Lihat Pertolongan Cemas' })).toHaveAttribute(
+    'href',
+    '/community/first-aid',
+  );
+  await expect(page.getByText('Maklumat ini adalah untuk tujuan pendidikan umum. Ia tidak menjamin pencegahan dan tidak menggantikan keperluan keselamatan tempat kerja, kebakaran atau bangunan yang berkenaan.', { exact: true })).toBeVisible();
   await expect(page.getByText('Video ini adalah untuk tujuan pendidikan sahaja', { exact: false })).toBeVisible();
 
   await page.getByRole('button', { name: 'Tukar kepada bahasa Inggeris' }).click();
   await expect(page.getByRole('heading', { name: 'First Aid Video', exact: true })).toBeVisible();
   await expect(page.getByText('This video is for educational purposes only', { exact: false })).toBeVisible();
+  await page.getByRole('link', { name: 'View First Aid' }).click();
+  await expect(page).toHaveURL(/\/community\/first-aid$/);
 });
 
 test('Burn Injury Prevention has five bilingual categories and links to First Aid', async ({ page }) => {

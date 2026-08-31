@@ -54,6 +54,17 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 ## Migration audit log
 
+### Step 50 — Link the First Aid Video page to immediate First Aid
+
+- Reused the Burn Prevention page's red “If a burn injury occurs” callout, internal View First Aid
+  link, and general educational-purpose disclaimer verbatim on the Community First Aid Video page.
+- Reused the existing Bahasa Malaysia translations and visual classes so both pages present the
+  same callout behavior and styling without duplicating content or introducing an external URL.
+- Architecture impact is NONE; version remains `8.1.0`. Responsible AI impact is NONE because no AI
+  behavior, control, prompt, model, clinical instruction or assurance claim changed.
+- Validation PASS: typecheck, production build, focused bilingual Community browser test `1/1`,
+  exact internal-link assertions, and editor diagnostics.
+
 ### Step 49 — Clarify running tap water first-aid guidance
 
 - Changed the Community First Aid Video cooling instruction to “Cool the burn with running tap

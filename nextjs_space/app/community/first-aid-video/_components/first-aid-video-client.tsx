@@ -3,12 +3,14 @@
 import { useLanguage } from '@/components/language-provider';
 import type { ResolvedFirstAidVideo } from '@/lib/config/first-aid-video';
 import { localizedContent } from '@/lib/i18n/index';
-import { AlertCircle, CheckCircle2, PlayCircle } from 'lucide-react';
+import { AlertCircle, ArrowRight, CheckCircle2, PlayCircle } from 'lucide-react';
+import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 export function FirstAidVideoClient({ videos }: { videos: ResolvedFirstAidVideo[] }) {
   const { lang } = useLanguage();
   const content = localizedContent(lang).community.firstAidVideo;
+  const preventionContent = localizedContent(lang).community.burnPrevention;
   const initialVideo = videos.find((video) => video.featured) ?? videos[0];
   const [activeVideoId, setActiveVideoId] = useState(initialVideo?.id);
   const [failedVideoId, setFailedVideoId] = useState<string>();
@@ -133,6 +135,22 @@ export function FirstAidVideoClient({ videos }: { videos: ResolvedFirstAidVideo[
           <strong><em>{content.reminder}</em></strong>
         </p>
       </section>
+
+      <section className="rounded-xl bg-[#8B0000] p-5 text-white shadow-sm">
+        <h2 className="font-display text-lg font-bold">{preventionContent.callout.heading}</h2>
+        <p className="mt-1 text-sm text-white/90">{preventionContent.callout.text}</p>
+        <Link
+          href="/community/first-aid"
+          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#8B0000] transition-colors hover:bg-red-50"
+        >
+          {preventionContent.callout.button}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </section>
+
+      <aside role="note" className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs leading-relaxed text-gray-600">
+        {preventionContent.disclaimer}
+      </aside>
 
       <aside role="note" className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs leading-relaxed text-gray-600">
         {content.disclaimer}
