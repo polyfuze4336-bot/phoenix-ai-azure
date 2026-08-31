@@ -54,6 +54,18 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 ## Migration audit log
 
+### Step 49 — Clarify running tap water first-aid guidance
+
+- Changed the Community First Aid Video cooling instruction to “Cool the burn with running tap
+  water for 20–30 minutes.” and synchronized the Bahasa Malaysia instruction as “Sejukkan kawasan
+  melecur dengan air paip yang mengalir selama 20–30 minit.”
+- Preserved the existing emphasis, duration, layout, video behavior, branding, navigation and all
+  other clinical guidance. Exact bilingual browser assertions now guard both complete sentences.
+- Architecture impact is NONE; version remains `8.1.0`. `RAI-TRANS-005` remains Partial because its
+  disclosed version-pinned citation limitation is unchanged.
+- Validation PASS: production build, focused bilingual Community browser test `1/1`, and Responsible
+  AI tests `31/31`.
+
 ### Step 48 — Add the Community first-aid video library
 
 - Added `https://youtu.be/qcADGBwSgC8` as the enabled featured video on the existing Community First

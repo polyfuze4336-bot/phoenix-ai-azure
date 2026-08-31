@@ -128,7 +128,7 @@ export const ms: LocalizedContent = {
       keyPoints: [
         {
           strong: 'Sejukkan kawasan melecur',
-          text: ' dengan air bersih yang sejuk dan mengalir selama ',
+          text: ' dengan air paip yang mengalir selama ',
           secondaryStrong: '20–30 minit',
           suffix: '.',
         },

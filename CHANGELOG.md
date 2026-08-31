@@ -9,6 +9,8 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 ## [Unreleased]
 
 ### Changed
+- Clarified the Community First Aid Video cooling instruction to use running tap water, with the
+  corresponding Bahasa Malaysia translation and exact bilingual browser coverage.
 - Added the curated Community first-aid YouTube video library with `qcADGBwSgC8` as the enabled
   featured video, while preserving `FIRST_AID_VIDEO_URL` as a validated, deduplicated runtime
   override and showing bilingual selection cards only when additional videos exist.

@@ -30,8 +30,7 @@ test('First Aid Video renders approved content and switches language immediately
   }
   await expect(page.getByText('The first aid video is temporarily unavailable. Please try again later.')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Burn First Aid' })).toBeVisible();
-  await expect(page.locator('strong').filter({ hasText: 'Cool the burn' })).toBeVisible();
-  await expect(page.locator('strong').filter({ hasText: '20–30 minutes' })).toBeVisible();
+  await expect(page.getByText('Cool the burn with running tap water for 20–30 minutes.', { exact: true })).toBeVisible();
   await expect(page.locator('strong').filter({ hasText: 'Cover the burn' })).toBeVisible();
   await expect(page.locator('strong').filter({ hasText: 'Seek medical treatment' })).toBeVisible();
   await expect(page.locator('strong').filter({ hasText: 'Do not apply' })).toBeVisible();
@@ -46,7 +45,9 @@ test('First Aid Video renders approved content and switches language immediately
   } else {
     await expect(page.getByRole('heading', { name: 'Video Pertolongan Cemas Lain' })).toHaveCount(0);
   }
-  await expect(page.locator('strong').filter({ hasText: '20–30 minit' })).toBeVisible();
+  await expect(
+    page.getByText('Sejukkan kawasan melecur dengan air paip yang mengalir selama 20–30 minit.', { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText('Video ini adalah untuk tujuan pendidikan sahaja', { exact: false })).toBeVisible();
 
   await page.getByRole('button', { name: 'Tukar kepada bahasa Inggeris' }).click();

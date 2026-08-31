@@ -128,7 +128,7 @@ export const en: LocalizedContent = {
       keyPoints: [
         {
           strong: 'Cool the burn',
-          text: ' with clean, cool running water for ',
+          text: ' with running tap water for ',
           secondaryStrong: '20–30 minutes',
           suffix: '.',
         },
