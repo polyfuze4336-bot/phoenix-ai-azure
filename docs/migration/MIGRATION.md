@@ -54,6 +54,22 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 ## Migration audit log
 
+### Step 48 — Add the Community first-aid video library
+
+- Added `https://youtu.be/qcADGBwSgC8` as the enabled featured video on the existing Community First
+  Aid Video page, using the existing privacy-enhanced YouTube player without autoplay.
+- Added a typed, ordered configuration list so future videos require one configuration entry; the
+  page shows selection cards only when more than one enabled video resolves successfully.
+- Preserved `FIRST_AID_VIDEO_URL` as a validated featured override and deduplicated matching video
+  IDs. Invalid configured or runtime URLs never reach an iframe.
+- Preserved the existing Community design, bilingual guidance, disclaimer, navigation, branding and
+  Azure deployment topology. Architecture `8.0.0` → `8.1.0`; RAI impact is NONE.
+- Local validation PASS: parser/library unit `6/6`, full unit `127/127`, RAI `31/31`, typecheck,
+  production build, architecture drift, single/multiple-video browser behavior, EN/MS switching,
+  Desktop Chrome, Desktop Edge profile, WebKit 18.2, mobile Chromium, 16:9 geometry, no horizontal
+  overflow, embedded playback and fullscreen control. GitHub Actions and live Azure verification
+  remain pending until the direct-main push deploys this commit.
+
 ### Step 47 — Add bilingual Community education sections
 
 - Added First Aid Video and Burn Injury Prevention routes to the existing Community experience and

@@ -6,7 +6,7 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `7.0.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.1.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -71,11 +71,11 @@ flowchart TB
         AIProvider["AI Provider Layer (lib/ai) — ACTIVE"]
         Data["Data Access Layer (lib/db, Prisma) — ACTIVE"]
         Storage["Storage Provider Layer (lib/storage) — OPTIONAL"]
-        RuntimeConfig["Runtime video config validation — ACTIVE"]
+        RuntimeConfig["Video library + runtime validation — ACTIVE"]
         Telemetry["Telemetry Layer (lib/telemetry) — ACTIVE"]
     end
 
-    YouTube["YouTube privacy-enhanced embed — OPTIONAL"]
+    YouTube["YouTube privacy-enhanced embed — ACTIVE"]
 
     subgraph AZURE["Microsoft Azure (rg-phoenixai-bfgs-demo, eastus2)"]
         ContainerApp["Azure Container Apps (Consumption) — ACTIVE"]
@@ -106,7 +106,7 @@ flowchart TB
     Landing --> Next
     HCP --> Next
     Community --> Next
-    Community -.->|"validated video ID; first-aid-video page only"| YouTube
+    Community -->|"validated video IDs; first-aid-video page only"| YouTube
     PWA --> Next
 
     Next --> MW
@@ -174,7 +174,7 @@ Companion diagrams:
 | API routes (15) | `app/api/**/route.ts` | Implemented |
 | Middleware (route protection) | `middleware.ts` | Implemented |
 | Instrumentation hook (startup env validation) | `instrumentation.ts` | Implemented |
-| Runtime Community video normalization | `lib/config/first-aid-video.ts`; reads `FIRST_AID_VIDEO_URL` per dynamic page request and returns only an allowlisted privacy-enhanced embed URL | Implemented; optional |
+| Community first-aid video library | `lib/config/first-aid-videos.ts`, `lib/config/first-aid-video.ts`; validates the enabled ordered library, applies `FIRST_AID_VIDEO_URL` as an optional featured override, deduplicates by video ID and returns only allowlisted privacy-enhanced embed data | Implemented |
 | Providers (language, theme, telemetry) | `components/*-provider.tsx` | Implemented |
 | Hooks | `hooks/use-toast.ts` | Implemented |
 | Shared types | `types/next-auth.d.ts`, `lib/types.ts` | Implemented |

@@ -120,7 +120,10 @@ export const ms: LocalizedContent = {
       title: 'Video Pertolongan Cemas',
       introduction: 'Tonton video pendidikan ringkas mengenai pertolongan cemas segera untuk kecederaan melecur.',
       iframeTitle: 'Video Pendidikan Pertolongan Cemas Melecur',
-      unavailable: 'Video pertolongan cemas tidak tersedia buat masa ini.',
+      unavailable: 'Video pertolongan cemas tidak tersedia buat sementara waktu. Sila cuba lagi kemudian.',
+      featuredHeading: 'Video Pilihan',
+      moreVideosHeading: 'Video Pertolongan Cemas Lain',
+      watchVideo: 'Tonton Video',
       keyPointsHeading: 'Pertolongan Cemas Melecur',
       keyPoints: [
         {

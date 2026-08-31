@@ -9,6 +9,9 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 ## [Unreleased]
 
 ### Changed
+- Added the curated Community first-aid YouTube video library with `qcADGBwSgC8` as the enabled
+  featured video, while preserving `FIRST_AID_VIDEO_URL` as a validated, deduplicated runtime
+  override and showing bilingual selection cards only when additional videos exist.
 - Added retained-context bilingual recovery actions for failed HCP image analysis and privacy-safe
   lifecycle telemetry for started, completed, retried, and failed analysis requests.
 - Consolidated GitHub Actions into one automatic direct-main `deploy.yml` plus manual-only

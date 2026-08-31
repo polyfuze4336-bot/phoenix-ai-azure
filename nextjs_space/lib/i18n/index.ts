@@ -80,6 +80,9 @@ export interface LocalizedContent {
       introduction: string;
       iframeTitle: string;
       unavailable: string;
+      featuredHeading: string;
+      moreVideosHeading: string;
+      watchVideo: string;
       keyPointsHeading: string;
       keyPoints: FirstAidVideoPointResource[];
       misconceptions: string;

@@ -48,20 +48,21 @@ Legacy fallbacks: `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI
 `NEXT_PUBLIC_APPLICATIONINSIGHTS_CONNECTION_STRING` (browser).
 
 ### Community education
-`FIRST_AID_VIDEO_URL` is the unlisted YouTube URL used by the Community First Aid Video page.
-It is a non-secret, server-side runtime setting and must not use a `NEXT_PUBLIC_` prefix.
-`app/community/first-aid-video/page.tsx` calls `lib/config/first-aid-video.ts` on every request.
-The helper accepts only recognized HTTPS YouTube hosts and valid 11-character video IDs, then sends
-only a normalized `youtube-nocookie.com` embed URL to the browser. Missing or invalid values produce
-the bilingual unavailable state without an iframe.
+`lib/config/first-aid-videos.ts` is the ordered source-controlled Community video library.
+`FIRST_AID_VIDEO_URL` remains a non-secret, server-side runtime setting and must not use a
+`NEXT_PUBLIC_` prefix. When valid, it overrides the featured video; otherwise the configured
+featured video remains active. `app/community/first-aid-video/page.tsx` calls
+`lib/config/first-aid-video.ts` on every request. The helper accepts only recognized HTTPS YouTube
+hosts and valid 11-character video IDs, deduplicates by video ID, and sends only normalized
+`youtube-nocookie.com` embed data to the browser. If no valid enabled video remains, the page shows
+the bilingual unavailable state while retaining its written guidance.
 
 To replace the video, update `FIRST_AID_VIDEO_URL` in the Azure Container App configuration and
 create/restart the revision as required for the container process to receive its changed
 environment. Refreshing the page is sufficient after the server has the new value. This requires no
 source change and no frontend rebuild merely to replace the URL.
-Because the prototype IaC intentionally remains unchanged in this step, operators should preserve
-or reapply this runtime setting when a later Container App deployment replaces the revision
-template.
+Adding a persistent curated video requires one new entry in `lib/config/first-aid-videos.ts` and a
+normal application deployment; no page rewrite, database or CMS is required.
 
 All new variables default to safe no-ops when unset (telemetry off, auth = demo, storage/AI
 tolerant), so local development and demo runs need no secrets.

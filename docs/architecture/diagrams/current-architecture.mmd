@@ -21,11 +21,11 @@ flowchart TB
         AIProvider["AI Provider Layer (lib/ai) — ACTIVE"]
         Data["Data Access Layer (lib/db, Prisma) — ACTIVE"]
         Storage["Storage Provider Layer (lib/storage) — OPTIONAL"]
-        RuntimeConfig["Runtime video config validation — ACTIVE"]
+        RuntimeConfig["Video library + runtime validation — ACTIVE"]
         Telemetry["Telemetry Layer (lib/telemetry) — ACTIVE"]
     end
 
-    YouTube["YouTube privacy-enhanced embed — OPTIONAL"]
+    YouTube["YouTube privacy-enhanced embed — ACTIVE"]
 
     subgraph AZURE["Microsoft Azure (rg-phoenixai-bfgs-demo, eastus2)"]
         ContainerApp["Azure Container Apps (Consumption) — ACTIVE"]
@@ -60,7 +60,7 @@ flowchart TB
     Landing --> Next
     HCP --> Next
     Community --> Next
-    Community -.->|"validated video ID; first-aid-video page only"| YouTube
+    Community -->|"validated video IDs; first-aid-video page only"| YouTube
     PWA --> Next
 
     Next --> MW

@@ -120,7 +120,10 @@ export const en: LocalizedContent = {
       title: 'First Aid Video',
       introduction: 'Watch a short educational video on immediate first aid for burn injuries.',
       iframeTitle: 'Burn First Aid Educational Video',
-      unavailable: 'First aid video is currently unavailable.',
+      unavailable: 'The first aid video is temporarily unavailable. Please try again later.',
+      featuredHeading: 'Featured Video',
+      moreVideosHeading: 'More First Aid Videos',
+      watchVideo: 'Watch Video',
       keyPointsHeading: 'Burn First Aid',
       keyPoints: [
         {

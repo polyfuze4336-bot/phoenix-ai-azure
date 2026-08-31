@@ -16,6 +16,21 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.1.0] — 2026-08-31
+
+### Changed
+- Extended the validated Community first-aid video configuration from one optional runtime URL to
+  an enabled, ordered library with one committed featured video.
+- Preserved `FIRST_AID_VIDEO_URL` as a validated featured override, with video-ID deduplication.
+- Added route-local active-video selection and conditional additional-video cards.
+
+### Boundaries
+- The existing `INT-COMMUNITY-YOUTUBE` iframe integration, privacy-enhanced host, global EN/MS
+  provider and Community route remain in place. No Azure resource, identity, API, database, AI
+  behavior, dependency, deployment workflow or HCP behavior changed. See
+  [ADR-0016](./decisions/ADR-0016-runtime-community-first-aid-video.md) and
+  [CHANGE-20260831](./changes/CHANGE-20260831-community-first-aid-video-library.md).
+
 ## [8.0.0] — 2026-08-29
 
 ### Added

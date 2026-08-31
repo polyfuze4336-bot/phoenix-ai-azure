@@ -36,6 +36,9 @@
 > The `8.0.0` Community education change adds only a non-secret Container App runtime setting and an
 > optional browser-to-YouTube embed. It provisions or changes no Azure resource, identity, secret,
 > model deployment, database, storage, network configuration, SKU, region or workflow.
+> The `8.1.0` Community first-aid video library is an application-only extension of that integration.
+> It adds no Azure resource, identity, secret, model deployment, database, storage, network
+> configuration, SKU, region or workflow.
 
 ## Environment
 

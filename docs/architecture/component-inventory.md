@@ -11,7 +11,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | UI-LANDING | Public landing | UI | Next.js/React | `app/page.tsx`, `app/_components/landing-client.tsx` | Single Phoenix AI public entry and original supplied brand | APP-NEXT | ACTIVE | Phoenix AI team |
 | UI-HCP | HCP portal | UI | Next.js/React | `app/hcp/*` | Clinician chat, analysis, TBSA, Parkland, guidelines, history | APP-NEXT, AUTH-DEMO, API-* | ACTIVE | Phoenix AI team |
-| UI-COMMUNITY | Community portal | UI | Next.js/React | `app/community/*` | Public chat, assessment, articles, first-aid, runtime-configured first-aid video and burn prevention; retired image route redirects home | APP-NEXT, API-COMMUNITY-CHAT, CFG-ENV, INT-COMMUNITY-YOUTUBE | ACTIVE | Phoenix AI team |
+| UI-COMMUNITY | Community portal | UI | Next.js/React | `app/community/*` | Public chat, assessment, articles, first-aid, configured first-aid video library and burn prevention; retired image route redirects home | APP-NEXT, API-COMMUNITY-CHAT, CFG-ENV, INT-COMMUNITY-YOUTUBE | ACTIVE | Phoenix AI team |
 | UI-V2-HCP | Retired alternate HCP workspace | UI | Git history only | Removed from runtime source | Historical component ID; implementation removed | — | LEGACY | Phoenix AI team |
 | UI-V2-COMMUNITY | Retired alternate community portal | UI | Git history only | Removed from runtime source | Historical component ID; implementation removed | — | LEGACY | Phoenix AI team |
 | UI-V2-SHELL | Retired alternate shell | UI | Git history only | Removed from runtime source | Historical component ID; implementation removed | — | LEGACY | Phoenix AI team |
@@ -71,7 +71,7 @@
 | AUTH-ENTRA | Entra ID provider | Lib | OIDC + jose | `lib/auth/entra-*.ts` | Opt-in SSO | AUTH-SESSION | OPTIONAL | Phoenix AI team |
 | AUTH-SESSION | Session cookie | Lib | jose HS256 | `lib/auth/session.ts`, `current-session.ts` | Signed httpOnly session | — | ACTIVE | Phoenix AI team |
 | ANALYSIS-HISTORY | Analysis history service | Lib | TypeScript | `lib/analysis/history.ts` | Read/write AnalysisRecord | DB-PRISMA | ACTIVE | Phoenix AI team |
-| CFG-ENV | Runtime config/validation | Lib | TypeScript | `lib/config/environment.ts`, `lib/config/first-aid-video.ts` | Feature gating, env validation, and allowlisted runtime Community video normalization | — | ACTIVE | Phoenix AI team |
+| CFG-ENV | Runtime config/validation | Lib | TypeScript | `lib/config/environment.ts`, `lib/config/first-aid-video.ts`, `lib/config/first-aid-videos.ts` | Feature gating, allowlisted Community video-library validation, deduplication and runtime featured override | — | ACTIVE | Phoenix AI team |
 | HEALTH-READINESS | Readiness checks | Lib | TypeScript | `lib/health/readiness.ts` | Dependency probes | AI-PROVIDER, DB-PRISMA, STORAGE-BLOB | ACTIVE | Phoenix AI team |
 | OBS-APPINSIGHTS | App Insights telemetry | Lib/Infra | applicationinsights + web SDK | `lib/telemetry/*`, `components/telemetry-provider.tsx` | Privacy-safe telemetry including analysis reliability dimensions; never image/content payloads | — | ACTIVE | Phoenix AI team |
 | INFRA-APPSERVICE | Azure App Service | Infra | Bicep | `infra/modules/app-service.bicep` | Former web runtime | INFRA-PLAN, INFRA-MI | DEPRECATED | Phoenix AI team |

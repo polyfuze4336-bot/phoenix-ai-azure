@@ -78,3 +78,12 @@ Community and HCP functionality remains independent.
 
 Run parser unit tests, bilingual and responsive Community browser tests, typecheck, lint, production
 build, architecture validation, code review and security scanning.
+
+## 2026-08-31 Amendment
+
+The route now has a small source-controlled, ordered video library containing the requested default
+video. `FIRST_AID_VIDEO_URL` remains backward compatible as the featured override. All configured
+and runtime entries pass through the same host and 11-character ID validation, are deduplicated by
+video ID, and expose only normalized `youtube-nocookie.com` embed data to the client. Additional
+enabled entries render as route-local selection cards without introducing a database, CMS, API or
+new external host. This backward-compatible extension does not replace the original decision.
