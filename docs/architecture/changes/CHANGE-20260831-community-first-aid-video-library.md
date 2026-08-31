@@ -27,4 +27,7 @@
   architecture drift validation; single-video Community browser `3/3`; two-video selection `1/1`;
   Desktop Chrome `3/3`; Desktop Edge profile `3/3`; WebKit 18.2 `3/3`; mobile Chromium `3/3`;
   direct player inspection at 16:9 with no horizontal overflow, Play and fullscreen controls.
-- PENDING: GitHub Actions deployment and live Azure verification.
+- PASS: GitHub Actions run `33365612250` deployed commit `eb0b110` as healthy Container Apps
+  revision `ca-phoenixai-oaprp7dte7bw2--eb0b110-12-1`. Live verification confirmed the embedded
+  `qcADGBwSgC8` player, Play and fullscreen controls, EN/MS switching, preserved branding/guidance/
+  disclaimer, and 390 px mobile 16:9 containment without horizontal overflow.

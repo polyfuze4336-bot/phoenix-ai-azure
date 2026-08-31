@@ -67,8 +67,11 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 - Local validation PASS: parser/library unit `6/6`, full unit `127/127`, RAI `31/31`, typecheck,
   production build, architecture drift, single/multiple-video browser behavior, EN/MS switching,
   Desktop Chrome, Desktop Edge profile, WebKit 18.2, mobile Chromium, 16:9 geometry, no horizontal
-  overflow, embedded playback and fullscreen control. GitHub Actions and live Azure verification
-  remain pending until the direct-main push deploys this commit.
+  overflow, embedded playback and fullscreen control.
+- Deployment validation PASS: GitHub Actions run `33365612250` deployed `eb0b110` as healthy
+  Container Apps revision `ca-phoenixai-oaprp7dte7bw2--eb0b110-12-1`. The live Community page
+  served `qcADGBwSgC8` inside Phoenix AI, accepted Play, exposed fullscreen, switched all page copy
+  between EN/MS, retained branding/guidance/disclaimer, and remained 16:9 without mobile overflow.
 
 ### Step 47 — Add bilingual Community education sections
 
