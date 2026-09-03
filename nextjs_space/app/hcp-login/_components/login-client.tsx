@@ -3,7 +3,7 @@
 import { useLanguage } from '@/components/language-provider';
 import { LanguageToggle } from '@/components/language-toggle';
 import { PhoenixLogo } from '@/components/phoenix-logo';
-import { Stethoscope, Lock, User, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
+import { Stethoscope, Lock, User, Eye, EyeOff, ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useCallback } from 'react';
@@ -28,12 +28,12 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const startSession = useCallback((user: { name: string; role: string; email: string }, mode: 'manual' | 'quick') => {
+  const startSession = useCallback((user: { name: string; role: string; email: string }) => {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('hcp_auth', JSON.stringify(user));
     }
     // Privacy-safe: record the login mode + role only. Never the email or name.
-    trackClientEvent('demo_login_completed', { mode, role: user.role });
+    trackClientEvent('demo_login_completed', { mode: 'manual', role: user.role });
     router.push('/hcp');
   }, [router]);
 
@@ -53,7 +53,7 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
         return;
       }
       const data = await res.json();
-      startSession(data.user, 'manual');
+      startSession(data.user);
     } catch {
       setError(t('login.connection_error'));
       setLoading(false);

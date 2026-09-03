@@ -1,6 +1,6 @@
 # Authentication — demo isolation for the Azure parity release
 
-Phoenix AI's first Azure parity release preserves the original mock login exactly.
+Phoenix AI's Azure parity release uses a deliberately limited demo login.
 This document records what that means, why it is safe **only** for a demo, and how to
 protect the demo environment.
 
@@ -11,19 +11,18 @@ protect the demo environment.
 ## What ships in the parity release
 
 - **Feature flag `AUTH_MODE`** (see `.env.example`, `lib/auth/auth-config.ts`):
-  - `demo` (default) — server-verified demo credentials plus the original quick-login cards.
+  - `demo` (default) — one server-verified demo/test account.
   - `entra` — **optional** Microsoft Entra ID sign-in for HCP users (see below). Opt-in and
     not enabled by default for the parity release.
 - **Authentication abstraction** (`lib/auth/`): a provider-neutral contract
   (`AuthProvider`) with a `DemoAuthProvider` and an `EntraAuthProvider` placeholder, so a
   real identity provider can be added later without touching the login UI or route guard.
-- **Demo credentials moved server-side** (`lib/auth/demo-users.ts`): passwords no longer
-  appear in browser source. The login page renders only a **non-secret** directory (names,
-  roles, emails) for the quick-login cards and posts to `POST /api/auth/login`, which verifies
-  credentials on the server. Quick-login issues a demo session without placing a password in
-  the browser.
-- **Preserved experience**: the visual login, the three quick-login cards, the `/hcp-login`
-  and `/hcp` routes, and the `sessionStorage` `hcp_auth` session all behave as before.
+- **Single server-side demo account** (`lib/auth/demo-users.ts`): the DEMO/TEST-only
+  credential comparison runs only in the server authentication provider. The login page
+  contains empty User ID and password fields and posts to `POST /api/auth/login`; it renders no
+  credential, example, directory, or quick-login control.
+- **Preserved flow**: the `/hcp-login` and `/hcp` routes, bilingual UI, and
+  `sessionStorage` `hcp_auth` demo session remain.
 
 ## Why `sessionStorage` auth is not production-grade
 
@@ -35,7 +34,7 @@ check (`app/hcp/_components/hcp-layout-client.tsx`). This is acceptable for a de
   any script in the page; a user can forge `hcp_auth` and bypass the guard.
 - **No httpOnly / secure cookie** — the session is exposed to XSS and cannot be invalidated
   server-side.
-- **No real credential store** — demo passwords are fictional, shared, and static.
+- **No real credential store** — the single demo password is fictional and static.
 - **No authorization, MFA, lockout, audit trail, or session expiry.**
 - **No protection of the API routes** — the AI and health endpoints are not access-controlled
   at the application layer.

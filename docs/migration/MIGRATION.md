@@ -1651,3 +1651,26 @@ configuration while retaining automatic Azure deployment.
 - **Local Azure context note.** The local Azure CLI subscription did not contain deployment
   `phoenixai-dev-13`; deployment outputs were therefore not queried locally. The authenticated
   environment-bound GitHub deployment and independent public endpoint probes provide the evidence.
+
+### Step 38 - Simplify demo login and make professional assessment universal
+
+- **HCP demo login.** Replaced the three-account quick-login directory with one
+  server-verified DEMO/TEST-only account. The bilingual login remains an empty User ID/password
+  form; it no longer renders identities, examples, credentials, helper text, or quick-login
+  controls. Submitted credentials and payloads are not logged. The client-side demo session remains
+  a documented non-production limitation; Entra architecture is unchanged.
+- **Community Self-Assessment.** Preserved all four questions, score values, thresholds, three
+  result categories, first-aid guidance, disclaimer, and emergency `Call 999` action. Added a clear
+  EN/BM recommended-next-step section for every result: community/primary care for `minor`,
+  hospital/appropriate medical facility for `moderate`, and urgent hospital/emergency care for
+  `emergency`.
+- **Architecture.** LOW impact; version `8.1.0 -> 8.2.0`; no ADR. The current architecture,
+  component/integration inventories, changelog, and
+  `CHANGE-20260903-demo-login-community-referral.md` are synchronized. Azure resource impact is
+  NONE; Responsible AI control impact is NONE because no AI behavior or control changed.
+- **Validation.** PASS: unit `126/126`, Responsible AI `31/31`, integration `14/14`, production HTTP
+  API `23/23`, focused login/Self-Assessment E2E `9/9`, TypeScript, ESLint, production build (with
+  Next.js test-only offline font responses because Google Fonts DNS was unavailable), and
+  architecture drift. Full E2E was `38/40`; the two failures are pre-existing stale EN/MS HCP
+  analysis subtitle expectations ("Upload or capture..." vs rendered "Upload..."), unrelated to
+  this task. No changed or added test failed.

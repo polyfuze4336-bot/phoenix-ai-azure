@@ -18,6 +18,7 @@ export interface AssessmentQuestionResource {
 export interface AssessmentResultResource {
   title: string;
   description: string;
+  nextStep: string;
 }
 
 export interface FirstAidGuideResource {
@@ -67,6 +68,7 @@ export interface LocalizedContent {
     assessment: {
       disclaimer: string;
       questionLabel: string;
+      nextStepLabel: string;
       callEmergency: string;
       questions: AssessmentQuestionResource[];
       results: Record<'minor' | 'moderate' | 'emergency', AssessmentResultResource>;

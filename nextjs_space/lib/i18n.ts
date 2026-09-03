@@ -28,7 +28,6 @@ const legacyTranslations: Record<string, LegacyTranslation> = {
   'login.subtitle': { en: 'Please sign in to continue', bm: 'Sila log masuk untuk meneruskan' },
   'login.invalid_credentials': { en: 'Invalid User ID or password.', bm: 'ID Pengguna atau kata laluan tidak sah.' },
   'login.connection_error': { en: 'Connection error. Please try again.', bm: 'Ralat sambungan. Sila cuba lagi.' },
-  'login.demo_failed': { en: 'Demo login failed', bm: 'Log masuk demo gagal' },
   'login.entra_forbidden': { en: 'Your account does not have a clinical role for the Phoenix AI portal.', bm: 'Akaun anda tiada peranan klinikal untuk portal Phoenix AI.' },
   'login.entra_unavailable': { en: 'Entra ID sign-in is unavailable. Please contact your administrator.', bm: 'Log masuk Entra ID tidak tersedia. Sila hubungi pentadbir anda.' },
   'login.entra_unauthorized': { en: 'Your session expired or sign-in was cancelled. Please sign in again.', bm: 'Sesi anda telah tamat atau log masuk dibatalkan. Sila log masuk semula.' },
@@ -39,13 +38,7 @@ const legacyTranslations: Record<string, LegacyTranslation> = {
   'login.password': { en: 'Password', bm: 'Kata Laluan' },
   'login.signing_in': { en: 'Signing in...', bm: 'Sedang log masuk...' },
   'login.sign_in': { en: 'Sign In', bm: 'Log Masuk' },
-  'login.quick_login': { en: 'or quick login as', bm: 'atau log masuk pantas sebagai' },
-  'login.demo_mode': { en: 'Demo Mode', bm: 'Mod Demo' },
-  'login.demo_help': { en: 'Use quick login buttons above or enter email & password', bm: 'Gunakan butang log masuk pantas atau masukkan e-mel & kata laluan di atas' },
   'login.back_home': { en: 'Back to home', bm: 'Kembali ke halaman utama' },
-  'login.role_doctor': { en: 'Emergency Medicine Specialist', bm: 'Pakar Perubatan Kecemasan' },
-  'login.role_nurse': { en: 'Senior Nurse', bm: 'Jururawat Kanan' },
-  'login.role_admin': { en: 'System Administrator', bm: 'Pentadbir Sistem' },
 
   // HCP Navigation
   'hcp.dashboard': { en: 'Dashboard', bm: 'Papan Pemuka' },

@@ -12,9 +12,9 @@ export const TINY_PNG = Buffer.from(
 
 /** The demo HCP session object the real demo login writes to sessionStorage. */
 export const DEMO_HCP_SESSION = {
-  name: 'Dr. Ahmad Faizal',
-  role: 'Pakar Perubatan Kecemasan',
-  email: 'doctor@phoenix.my',
+  name: 'Admin Phoenix',
+  role: 'Pentadbir Sistem',
+  email: 'admin.phoenix',
 };
 
 /** Seed the demo HCP session so gated /hcp routes render without the login flow. */

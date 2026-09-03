@@ -70,7 +70,6 @@ Rendered on every `/community/*` route.
 | Route | Control | Label | Expected action | Actual action | Status | Automated test | Defect | Resolution |
 |-------|---------|-------|-----------------|---------------|--------|----------------|--------|------------|
 | /hcp-login | Form submit | Sign In | Authenticate and enter `/hcp` | `onSubmit` → POST `/api/auth/login`, on success writes session + `router.push('/hcp')`, on failure shows error | ✅ | tests/e2e/hcp-journey.spec.ts; tests/api/routes.spec.ts | None | No change required |
-| /hcp-login | Quick-login button | (demo doctor/nurse) | Prefill + sign in as demo user | Sets credentials and submits demo login | ✅ | tests/e2e/hcp-journey.spec.ts | None | No change required |
 | /hcp-login | Icon button | Show/hide password | Toggle password visibility | `setShowPassword(v => !v)` → input type toggles | ✅ | manual | None | No change required |
 | /hcp-login | Back link | Back to Home | Navigate to `/` | `next/link` → `/` | ✅ | tests/e2e/clickable-controls.spec.ts | None | No change required |
 | /hcp-login | Anchor | Sign in with Microsoft Entra ID | Start Entra OAuth | `<a href="/api/auth/entra/login">` → server route | ✅ | manual (external IdP) | None | No change required |
