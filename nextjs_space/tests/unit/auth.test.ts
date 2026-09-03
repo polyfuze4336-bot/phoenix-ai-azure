@@ -4,11 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { resolveAuthMode, isDemoMode, isEntraMode } from '../../lib/auth/auth-config';
-import {
-  listPublicDemoUsers,
-  findPublicDemoUser,
-  verifyDemoCredentials,
-} from '../../lib/auth/demo-users';
+import { verifyDemoCredentials } from '../../lib/auth/demo-users';
 
 function withAuthMode(value: string | undefined, fn: () => void): void {
   const saved = process.env.AUTH_MODE;
@@ -40,41 +36,27 @@ test('resolveAuthMode: AUTH_MODE=entra selects entra (case-insensitive)', () => 
   withAuthMode('ENTRA', () => assert.equal(resolveAuthMode(), 'entra'));
 });
 
-test('listPublicDemoUsers: returns the 3 demo users WITHOUT passwords', () => {
-  const users = listPublicDemoUsers();
-  assert.equal(users.length, 3);
-  const emails = users.map((u) => u.email).sort();
-  assert.deepEqual(emails, ['admin@phoenix.my', 'doctor@phoenix.my', 'nurse@phoenix.my']);
-  for (const u of users) {
-    assert.ok(!('password' in (u as Record<string, unknown>)), 'public user must not carry a password');
-    assert.ok(u.name && u.role);
-  }
-});
-
-test('findPublicDemoUser: case-insensitive email lookup, null on miss', () => {
-  const doctor = findPublicDemoUser('DOCTOR@phoenix.my');
-  assert.equal(doctor?.name, 'Dr. Ahmad Faizal');
-  assert.equal(doctor?.role, 'Pakar Perubatan Kecemasan');
-  assert.equal(findPublicDemoUser('nobody@phoenix.my'), null);
-});
-
-test('verifyDemoCredentials: correct shared password returns the AuthUser', () => {
-  const user = verifyDemoCredentials('doctor@phoenix.my', 'phoenix2026');
+test('verifyDemoCredentials: the intended demo account authenticates', () => {
+  const user = verifyDemoCredentials('admin.phoenix', 'bfg123');
   assert.ok(user);
-  assert.equal(user?.email, 'doctor@phoenix.my');
-  assert.equal(user?.name, 'Dr. Ahmad Faizal');
+  assert.equal(user?.email, 'admin.phoenix');
+  assert.equal(user?.name, 'Admin Phoenix');
 });
 
-test('verifyDemoCredentials: admin uses its own password', () => {
-  assert.ok(verifyDemoCredentials('admin@phoenix.my', 'admin123'));
-  assert.equal(verifyDemoCredentials('admin@phoenix.my', 'phoenix2026'), null);
+test('verifyDemoCredentials: rejects the correct user ID with a wrong password', () => {
+  assert.equal(verifyDemoCredentials('admin.phoenix', 'wrong'), null);
 });
 
-test('verifyDemoCredentials: wrong password returns null', () => {
-  assert.equal(verifyDemoCredentials('doctor@phoenix.my', 'wrong'), null);
-  assert.equal(verifyDemoCredentials('nobody@phoenix.my', 'phoenix2026'), null);
+test('verifyDemoCredentials: rejects a wrong user ID with the correct password', () => {
+  assert.equal(verifyDemoCredentials('not.admin', 'bfg123'), null);
 });
 
-test('verifyDemoCredentials: email match is case-insensitive', () => {
-  assert.ok(verifyDemoCredentials('DOCTOR@PHOENIX.MY', 'phoenix2026'));
+test('verifyDemoCredentials: rejects all legacy demo accounts', () => {
+  assert.equal(verifyDemoCredentials('doctor@phoenix.my', 'phoenix2026'), null);
+  assert.equal(verifyDemoCredentials('nurse@phoenix.my', 'phoenix2026'), null);
+  assert.equal(verifyDemoCredentials('admin@phoenix.my', 'admin123'), null);
+});
+
+test('verifyDemoCredentials: user ID match is case-insensitive', () => {
+  assert.ok(verifyDemoCredentials('ADMIN.PHOENIX', 'bfg123'));
 });

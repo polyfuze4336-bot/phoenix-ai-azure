@@ -25,4 +25,4 @@ export function getAuthProvider(): AuthProvider {
 
 export { isDemoMode, resolveAuthMode };
 export { AuthError } from './types';
-export type { AuthMode, AuthProvider, AuthUser, PublicDemoUser } from './types';
+export type { AuthMode, AuthProvider, AuthUser } from './types';

@@ -7,7 +7,7 @@
  * needs no code here. This class exists so AUTH_MODE=entra is a recognised,
  * type-safe option and fails loudly with guidance until a real integration lands.
  */
-import { AuthError, type AuthProvider, type AuthUser, type PublicDemoUser } from './types';
+import { AuthError, type AuthProvider, type AuthUser } from './types';
 
 const NOT_IMPLEMENTED_MESSAGE =
   'AUTH_MODE=entra is not implemented in the parity release. Protect the app with ' +
@@ -25,11 +25,4 @@ export class EntraAuthProvider implements AuthProvider {
     this.notImplemented();
   }
 
-  async quickAuthenticate(): Promise<AuthUser> {
-    this.notImplemented();
-  }
-
-  listPublicUsers(): PublicDemoUser[] {
-    return [];
-  }
 }

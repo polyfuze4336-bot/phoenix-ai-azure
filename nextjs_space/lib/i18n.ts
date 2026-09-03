@@ -26,7 +26,7 @@ const legacyTranslations: Record<string, LegacyTranslation> = {
   // Authentication
   'login.portal_title': { en: 'Healthcare Professional Portal', bm: 'Portal Profesional Kesihatan' },
   'login.subtitle': { en: 'Please sign in to continue', bm: 'Sila log masuk untuk meneruskan' },
-  'login.invalid_credentials': { en: 'Invalid email or password', bm: 'E-mel atau kata laluan tidak sah' },
+  'login.invalid_credentials': { en: 'Invalid User ID or password.', bm: 'ID Pengguna atau kata laluan tidak sah.' },
   'login.connection_error': { en: 'Connection error. Please try again.', bm: 'Ralat sambungan. Sila cuba lagi.' },
   'login.demo_failed': { en: 'Demo login failed', bm: 'Log masuk demo gagal' },
   'login.entra_forbidden': { en: 'Your account does not have a clinical role for the Phoenix AI portal.', bm: 'Akaun anda tiada peranan klinikal untuk portal Phoenix AI.' },
@@ -35,7 +35,7 @@ const legacyTranslations: Record<string, LegacyTranslation> = {
   'login.entra_description': { en: 'Sign in with your organisational account via Microsoft Entra ID.', bm: 'Log masuk dengan akaun organisasi anda melalui Microsoft Entra ID.' },
   'login.entra_action': { en: 'Sign in with Microsoft Entra ID', bm: 'Log Masuk dengan Microsoft Entra ID' },
   'login.entra_roles': { en: 'Access is governed by your organisation role (Doctor, Nurse, Administrator).', bm: 'Akses dikawal oleh peranan organisasi (Doktor, Jururawat, Pentadbir).' },
-  'login.email': { en: 'Email', bm: 'E-mel' },
+  'login.email': { en: 'User ID', bm: 'ID Pengguna' },
   'login.password': { en: 'Password', bm: 'Kata Laluan' },
   'login.signing_in': { en: 'Signing in...', bm: 'Sedang log masuk...' },
   'login.sign_in': { en: 'Sign In', bm: 'Log Masuk' },

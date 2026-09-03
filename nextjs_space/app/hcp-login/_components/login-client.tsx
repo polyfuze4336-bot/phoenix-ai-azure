@@ -3,20 +3,12 @@
 import { useLanguage } from '@/components/language-provider';
 import { LanguageToggle } from '@/components/language-toggle';
 import { PhoenixLogo } from '@/components/phoenix-logo';
-import { Stethoscope, Lock, Mail, Eye, EyeOff, ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
+import { Stethoscope, Lock, User, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { trackClientEvent } from '@/lib/telemetry/client';
-
-// Public demo directory — display only. NO passwords live in browser source;
-// credentials are verified server-side via POST /api/auth/login.
-const DEMO_USERS = [
-  { email: 'doctor@phoenix.my', name: 'Dr. Ahmad Faizal', roleKey: 'login.role_doctor' },
-  { email: 'nurse@phoenix.my', name: 'Nurse Siti Aminah', roleKey: 'login.role_nurse' },
-  { email: 'admin@phoenix.my', name: 'Admin Phoenix', roleKey: 'login.role_admin' },
-];
 
 type AuthMode = 'demo' | 'entra';
 type LoginErrorCode = 'unauthorized' | 'forbidden' | 'unavailable' | null;
@@ -30,7 +22,7 @@ function entraErrorKey(code: LoginErrorCode): string {
 export function LoginClient({ mode, initialError }: { mode: AuthMode; initialError: LoginErrorCode }) {
   const { t } = useLanguage();
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -53,7 +45,7 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.toLowerCase().trim(), password }),
+        body: JSON.stringify({ userId: userId.toLowerCase().trim(), password }),
       });
       if (!res.ok) {
         setError(t('login.invalid_credentials'));
@@ -66,31 +58,7 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
       setError(t('login.connection_error'));
       setLoading(false);
     }
-  }, [email, password, startSession, t]);
-
-  const quickLogin = useCallback(async (demoUser: typeof DEMO_USERS[0]) => {
-    setEmail(demoUser.email);
-    setPassword('');
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: demoUser.email, quick: true }),
-      });
-      if (!res.ok) {
-        setError(t('login.demo_failed'));
-        setLoading(false);
-        return;
-      }
-      const data = await res.json();
-      startSession(data.user, 'quick');
-    } catch {
-      setError(t('login.connection_error'));
-      setLoading(false);
-    }
-  }, [startSession, t]);
+  }, [userId, password, startSession, t]);
 
   const isEntra = mode === 'entra';
 
@@ -160,12 +128,13 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
                       {t('login.email')}
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="doctor@phoenix.my"
+                        type="text"
+                        name="username"
+                        autoComplete="username"
+                        value={userId}
+                        onChange={(e) => setUserId(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#8B0000]/20 focus:border-[#8B0000] outline-none transition-all"
                         required
                       />
@@ -180,6 +149,8 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
                         type={showPassword ? 'text' : 'password'}
+                         name="password"
+                         autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
@@ -219,43 +190,6 @@ export function LoginClient({ mode, initialError }: { mode: AuthMode; initialErr
                   </button>
                 </form>
 
-                {/* Divider */}
-                <div className="px-6">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-gray-200" />
-                    <span className="text-xs text-gray-400">{t('login.quick_login')}</span>
-                    <div className="flex-1 h-px bg-gray-200" />
-                  </div>
-                </div>
-
-                {/* Quick Login */}
-                <div className="p-6 pt-4 space-y-2">
-                  {DEMO_USERS.map((user) => (
-                    <button
-                      key={user.email}
-                      onClick={() => quickLogin(user)}
-                      disabled={loading}
-                      className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors text-left disabled:opacity-50 group"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-[#8B0000]/10 flex items-center justify-center shrink-0 group-hover:bg-[#8B0000]/15 transition-colors">
-                        <span className="text-sm font-bold text-[#8B0000]">{user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
-                        <p className="text-xs text-gray-500 truncate">{t(user.roleKey)}</p>
-                      </div>
-                      <ArrowLeft className="w-4 h-4 text-gray-300 rotate-180 group-hover:text-[#8B0000] transition-colors" />
-                    </button>
-                  ))}
-                </div>
-
-                {/* Demo Notice */}
-                <div className="px-6 pb-6">
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700 text-center">
-                    <strong>{t('login.demo_mode')}:</strong>{' '}
-                    {t('login.demo_help')}
-                  </div>
-                </div>
               </>
             )}
           </div>
