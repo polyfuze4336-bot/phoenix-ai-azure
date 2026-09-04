@@ -6,7 +6,7 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.1.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.2.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -156,7 +156,7 @@ Companion diagrams:
 | --- | --- | --- |
 | Public landing (single Phoenix AI entry) | `app/page.tsx`, `app/_components/landing-client.tsx` | Implemented |
 | HCP portal (chat, analysis, TBSA, Parkland, guidelines, history) | `app/hcp/*` | Implemented |
-| Community portal (chat, assessment, articles, first-aid, first-aid video and burn prevention; retired image route redirects home) | `app/community/*` | Implemented |
+| Community portal (chat, assessment with severity-appropriate professional-care disposition on every result, articles, first-aid, first-aid video and burn prevention; retired image route redirects home) | `app/community/*` | Implemented |
 | Retired alternate experience | Runtime source, components, libraries, flags, assets and tests removed; recoverable from Git history only | Removed |
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |
 | Global English / Bahasa Melayu UI | Root `LanguageProvider`, `components/language-toggle.tsx`, `lib/i18n/{en,ms,index}.ts`; persisted `AppLanguage` (`en`/`ms`) | Implemented |
@@ -252,7 +252,7 @@ migration because language metadata is stored inside the existing JSON result.
 
 | Element | Location | Status |
 | --- | --- | --- |
-| Demo authentication | `lib/auth/demo-provider.ts`, `demo-users.ts` (fictional users; default `AUTH_MODE=demo`) | Mock/demo |
+| Demo authentication | `lib/auth/demo-provider.ts`, `demo-users.ts` (one server-verified DEMO/TEST-only account; no quick-login or visible credentials; default `AUTH_MODE=demo`) | Mock/demo |
 | Session (signed httpOnly cookie) | `lib/auth/session.ts`, `current-session.ts` (`jose` HS256) | Implemented |
 | Entra ID (OIDC) | `lib/auth/entra-*.ts`, `app/api/auth/entra/*` (opt-in `AUTH_MODE=entra`; placeholder in this release) | Optional |
 | Roles (Doctor/Nurse/Administrator) | `lib/auth/*` role mapping | Implemented (used by demo; Entra role mapping opt-in) |

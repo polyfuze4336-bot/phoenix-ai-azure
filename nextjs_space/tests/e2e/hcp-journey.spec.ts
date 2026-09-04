@@ -61,9 +61,15 @@ test(`hcp journey in ${language}`, async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('lang', language);
   await expect(page.getByRole('heading', { name: labels.portal })).toBeVisible();
 
-  // 2. Use demo doctor login (verified server-side via /api/auth/login).
-  await page.locator('input[type="email"]').fill('doctor@phoenix.my');
-  await page.locator('input[type="password"]').fill('phoenix2026');
+  await expect(page.locator('input[name="username"]')).toHaveValue('');
+  await expect(page.locator('input[name="password"]')).toHaveValue('');
+  await expect(page.getByText('admin.phoenix', { exact: false })).toHaveCount(0);
+  await expect(page.getByText('bfg123', { exact: false })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /quick login|log masuk pantas/i })).toHaveCount(0);
+
+  // 2. Use the single demo account (verified server-side via /api/auth/login).
+  await page.locator('input[name="username"]').fill('admin.phoenix');
+  await page.locator('input[name="password"]').fill('bfg123');
   await page.getByRole('button', { name: labels.signIn }).click();
 
   // 3. Reach /hcp.

@@ -16,6 +16,20 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.2.0] — 2026-09-03
+
+### Changed
+- Restricted the default demo authentication provider to one server-verified DEMO/TEST-only account
+  and removed the browser quick-login path and displayed demo identities.
+- Extended every Community Self-Assessment result with bilingual, severity-appropriate
+  professional-care disposition while preserving scores, thresholds, first aid, and emergency 999
+  escalation.
+
+### Boundaries
+- No Azure resource, deployment workflow, database schema, dependency, AI behavior, prompt, image
+  analysis, TBSA/Parkland rule, or production identity architecture changed. No ADR is required.
+  See [CHANGE-20260903](./changes/CHANGE-20260903-demo-login-community-referral.md).
+
 ## [8.1.0] — 2026-08-31
 
 ### Changed

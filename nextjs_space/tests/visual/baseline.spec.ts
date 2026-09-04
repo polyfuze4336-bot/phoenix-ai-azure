@@ -15,9 +15,9 @@ import { test, type Page, type TestInfo } from '@playwright/test';
  */
 
 const DEMO_HCP_SESSION = JSON.stringify({
-  name: 'Dr. Ahmad Faizal',
-  role: 'Pakar Perubatan Kecemasan',
-  email: 'doctor@phoenix.my',
+  name: 'Admin Phoenix',
+  role: 'Pentadbir Sistem',
+  email: 'admin.phoenix',
 });
 
 type Lang = 'en' | 'bm';
@@ -104,7 +104,7 @@ test('hcp-login', async ({ page }, info) => {
   // Error state: submit invalid credentials.
   await page.goto('/hcp-login').catch(() => {});
   await page.waitForTimeout(400);
-  await page.locator('input[type="email"]').fill('wrong@phoenix.my');
+  await page.locator('input[name="username"]').fill('wrong-user');
   await page.locator('input[type="password"]').fill('bad-password');
   await page.getByRole('button', { name: /log in|log masuk|sign in/i }).first().click().catch(() => {});
   await page.waitForTimeout(1600); // 1.2s mock delay + render

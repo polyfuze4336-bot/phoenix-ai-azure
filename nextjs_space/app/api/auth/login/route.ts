@@ -1,10 +1,9 @@
 /**
  * Phoenix AI — demo authentication endpoint (SERVER-ONLY).
  *
- * Verifies demo credentials server-side so passwords never live in browser
- * source. Two flows, both returning the same session shape the client persists:
- *   - manual:      POST { email, password }
- *   - quick-login: POST { email, quick: true }   (demo cards, no password)
+ * Verifies the single demo/test account server-side so credentials never live
+ * in browser source. Accepts POST { userId, password } and returns the session
+ * shape persisted by the client.
  *
  * This is DEMO authentication, not enterprise identity. The environment is
  * expected to be protected at the platform level (App Service access
@@ -25,15 +24,12 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   const record = (body ?? {}) as Record<string, unknown>;
-  const email = typeof record.email === 'string' ? record.email : '';
+  const userId = typeof record.userId === 'string' ? record.userId : '';
   const password = typeof record.password === 'string' ? record.password : '';
-  const quick = record.quick === true;
 
   try {
     const provider = getAuthProvider();
-    const user = quick
-      ? await provider.quickAuthenticate(email)
-      : await provider.authenticate(email, password);
+    const user = await provider.authenticate(userId, password);
     return Response.json({ user });
   } catch (err) {
     if (err instanceof AuthError) {

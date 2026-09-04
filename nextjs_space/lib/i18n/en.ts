@@ -57,6 +57,7 @@ export const en: LocalizedContent = {
     assessment: {
       disclaimer: 'This is a basic self-assessment tool and does not replace professional medical advice. When in doubt, seek medical help.',
       questionLabel: 'Question',
+      nextStepLabel: 'Recommended Next Step',
       callEmergency: 'Call 999 Now',
       questions: [
         {
@@ -103,16 +104,19 @@ export const en: LocalizedContent = {
       ],
       results: {
         minor: {
-          title: 'Minor — Home Care Recommended',
+          title: 'Minor — Professional Review Recommended',
           description: 'This appears to be a minor burn. Apply first aid at home: cool under running water for 20 minutes, apply aloe vera or burn cream, and cover with a clean bandage. Monitor for signs of infection.',
+          nextStep: 'Even if the burn appears minor, consider having it assessed by a community healthcare professional, clinic, or primary care provider.',
         },
         moderate: {
-          title: 'Moderate — Visit a Clinic',
-          description: 'This burn may need professional medical attention. Apply first aid, then visit your nearest clinic or hospital for proper assessment and treatment.',
+          title: 'Moderate — Seek Medical Assessment',
+          description: 'Apply first aid and arrange medical assessment.',
+          nextStep: 'Please seek assessment by a healthcare professional at a hospital or appropriate medical facility.',
         },
         emergency: {
           title: 'Emergency — Go to Hospital Immediately',
           description: 'This appears to be a serious burn that requires immediate emergency medical attention. Call 999 or go to the nearest Emergency Department immediately. While waiting, cool the burn under running water.',
+          nextStep: 'Please seek urgent medical assessment at a hospital. Call 999 or go to the nearest Emergency Department immediately.',
         },
       },
     },

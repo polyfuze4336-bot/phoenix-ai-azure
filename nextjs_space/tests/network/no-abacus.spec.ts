@@ -36,9 +36,9 @@ const ROUTES = [
 ];
 
 const DEMO_HCP_SESSION = JSON.stringify({
-  name: 'Dr. Ahmad Faizal',
-  role: 'Pakar Perubatan Kecemasan',
-  email: 'doctor@phoenix.my',
+  name: 'Admin Phoenix',
+  role: 'Pentadbir Sistem',
+  email: 'admin.phoenix',
 });
 
 /** Seed the demo HCP session so gated /hcp routes render (mirrors the demo login). */

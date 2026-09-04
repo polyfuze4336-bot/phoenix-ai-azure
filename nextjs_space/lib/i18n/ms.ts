@@ -57,6 +57,7 @@ export const ms: LocalizedContent = {
     assessment: {
       disclaimer: 'Ini ialah alat penilaian kendiri asas dan tidak menggantikan nasihat perubatan profesional. Jika ragu-ragu, dapatkan bantuan perubatan.',
       questionLabel: 'Soalan',
+      nextStepLabel: 'Langkah Seterusnya yang Disyorkan',
       callEmergency: 'Hubungi 999 Sekarang',
       questions: [
         {
@@ -103,16 +104,19 @@ export const ms: LocalizedContent = {
       ],
       results: {
         minor: {
-          title: 'Ringan — Penjagaan di Rumah Dicadangkan',
+          title: 'Ringan — Penilaian Profesional Disyorkan',
           description: 'Ini kelihatan seperti kelecuran ringan. Berikan pertolongan cemas di rumah: sejukkan di bawah air mengalir selama 20 minit, sapukan aloe vera atau krim kelecuran, dan tutup dengan pembalut bersih. Pantau tanda jangkitan.',
+          nextStep: 'Walaupun kecederaan melecur kelihatan ringan, pertimbangkan untuk mendapatkan penilaian daripada profesional penjagaan kesihatan di klinik atau perkhidmatan penjagaan kesihatan primer.',
         },
         moderate: {
-          title: 'Sederhana — Pergi ke Klinik',
-          description: 'Kelecuran ini mungkin memerlukan perhatian perubatan profesional. Berikan pertolongan cemas, kemudian pergi ke klinik atau hospital terdekat untuk penilaian dan rawatan yang sewajarnya.',
+          title: 'Sederhana — Dapatkan Penilaian Perubatan',
+          description: 'Berikan pertolongan cemas dan aturkan penilaian perubatan.',
+          nextStep: 'Sila dapatkan penilaian daripada profesional penjagaan kesihatan di hospital atau fasiliti perubatan yang sesuai.',
         },
         emergency: {
           title: 'Kecemasan — Pergi ke Hospital Segera',
           description: 'Ini kelihatan seperti kelecuran serius yang memerlukan perhatian perubatan kecemasan segera. Hubungi 999 atau pergi ke Jabatan Kecemasan terdekat dengan segera. Sementara menunggu, sejukkan kelecuran di bawah air mengalir.',
+          nextStep: 'Sila dapatkan penilaian perubatan dengan segera di hospital. Hubungi 999 atau pergi ke Jabatan Kecemasan terdekat dengan segera.',
         },
       },
     },

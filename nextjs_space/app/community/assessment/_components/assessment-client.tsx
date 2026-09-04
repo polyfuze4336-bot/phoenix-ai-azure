@@ -112,6 +112,14 @@ export function AssessmentClient() {
             <p className={`text-sm ${result?.textColor}`}>
               {resultCopy.description}
             </p>
+            <div className="mt-4 pt-4 border-t border-current/20">
+              <h3 className={`text-sm font-bold ${result?.textColor}`}>
+                {content.nextStepLabel}
+              </h3>
+              <p className={`text-sm mt-1 ${result?.textColor}`}>
+                {resultCopy.nextStep}
+              </p>
+            </div>
           </div>
 
           {result?.level === 'emergency' && (

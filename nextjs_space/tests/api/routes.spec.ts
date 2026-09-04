@@ -31,6 +31,37 @@ async function postJson(request: APIRequestContext, path: string, data: unknown)
   });
 }
 
+// --- /api/auth/login ---------------------------------------------------------
+
+test('POST /api/auth/login accepts only the intended demo account', async ({ request }) => {
+  const valid = await postJson(request, '/api/auth/login', {
+    userId: 'admin.phoenix',
+    password: 'bfg123',
+  });
+  expect(valid.status()).toBe(200);
+  await expect(valid.json()).resolves.toMatchObject({
+    user: { email: 'admin.phoenix', name: 'Admin Phoenix' },
+  });
+
+  const rejectedCredentials = [
+    { userId: 'admin.phoenix', password: 'wrong' },
+    { userId: 'wrong-user', password: 'bfg123' },
+    { userId: 'doctor@phoenix.my', password: 'phoenix2026' },
+    { userId: 'nurse@phoenix.my', password: 'phoenix2026' },
+    { userId: 'admin@phoenix.my', password: 'admin123' },
+    { userId: 'admin.phoenix', quick: true },
+  ];
+
+  for (const credentials of rejectedCredentials) {
+    const rejected = await postJson(request, '/api/auth/login', credentials);
+    expect(rejected.status()).toBe(401);
+    await expect(rejected.json()).resolves.toMatchObject({
+      error: 'Invalid User ID or password.',
+      code: 'invalid_credentials',
+    });
+  }
+});
+
 // --- Health endpoints --------------------------------------------------------
 
 test('GET /api/health returns 200 with status ok', async ({ request }) => {
