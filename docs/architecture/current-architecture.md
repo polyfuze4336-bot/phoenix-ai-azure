@@ -6,7 +6,8 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.2.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.2.1`,
+> documentation-only proposal; implemented architecture remains 8.2.0).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -329,6 +330,37 @@ Feature gating is driven by presence of environment variables, read centrally in
 ---
 
 ## 5. Cross-references
+
+### Planned HCP assessment-mode boundary (not implemented at this documentation step)
+
+The current `/hcp/analysis` client and `/api/analyze-wound` pipeline retain their mixed burn/wound
+behaviour. [ADR-0017](./decisions/ADR-0017-hcp-assessment-modes.md) proposes two explicit HCP
+assessment types, `acute_burn` and `general_wound`, within the *same* HCP shell, auth, Azure AI
+provider, PostgreSQL database, translation path, and history ownership boundary. `acute_burn`
+keeps the existing burn analysis and TBSA/Parkland flows. `general_wound` requires structured
+TIMERS: **Tissue, Infection/inflammation, Moisture, Edge, Regeneration/repair, and Social factors**.
+Social factors are clinician-entered or marked unknown, never inferred from an image; Fitzpatrick
+phototype is unknown absent reliable clinician-supplied evidence. Burn TBSA, Parkland and burn
+severity calculations do not appear in general-wound results. Reference links remain honest
+placeholders rather than fabricated citations.
+
+The existing anterior/posterior TBSA PNG assets (including their masks) must remain byte-for-byte
+unchanged. Only placement/scaling of the existing diagram in its calculator layout may be corrected.
+No image or branding asset is replaced.
+
+`AnalysisRecord` already contains mixed historical burn/wound JSON. The proposed history discriminator
+must not retroactively default old rows to `acute_burn`. Until a legacy result contains a verified,
+unambiguous type discriminator, expose it as `legacy_unclassified`; if implementation can prove a
+reliable existing result field, classify only those rows, leave the rest unclassified, and document
+the actual field and tests in the implementing change. Preserve authorized access to existing rows.
+No schema migration, classification algorithm, or data backfill is claimed as implemented here.
+
+Affected stable components: UI-HCP, API-HCP-ANALYSIS, API-HCP-ANALYSIS-TRANSLATION,
+AI-ANALYSIS-PIPELINE, AI-ANALYSIS-SCHEMA, PROMPT-HCP-ANALYSIS, PROMPT-ANALYSIS-STAGES,
+CLINICAL-TBSA, CLINICAL-PARKLAND, ANALYSIS-HISTORY, DB-ANALYSISRECORD, LIB-RAI. Existing
+integrations INT-BROWSER-APP, INT-APP-FOUNDRY and INT-APP-POSTGRES are reused; no new
+Azure resources or trust boundary are planned. Planned elements in the companion diagrams and
+inventories must be promoted to ACTIVE only after code, migrations (if used), and tests agree.
 
 - Component inventory → [component-inventory.md](./component-inventory.md)
 - Integration inventory → [integration-inventory.md](./integration-inventory.md)

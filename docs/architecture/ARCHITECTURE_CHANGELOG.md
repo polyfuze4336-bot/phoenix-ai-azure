@@ -16,6 +16,16 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.2.1] — 2026-09-30
+
+### Documentation-only proposal
+- Recorded the planned HCP `acute_burn` / `general_wound` assessment split and the
+  `legacy_unclassified` history compatibility boundary. Existing runtime remains unchanged until
+  implementation is verified; see [ADR-0017](./decisions/ADR-0017-hcp-assessment-modes.md) and
+  [CHANGE-20260930](./changes/CHANGE-20260930-hcp-assessment-modes-plan.md).
+- The planned general-wound TIMERS contract and non-inference restrictions extend existing RAI
+  controls only after code and tests supply evidence. No Azure resource or integration is added.
+
 ## [8.2.0] — 2026-09-03
 
 ### Changed

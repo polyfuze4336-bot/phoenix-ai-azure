@@ -39,6 +39,9 @@
 > The `8.1.0` Community first-aid video library is an application-only extension of that integration.
 > It adds no Azure resource, identity, secret, model deployment, database, storage, network
 > configuration, SKU, region or workflow.
+> The `8.2.1` documentation-only HCP assessment-mode proposal reuses the existing AI deployment,
+> PostgreSQL server, runtime, identity, and telemetry. No Azure resource, SKU, role or external
+> integration changes are proposed; no new mode or schema change is claimed deployed yet.
 
 ## Environment
 

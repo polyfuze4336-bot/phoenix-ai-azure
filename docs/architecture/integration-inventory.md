@@ -57,3 +57,8 @@
 > **Existing-result translation adds no external integration.** It reuses `INT-BROWSER-APP` and
 > `INT-APP-FOUNDRY`, sends only the existing structured result, never resends the image, validates
 > numeric/canonical values unchanged, and caches EN/MS representations in the browser session.
+>
+> **Proposed HCP assessment modes add no integration.** `acute_burn` and `general_wound` would
+> travel over existing `INT-BROWSER-APP` and `INT-APP-FOUNDRY`; typed authorized retention would
+> reuse `INT-APP-POSTGRES`. Historical records must remain `legacy_unclassified` unless a reliable
+> pre-existing discriminator proves the type. This is a design boundary, not an implemented claim.
