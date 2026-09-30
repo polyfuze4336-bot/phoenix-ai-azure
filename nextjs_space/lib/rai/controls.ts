@@ -143,6 +143,7 @@ export const RAI_CONTROLS: RaiControl[] = [
       'The model may describe observed skin tone but must not assign a Fitzpatrick type from a photograph; Fitzpatrick is forced to "unknown" unless a clinician supplies it.',
     evidence: [
       'lib/ai/prompts/wound-clinical-interpretation.ts',
+      'lib/ai/prompts/general-wound-analysis.ts',
       'lib/ai/analysis/pipeline.ts',
     ],
     tests: ['tests/rai/rai-unsupported-inference.test.ts', 'tests/unit/analysis-pipeline.test.ts'],
@@ -195,8 +196,8 @@ export const RAI_CONTROLS: RaiControl[] = [
     status: 'active',
     description:
       'Numeric wound dimensions are stripped unless a scale reference is present in the image, preventing false precision from an uncalibrated photo.',
-    evidence: ['lib/ai/analysis/pipeline.ts'],
-    tests: ['tests/rai/rai-safety.test.ts', 'tests/unit/analysis-pipeline.test.ts'],
+    evidence: ['lib/ai/analysis/pipeline.ts', 'lib/ai/prompts/general-wound-analysis.ts'],
+    tests: ['tests/rai/rai-safety.test.ts', 'tests/unit/analysis-pipeline.test.ts', 'tests/unit/general-wound-schema.test.ts'],
     userVisible: true,
   },
   {

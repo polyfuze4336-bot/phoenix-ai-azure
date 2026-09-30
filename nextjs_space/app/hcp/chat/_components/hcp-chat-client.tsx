@@ -26,10 +26,19 @@ export function HcpChatClient() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [escalated, setEscalated] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const assessmentTypeRef = useRef(assessmentType);
   const fileRef = useRef<HTMLInputElement>(null);
   const quickPrompts = assessmentType === 'acute_burn'
     ? localizedContent(lang).hcp.chatQuickPrompts
     : localizedContent(lang).hcp.generalWoundChatQuickPrompts;
+
+  useEffect(() => {
+    assessmentTypeRef.current = assessmentType;
+    setMessages([]);
+    setInput('');
+    setImagePreview(null);
+    setLoading(false);
+  }, [assessmentType]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef?.current?.scrollIntoView?.({ behavior: 'smooth' });
@@ -45,6 +54,7 @@ export function HcpChatClient() {
     setInput('');
     setImagePreview(null);
     setLoading(true);
+    const requestAssessmentType = assessmentType;
 
     try {
       const response = await fetch('/api/hcp-chat', {
@@ -71,6 +81,10 @@ export function HcpChatClient() {
       setMessages(prev => [...(prev ?? []), { role: 'assistant', content: '' }]);
 
       while (true) {
+        if (assessmentTypeRef.current !== requestAssessmentType) {
+          await reader?.cancel();
+          return;
+        }
         const { done, value } = await (reader?.read() ?? { done: true, value: undefined });
         if (done) break;
         partialRead += decoder?.decode(value, { stream: true }) ?? '';

@@ -9,13 +9,16 @@ Phoenix AI handles skin tone carefully and avoids unsupported demographic infere
 - **Explains** how observed skin tone affects interpretation (e.g. rely on texture/temperature/oedema
   where erythema is harder to see) at the interpretation stage.
 - **Does not** assign a Fitzpatrick skin type from a photograph. Fitzpatrick describes UV response and
-  cannot be determined from an image; it is forced to `unknown` unless a clinician supplies it
+  cannot be determined from an image; Acute Burn uses `unknown` and General Wound presents
+  `Unable to determine reliably` unless a clinician supplies it
   (**RAI-FAIR-001**).
 - **Does not** infer ethnicity, race, age, pain or sensation from an image (**RAI-FAIR-002**).
 
 ## Evidence
 - Deterministic enforcement: `assembleAnalysis` in
   [`lib/ai/analysis/pipeline.ts`](../../nextjs_space/lib/ai/analysis/pipeline.ts).
+- General Wound enforcement: `runGeneralWoundAnalysis` in the same pipeline and
+  [`general-wound-analysis.ts`](../../nextjs_space/lib/ai/prompts/general-wound-analysis.ts).
 - Prompt guardrails asserted by
   [`tests/rai/rai-unsupported-inference.test.ts`](../../nextjs_space/tests/rai/rai-unsupported-inference.test.ts)
   and [`tests/rai/rai-safety.test.ts`](../../nextjs_space/tests/rai/rai-safety.test.ts).

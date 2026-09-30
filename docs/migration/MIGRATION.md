@@ -54,6 +54,23 @@ revisited if any hidden persistence behaviour is discovered during UI parity QA.
 
 ## Migration audit log
 
+### Step 51 — Add HCP Acute Burn and General Wound assessment modes
+
+- Added a shared, persistent HCP mode selector using canonical `acute_burn` and `general_wound`
+  values without adding a second language provider or authentication flow.
+- Kept TBSA and Parkland in Acute Burn only; split demo dashboards, guidelines, chat context and
+  retained-analysis history by mode.
+- Added nullable `AnalysisRecord.assessmentType`. New records are explicit; existing records remain
+  safely unclassified and are not silently guessed.
+- Replaced TIME presentation with clinical TIMERS: Tissue management, Infection & inflammation,
+  Moisture imbalance, Edge of wound, Repair & regeneration, and Social & patient factors.
+- Added optional Comorbidities and Social Context inputs. Neither is inferred from the image.
+- Added a distinct General Wound prompt/schema with no burn calculations and with honest
+  Fitzpatrick, scale/dimensions, evidence, limitations and refinement outputs.
+- Added two bilingual, non-linked General Wound reference placeholders. No external PDFs, Drive
+  files, screenshots, attachments or temporary chat files were accessed.
+- TBSA diagram work was explicitly excluded from this step.
+
 ### Step 50 — Link the First Aid Video page to immediate First Aid
 
 - Reused the Burn Prevention page's red “If a burn injury occurs” callout, internal View First Aid

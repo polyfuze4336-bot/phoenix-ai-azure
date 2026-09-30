@@ -37,6 +37,7 @@ export function baseInterpretation(over: Partial<Interpretation> = {}): Interpre
     exudate: field('Scant'),
     infectionSigns: field('None', 'low'),
     edgesAndPeriwound: field('Defined'),
+    repairRegeneration: field('Reassess healing trajectory'),
     severity: 'Moderate',
     visualExtent: 'small area',
     measuredDimensions: '5 x 4 cm',

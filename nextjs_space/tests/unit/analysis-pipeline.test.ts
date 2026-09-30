@@ -46,6 +46,7 @@ function baseInterpretation(over: Partial<Interpretation> = {}): Interpretation 
     exudate: field('Scant'),
     infectionSigns: field('None', 'low'),
     edgesAndPeriwound: field('Defined'),
+    repairRegeneration: field('Reassess healing trajectory'),
     severity: 'Moderate',
     visualExtent: 'small area',
     measuredDimensions: '5 x 4 cm',
@@ -246,4 +247,28 @@ test('flat adapter maps the rich structure back to the 22-field contract', () =>
   assert.ok(flat.parklandFluid.length > 0);
   // A clinician-supplied Fitzpatrick type is carried into the flat field.
   assert.match(flat.fitzpatrickType, /Type V/);
+});
+
+test('TIMERS uses the clinical framework and only supplied social context', () => {
+  const withoutSocial = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation(),
+    management: baseManagement(),
+    critic,
+  });
+  assert.equal(withoutSocial.timers.tissueManagement, 'N/A');
+  assert.equal(withoutSocial.timers.infectionInflammation, 'None');
+  assert.equal(withoutSocial.timers.moistureImbalance, 'Scant');
+  assert.equal(withoutSocial.timers.edgeOfWound, 'Defined');
+  assert.equal(withoutSocial.timers.repairRegeneration, 'Reassess healing trajectory');
+  assert.equal(withoutSocial.timers.socialPatientFactors, 'Not supplied');
+
+  const supplied = assembleAnalysis({
+    observation: baseObservation(),
+    interpretation: baseInterpretation(),
+    management: baseManagement(),
+    critic,
+    patient: { socialContext: 'Lives alone with limited dressing support' },
+  });
+  assert.equal(supplied.timers.socialPatientFactors, 'Lives alone with limited dressing support');
 });

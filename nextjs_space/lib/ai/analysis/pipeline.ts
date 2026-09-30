@@ -367,92 +367,6 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
     // Management is non-core; retain the validated classification and label it unavailable.
   }
 
-  export async function runGeneralWoundAnalysis(input: PipelineInput): Promise<GeneralWoundAnalysis> {
-    const { imageDataUrl, language, patient, correlationId } = input;
-    const ctx = contextBlock(patient);
-    const obsStage = await runStage(
-      WOUND_VISUAL_OBSERVATION_PROMPT,
-      [
-        { type: 'text', text: `${ctx}\nDescribe what is visible in this general-wound image.` },
-        { type: 'image_url', image_url: { url: imageDataUrl } },
-      ],
-      language,
-      correlationId,
-      'analyze-wound:general-observation',
-      hasObservationSignal,
-    );
-    if (!obsStage.value) throw coreStageError(obsStage.category);
-    const observationResult = visualObservationSchema.safeParse(obsStage.value);
-    if (!observationResult.success) throw coreStageError('AI_SCHEMA_VALIDATION_FAILED');
-    const observation = observationResult.data;
-
-    const analysisStage = await runStage(
-      GENERAL_WOUND_ANALYSIS_PROMPT,
-      [
-        {
-          type: 'text',
-          text: `${ctx}\nStructured observations:\n${JSON.stringify(observation)}\nAssess this general wound.`,
-        },
-        { type: 'image_url', image_url: { url: imageDataUrl } },
-      ],
-      language,
-      correlationId,
-      'analyze-wound:general-assessment',
-      (value) => typeof value.woundCategory === 'string' && Boolean(value.timers),
-    );
-    if (!analysisStage.value) throw coreStageError(analysisStage.category);
-
-    const parsed = generalWoundAnalysisSchema.partial({
-      schemaVersion: true,
-      analysisQuality: true,
-      imageQuality: true,
-      observation: true,
-    }).safeParse(analysisStage.value);
-    if (!parsed.success) throw coreStageError('AI_SCHEMA_VALIDATION_FAILED');
-
-    const inadequate = !observation.imageQualityAdequate;
-    const analysisQuality: GeneralWoundAnalysis['analysisQuality'] = inadequate
-      ? observation.imageQualityIssues.length >= 2 ? 'LOW' : 'MODERATE'
-      : 'HIGH';
-    const noScale = !observation.scalePresent;
-    const unavailableDimensions = language === 'ms'
-      ? 'Tidak dapat ditentukan dengan pasti tanpa skala/rujukan'
-      : 'Unable to determine reliably without a scale/reference';
-    const unavailablePhototype = language === 'ms'
-      ? 'Tidak dapat ditentukan dengan pasti'
-      : 'Unable to determine reliably';
-    const socialNotSupplied = language === 'ms' ? 'Tidak dibekalkan' : 'Not supplied';
-
-    return generalWoundAnalysisSchema.parse({
-      ...parsed.data,
-      schemaVersion: '1.0',
-      analysisQuality,
-      imageQuality: {
-        adequate: observation.imageQualityAdequate,
-        issues: observation.imageQualityIssues,
-        note: observation.imageQualityNote,
-      },
-      observation,
-      fitzpatrickPhototype: patient?.fitzpatrickType || unavailablePhototype,
-      measuredDimensions: noScale ? unavailableDimensions : parsed.data.measuredDimensions,
-      timers: {
-        ...parsed.data.timers,
-        socialPatientFactors: patient?.socialContext || socialNotSupplied,
-      },
-      missingInformation: Array.from(new Set([
-        ...(parsed.data.missingInformation ?? []),
-        ...(noScale ? [unavailableDimensions] : []),
-        ...(!patient?.comorbidities ? [language === 'ms' ? 'Komorbiditi tidak dibekalkan' : 'Comorbidities were not supplied'] : []),
-        ...(!patient?.socialContext ? [language === 'ms' ? 'Konteks sosial tidak dibekalkan' : 'Social context was not supplied'] : []),
-      ])),
-      limitations: Array.from(new Set([
-        ...(parsed.data.limitations ?? []),
-        language === 'ms'
-          ? 'Penilaian ini berdasarkan satu foto dan tidak menggantikan pemeriksaan klinikal secara langsung.'
-          : 'This assessment is based on one photograph and does not replace hands-on clinical examination.',
-      ])),
-    });
-  }
   const managementResult = mgmtStage.value ? managementSchema.safeParse(mgmtStage.value) : null;
   const management: Management = managementResult?.success
     ? managementResult.data
@@ -477,6 +391,97 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
   const critic = criticResult?.success ? criticResult.data : unavailableCritic(language);
 
   return assemble({ observation, interpretation, management, critic, patient, language });
+}
+
+export async function runGeneralWoundAnalysis(input: PipelineInput): Promise<GeneralWoundAnalysis> {
+  const { imageDataUrl, language, patient, correlationId } = input;
+  const ctx = contextBlock(patient);
+  const obsStage = await runStage(
+    WOUND_VISUAL_OBSERVATION_PROMPT,
+    [
+      { type: 'text', text: `${ctx}\nDescribe what is visible in this general-wound image.` },
+      { type: 'image_url', image_url: { url: imageDataUrl } },
+    ],
+    language,
+    correlationId,
+    'analyze-wound:general-observation',
+    hasObservationSignal,
+  );
+  if (!obsStage.value) throw coreStageError(obsStage.category);
+  const observationResult = visualObservationSchema.safeParse(obsStage.value);
+  if (!observationResult.success) throw coreStageError('AI_SCHEMA_VALIDATION_FAILED');
+  const observation = observationResult.data;
+
+  const analysisStage = await runStage(
+    GENERAL_WOUND_ANALYSIS_PROMPT,
+    [
+      {
+        type: 'text',
+        text: `${ctx}\nStructured observations:\n${JSON.stringify(observation)}\nAssess this general wound.`,
+      },
+      { type: 'image_url', image_url: { url: imageDataUrl } },
+    ],
+    language,
+    correlationId,
+    'analyze-wound:general-assessment',
+    (value) => typeof value.woundCategory === 'string' && Boolean(value.timers),
+  );
+  if (!analysisStage.value) throw coreStageError(analysisStage.category);
+
+  const parsed = generalWoundAnalysisSchema.partial({
+    schemaVersion: true,
+    analysisQuality: true,
+    imageQuality: true,
+    observation: true,
+  }).safeParse(analysisStage.value);
+  if (!parsed.success) throw coreStageError('AI_SCHEMA_VALIDATION_FAILED');
+
+  const inadequate = !observation.imageQualityAdequate;
+  const analysisQuality: GeneralWoundAnalysis['analysisQuality'] = inadequate
+    ? observation.imageQualityIssues.length >= 2 ? 'LOW' : 'MODERATE'
+    : 'HIGH';
+  const confidenceLevel = inadequate
+    ? capConfidence(parsed.data.confidenceLevel, observation.imageQualityIssues.length >= 2 ? 'low' : 'moderate')
+    : parsed.data.confidenceLevel;
+  const noScale = !observation.scalePresent;
+  const unavailableDimensions = language === 'ms'
+    ? 'Tidak dapat ditentukan dengan pasti tanpa skala/rujukan'
+    : 'Unable to determine reliably without a scale/reference';
+  const unavailablePhototype = language === 'ms'
+    ? 'Tidak dapat ditentukan dengan pasti'
+    : 'Unable to determine reliably';
+  const socialNotSupplied = language === 'ms' ? 'Tidak dibekalkan' : 'Not supplied';
+
+  return generalWoundAnalysisSchema.parse({
+    ...parsed.data,
+    schemaVersion: '1.0',
+    analysisQuality,
+    confidenceLevel,
+    imageQuality: {
+      adequate: observation.imageQualityAdequate,
+      issues: observation.imageQualityIssues,
+      note: observation.imageQualityNote,
+    },
+    observation,
+    fitzpatrickPhototype: patient?.fitzpatrickType || unavailablePhototype,
+    measuredDimensions: noScale ? unavailableDimensions : parsed.data.measuredDimensions,
+    timers: {
+      ...parsed.data.timers,
+      socialPatientFactors: patient?.socialContext || socialNotSupplied,
+    },
+    missingInformation: Array.from(new Set([
+      ...(parsed.data.missingInformation ?? []),
+      ...(noScale ? [unavailableDimensions] : []),
+      ...(!patient?.comorbidities ? [language === 'ms' ? 'Komorbiditi tidak dibekalkan' : 'Comorbidities were not supplied'] : []),
+      ...(!patient?.socialContext ? [language === 'ms' ? 'Konteks sosial tidak dibekalkan' : 'Social context was not supplied'] : []),
+    ])),
+    limitations: Array.from(new Set([
+      ...(parsed.data.limitations ?? []),
+      language === 'ms'
+        ? 'Penilaian ini berdasarkan satu foto dan tidak menggantikan pemeriksaan klinikal secara langsung.'
+        : 'This assessment is based on one photograph and does not replace hands-on clinical examination.',
+    ])),
+  });
 }
 
 /* ------------------------------------------------- deterministic assembly */

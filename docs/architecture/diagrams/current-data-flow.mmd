@@ -4,11 +4,11 @@
 %% (inference payloads are ephemeral; the original HCP client may make a separate
 %% Entra-session-authorized retention request after analysis).
 flowchart TB
-    subgraph HCPChat["HCP Chat"]
+    subgraph HCPChat["Mode-aware HCP Chat"]
         U1["User"] --> UI1["HCP Chat UI"]
         UI1 --> L1["Global persisted EN/MS selection"]
         L1 --> R1["/api/hcp-chat"]
-        R1 --> P1["lib/ai prompts: hcp-chat + language instruction"]
+        R1 --> P1["lib/ai prompts: hcp-chat + assessment mode + language instruction"]
         P1 --> AP1["AI Provider (AzureFoundryProvider)"]
         AP1 --> F1["Microsoft Foundry / Azure OpenAI"]
         F1 --> LV1["Language validation\nretry once if needed"]
@@ -16,12 +16,13 @@ flowchart TB
         S1 --> UI1
     end
 
-    subgraph HCPAnalysis["HCP Wound Analysis"]
+    subgraph HCPAnalysis["HCP Mode-specific Analysis"]
         U2["User"] --> IMG2["Image upload (JPEG/PNG/WebP/GIF base64)"]
         IMG2 --> R2["/api/analyze-wound"]
-        R2 --> V2["Image validation (MIME + base64 + content signature)"]
+        R2 --> M2["Explicit acute_burn / general_wound mode"]
+        M2 --> V2["Image validation (MIME + base64 + content signature)"]
         V2 -.->|"invalid: actionable HTTP 400"| UI2
-        V2 --> AP2["AI Provider (multimodal, consolidated TBSA)"]
+        V2 --> AP2["AI Provider (distinct burn / general-wound prompt + schema)"]
         AP2 --> F2["Microsoft Foundry (gpt-4o vision)"]
         F2 --> LV2["Language validation\nretry once if needed"]
         LV2 --> SV2["Structured response validation (wound-analysis-schema)"]
@@ -29,7 +30,7 @@ flowchart TB
         UI2 -->|"language switch: structured result only"| TR2["/api/analyze-wound/translate"]
         TR2 --> TV2["Narrative translation\ncanonical/numeric validation"]
         TV2 -->|"cached EN/MS; original retained on failure"| UI2
-        R2 -.->|"Entra session only: persist AnalysisRecord"| DB2["PostgreSQL (lib/analysis/history)"]
+        R2 -.->|"Entra session only: persist/filter explicit assessment type"| DB2["PostgreSQL (lib/analysis/history)"]
         R2 -.->|"Entra session only: private image"| BLOB2["Azure Blob Storage"]
     end
 

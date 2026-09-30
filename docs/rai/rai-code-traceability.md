@@ -16,6 +16,7 @@ and `tests`).
 | Path | Controls |
 | --- | --- |
 | `lib/ai/analysis/pipeline.ts`, `lib/ai/openai-compatible.ts`, `lib/ai/streaming/collect.ts` | RAI-SAFE-002/003/005/006/007/008/009/011, RAI-FAIR-001, RAI-REL-001, RAI-TRANS-002 |
+| `lib/ai/prompts/general-wound-analysis.ts`, `lib/ai/schemas/general-wound-analysis.ts` | RAI-SAFE-003/007, RAI-FAIR-001/002, RAI-TRANS-001/002 |
 | `lib/ai/schemas/burn-wound-analysis.ts` | RAI-SAFE-004, RAI-TRANS-001 |
 | `lib/ai/validation/image-input.ts`, `app/api/analyze-wound/route.ts` | RAI-SAFE-001, RAI-PRIV-006 |
 | `lib/ai/validation/wound-analysis-schema.ts`, retained analysis clients | RAI-SAFE-003/010 |

@@ -14,6 +14,7 @@ Version identifiers live in
 | `WOUND_ANALYSIS_CRITIC_PROMPT_VERSION` | Stage 4 — consistency / safety review |
 | `HCP_WOUND_ANALYSIS_PROMPT_VERSION` | Single-pass fallback |
 | `HCP_CHAT_PROMPT_VERSION` | HCP clinical chat |
+| `GENERAL_WOUND_ANALYSIS_PROMPT_VERSION` | Dedicated General Wound assessment |
 | `COMMUNITY_WOUND_ANALYSIS_PROMPT_VERSION` | Retained Community analysis prompt (no active route) |
 | `ANALYSIS_PIPELINE_VERSION` | Staged pipeline as a whole |
 | `ANALYSIS_SCHEMA_VERSION` | Structured output schema |
@@ -43,6 +44,8 @@ asserts that the prompts:
 - default `reportedFitzpatrickType` to `unknown` unless supplied;
 - forbid invented measurements;
 - defer fluid resuscitation to deterministic calculation.
+- keep General Wound output free of burn-only TBSA/Parkland calculations;
+- use social context only when it is supplied by the clinician.
 
 These tests prevent a future prompt edit from silently dropping a safety guardrail.
 

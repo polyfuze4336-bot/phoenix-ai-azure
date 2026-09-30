@@ -9,6 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { WOUND_VISUAL_OBSERVATION_PROMPT } from '../../lib/ai/prompts/wound-visual-observation';
 import { WOUND_CLINICAL_INTERPRETATION_PROMPT } from '../../lib/ai/prompts/wound-clinical-interpretation';
+import { GENERAL_WOUND_ANALYSIS_PROMPT } from '../../lib/ai/prompts/general-wound-analysis';
 
 test('RAI-FAIR-001: the visual prompt forbids assigning Fitzpatrick from a photo', () => {
   const p = WOUND_VISUAL_OBSERVATION_PROMPT.toLowerCase();
@@ -31,4 +32,10 @@ test('RAI-SAFE-007: the interpretation prompt forbids invented measurements', ()
 test('RAI-SAFE-006: the interpretation prompt defers fluid resuscitation to deterministic calc', () => {
   const p = WOUND_CLINICAL_INTERPRETATION_PROMPT.toLowerCase();
   assert.match(p, /do not compute fluid resuscitation/i);
+});
+
+test('General Wound prompt prevents burn calculations and unsupported social inference', () => {
+  assert.match(GENERAL_WOUND_ANALYSIS_PROMPT, /Do not output TBSA/);
+  assert.match(GENERAL_WOUND_ANALYSIS_PROMPT, /Do not infer comorbidities or social factors/);
+  assert.match(GENERAL_WOUND_ANALYSIS_PROMPT, /S may use supplied social context only/);
 });

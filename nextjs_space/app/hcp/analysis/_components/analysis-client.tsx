@@ -105,7 +105,16 @@ export function AnalysisClient() {
   const lastBase64Ref = useRef<string>('');
   const lastMimeRef = useRef<string>('image/jpeg');
   const translationsRef = useRef<Partial<Record<AppLanguage, AnalysisResult>>>({});
+  const assessmentTypeRef = useRef(assessmentType);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    assessmentTypeRef.current = assessmentType;
+    setResult(null);
+    setError(null);
+    setAnalysisFailed(false);
+    translationsRef.current = {};
+  }, [assessmentType]);
 
   const analysisStages = lang === 'ms'
     ? ['Menyediakan imej', 'Menganalisis ciri luka', 'Menyemak penilaian', 'Menyediakan keputusan']
@@ -245,6 +254,7 @@ export function AnalysisClient() {
 
   const analyzeImage = useCallback(async (retryCount: number) => {
     if (!imageFile || !lastBase64Ref.current) return;
+    const requestAssessmentType = assessmentType;
     setAnalyzing(true);
     setError(null);
     setAnalysisFailed(false);
@@ -265,6 +275,7 @@ export function AnalysisClient() {
       if (!response?.ok) throw new Error(await responseError(response, t('analysis.failed')));
 
       const completed = await readAnalysisStream(response);
+      if (assessmentTypeRef.current !== requestAssessmentType) return;
       if (completed) {
         const localized = { ...completed, language: lang };
         translationsRef.current = { [lang]: localized };
@@ -289,6 +300,7 @@ export function AnalysisClient() {
   /** Second pass: re-run the pipeline with clinician answers, no re-upload. */
   const refineAnalysis = useCallback(async (answers: string) => {
     if (!lastBase64Ref.current || !result?.structured) return;
+    const requestAssessmentType = assessmentType;
     setRefining(true);
     setError(null);
     try {
@@ -307,6 +319,7 @@ export function AnalysisClient() {
       });
       if (!response?.ok) throw new Error(await responseError(response, t('analysis.refine_failed')));
       const completed = await readAnalysisStream(response);
+      if (assessmentTypeRef.current !== requestAssessmentType) return;
       if (completed) {
         const localized = { ...completed, language: lang };
         translationsRef.current = { [lang]: localized };
@@ -512,10 +525,10 @@ export function AnalysisClient() {
 
               {/* Native skin type (Fitzpatrick) */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 overflow-hidden">
-                {assessmentType === 'acute_burn' && <div className="p-4 flex items-center justify-between">
+                <div className="p-4 flex items-center justify-between">
                   <span className="flex items-center gap-2 text-sm font-medium text-gray-600"><Palette className="w-4 h-4 text-[#E67E22]" /> {t('analysis.native_skin_type')}</span>
                   <span className="ml-3 min-w-0 break-words text-right text-sm font-bold text-[#8B0000]">{translateCanonicalValue(result?.fitzpatrickType, lang)}</span>
-                </div>}
+                </div>
                 {result?.fitzpatrickNote && result?.fitzpatrickNote !== 'N/A' && (
                   <div className="px-4 pb-4 -mt-1">
                     <p className="text-xs text-gray-600 leading-relaxed">{result?.fitzpatrickNote}</p>
@@ -532,10 +545,10 @@ export function AnalysisClient() {
                   <span className="text-sm font-medium text-gray-500">{t('analysis.wound_type')}</span>
                   <span className="ml-3 min-w-0 break-words text-right text-sm font-semibold text-gray-900">{translateCanonicalValue(result?.woundType, lang)}</span>
                 </div>
-                <div className="p-4 flex items-center justify-between">
+                {assessmentType === 'acute_burn' && <div className="p-4 flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500">{t('analysis.burn_degree')}</span>
                   <span className="ml-3 min-w-0 break-words text-right text-sm font-semibold text-gray-900">{translateCanonicalValue(result?.burnDegree, lang)}</span>
-                </div>
+                </div>}
                 <div className="p-4 flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500">{t('analysis.severity')}</span>
                   <span className={`text-xs font-semibold px-3 py-1 rounded-full ${severityColor(result?.severity ?? '')}`}>{translateCanonicalValue(result?.severity, lang)}</span>
@@ -551,8 +564,7 @@ export function AnalysisClient() {
               </div>
 
               {/* Wound bed / tissue assessment */}
-              {assessmentType === 'acute_burn' && (
-              {((result?.tissueComposition && result?.tissueComposition !== 'N/A') ||
+              {assessmentType === 'acute_burn' && ((result?.tissueComposition && result?.tissueComposition !== 'N/A') ||
                 (result?.exudate && result?.exudate !== 'N/A') ||
                 (result?.woundEdges && result?.woundEdges !== 'N/A')) && (
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -653,9 +665,9 @@ export function AnalysisClient() {
                     <p className="text-xs font-semibold text-[#8B0000] mb-1">{item?.label}</p>
                     <p className="text-sm text-gray-700">{item?.value ?? t('common.not_available')}</p>
                   </div>
-                  </>}
                 ))}
               </div>
+              </>}
 
               {/* Enhanced staged-pipeline detail: evidence, confidence, gaps, refine. */}
               {result?.structured && (
