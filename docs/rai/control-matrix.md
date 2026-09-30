@@ -21,6 +21,7 @@ Status: **Active** (implemented + evidenced) · **Partial** · **Planned**.
 | RAI-SAFE-008 | Special-site referral escalation | Reliability & Safety | Output | Active |
 | RAI-SAFE-009 | Confidence capping on poor images | Reliability & Safety | Output | Active |
 | RAI-SAFE-010 | Safe-failure state | Reliability & Safety | Output | Active |
+| RAI-SAFE-013 | Community burn deterministic escalation | Reliability & Safety | Output | Partial |
 | RAI-TRANS-001 | Field-level confidence | Transparency | Output | Active |
 | RAI-TRANS-002 | Limitations & missing-info disclosure | Transparency | Output | Active |
 | RAI-TRANS-003 | AI labelling + analysis metadata | Transparency | Output | Partial |

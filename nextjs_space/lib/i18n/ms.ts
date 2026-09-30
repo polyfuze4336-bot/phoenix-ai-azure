@@ -151,6 +151,7 @@ export const ms: LocalizedContent = {
       minor: 'Kelecuran Ringan', major: 'Kelecuran Serius',
       indeterminate: 'Tidak dapat mengelaskan kelecuran ini dengan selamat berdasarkan maklumat yang diberikan. Sila dapatkan pemeriksaan daripada profesional kesihatan.',
       clinic: 'Sila dapatkan pemeriksaan di Klinik Kesihatan, klinik atau daripada profesional kesihatan komuniti.',
+      urgentClinic: 'Sila dapatkan pemeriksaan segera di Klinik Kesihatan, klinik atau daripada profesional kesihatan komuniti.',
       hospital: 'Sila dapatkan pemeriksaan di hospital terdekat.',
       emergency: 'Hubungi 999 segera',
       explanation: 'Berdasarkan jawapan anda dan peraturan keselamatan kelecuran sedia ada. Gambar tidak boleh mengurangkan tahap kecemasan.',

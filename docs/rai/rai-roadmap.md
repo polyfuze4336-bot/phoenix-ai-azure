@@ -35,3 +35,9 @@ Honest staging. **Implemented** items are in the product today; **Next** and **F
 - Additional community languages.
 
 > These Next/Future items must not be presented to users as existing features.
+# Community burn prototype review
+
+Clinical/manual review remains required for the new public red-flag combinations, indeterminate
+handling, and AI image observation wording before this prototype can be treated as clinically
+validated. The existing HCP structural evaluation harness does not establish Community
+diagnostic accuracy (RAI-SAFE-013).

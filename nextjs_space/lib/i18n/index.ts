@@ -100,6 +100,7 @@ export interface LocalizedContent {
       major: string;
       indeterminate: string;
       clinic: string;
+      urgentClinic: string;
       hospital: string;
       emergency: string;
       explanation: string;

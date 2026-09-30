@@ -27,6 +27,7 @@ export function AssessmentClient() {
   const [documented, setDocumented] = useState<Partial<Record<typeof symptoms[number], boolean>>>({});
   const [photo, setPhoto] = useState<NormalizedImage | null>(null);
   const [imageError, setImageError] = useState(false);
+  const [ingesting, setIngesting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [observation, setObservation] = useState<{ language: string; text: string } | null>(null);
   const result = classifyCommunityBurn(answers);
@@ -49,9 +50,16 @@ export function AssessmentClient() {
     if (!file) return;
     setImageError(false);
     setPhoto(null);
-    const ingested = await ingestImage(file);
-    if (ingested.ok) setPhoto(ingested.image);
-    else setImageError(true);
+    setIngesting(true);
+    try {
+      const ingested = await ingestImage(file);
+      if (ingested.ok) setPhoto(ingested.image);
+      else setImageError(true);
+    } catch {
+      setImageError(true);
+    } finally {
+      setIngesting(false);
+    }
   };
 
   const onAssess = async () => {
@@ -155,7 +163,7 @@ export function AssessmentClient() {
           </label>
           {photo && <button type="button" onClick={() => setPhoto(null)} className="text-sm font-semibold text-[#8B0000]">{copy.removePhoto}</button>}
           {imageError && <p role="alert" className="text-sm text-red-700">{copy.imageError}</p>}
-          <button type="button" disabled={busy} onClick={() => void onAssess()}
+          <button type="button" disabled={busy || ingesting} onClick={() => void onAssess()}
             className="w-full rounded-xl bg-[#8B0000] px-5 py-3 font-semibold text-white disabled:opacity-50">
             {busy ? copy.analysing : copy.analyse}
           </button>
@@ -177,7 +185,9 @@ export function AssessmentClient() {
               </a>
             )}
             <h3 className="mt-4 text-sm font-bold text-gray-900">{content.assessment.nextStepLabel}</h3>
-            <p className="mt-1 text-sm text-gray-800">{result.disposition === 'clinic' ? copy.clinic : copy.hospital}</p>
+            <p className="mt-1 text-sm text-gray-800">{result.disposition === 'clinic'
+              ? answers.blurredVision === 'unsure' || answers.faceOrEyes === 'unsure' ? copy.urgentClinic : copy.clinic
+              : copy.hospital}</p>
             <p className="mt-4 text-sm text-gray-700">
               {result.classification === 'indeterminate' ? copy.indeterminateExplanation : copy.explanation}
             </p>

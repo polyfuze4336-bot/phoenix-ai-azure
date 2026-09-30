@@ -37,6 +37,15 @@ covered by the RAI + unit tests:
    accepts TIMERS social/patient factors only from clinician-supplied social context.
 
 ## Safe failure
+Community burn assessment uses the existing Self-Assessment cause/size/appearance/pain scores
+and thresholds (`<=3` minor; `4–7` moderate; `>=8` emergency). The public mapping is
+Minor Burn / Major Burn / Major Burn; emergency is a separate 999 disposition. Explicit
+prototype questionnaire red flags can only escalate, never be downgraded by image observations.
+Contact, Other and Unsure have no approved cause score: absent a deterministic hospital or
+emergency flag, the result is indeterminate and requests professional assessment. Age and time
+are context only. These new escalation rules have **not** been clinically validated and need
+clinical review (**RAI-SAFE-013**, `tests/rai/community-burn.test.ts`).
+
 If the model or validation fails, the app returns an explicit, clearly-labelled
 "assessment could not be completed" state that preserves the medical disclaimer rather than guessing
 a result (**RAI-SAFE-010**,

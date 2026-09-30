@@ -13,7 +13,7 @@ const communityRoutes: RouteExpectation[] = [
   { path: '/community/first-aid', en: 'First Aid Education', ms: 'Pendidikan Pertolongan Cemas' },
   { path: '/community/first-aid-video', en: 'First Aid Video', ms: 'Video Pertolongan Cemas' },
   { path: '/community/burn-prevention', en: 'Burn Injury Prevention', ms: 'Pencegahan Kecederaan Melecur' },
-  { path: '/community/assessment', en: 'Burn Severity Self-Assessment', ms: 'Penilaian Kendiri Keterukan Kelecuran' },
+  { path: '/community/assessment', en: 'Community AI Burn Assessment', ms: 'Penilaian AI Kelecuran Komuniti' },
   { path: '/community/articles', en: 'Health Articles', ms: 'Artikel Kesihatan' },
   { path: '/community/chat', en: 'Friendly health guidance for burns and wounds', ms: 'Panduan kesihatan mesra untuk kelecuran dan luka' },
 ];

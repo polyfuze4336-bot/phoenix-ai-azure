@@ -151,6 +151,7 @@ export const en: LocalizedContent = {
       minor: 'Minor Burn', major: 'Major Burn',
       indeterminate: 'Unable to classify this burn safely from the information provided. Please seek assessment from a healthcare professional.',
       clinic: 'Please seek assessment at a Klinik Kesihatan, clinic, or with a community healthcare professional.',
+      urgentClinic: 'Please seek prompt professional assessment at a Klinik Kesihatan, clinic, or with a community healthcare professional.',
       hospital: 'Please seek assessment at the nearest hospital.',
       emergency: 'Call 999 immediately',
       explanation: 'Based on your questionnaire answers and existing burn safety rules. The image cannot reduce the level of urgency.',

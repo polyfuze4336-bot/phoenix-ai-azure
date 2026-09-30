@@ -1691,3 +1691,14 @@ configuration while retaining automatic Azure deployment.
   architecture drift. Full E2E was `38/40`; the two failures are pre-existing stale EN/MS HCP
   analysis subtitle expectations ("Upload or capture..." vs rendered "Upload..."), unrelated to
   this task. No changed or added test failed.
+# 2026-09-30 — Community burn assessment prototype
+
+- Added a questionnaire-first Community AI-assisted burn assessment with image upload only
+  after the questions. Existing score thresholds map minor to Minor Burn, moderate/emergency
+  to Major Burn; unmapped causes yield indeterminate unless a deterministic escalation applies.
+- Explicit prototype red flags choose clinic, hospital or 999 before any advisory image
+  observation. Age and time are context-only; every result includes First Aid Tips and a
+  professional-care notice. EN/BM share the global language provider.
+- First Aid order is Flame, Contact/Scald, Chemical, Electrical, Wound; existing Sunburn
+  guidance remains inside the Contact/Scald card. These rules require clinical/manual review
+  and do not establish diagnostic accuracy or regulatory approval.

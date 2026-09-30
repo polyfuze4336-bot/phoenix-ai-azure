@@ -29,6 +29,7 @@ export function classifyCommunityBurn(a: BurnAnswers): BurnResult {
     [0, 2, 4].includes(a.appearanceScore) &&
     [0, 1, 2, 3].includes(a.painScore);
   const score = validScore ? causeScore! + a.sizeScore + a.appearanceScore + a.painScore : null;
+  const hazardousMechanism = a.cause === 'chemical' || a.cause === 'electrical';
   const emergency =
     a.shortnessOfBreath === 'yes' ||
     a.chestPain === 'yes' ||
@@ -39,14 +40,13 @@ export function classifyCommunityBurn(a: BurnAnswers): BurnResult {
   if (emergency) return { classification: 'major', disposition: 'emergency' };
 
   const hospital =
-    a.cause === 'electrical' || a.cause === 'chemical' ||
+    hazardousMechanism ||
     a.shortnessOfBreath === 'unsure' || a.chestPain === 'unsure' ||
     a.dizziness === 'yes' || a.blurredVision === 'yes' ||
     a.lossOfConsciousness === 'unsure' ||
     a.blast !== 'no' || a.faceOrEyes === 'yes' ||
-    (a.faceOrEyes === 'unsure' && (a.cause === 'chemical' || a.cause === 'electrical')) ||
-    (a.blurredVision === 'unsure' && (a.cause === 'chemical' || a.cause === 'electrical')) ||
-    (a.tinnitus === 'yes' && (a.dizziness === 'yes' || a.blast === 'yes'));
+    (a.faceOrEyes === 'unsure' && hazardousMechanism) ||
+    (a.blurredVision === 'unsure' && hazardousMechanism);
   if (hospital) return { classification: 'major', disposition: 'hospital' };
 
   if (score === null) {

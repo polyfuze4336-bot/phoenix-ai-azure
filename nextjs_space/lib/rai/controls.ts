@@ -76,6 +76,18 @@ export const CONTROL_STATUS_LABELS: Record<ControlStatus, string> = {
 
 /** The register. Ordered by assurance layer, then principle. */
 export const RAI_CONTROLS: RaiControl[] = [
+  {
+    id: 'RAI-SAFE-013',
+    title: 'Community burn deterministic escalation',
+    principle: 'reliabilitySafety',
+    layer: 'output',
+    status: 'partial',
+    description:
+      'Community burn responses retain existing score thresholds, escalate explicit prototype red flags before image interpretation, and return indeterminate when a required score cannot be mapped. Clinical validation of the new red-flag rules is pending.',
+    evidence: ['lib/clinical/community-burn.ts', 'app/community/assessment/_components/assessment-client.tsx', 'app/api/community-burn/route.ts'],
+    tests: ['tests/unit/community-burn.test.ts', 'tests/rai/community-burn.test.ts', 'tests/e2e/community-assessment.spec.ts'],
+    userVisible: true,
+  },
   // ---------------------------------------------------------------- Input
   {
     id: 'RAI-SAFE-001',
