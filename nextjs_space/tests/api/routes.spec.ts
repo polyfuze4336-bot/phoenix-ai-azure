@@ -16,6 +16,22 @@ const TINY_PNG_B64 =
 /** A payload comfortably above the 1 MB test image ceiling (~2 MB of base64). */
 const OVERSIZED_B64 = 'A'.repeat(2_000_000);
 
+const communityAnswers = {
+  cause: 'scald', sizeScore: 0, appearanceScore: 0, painScore: 0,
+  shortnessOfBreath: 'no', chestPain: 'no', dizziness: 'no',
+  blurredVision: 'no', tinnitus: 'no', blast: 'no',
+  lossOfConsciousness: 'no', faceOrEyes: 'no',
+};
+
+test('Community burn API requires questionnaire and validates image before AI', async ({ request }) => {
+  const incomplete = await postJson(request, '/api/community-burn', { language: 'en', image: TINY_PNG_B64, mimeType: 'image/png' });
+  expect(incomplete.status()).toBe(400);
+  const unsupported = await postJson(request, '/api/community-burn', { language: 'ms', answers: communityAnswers, image: TINY_PNG_B64, mimeType: 'image/heic' });
+  expect(unsupported.status()).toBe(400);
+  const mismatch = await postJson(request, '/api/community-burn', { language: 'en', answers: communityAnswers, image: TINY_PNG_B64, mimeType: 'image/jpeg' });
+  expect(mismatch.status()).toBe(400);
+});
+
 /** Assert a route reached a terminal HTTP response (2xx stream OR explicit error). */
 function expectTerminalResponse(status: number): void {
   expect(typeof status).toBe('number');

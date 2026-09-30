@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
 const guideIcons: Record<string, any> = {
+  flame: Flame,
   burn: Flame,
   wound: Droplets,
   chemical: FlaskConical,
@@ -16,7 +17,7 @@ const guideIcons: Record<string, any> = {
 
 export function FirstAidClient() {
   const { t, lang } = useLanguage();
-  const [expanded, setExpanded] = useState<string | null>('burn');
+  const [expanded, setExpanded] = useState<string | null>('flame');
   const content = localizedContent(lang).community.firstAid;
 
   return (
@@ -25,7 +26,6 @@ export function FirstAidClient() {
         <h1 className="font-display text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{t('community.firstaid_title')}</h1>
         <p className="text-sm text-gray-500 mt-1">{t('community.firstaid_desc')}</p>
       </div>
-
       <div className="space-y-4">
         {content.guides.map((guide: FirstAidGuideResource) => {
           const isOpen = expanded === guide.id;
@@ -77,6 +77,16 @@ export function FirstAidClient() {
                           </ul>
                         </div>
                       </div>
+                      {guide.id === 'burn' && (
+                        <div className="space-y-2 rounded-lg border border-gray-100 p-4 text-sm text-gray-700">
+                          <h4 className="font-semibold text-gray-900">{content.sunburn.title}</h4>
+                          {content.sunburn.steps.map((step, index) => <p key={index}>{step}</p>)}
+                          <p className="font-semibold">{t('community.do')}</p>
+                          <ul className="list-disc pl-5">{content.sunburn.dos.map((item, index) => <li key={index}>{item}</li>)}</ul>
+                          <p className="font-semibold">{t('community.dont')}</p>
+                          <ul className="list-disc pl-5">{content.sunburn.donts.map((item, index) => <li key={index}>{item}</li>)}</ul>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}

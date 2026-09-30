@@ -46,3 +46,11 @@ patient data unless explicitly authorized (**RAI-PRIV-007**). A separate bilingu
 that Phoenix AI is decision support and does not replace professional clinical judgement. These
 notices describe obligations and limitations; they are not legal advice or claims of compliance,
 certification, or production readiness.
+# Community burn assessment
+
+The Community questionnaire precedes the optional image upload. Its public result shows only
+Minor Burn, Major Burn or an explicit indeterminate safety result, with clinic, hospital or
+999 guidance and a professional-care notice below the recommendation. The model returns a
+plain-language image observation only; it cannot choose severity or downgrade deterministic
+red flags. Photo limitations and AI-assistance are disclosed on the result in EN/BM. No
+clinical-validation or regulatory claim is made (RAI-SAFE-013).

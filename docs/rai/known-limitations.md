@@ -23,3 +23,11 @@ Documented, honestly. Each has a stable ID in the governed control register and 
 
 These limitations are not defects to hide — they define the responsible scope of the tool. See
 [rai-roadmap.md](./rai-roadmap.md) for what is planned.
+# Community burn prototype limitation
+
+Community AI burn assessment is not clinically validated. It uses only explicit questionnaire
+red flags and the existing Community Self-Assessment score; a photo cannot establish mechanism,
+age, symptoms, depth or emergency need. A missing/unmapped cause yields indeterminate unless a
+deterministic red flag escalates. Image interpretation is advisory and may be unavailable;
+professional assessment remains recommended on every result. The new red-flag combinations
+require clinical/manual review (RAI-SAFE-013).

@@ -74,9 +74,47 @@ export interface LocalizedContent {
       questions: AssessmentQuestionResource[];
       results: Record<'minor' | 'moderate' | 'emergency', AssessmentResultResource>;
     };
+    burnAssessment: {
+      intro: string;
+      disclaimer: string;
+      questionnaire: string;
+      mechanism: string;
+      causes: Record<'flame' | 'scald' | 'contact' | 'chemical' | 'electrical' | 'other' | 'unsure' | 'sun', string>;
+      age: string;
+      time: string;
+      hours: string;
+      symptoms: Record<'shortnessOfBreath' | 'chestPain' | 'dizziness' | 'blurredVision' | 'tinnitus' | 'blast' | 'lossOfConsciousness' | 'faceOrEyes', string>;
+      yes: string;
+      no: string;
+      unsure: string;
+      select: string;
+      continue: string;
+      uploadPrompt: string;
+      uploadLabel: string;
+      removePhoto: string;
+      analyse: string;
+      analysing: string;
+      imageError: string;
+      imageUnavailable: string;
+      minor: string;
+      major: string;
+      indeterminate: string;
+      clinic: string;
+      urgentClinic: string;
+      hospital: string;
+      emergency: string;
+      explanation: string;
+      indeterminateExplanation: string;
+      uncertaintyNotice: string;
+      imageNote: string;
+      limitations: string;
+      firstAidTips: string;
+      professionalNotice: string;
+    };
     firstAid: {
       stepsLabel: string;
       guides: FirstAidGuideResource[];
+      sunburn: FirstAidGuideResource;
     };
     firstAidVideo: {
       title: string;

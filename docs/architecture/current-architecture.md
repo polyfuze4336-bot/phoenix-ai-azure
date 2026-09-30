@@ -6,7 +6,7 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.3.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.4.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -35,7 +35,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Concern | Current state |
 | --- | --- |
 | Application runtime | Next.js 14 (App Router), React 18, TypeScript 5, standalone Node server (`node server.js`) — **Implemented** |
-| Major portals | One Phoenix AI landing; one shared HCP shell with Acute Burn Injury and General Wound modes; Community routes for first aid, first-aid video, burn prevention, self-assessment, articles and chat; PWA; global English/Bahasa Melayu UI — **Implemented** |
+| Major portals | One Phoenix AI landing; one shared HCP shell with Acute Burn Injury and General Wound modes; Community routes for first aid, first-aid video, burn prevention, questionnaire-first AI-assisted burn assessment, articles and chat; PWA; global English/Bahasa Melayu UI — **Implemented** |
 | Hosting | Azure Container Apps Consumption, `eastus2`; image in Azure Container Registry Basic — **Implemented** |
 | AI processing | Environment-owned Azure AI Services S0 account with `gpt-4o` via `lib/ai`, managed identity — **Implemented** |
 | Data handling | Azure PostgreSQL Flexible Server 17.10 via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
@@ -59,14 +59,14 @@ flowchart TB
     subgraph CLIENT["Client Experience"]
         Landing["Phoenix AI Landing — ACTIVE"]
         HCP["HCP Portal: Acute Burn + General Wound modes — ACTIVE"]
-        Community["Community Portal — ACTIVE"]
+        Community["Community Portal + questionnaire-first burn assessment — ACTIVE"]
         PWA["PWA / Mobile + global EN/MS UI — ACTIVE"]
     end
 
     subgraph APP["Phoenix AI Application (Next.js 14 App Router)"]
         Next["Next.js Server (standalone) — ACTIVE"]
         MW["middleware.ts route protection — ACTIVE"]
-        API["API Routes (15) — ACTIVE"]
+        API["API Routes (16) — ACTIVE"]
         Auth["Auth Layer: demo default — DEMO / Entra — OPTIONAL"]
         AIProvider["AI Provider Layer (lib/ai) — ACTIVE"]
         Data["Data Access Layer (lib/db, Prisma) — ACTIVE"]
