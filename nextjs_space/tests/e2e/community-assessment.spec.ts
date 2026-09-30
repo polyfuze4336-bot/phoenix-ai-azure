@@ -49,7 +49,14 @@ for (const lang of ['en', 'ms'] as const) {
     await fillQuestions(page, lang);
     await page.getByRole('button', { name: text.assess }).click();
     await expect(page.getByRole('heading', { name: text.minor })).toBeVisible();
+    await expect(page.getByText(new RegExp(`${text.age}: 30`))).toBeVisible();
     await expect(page.getByText(text.notice, { exact: true })).toBeVisible();
+
+    await page.goto('/community/assessment');
+    await fillQuestions(page, lang, { symptom: 2, answer: text.unsure });
+    await page.getByRole('button', { name: text.assess }).click();
+    await expect(page.getByRole('heading', { name: text.minor })).toBeVisible();
+    await expect(page.getByText(lang === 'en' ? /Some answers are uncertain/ : /Sesetengah jawapan tidak pasti/)).toBeVisible();
     await page.getByRole('link', { name: lang === 'en' ? 'First Aid Tips' : 'Tips Pertolongan Cemas' }).click();
     await expect(page).toHaveURL(/\/community\/first-aid$/);
 

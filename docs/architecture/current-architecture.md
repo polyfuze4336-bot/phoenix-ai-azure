@@ -59,14 +59,14 @@ flowchart TB
     subgraph CLIENT["Client Experience"]
         Landing["Phoenix AI Landing — ACTIVE"]
         HCP["HCP Portal: Acute Burn + General Wound modes — ACTIVE"]
-        Community["Community Portal — ACTIVE"]
+        Community["Community Portal + questionnaire-first burn assessment — ACTIVE"]
         PWA["PWA / Mobile + global EN/MS UI — ACTIVE"]
     end
 
     subgraph APP["Phoenix AI Application (Next.js 14 App Router)"]
         Next["Next.js Server (standalone) — ACTIVE"]
         MW["middleware.ts route protection — ACTIVE"]
-        API["API Routes (15) — ACTIVE"]
+        API["API Routes (16) — ACTIVE"]
         Auth["Auth Layer: demo default — DEMO / Entra — OPTIONAL"]
         AIProvider["AI Provider Layer (lib/ai) — ACTIVE"]
         Data["Data Access Layer (lib/db, Prisma) — ACTIVE"]

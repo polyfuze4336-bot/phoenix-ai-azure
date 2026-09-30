@@ -43,7 +43,8 @@ Minor Burn / Major Burn / Major Burn; emergency is a separate 999 disposition. E
 prototype questionnaire red flags can only escalate, never be downgraded by image observations.
 Contact, Other and Unsure have no approved cause score: absent a deterministic hospital or
 emergency flag, the result is indeterminate and requests professional assessment. Age and time
-are context only. These new escalation rules have **not** been clinically validated and need
+are context only and shown in the result. Uncertain symptoms that do not independently
+escalate still receive an explicit professional-discussion notice. These new escalation rules have **not** been clinically validated and need
 clinical review (**RAI-SAFE-013**, `tests/rai/community-burn.test.ts`).
 
 If the model or validation fails, the app returns an explicit, clearly-labelled

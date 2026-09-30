@@ -23,6 +23,8 @@ export function AssessmentClient() {
   const copy = content.burnAssessment;
   const [stage, setStage] = useState<'questions' | 'photo' | 'result'>('questions');
   const [answers, setAnswers] = useState<BurnAnswers>(initialAnswers);
+  const [age, setAge] = useState('');
+  const [hours, setHours] = useState('');
   const [causeSelected, setCauseSelected] = useState(false);
   const [documented, setDocumented] = useState<Partial<Record<typeof symptoms[number], boolean>>>({});
   const [photo, setPhoto] = useState<NormalizedImage | null>(null);
@@ -112,12 +114,14 @@ export function AssessmentClient() {
           </label>
           <label className="block space-y-1 text-sm font-medium text-gray-800">
             <span>{copy.age}</span>
-            <input type="number" min="0" required inputMode="numeric"
+            <input type="number" min="0" required inputMode="numeric" value={age}
+              onChange={(event) => setAge(event.target.value)}
               className="w-full rounded-xl border border-gray-200 p-3" />
           </label>
           <label className="block space-y-1 text-sm font-medium text-gray-800">
             <span>{copy.time}</span>
             <input type="number" min="0" step="any" required inputMode="decimal" placeholder={copy.hours}
+              value={hours} onChange={(event) => setHours(event.target.value)}
               className="w-full rounded-xl border border-gray-200 p-3" />
           </label>
           {selectQuestion(content.assessment.questions[1].text, 'sizeScore', 1)}
@@ -191,6 +195,9 @@ export function AssessmentClient() {
             <p className="mt-4 text-sm text-gray-700">
               {result.classification === 'indeterminate' ? copy.indeterminateExplanation : copy.explanation}
             </p>
+            <p className="mt-2 text-sm text-gray-700">{copy.age}: {age}. {copy.time}: {hours}.</p>
+            {(answers.cause === 'unsure' || symptoms.some((key) => answers[key] === 'unsure')) &&
+              <p className="mt-2 text-sm font-medium text-amber-900">{copy.uncertaintyNotice}</p>}
           </div>
           {observation?.language === lang && <p className="rounded-xl border bg-white p-4 text-sm text-gray-700">
             <strong>{copy.imageNote}: </strong>{observation.text}

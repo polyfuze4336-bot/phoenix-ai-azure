@@ -156,6 +156,7 @@ export const en: LocalizedContent = {
       emergency: 'Call 999 immediately',
       explanation: 'Based on your questionnaire answers and existing burn safety rules. The image cannot reduce the level of urgency.',
       indeterminateExplanation: 'The existing scoring rules do not cover this burn type; an image cannot establish the missing information.',
+      uncertaintyNotice: 'Some answers are uncertain. Please discuss these concerns with a healthcare professional; do not assume they are absent.',
       imageNote: 'AI image observation (not a diagnosis)',
       limitations: 'A photo cannot reliably determine burn severity, symptoms, or changes over time. This AI-assisted information does not replace professional medical assessment. For emergencies, call 999.',
       firstAidTips: 'First Aid Tips',

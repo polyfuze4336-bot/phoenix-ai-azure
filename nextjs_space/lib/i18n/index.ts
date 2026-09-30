@@ -105,6 +105,7 @@ export interface LocalizedContent {
       emergency: string;
       explanation: string;
       indeterminateExplanation: string;
+      uncertaintyNotice: string;
       imageNote: string;
       limitations: string;
       firstAidTips: string;

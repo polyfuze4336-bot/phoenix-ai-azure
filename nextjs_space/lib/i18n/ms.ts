@@ -156,6 +156,7 @@ export const ms: LocalizedContent = {
       emergency: 'Hubungi 999 segera',
       explanation: 'Berdasarkan jawapan anda dan peraturan keselamatan kelecuran sedia ada. Gambar tidak boleh mengurangkan tahap kecemasan.',
       indeterminateExplanation: 'Peraturan pemarkahan sedia ada tidak merangkumi jenis kelecuran ini; gambar tidak boleh menentukan maklumat yang belum diketahui.',
+      uncertaintyNotice: 'Sesetengah jawapan tidak pasti. Sila bincangkan perkara ini dengan profesional kesihatan; jangan anggap gejala tersebut tiada.',
       imageNote: 'Pemerhatian gambar oleh AI (bukan diagnosis)',
       limitations: 'Gambar tidak dapat menentukan tahap kelecuran, gejala atau perubahan dari semasa ke semasa dengan pasti. Maklumat berbantu AI ini tidak menggantikan penilaian perubatan profesional. Untuk kecemasan, hubungi 999.',
       firstAidTips: 'Tips Pertolongan Cemas',

@@ -11,7 +11,8 @@
   mechanisms cannot be assigned new numeric scores; an indeterminate result is shown when no
   deterministic escalation applies. Existing minor/moderate/emergency tiers map to Minor/Major/Major.
 - Explicit prototype red flags take precedence over image observations. Dispositions are primary
-  care, hospital or hospital plus 999. Age and time are context only.
+  care, hospital or hospital plus 999. Age and time are context only and displayed locally in the
+  result; uncertain symptom answers are called out even when they do not change disposition.
 - Every result includes professional-care guidance and First Aid Tips; bilingual First Aid guides
   are reorganized without removing the existing wound or sunburn guidance.
 - The image API validates input and returns only plain-language supporting observations. Images
