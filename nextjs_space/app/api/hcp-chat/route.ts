@@ -12,6 +12,7 @@ import { trackEvent } from '@/lib/telemetry/server';
 import { checkRequestBodySize } from '@/lib/ai/validation/image-input';
 import { hcpChatSystemPrompt } from '@/lib/ai/prompts/hcp-chat';
 import { completeWithLanguageValidation, parseRequestedLanguage } from '@/lib/ai/language';
+import { parseAssessmentType } from '@/lib/assessment-type';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,11 +24,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { messages: chatMessages } = body ?? {};
     const language = parseRequestedLanguage(body?.language);
+    const assessmentType = parseAssessmentType(body?.assessmentType);
     if (!language) {
       return new Response(JSON.stringify({ error: 'Invalid language. Use "en" or "ms".' }), { status: 400 });
     }
+    if (!assessmentType) {
+      return new Response(JSON.stringify({ error: 'Invalid assessment type.' }), { status: 400 });
+    }
 
-    const llmMessages: AiMessage[] = [{ role: 'system', content: hcpChatSystemPrompt(language) }];
+    const llmMessages: AiMessage[] = [{ role: 'system', content: hcpChatSystemPrompt(language, assessmentType) }];
     for (const msg of (chatMessages ?? [])) {
       if (msg?.image) {
         llmMessages.push({

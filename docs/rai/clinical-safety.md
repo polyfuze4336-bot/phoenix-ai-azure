@@ -32,6 +32,9 @@ covered by the RAI + unit tests:
 8. **Parkland indication before calculation** — below-threshold burns receive a bilingual
    not-required state without volumes; missing category is uncertain, and indicated cases without
    weight request weight without calculating a placeholder (**RAI-SAFE-006**).
+9. **Assessment-mode isolation** — General Wound uses a separate prompt/schema, strips the burn
+   calculation surface entirely, forces unsupported dimensions to an unavailable statement, and
+   accepts TIMERS social/patient factors only from clinician-supplied social context.
 
 ## Safe failure
 If the model or validation fails, the app returns an explicit, clearly-labelled

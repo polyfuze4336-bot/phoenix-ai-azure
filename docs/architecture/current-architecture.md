@@ -6,7 +6,7 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.2.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.3.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -35,7 +35,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | Concern | Current state |
 | --- | --- |
 | Application runtime | Next.js 14 (App Router), React 18, TypeScript 5, standalone Node server (`node server.js`) — **Implemented** |
-| Major portals | One Phoenix AI landing, HCP routes, Community routes for first aid, first-aid video, burn prevention, self-assessment, articles and chat, PWA, and global English/Bahasa Melayu UI — **Implemented** |
+| Major portals | One Phoenix AI landing; one shared HCP shell with Acute Burn Injury and General Wound modes; Community routes for first aid, first-aid video, burn prevention, self-assessment, articles and chat; PWA; global English/Bahasa Melayu UI — **Implemented** |
 | Hosting | Azure Container Apps Consumption, `eastus2`; image in Azure Container Registry Basic — **Implemented** |
 | AI processing | Environment-owned Azure AI Services S0 account with `gpt-4o` via `lib/ai`, managed identity — **Implemented** |
 | Data handling | Azure PostgreSQL Flexible Server 17.10 via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
@@ -58,7 +58,7 @@ flowchart TB
 
     subgraph CLIENT["Client Experience"]
         Landing["Phoenix AI Landing — ACTIVE"]
-        HCP["HCP Portal + bilingual clinical notice — ACTIVE"]
+        HCP["HCP Portal: Acute Burn + General Wound modes — ACTIVE"]
         Community["Community Portal — ACTIVE"]
         PWA["PWA / Mobile + global EN/MS UI — ACTIVE"]
     end
@@ -155,7 +155,7 @@ Companion diagrams:
 | Element | Location | Status |
 | --- | --- | --- |
 | Public landing (single Phoenix AI entry) | `app/page.tsx`, `app/_components/landing-client.tsx` | Implemented |
-| HCP portal (chat, analysis, TBSA, Parkland, guidelines, history) | `app/hcp/*` | Implemented |
+| HCP portal | `app/hcp/*`, `components/hcp-assessment-mode.tsx` | Implemented — shared shell with persisted `acute_burn` and `general_wound` modes; TBSA and Parkland are burn-only |
 | Community portal (chat, assessment with severity-appropriate professional-care disposition on every result, articles, first-aid, first-aid video and burn prevention; retired image route redirects home) | `app/community/*` | Implemented |
 | Retired alternate experience | Runtime source, components, libraries, flags, assets and tests removed; recoverable from Git history only | Removed |
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |
@@ -188,7 +188,7 @@ Companion diagrams:
 | Model selection (purpose-specific) | `lib/ai/model-config.ts` — `AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT` / `AZURE_AI_CHAT_MODEL_DEPLOYMENT` (default to `AZURE_AI_MODEL_DEPLOYMENT`) | Implemented |
 | Credential | `lib/ai/azure-credential.ts` (`DefaultAzureCredential`, key fallback) | Implemented |
 | OpenAI-compatible mapping | `lib/ai/openai-compatible.ts` | Implemented |
-| Active system prompts (HCP analysis/chat and Community chat, strict EN/MS response instruction) | `lib/ai/prompts/{hcp-chat,hcp-wound-analysis,community-chat}.ts`, `lib/ai/language.ts` | Implemented |
+| Active system prompts (mode-aware HCP analysis/chat and Community chat, strict EN/MS response instruction) | `lib/ai/prompts/{hcp-chat,hcp-wound-analysis,general-wound-analysis,community-chat}.ts`, `lib/ai/language.ts` | Implemented |
 | Staged analysis prompts | `lib/ai/prompts/{wound-visual-observation,wound-clinical-interpretation,wound-management,wound-analysis-critic}.ts`; receive the selected output language | Implemented |
 | AI output-language validation | `lib/ai/language.ts`; detects predominantly wrong-language completions, retries once with a rewrite instruction, logs language codes only | Implemented |
 | Existing-analysis translation | `lib/ai/analysis/translation.ts`, `/api/analyze-wound/translate`; translates narrative text only, validates protected canonical/numeric values unchanged, and receives no image | Implemented |
@@ -234,7 +234,7 @@ migration because language metadata is stored inside the existing JSON result.
 | Prisma client | `lib/db.ts` (auto `sslmode=require`, pool defaults) | Implemented |
 | PostgreSQL | Azure Database for PostgreSQL Flexible Server 17.10 (live audit 2026-08-16) | Implemented (infra) |
 | Models: `Case`, `ChatMessage`, `Article` | `prisma/schema.prisma` | Present, **not wired to UI** (parity demo content) |
-| Model: `AnalysisRecord` | `prisma/schema.prisma` | Implemented — used by HCP history |
+| Model: `AnalysisRecord` | `prisma/schema.prisma` | Implemented — explicit nullable assessment type supports filtered HCP history; legacy rows remain unclassified |
 | Migrations + seed | `prisma/migrations/*`, `scripts/{seed,seed-data,safe-seed}.ts` | Implemented (fictional data) |
 | Client-side state / session storage | React state; login uses server session cookie | Implemented |
 | Static/demo content | in-app demo data, `lib/i18n.ts` | Implemented |

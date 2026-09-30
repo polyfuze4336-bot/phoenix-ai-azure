@@ -96,29 +96,29 @@ test('GET /api/health/ready reports the essential checks', async ({ request }) =
 // --- /api/analyze-wound ------------------------------------------------------
 
 test('POST /api/analyze-wound rejects a missing image with 400', async ({ request }) => {
-  const res = await postJson(request, '/api/analyze-wound', { language: 'en' });
+  const res = await postJson(request, '/api/analyze-wound', { language: 'en', assessmentType: 'acute_burn' });
   expect(res.status()).toBe(400);
 });
 
 test('POST /api/analyze-wound rejects unsupported HEIC before model invocation', async ({ request }) => {
-  const res = await postJson(request, '/api/analyze-wound', { image: TINY_PNG_B64, mimeType: 'image/heic', language: 'en' });
+  const res = await postJson(request, '/api/analyze-wound', { image: TINY_PNG_B64, mimeType: 'image/heic', language: 'en', assessmentType: 'acute_burn' });
   expect(res.status()).toBe(400);
   await expect(res.json()).resolves.toMatchObject({ error: expect.stringMatching(/JPEG, PNG, WebP, or GIF/) });
 });
 
 test('POST /api/analyze-wound rejects MIME/content mismatch before model invocation', async ({ request }) => {
-  const res = await postJson(request, '/api/analyze-wound', { image: TINY_PNG_B64, mimeType: 'image/jpeg', language: 'en' });
+  const res = await postJson(request, '/api/analyze-wound', { image: TINY_PNG_B64, mimeType: 'image/jpeg', language: 'en', assessmentType: 'acute_burn' });
   expect(res.status()).toBe(400);
   await expect(res.json()).resolves.toMatchObject({ error: expect.stringMatching(/does not match/) });
 });
 
 test('POST /api/analyze-wound rejects an oversized body with 413', async ({ request }) => {
-  const res = await postJson(request, '/api/analyze-wound', { image: OVERSIZED_B64, mimeType: 'image/png', language: 'en' });
+  const res = await postJson(request, '/api/analyze-wound', { image: OVERSIZED_B64, mimeType: 'image/png', language: 'en', assessmentType: 'acute_burn' });
   expect(res.status()).toBe(413);
 });
 
 test('POST /api/analyze-wound reaches a terminal response for a valid image', async ({ request }) => {
-  const res = await postJson(request, '/api/analyze-wound', { image: TINY_PNG_B64, mimeType: 'image/png', language: 'en' });
+  const res = await postJson(request, '/api/analyze-wound', { image: TINY_PNG_B64, mimeType: 'image/png', language: 'en', assessmentType: 'acute_burn' });
   expectTerminalResponse(res.status());
 });
 
@@ -146,6 +146,7 @@ test('POST /api/hcp-chat rejects an oversized body with 413', async ({ request }
   const res = await postJson(request, '/api/hcp-chat', {
     messages: [{ role: 'user', content: OVERSIZED_B64 }],
     language: 'en',
+    assessmentType: 'acute_burn',
   });
   expect(res.status()).toBe(413);
 });
@@ -154,6 +155,7 @@ test('POST /api/hcp-chat reaches a terminal response for a valid question', asyn
   const res = await postJson(request, '/api/hcp-chat', {
     messages: [{ role: 'user', content: 'What is the initial management of a burn?' }],
     language: 'en',
+    assessmentType: 'acute_burn',
   });
   expectTerminalResponse(res.status());
 });

@@ -16,6 +16,24 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.3.0] — 2026-09-30
+
+### Changed
+- Split the existing HCP portal into persisted `acute_burn` and `general_wound` assessment modes
+  within the shared shell, language provider, Azure AI provider and PostgreSQL infrastructure.
+- Added mode-specific navigation, demo dashboard data, guidelines, chat context, analysis contracts,
+  and filtered retained-analysis history.
+- Added a nullable `AnalysisRecord.assessmentType`; new records are explicit while pre-existing rows
+  remain unclassified and visible through a compatibility notice rather than being guessed.
+- Added clinical TIMERS output and a distinct General Wound schema/prompt with deterministic
+  Fitzpatrick, dimensions and social-context safeguards.
+
+### Boundaries
+- No Azure resource, identity, deployment workflow, model deployment or storage topology changed.
+- General Wound references are bilingual, non-linked placeholders; no external documents were
+  accessed or committed. No ADR is required.
+- See [CHANGE-20260930](./changes/CHANGE-20260930-hcp-assessment-modes.md).
+
 ## [8.2.0] — 2026-09-03
 
 ### Changed

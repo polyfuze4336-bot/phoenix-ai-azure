@@ -285,6 +285,7 @@ export const ms: LocalizedContent = {
   },
   hcp: {
     chatQuickPrompts: ['Kira TBSA', 'Formula Parkland', 'Protokol Pengurusan Kelecuran', 'Penilaian Luka'],
+    generalWoundChatQuickPrompts: ['Penilaian luka TIMERS', 'Pemilihan pembalut', 'Tanda amaran jangkitan', 'Kriteria rujukan'],
     guidelines: {
       referencesLabel: 'Rujukan',
       filters: {
@@ -294,6 +295,7 @@ export const ms: LocalizedContent = {
         infection: 'Jangkitan',
         dressing: 'Pembalut',
         surgical: 'Pembedahan',
+        reference: 'Rujukan',
       },
       items: [
         {
@@ -309,9 +311,9 @@ export const ms: LocalizedContent = {
           references: ['ATLS 10th Edition', 'Malaysian CPG Burns Management'],
         },
         {
-          id: '3', category: 'wound_care', title: 'Penyediaan Dasar Luka (Rangka Kerja TIME)',
-          summary: 'Pendekatan sistematik untuk pengurusan luka menggunakan rangka kerja TIME.',
-          steps: ['T - Tisu: Buang tisu yang tidak berdaya hidup', 'I - Jangkitan/Keradangan: Urus beban bio dan keradangan', 'M - Kelembapan: Kekalkan keseimbangan kelembapan optimum', 'E - Tepi: Nilai tepi luka yang tidak berkembang atau terhakis', 'Nilai semula luka pada setiap pertukaran pembalut', 'Dokumentasikan kemajuan luka menggunakan alat penilaian yang disahkan'],
+          id: '3', category: 'wound_care', title: 'Penyediaan Dasar Luka (Rangka Kerja TIMERS)',
+          summary: 'Pendekatan sistematik untuk penilaian dan pengurusan luka menggunakan rangka kerja TIMERS.',
+          steps: ['T — Pengurusan tisu', 'I — Jangkitan & keradangan', 'M — Ketidakseimbangan kelembapan', 'E — Tepi luka', 'R — Pembaikan & penjanaan semula', 'S — Faktor sosial & pesakit', 'Nilai semula luka pada setiap pertukaran pembalut', 'Dokumentasikan kemajuan luka menggunakan alat penilaian yang disahkan'],
           references: ['International Wound Journal 2023', 'Malaysian CPG Chronic Wound Management'],
         },
         {
@@ -331,6 +333,16 @@ export const ms: LocalizedContent = {
           summary: 'Petunjuk untuk campur tangan pembedahan dalam pengurusan kelecuran dan luka.',
           steps: ['Kelecuran ketebalan penuh darjah ketiga atau keempat yang memerlukan eksisi dan cantuman', 'Kelecuran melebihi 20% TBSA pada dewasa atau 10% pada kanak-kanak atau warga emas', 'Kelecuran pada muka, tangan, kaki, perineum, atau sendi utama', 'Kelecuran sirkumferensial yang memerlukan eskarotomi', 'Kelecuran elektrik atau kimia dengan penglibatan tisu dalam', 'Luka yang tidak sembuh selepas 3 minggu penjagaan yang sesuai', 'Luka dengan tendon, tulang, atau sendi terdedah'],
           references: ['ISBI Guidelines 2023', 'Malaysian CPG Burns Referral Criteria'],
+        },
+        {
+          id: 'general-reference-infection', category: 'reference', title: 'Rujukan Jangkitan Luka',
+          summary: 'Dokumen rujukan akan ditambah kemudian.', steps: [], references: [],
+          placeholderStatus: 'Dokumen rujukan akan ditambah kemudian.',
+        },
+        {
+          id: 'general-reference-wound', category: 'reference', title: 'Rujukan Luka Umum',
+          summary: 'Dokumen rujukan akan ditambah kemudian.', steps: [], references: [],
+          placeholderStatus: 'Dokumen rujukan akan ditambah kemudian.',
         },
       ],
     },

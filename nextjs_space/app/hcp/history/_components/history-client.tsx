@@ -5,6 +5,9 @@ import { motion } from 'framer-motion';
 import { Clock, ImageOff, Loader2, RefreshCw, Flame, Stethoscope, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { translateCanonicalValue, type AppLanguage } from '@/lib/i18n';
+import { useHcpAssessmentMode } from '@/components/hcp-assessment-mode';
+import type { AssessmentType } from '@/lib/assessment-type';
+import { GeneralWoundAnalysisView } from '../../analysis/_components/general-wound-analysis';
 
 interface RecordSummary {
   id: string;
@@ -18,6 +21,7 @@ interface RecordSummary {
   tbsaEstimate: string | null;
   isBurn: boolean;
   hasImage: boolean;
+  assessmentType: AssessmentType | null;
 }
 
 interface RecordDetail extends RecordSummary {
@@ -45,6 +49,7 @@ function formatDate(iso: string, lang: AppLanguage) {
 
 export function HistoryClient() {
   const { t, lang } = useLanguage();
+  const { assessmentType } = useHcpAssessmentMode();
   const [records, setRecords] = useState<RecordSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,25 +58,38 @@ export function HistoryClient() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailTranslating, setDetailTranslating] = useState(false);
   const [translationError, setTranslationError] = useState(false);
+  const [legacyCount, setLegacyCount] = useState(0);
   const translatedResultsRef = useRef<Record<string, Partial<Record<AppLanguage, Record<string, any>>>>>({});
+  const listRequestRef = useRef(0);
+  const detailRequestRef = useRef(0);
 
   const loadList = useCallback(async () => {
+    const requestId = ++listRequestRef.current;
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/hcp/analyses');
+      const res = await fetch(`/api/hcp/analyses?assessmentType=${assessmentType}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(t('history.load_error'));
+      if (requestId !== listRequestRef.current) return;
       setRecords(Array.isArray(data?.records) ? data.records : []);
+      setLegacyCount(typeof data?.legacyCount === 'number' ? data.legacyCount : 0);
     } catch (e: any) {
+      if (requestId !== listRequestRef.current) return;
       setError(e?.message ?? t('history.load_error'));
       setRecords([]);
     } finally {
-      setLoading(false);
+      if (requestId === listRequestRef.current) setLoading(false);
     }
-  }, [t]);
+  }, [assessmentType, t]);
 
   useEffect(() => {
+    detailRequestRef.current += 1;
+    setSelectedId(null);
+    setDetail(null);
+    setDetailLoading(false);
+    setDetailTranslating(false);
+    setTranslationError(false);
     loadList();
   }, [loadList]);
 
@@ -113,6 +131,7 @@ export function HistoryClient() {
   }, [detail, lang]);
 
   const selectRecord = useCallback(async (id: string) => {
+    const requestId = ++detailRequestRef.current;
     setSelectedId(id);
     setDetail(null);
     setDetailLoading(true);
@@ -122,6 +141,7 @@ export function HistoryClient() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(t('history.detail_error'));
       const record = data?.record ?? null;
+      if (requestId !== detailRequestRef.current || record?.assessmentType !== assessmentType) return;
       if (record?.result?.language === 'en' || record?.result?.language === 'ms') {
         translatedResultsRef.current[record.id] = {
           ...translatedResultsRef.current[record.id],
@@ -130,11 +150,11 @@ export function HistoryClient() {
       }
       setDetail(record);
     } catch {
-      setDetail(null);
+      if (requestId === detailRequestRef.current) setDetail(null);
     } finally {
-      setDetailLoading(false);
+      if (requestId === detailRequestRef.current) setDetailLoading(false);
     }
-  }, [t]);
+  }, [assessmentType, t]);
 
   return (
     <div className="space-y-6">
@@ -158,6 +178,11 @@ export function HistoryClient() {
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">{error}</div>
+      )}
+      {legacyCount > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          {t('history.legacy_notice').replace('{count}', String(legacyCount))}
+        </div>
       )}
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -300,6 +325,29 @@ export function HistoryClient() {
               {detail.result?.characteristics && detail.result.characteristics !== 'N/A' && (
                 <Section title={t('history.characteristics')} text={detail.result.characteristics} />
               )}
+
+              {detail.result?.structured?.timers && (
+                <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+                  <div className="bg-gradient-to-r from-[#0F9B8E] to-[#0e8a7e] px-4 py-2.5 text-sm font-semibold text-white">TIMERS</div>
+                  <div className="divide-y">
+                    {[
+                      ['T', t('analysis.timers.tissue'), detail.result.structured.timers.tissueManagement],
+                      ['I', t('analysis.timers.infection'), detail.result.structured.timers.infectionInflammation],
+                      ['M', t('analysis.timers.moisture'), detail.result.structured.timers.moistureImbalance],
+                      ['E', t('analysis.timers.edge'), detail.result.structured.timers.edgeOfWound],
+                      ['R', t('analysis.timers.repair'), detail.result.structured.timers.repairRegeneration],
+                      ['S', t('analysis.timers.social'), detail.result.structured.timers.socialPatientFactors],
+                    ].map(([letter, label, value]) => (
+                      <div key={letter} className="p-4">
+                        <p className="text-xs font-semibold text-[#0F9B8E]">{letter} — {label}</p>
+                        <p className="mt-1 text-sm text-gray-700">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {detail.result?.generalWound && <GeneralWoundAnalysisView data={detail.result.generalWound} />}
 
               {(['tissueComposition', 'exudate', 'woundEdges'] as const).some(
                 (k) => detail.result?.[k] && detail.result[k] !== 'N/A',

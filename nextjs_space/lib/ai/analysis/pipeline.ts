@@ -45,6 +45,11 @@ import { WOUND_MANAGEMENT_PROMPT } from '../prompts/wound-management';
 import { WOUND_ANALYSIS_CRITIC_PROMPT } from '../prompts/wound-analysis-critic';
 import { completeWithLanguageValidation, withLanguageInstruction } from '../language';
 import type { AppLanguage } from '@/lib/i18n';
+import {
+  generalWoundAnalysisSchema,
+  type GeneralWoundAnalysis,
+} from '../schemas/general-wound-analysis';
+import { GENERAL_WOUND_ANALYSIS_PROMPT } from '../prompts/general-wound-analysis';
 
 /** Optional patient context supplied by the clinician (never invented). */
 export interface PatientContext {
@@ -54,6 +59,8 @@ export interface PatientContext {
   mechanism?: string;
   timeSinceInjury?: string;
   freeText?: string;
+  comorbidities?: string;
+  socialContext?: string;
 }
 
 export interface PipelineInput {
@@ -86,6 +93,8 @@ function contextBlock(p?: PatientContext): string {
   if (p.mechanism) parts.push(`mechanism: ${p.mechanism}`);
   if (p.timeSinceInjury) parts.push(`time since injury: ${p.timeSinceInjury}`);
   if (p.freeText) parts.push(`notes: ${p.freeText}`);
+  if (p.comorbidities) parts.push(`clinician-supplied comorbidities: ${p.comorbidities}`);
+  if (p.socialContext) parts.push(`clinician-supplied social context: ${p.socialContext}`);
   return parts.length ? `Provided patient context: ${parts.join('; ')}.` : 'No additional patient context was provided.';
 }
 
@@ -357,6 +366,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
   } catch {
     // Management is non-core; retain the validated classification and label it unavailable.
   }
+
   const managementResult = mgmtStage.value ? managementSchema.safeParse(mgmtStage.value) : null;
   const management: Management = managementResult?.success
     ? managementResult.data
@@ -381,6 +391,97 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<BurnWou
   const critic = criticResult?.success ? criticResult.data : unavailableCritic(language);
 
   return assemble({ observation, interpretation, management, critic, patient, language });
+}
+
+export async function runGeneralWoundAnalysis(input: PipelineInput): Promise<GeneralWoundAnalysis> {
+  const { imageDataUrl, language, patient, correlationId } = input;
+  const ctx = contextBlock(patient);
+  const obsStage = await runStage(
+    WOUND_VISUAL_OBSERVATION_PROMPT,
+    [
+      { type: 'text', text: `${ctx}\nDescribe what is visible in this general-wound image.` },
+      { type: 'image_url', image_url: { url: imageDataUrl } },
+    ],
+    language,
+    correlationId,
+    'analyze-wound:general-observation',
+    hasObservationSignal,
+  );
+  if (!obsStage.value) throw coreStageError(obsStage.category);
+  const observationResult = visualObservationSchema.safeParse(obsStage.value);
+  if (!observationResult.success) throw coreStageError('AI_SCHEMA_VALIDATION_FAILED');
+  const observation = observationResult.data;
+
+  const analysisStage = await runStage(
+    GENERAL_WOUND_ANALYSIS_PROMPT,
+    [
+      {
+        type: 'text',
+        text: `${ctx}\nStructured observations:\n${JSON.stringify(observation)}\nAssess this general wound.`,
+      },
+      { type: 'image_url', image_url: { url: imageDataUrl } },
+    ],
+    language,
+    correlationId,
+    'analyze-wound:general-assessment',
+    (value) => typeof value.woundCategory === 'string' && Boolean(value.timers),
+  );
+  if (!analysisStage.value) throw coreStageError(analysisStage.category);
+
+  const parsed = generalWoundAnalysisSchema.partial({
+    schemaVersion: true,
+    analysisQuality: true,
+    imageQuality: true,
+    observation: true,
+  }).safeParse(analysisStage.value);
+  if (!parsed.success) throw coreStageError('AI_SCHEMA_VALIDATION_FAILED');
+
+  const inadequate = !observation.imageQualityAdequate;
+  const analysisQuality: GeneralWoundAnalysis['analysisQuality'] = inadequate
+    ? observation.imageQualityIssues.length >= 2 ? 'LOW' : 'MODERATE'
+    : 'HIGH';
+  const confidenceLevel = inadequate
+    ? capConfidence(parsed.data.confidenceLevel, observation.imageQualityIssues.length >= 2 ? 'low' : 'moderate')
+    : parsed.data.confidenceLevel;
+  const noScale = !observation.scalePresent;
+  const unavailableDimensions = language === 'ms'
+    ? 'Tidak dapat ditentukan dengan pasti tanpa skala/rujukan'
+    : 'Unable to determine reliably without a scale/reference';
+  const unavailablePhototype = language === 'ms'
+    ? 'Tidak dapat ditentukan dengan pasti'
+    : 'Unable to determine reliably';
+  const socialNotSupplied = language === 'ms' ? 'Tidak dibekalkan' : 'Not supplied';
+
+  return generalWoundAnalysisSchema.parse({
+    ...parsed.data,
+    schemaVersion: '1.0',
+    analysisQuality,
+    confidenceLevel,
+    imageQuality: {
+      adequate: observation.imageQualityAdequate,
+      issues: observation.imageQualityIssues,
+      note: observation.imageQualityNote,
+    },
+    observation,
+    fitzpatrickPhototype: patient?.fitzpatrickType || unavailablePhototype,
+    measuredDimensions: noScale ? unavailableDimensions : parsed.data.measuredDimensions,
+    timers: {
+      ...parsed.data.timers,
+      socialPatientFactors: patient?.socialContext || socialNotSupplied,
+    },
+    missingInformation: Array.from(new Set([
+      ...(parsed.data.missingInformation ?? []),
+      ...(noScale ? [unavailableDimensions] : []),
+      ...(!patient?.comorbidities ? [language === 'ms' ? 'Komorbiditi tidak dibekalkan' : 'Comorbidities were not supplied'] : []),
+      ...(!patient?.socialContext ? [language === 'ms' ? 'Konteks sosial tidak dibekalkan' : 'Social context was not supplied'] : []),
+    ])),
+    limitations: Array.from(new Set([
+      ...(parsed.data.limitations ?? []),
+      language === 'ms'
+        ? 'Penilaian ini berdasarkan satu foto dan tidak menggantikan pemeriksaan klinikal secara langsung.'
+        : 'This assessment is based on one photograph and does not replace hands-on clinical examination.',
+    ])),
+  });
 }
 
 /* ------------------------------------------------- deterministic assembly */
@@ -445,6 +546,7 @@ function assemble(args: {
   interpretation.exudate = capField(interpretation.exudate);
   interpretation.infectionSigns = capField(interpretation.infectionSigns);
   interpretation.edgesAndPeriwound = capField(interpretation.edgesAndPeriwound);
+  interpretation.repairRegeneration = capField(interpretation.repairRegeneration);
 
   // --- Special-site escalation: never leave a special-site burn on routine follow-up.
   const locationText = `${observation.anatomicalLocation} ${interpretation.tbsaBodyRegions} ${management.locationConsiderations}`;
@@ -481,6 +583,7 @@ function assemble(args: {
     tissueComposition: interpretation.tissueComposition.confidence,
     infection: interpretation.infectionSigns.confidence,
     edges: interpretation.edgesAndPeriwound.confidence,
+    repairRegeneration: interpretation.repairRegeneration.confidence,
   };
 
   // --- Missing information + follow-up questions (deterministic, honest).
@@ -523,11 +626,19 @@ function assemble(args: {
     analysisQuality === 'HIGH' ? 'High' : analysisQuality === 'MODERATE' ? 'Moderate' : analysisQuality === 'LOW' ? 'Low' : 'Insufficient';
 
   const candidate = {
-    schemaVersion: '2.0' as const,
+    schemaVersion: '2.1' as const,
     analysisQuality,
     imageQuality: { adequate: observation.imageQualityAdequate, issues, note: observation.imageQualityNote },
     observation,
     interpretation,
+    timers: {
+      tissueManagement: interpretation.tissueComposition.interpretation || interpretation.tissueComposition.observation,
+      infectionInflammation: interpretation.infectionSigns.interpretation || interpretation.infectionSigns.observation,
+      moistureImbalance: interpretation.exudate.interpretation || interpretation.exudate.observation,
+      edgeOfWound: interpretation.edgesAndPeriwound.interpretation || interpretation.edgesAndPeriwound.observation,
+      repairRegeneration: interpretation.repairRegeneration.interpretation || interpretation.repairRegeneration.observation,
+      socialPatientFactors: patient?.socialContext || (language === 'ms' ? 'Tidak dibekalkan' : 'Not supplied'),
+    },
     management,
     parkland,
     confidenceByCategory,

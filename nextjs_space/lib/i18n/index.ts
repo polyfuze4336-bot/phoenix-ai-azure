@@ -55,6 +55,7 @@ export interface GuidelineResource {
   summary: string;
   steps: string[];
   references: string[];
+  placeholderStatus?: string;
 }
 
 export interface LocalizedContent {
@@ -105,6 +106,7 @@ export interface LocalizedContent {
   };
   hcp: {
     chatQuickPrompts: string[];
+    generalWoundChatQuickPrompts: string[];
     guidelines: {
       referencesLabel: string;
       filters: Record<string, string>;

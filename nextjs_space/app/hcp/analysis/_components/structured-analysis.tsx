@@ -43,6 +43,14 @@ export interface StructuredAnalysisData {
     tbsaAssumptions: string[];
     tbsaLimitations: string[];
   };
+  timers: {
+    tissueManagement: string;
+    infectionInflammation: string;
+    moistureImbalance: string;
+    edgeOfWound: string;
+    repairRegeneration: string;
+    socialPatientFactors: string;
+  };
   parkland: { indicated: string; requiresWeight: boolean; summary: string };
   confidenceByCategory: Record<string, Confidence>;
   missingInformation: string[];
@@ -151,6 +159,25 @@ export function StructuredAnalysis({
           <WhyField label={t('analysis.exudate_infection')} field={i.exudate} />
           <WhyField label={t('analysis.infection_signs')} field={i.infectionSigns} />
           <WhyField label={t('analysis.edges_periwound')} field={i.edgesAndPeriwound} />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-4 py-2.5 bg-gradient-to-r from-[#0F9B8E] to-[#0e8a7e] text-sm font-semibold text-white">TIMERS</div>
+        <div className="divide-y">
+          {[
+            ['T', t('analysis.timers.tissue'), data.timers.tissueManagement],
+            ['I', t('analysis.timers.infection'), data.timers.infectionInflammation],
+            ['M', t('analysis.timers.moisture'), data.timers.moistureImbalance],
+            ['E', t('analysis.timers.edge'), data.timers.edgeOfWound],
+            ['R', t('analysis.timers.repair'), data.timers.repairRegeneration],
+            ['S', t('analysis.timers.social'), data.timers.socialPatientFactors],
+          ].map(([letter, label, value]) => (
+            <div key={letter} className="p-4">
+              <p className="text-xs font-semibold text-[#0F9B8E]">{letter} — {label}</p>
+              <p className="mt-1 text-sm text-gray-700">{value || t('common.not_available')}</p>
+            </div>
+          ))}
         </div>
       </div>
 

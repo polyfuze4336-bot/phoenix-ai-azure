@@ -285,6 +285,7 @@ export const en: LocalizedContent = {
   },
   hcp: {
     chatQuickPrompts: ['Calculate TBSA', 'Parkland Formula', 'Burn Management Protocol', 'Wound Assessment'],
+    generalWoundChatQuickPrompts: ['TIMERS wound assessment', 'Dressing selection', 'Infection red flags', 'Referral criteria'],
     guidelines: {
       referencesLabel: 'References',
       filters: {
@@ -294,6 +295,7 @@ export const en: LocalizedContent = {
         infection: 'Infection',
         dressing: 'Dressing',
         surgical: 'Surgical',
+        reference: 'References',
       },
       items: [
         {
@@ -309,9 +311,9 @@ export const en: LocalizedContent = {
           references: ['ATLS 10th Edition', 'Malaysian CPG Burns Management'],
         },
         {
-          id: '3', category: 'wound_care', title: 'Wound Bed Preparation (TIME Framework)',
-          summary: 'Systematic approach to wound management using the TIME framework.',
-          steps: ['T - Tissue: Debride non-viable tissue', 'I - Infection/Inflammation: Manage bioburden and inflammation', 'M - Moisture: Maintain optimal moisture balance', 'E - Edge: Assess for non-advancing or undermined wound edges', 'Reassess the wound at each dressing change', 'Document wound progress using validated assessment tools'],
+          id: '3', category: 'wound_care', title: 'Wound Bed Preparation (TIMERS Framework)',
+          summary: 'Systematic approach to wound assessment and management using the TIMERS framework.',
+          steps: ['T — Tissue management', 'I — Infection & inflammation', 'M — Moisture imbalance', 'E — Edge of wound', 'R — Repair & regeneration', 'S — Social & patient factors', 'Reassess the wound at each dressing change', 'Document wound progress using validated assessment tools'],
           references: ['International Wound Journal 2023', 'Malaysian CPG Chronic Wound Management'],
         },
         {
@@ -331,6 +333,16 @@ export const en: LocalizedContent = {
           summary: 'Indications for surgical intervention in burn and wound management.',
           steps: ['Full-thickness third- or fourth-degree burns requiring excision and grafting', 'Burns above 20% TBSA in adults or above 10% in children or older adults', 'Burns to the face, hands, feet, perineum, or major joints', 'Circumferential burns requiring escharotomy', 'Electrical or chemical burns with deep tissue involvement', 'Wounds not healing after 3 weeks of appropriate care', 'Wounds with exposed tendon, bone, or joint'],
           references: ['ISBI Guidelines 2023', 'Malaysian CPG Burns Referral Criteria'],
+        },
+        {
+          id: 'general-reference-infection', category: 'reference', title: 'Wound Infection Reference',
+          summary: 'Reference document will be added later.', steps: [], references: [],
+          placeholderStatus: 'Reference document will be added later.',
+        },
+        {
+          id: 'general-reference-wound', category: 'reference', title: 'General Wound Reference',
+          summary: 'Reference document will be added later.', steps: [], references: [],
+          placeholderStatus: 'Reference document will be added later.',
         },
       ],
     },

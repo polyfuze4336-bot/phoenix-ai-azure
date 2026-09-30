@@ -3,13 +3,13 @@
 %% multimodal one-or-many image input, and structured-output validation.
 flowchart TB
     subgraph Interfaces["Client Interfaces"]
-        HCPUI["HCP Interface"]
+        HCPUI["HCP Interface\nAcute Burn / General Wound mode"]
         COMMUI["Community Interface\n(chat)"]
     end
 
     subgraph Routes["Next.js API Routes"]
-        RHCPCHAT["/api/hcp-chat\n(validated EN/MS)"]
-        RHCPAN["/api/analyze-wound\n(validated EN/MS)"]
+        RHCPCHAT["/api/hcp-chat\n(mode-aware, validated EN/MS)"]
+        RHCPAN["/api/analyze-wound\n(explicit mode, validated EN/MS)"]
         RHCPTRANS["/api/analyze-wound/translate\n(text-only existing result)"]
         RCOMCHAT["/api/community-chat\n(validated EN/MS)"]
     end
@@ -17,6 +17,7 @@ flowchart TB
     subgraph Prompts["Prompt Layer (lib/ai/prompts)"]
         PHCPCHAT["hcp-chat\n(clinical, detailed, EN/MS narrative)"]
         PHCPAN["hcp-wound-analysis\n(single-pass fallback, EN/MS narrative)"]
+        PGENERAL["general-wound-analysis\n(no burn calculations)"]
         PCOMCHAT["community-chat\n(plain-language, safe)"]
         subgraph StagedPrompts["Staged analysis prompts"]
             PS1["wound-visual-observation"]
@@ -29,7 +30,7 @@ flowchart TB
     subgraph Pipeline["Staged Analysis Pipeline (lib/ai/analysis)"]
         ORCH["runAnalysisPipeline\n(core observation + interpretation required)\n(optional management/critic degradation)"]
         DETCALC["Deterministic calc\nlib/clinical/parkland + tbsa\n(no assumed weight)"]
-        SCHEMA["schemas/burn-wound-analysis\n(obs vs interp, confidence, gaps)"]
+        SCHEMA["mode-specific Zod schemas\nTIMERS, confidence, gaps"]
         MODELSEL["model-config\nAZURE_AI_ANALYSIS_MODEL_DEPLOYMENT"]
     end
 
@@ -68,6 +69,7 @@ flowchart TB
     ORCH --> PS4 --> FACTORY
     ORCH --> DETCALC
     ORCH --> SCHEMA
+    RHCPAN -->|"general_wound"| PGENERAL --> FACTORY
     ORCH --> MODELSEL
     MODELSEL --> AZPROV
     RHCPAN -.->|"AI_ANALYSIS_PIPELINE=single"| PHCPAN --> FACTORY

@@ -62,7 +62,12 @@ async function executeRun(index: number, images: Buffer[]): Promise<ReliabilityO
     const response = await fetch(new URL('/api/analyze-wound', baseUrl), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: image.toString('base64'), mimeType: 'image/png', language: 'en' }),
+      body: JSON.stringify({
+        image: image.toString('base64'),
+        mimeType: 'image/png',
+        language: 'en',
+        assessmentType: 'acute_burn',
+      }),
       signal: controller.signal,
     });
     const body = await response.text();

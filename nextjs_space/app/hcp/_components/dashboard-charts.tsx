@@ -5,6 +5,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   LineChart, Line, Legend
 } from 'recharts';
+import type { AssessmentType } from '@/lib/assessment-type';
 
 const COLORS = ['#8B0000', '#E67E22', '#F59B0C', '#0F9B8E', '#C0392B', '#60B5FF', '#FF9898'];
 
@@ -29,7 +30,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-export function DashboardCharts() {
+export function DashboardCharts({ assessmentType }: { assessmentType: AssessmentType }) {
   const { t, lang } = useLanguage();
   const severityData = [
     { name: t('dash.degree_1'), value: 210 },
@@ -51,7 +52,6 @@ export function DashboardCharts() {
     cases,
   }));
   const woundTypeData = [
-    { type: t('dash.burn'), count: 834 },
     { type: t('dash.diabetic_ulcer'), count: 128 },
     { type: t('dash.pressure_ulcer'), count: 95 },
     { type: t('dash.traumatic'), count: 112 },
@@ -63,6 +63,44 @@ export function DashboardCharts() {
     { name: t('dash.referred'), value: 178 },
     { name: t('dash.complicated'), value: 112 },
   ];
+
+  if (assessmentType === 'general_wound') {
+    return (
+      <div className="grid md:grid-cols-2 gap-6">
+        <ChartCard title={t('dash.wound_type')}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={woundTypeData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+              <XAxis type="number" tickLine={false} tick={{ fontSize: 10 }} />
+              <YAxis type="category" dataKey="type" tickLine={false} tick={{ fontSize: 10 }} width={90} />
+              <Tooltip contentStyle={{ fontSize: 11 }} />
+              <Bar dataKey="count" fill="#0F9B8E" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+        <ChartCard title={t('dash.monthly_trend')}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={monthlyData.map((item) => ({ ...item, cases: Math.round(item.cases * 0.33) }))}>
+              <XAxis dataKey="month" tickLine={false} tick={{ fontSize: 10 }} />
+              <YAxis tickLine={false} tick={{ fontSize: 10 }} />
+              <Tooltip contentStyle={{ fontSize: 11 }} />
+              <Line type="monotone" dataKey="cases" stroke="#0F9B8E" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+        <ChartCard title={t('dash.outcomes')}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={outcomeData.map((item) => ({ ...item, value: Math.round(item.value * 0.33) }))} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value">
+                {outcomeData.map((_, i) => <Cell key={i} fill={['#10B981', '#F59B0C', '#60B5FF', '#EF4444'][i]} />)}
+              </Pie>
+              <Tooltip contentStyle={{ fontSize: 11 }} />
+              <Legend verticalAlign="top" wrapperStyle={{ fontSize: 11 }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+    );
+  }
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
@@ -100,18 +138,6 @@ export function DashboardCharts() {
             <Tooltip contentStyle={{ fontSize: 11 }} />
             <Line type="monotone" dataKey="cases" stroke="#8B0000" strokeWidth={2} dot={{ fill: '#8B0000', r: 3 }} activeDot={{ r: 5 }} />
           </LineChart>
-        </ResponsiveContainer>
-      </ChartCard>
-
-      {/* Wound Type */}
-      <ChartCard title={t('dash.wound_type')}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={woundTypeData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-            <XAxis type="number" tickLine={false} tick={{ fontSize: 10 }} />
-            <YAxis type="category" dataKey="type" tickLine={false} tick={{ fontSize: 10 }} width={90} />
-            <Tooltip contentStyle={{ fontSize: 11 }} />
-            <Bar dataKey="count" fill="#E67E22" radius={[0, 4, 4, 0]} />
-          </BarChart>
         </ResponsiveContainer>
       </ChartCard>
 
