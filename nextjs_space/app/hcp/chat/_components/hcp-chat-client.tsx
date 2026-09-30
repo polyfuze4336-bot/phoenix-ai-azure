@@ -7,6 +7,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { localizedContent } from '@/lib/i18n/index';
 import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
+import { useHcpAssessmentMode } from '@/components/hcp-assessment-mode';
 
 interface ChatMsg {
   role: 'user' | 'assistant';
@@ -18,6 +19,7 @@ const quickPromptIcons = [Calculator, Droplets, BookOpen, Stethoscope];
 
 export function HcpChatClient() {
   const { t, lang } = useLanguage();
+  const { assessmentType } = useHcpAssessmentMode();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,7 +27,9 @@ export function HcpChatClient() {
   const [escalated, setEscalated] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const quickPrompts = localizedContent(lang).hcp.chatQuickPrompts;
+  const quickPrompts = assessmentType === 'acute_burn'
+    ? localizedContent(lang).hcp.chatQuickPrompts
+    : localizedContent(lang).hcp.generalWoundChatQuickPrompts;
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef?.current?.scrollIntoView?.({ behavior: 'smooth' });
@@ -53,6 +57,7 @@ export function HcpChatClient() {
             ...(m?.image ? { image: m.image } : {}),
           })),
           language: lang,
+          assessmentType,
         }),
       });
 
@@ -93,7 +98,7 @@ export function HcpChatClient() {
     } finally {
       setLoading(false);
     }
-  }, [input, imagePreview, lang, messages, t]);
+  }, [assessmentType, input, imagePreview, lang, messages, t]);
 
   const handleImage = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e?.target?.files?.[0];
@@ -113,6 +118,7 @@ export function HcpChatClient() {
         <div>
           <h1 className="font-display text-xl font-bold text-gray-900">{t('chat.specialist_title')}</h1>
           <p className="text-xs text-gray-500">{t('chat.hcp_description')}</p>
+          <p className="mt-1 text-xs font-semibold text-[#8B0000]">{t(`hcp.mode.${assessmentType}`)}</p>
         </div>
         <button
           onClick={() => setEscalated(true)}

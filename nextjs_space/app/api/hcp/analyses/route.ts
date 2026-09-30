@@ -11,6 +11,7 @@ import {
   saveAnalysisRecord,
   type HcpAnalysisResult,
 } from '@/lib/analysis/history';
+import { parseAssessmentType } from '@/lib/assessment-type';
 
 /** Persist a completed HCP analysis (image + structured result) for later reference. */
 export async function POST(request: NextRequest) {
@@ -22,8 +23,12 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => null);
     const result = body?.result as HcpAnalysisResult | undefined;
+    const assessmentType = parseAssessmentType(body?.assessmentType);
     if (!result || typeof result !== 'object') {
       return new Response(JSON.stringify({ error: 'An analysis result is required.' }), { status: 400 });
+    }
+    if (!assessmentType) {
+      return new Response(JSON.stringify({ error: 'A valid assessment type is required.' }), { status: 400 });
     }
 
     const correlationId = getOrCreateCorrelationId(request.headers);
@@ -36,6 +41,7 @@ export async function POST(request: NextRequest) {
       mimeType: body?.mimeType ?? null,
       clinicianName: body?.clinician?.name ?? null,
       clinicianEmail: body?.clinician?.email ?? null,
+      assessmentType,
     });
 
     return new Response(JSON.stringify({ id }), {
@@ -52,10 +58,14 @@ export async function POST(request: NextRequest) {
 }
 
 /** List retained analyses (newest first) for the history page. */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const records = await listAnalysisRecords();
-    return new Response(JSON.stringify({ records }), {
+    const assessmentType = parseAssessmentType(request.nextUrl.searchParams.get('assessmentType'));
+    if (!assessmentType) {
+      return new Response(JSON.stringify({ error: 'A valid assessment type is required.', records: [] }), { status: 400 });
+    }
+    const { records, legacyCount } = await listAnalysisRecords(assessmentType);
+    return new Response(JSON.stringify({ records, legacyCount }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

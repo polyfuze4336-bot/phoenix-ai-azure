@@ -5,6 +5,8 @@ import { Activity, Flame, Droplets, AlertTriangle, Percent } from 'lucide-react'
 import { motion } from 'framer-motion';
 import { useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import { useHcpAssessmentMode } from '@/components/hcp-assessment-mode';
+import type { AssessmentType } from '@/lib/assessment-type';
 
 function DashboardLoading() {
   const { t } = useLanguage();
@@ -43,22 +45,29 @@ function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: str
   return <span ref={ref} className="font-mono text-2xl md:text-3xl font-bold">{count}{suffix}</span>;
 }
 
-const summaryCards = [
-  { key: 'dash.total_cases', value: 1247, icon: Activity, color: 'from-[#8B0000] to-[#C0392B]', textColor: 'text-white' },
+const burnSummaryCards = [
+  { key: 'dash.total_cases', value: 834, icon: Activity, color: 'from-[#8B0000] to-[#C0392B]', textColor: 'text-white' },
   { key: 'dash.burn_cases', value: 834, icon: Flame, color: 'from-[#E67E22] to-[#F59B0C]', textColor: 'text-white' },
-  { key: 'dash.wound_cases', value: 413, icon: Droplets, color: 'from-[#0F9B8E] to-[#0e8a7e]', textColor: 'text-white' },
-  { key: 'dash.critical', value: 89, icon: AlertTriangle, color: 'from-red-500 to-red-600', textColor: 'text-white' },
+  { key: 'dash.critical', value: 61, icon: AlertTriangle, color: 'from-red-500 to-red-600', textColor: 'text-white' },
   { key: 'dash.avg_tbsa', value: 14, suffix: '%', icon: Percent, color: 'from-purple-500 to-purple-600', textColor: 'text-white' },
+];
+
+const woundSummaryCards = [
+  { key: 'dash.total_cases', value: 413, icon: Activity, color: 'from-[#8B0000] to-[#C0392B]', textColor: 'text-white' },
+  { key: 'dash.wound_cases', value: 413, icon: Droplets, color: 'from-[#0F9B8E] to-[#0e8a7e]', textColor: 'text-white' },
+  { key: 'dash.critical', value: 28, icon: AlertTriangle, color: 'from-red-500 to-red-600', textColor: 'text-white' },
 ];
 
 export function DashboardClient() {
   const { t } = useLanguage();
+  const { assessmentType } = useHcpAssessmentMode();
+  const summaryCards = assessmentType === 'acute_burn' ? burnSummaryCards : woundSummaryCards;
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-display text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{t('hcp.dashboard')}</h1>
-        <p className="text-sm text-gray-500 mt-1">{t('dash.subtitle')}</p>
+        <p className="text-sm text-gray-500 mt-1">{t(`dash.subtitle.${assessmentType}`)}</p>
       </div>
 
       {/* Summary Cards */}
@@ -83,7 +92,7 @@ export function DashboardClient() {
       </div>
 
       {/* Charts */}
-      <DashboardCharts />
+      <DashboardCharts assessmentType={assessmentType as AssessmentType} />
     </div>
   );
 }

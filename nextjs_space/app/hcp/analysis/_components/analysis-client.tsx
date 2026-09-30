@@ -9,6 +9,10 @@ import { StructuredAnalysis, type StructuredAnalysisData } from './structured-an
 import { translateCanonicalValue, type AppLanguage } from '@/lib/i18n';
 import { ClinicalAiNotice } from '@/components/clinical-ai-notice';
 import { ingestImage } from '@/lib/images/ingest-image';
+import { useHcpAssessmentMode } from '@/components/hcp-assessment-mode';
+import type { AssessmentType } from '@/lib/assessment-type';
+import { GeneralWoundAnalysisView } from './general-wound-analysis';
+import type { GeneralWoundAnalysis } from '@/lib/ai/schemas/general-wound-analysis';
 
 interface AnalysisResult {
   language?: AppLanguage;
@@ -36,6 +40,7 @@ interface AnalysisResult {
   followUp: string;
   /** Rich result from the staged pipeline (absent on the legacy single-pass path). */
   structured?: StructuredAnalysisData;
+  generalWound?: GeneralWoundAnalysis;
 }
 
 /** Optional patient context the clinician can supply to improve accuracy. */
@@ -43,13 +48,15 @@ interface PatientContext {
   weightKg?: number;
   ageGroup?: 'adult' | 'child';
   mechanism?: string;
+  comorbidities?: string;
+  socialContext?: string;
 }
 
 /**
  * Best-effort persistence of a completed analysis (image + result) to the clinician
  * history page. Fire-and-forget: a save failure must NEVER disrupt the analysis view.
  */
-async function saveAnalysisToHistory(result: AnalysisResult, image: string, mimeType: string) {
+async function saveAnalysisToHistory(result: AnalysisResult, image: string, mimeType: string, assessmentType: AssessmentType) {
   try {
     let clinician: { name?: string; email?: string } | undefined;
     if (typeof window !== 'undefined') {
@@ -64,7 +71,7 @@ async function saveAnalysisToHistory(result: AnalysisResult, image: string, mime
     await fetch('/api/hcp/analyses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ result, image, mimeType, clinician }),
+      body: JSON.stringify({ result, image, mimeType, clinician, assessmentType }),
     });
   } catch {
     /* best-effort only */
@@ -78,6 +85,7 @@ async function responseError(response: Response, fallback: string): Promise<stri
 
 export function AnalysisClient() {
   const { t, lang } = useLanguage();
+  const { assessmentType } = useHcpAssessmentMode();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -91,6 +99,8 @@ export function AnalysisClient() {
   const [weightKg, setWeightKg] = useState('');
   const [patientCategory, setPatientCategory] = useState('');
   const [mechanism, setMechanism] = useState('');
+  const [comorbidities, setComorbidities] = useState('');
+  const [socialContext, setSocialContext] = useState('');
   const [loadingStage, setLoadingStage] = useState(0);
   const lastBase64Ref = useRef<string>('');
   const lastMimeRef = useRef<string>('image/jpeg');
@@ -151,9 +161,11 @@ export function AnalysisClient() {
       weightKg: Number.isFinite(w) && w > 0 ? w : undefined,
       ageGroup: patientCategory === 'adult' || patientCategory === 'child' ? patientCategory : undefined,
       mechanism: mechanism.trim() || undefined,
+      comorbidities: comorbidities.trim() || undefined,
+      socialContext: socialContext.trim() || undefined,
     };
-    return ctx.weightKg || ctx.ageGroup || ctx.mechanism ? ctx : undefined;
-  }, [weightKg, patientCategory, mechanism]);
+    return ctx.weightKg || ctx.ageGroup || ctx.mechanism || ctx.comorbidities || ctx.socialContext ? ctx : undefined;
+  }, [weightKg, patientCategory, mechanism, comorbidities, socialContext]);
 
   /** Read the SSE stream from /api/analyze-wound and resolve the completed result. */
   const readAnalysisStream = useCallback(async (response: Response): Promise<AnalysisResult | null> => {
@@ -247,7 +259,7 @@ export function AnalysisClient() {
           'Content-Type': 'application/json',
           'x-analysis-retry-count': String(retryCount),
         },
-        body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext(), language: lang }),
+        body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext(), language: lang, assessmentType }),
       });
 
       if (!response?.ok) throw new Error(await responseError(response, t('analysis.failed')));
@@ -258,7 +270,7 @@ export function AnalysisClient() {
         translationsRef.current = { [lang]: localized };
         setResult(localized);
         setAnalysisFailed(false);
-        void saveAnalysisToHistory(completed, base64, mime);
+        void saveAnalysisToHistory(completed, base64, mime, assessmentType);
       }
     } catch (err: any) {
       setAnalysisFailed(true);
@@ -266,7 +278,7 @@ export function AnalysisClient() {
     } finally {
       setAnalyzing(false);
     }
-  }, [imageFile, lang, patientContext, readAnalysisStream, t]);
+  }, [assessmentType, imageFile, lang, patientContext, readAnalysisStream, t]);
 
   const retryAnalysis = useCallback(() => {
     const retryCount = Math.min(10, analysisRetryCount + 1);
@@ -290,6 +302,7 @@ export function AnalysisClient() {
           priorAnalysis: result.structured,
           refineAnswers: answers,
           language: lang,
+          assessmentType,
         }),
       });
       if (!response?.ok) throw new Error(await responseError(response, t('analysis.refine_failed')));
@@ -298,14 +311,14 @@ export function AnalysisClient() {
         const localized = { ...completed, language: lang };
         translationsRef.current = { [lang]: localized };
         setResult(localized);
-        void saveAnalysisToHistory(completed, lastBase64Ref.current, lastMimeRef.current);
+        void saveAnalysisToHistory(completed, lastBase64Ref.current, lastMimeRef.current, assessmentType);
       }
     } catch (err: any) {
       setError(err?.message ?? t('analysis.refine_failed'));
     } finally {
       setRefining(false);
     }
-  }, [lang, result, patientContext, readAnalysisStream, t]);
+  }, [assessmentType, lang, result, patientContext, readAnalysisStream, t]);
 
   const clearImage = useCallback(() => {
     setImagePreview(null);
@@ -379,7 +392,7 @@ export function AnalysisClient() {
               {/* Optional patient context — improves accuracy; nothing is assumed when blank. */}
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
                 <p className="text-xs font-semibold text-gray-500">{t('analysis.patient_details')}</p>
-                <div className="grid sm:grid-cols-3 gap-3">
+                {assessmentType === 'acute_burn' && <div className="grid sm:grid-cols-3 gap-3">
                   <div>
                     <label className="text-xs text-gray-500 block mb-1">{t('analysis.patient_category')}</label>
                     <select
@@ -414,8 +427,32 @@ export function AnalysisClient() {
                       className="w-full text-sm border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#8B0000]/30"
                     />
                   </div>
+                </div>}
+                {assessmentType === 'acute_burn' && <p className="text-[11px] text-gray-400">{t('analysis.weight_help')}</p>}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs text-gray-500">{t('analysis.comorbidities')}</label>
+                    <textarea
+                      value={comorbidities}
+                      onChange={(event) => setComorbidities(event.target.value)}
+                      rows={3}
+                      maxLength={2000}
+                      className="w-full rounded-lg border border-gray-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B0000]/30"
+                      placeholder={t('analysis.comorbidities_placeholder')}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-gray-500">{t('analysis.social_context')}</label>
+                    <textarea
+                      value={socialContext}
+                      onChange={(event) => setSocialContext(event.target.value)}
+                      rows={3}
+                      maxLength={2000}
+                      className="w-full rounded-lg border border-gray-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B0000]/30"
+                      placeholder={t('analysis.social_context_placeholder')}
+                    />
+                  </div>
                 </div>
-                <p className="text-[11px] text-gray-400">{t('analysis.weight_help')}</p>
               </div>
               <button
                 onClick={() => void analyzeImage(0)}
@@ -475,10 +512,10 @@ export function AnalysisClient() {
 
               {/* Native skin type (Fitzpatrick) */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 overflow-hidden">
-                <div className="p-4 flex items-center justify-between">
+                {assessmentType === 'acute_burn' && <div className="p-4 flex items-center justify-between">
                   <span className="flex items-center gap-2 text-sm font-medium text-gray-600"><Palette className="w-4 h-4 text-[#E67E22]" /> {t('analysis.native_skin_type')}</span>
                   <span className="ml-3 min-w-0 break-words text-right text-sm font-bold text-[#8B0000]">{translateCanonicalValue(result?.fitzpatrickType, lang)}</span>
-                </div>
+                </div>}
                 {result?.fitzpatrickNote && result?.fitzpatrickNote !== 'N/A' && (
                   <div className="px-4 pb-4 -mt-1">
                     <p className="text-xs text-gray-600 leading-relaxed">{result?.fitzpatrickNote}</p>
@@ -514,6 +551,7 @@ export function AnalysisClient() {
               </div>
 
               {/* Wound bed / tissue assessment */}
+              {assessmentType === 'acute_burn' && (
               {((result?.tissueComposition && result?.tissueComposition !== 'N/A') ||
                 (result?.exudate && result?.exudate !== 'N/A') ||
                 (result?.woundEdges && result?.woundEdges !== 'N/A')) && (
@@ -601,6 +639,7 @@ export function AnalysisClient() {
               )}
 
               {/* Management Recommendations */}
+              {assessmentType === 'acute_burn' && <>
               <h3 className="font-display text-base font-bold text-gray-900 pt-2">{t('analysis.management')}</h3>
               <div className="space-y-3">
                 {[
@@ -614,6 +653,7 @@ export function AnalysisClient() {
                     <p className="text-xs font-semibold text-[#8B0000] mb-1">{item?.label}</p>
                     <p className="text-sm text-gray-700">{item?.value ?? t('common.not_available')}</p>
                   </div>
+                  </>}
                 ))}
               </div>
 
@@ -621,6 +661,7 @@ export function AnalysisClient() {
               {result?.structured && (
                 <StructuredAnalysis data={result.structured} onRefine={refineAnalysis} refining={refining} />
               )}
+              {result?.generalWound && <GeneralWoundAnalysisView data={result.generalWound} />}
             </motion.div>
           )}
 

@@ -5,6 +5,7 @@ import { localizedContent, type GuidelineResource } from '@/lib/i18n/index';
 import { Search, Flame, Droplets, Bug, Package, Scissors, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
+import { useHcpAssessmentMode } from '@/components/hcp-assessment-mode';
 
 const categoryIcons: Record<string, any> = {
   burn_care: Flame,
@@ -20,15 +21,27 @@ export function GuidelinesClient() {
   const [category, setCategory] = useState('all');
   const [expanded, setExpanded] = useState<string | null>(null);
   const content = localizedContent(lang).hcp.guidelines;
+  const { assessmentType } = useHcpAssessmentMode();
 
   const filtered = useMemo(() => {
     const query = search.toLowerCase();
+    const allowedIds = assessmentType === 'acute_burn'
+      ? new Set(['1', '2', '4', '6'])
+      : new Set(['3', '5', 'general-reference-infection', 'general-reference-wound']);
     return content.items.filter((guideline) => {
+      if (!allowedIds.has(guideline.id)) return false;
       const matchesCategory = category === 'all' || guideline.category === category;
       const matchesSearch = !query || guideline.title.toLowerCase().includes(query) || guideline.summary.toLowerCase().includes(query);
       return matchesCategory && matchesSearch;
     });
-  }, [category, content.items, search]);
+  }, [assessmentType, category, content.items, search]);
+
+  const filters = Object.entries(content.filters).filter(([key]) => {
+    if (key === 'all') return true;
+    return assessmentType === 'acute_burn'
+      ? ['burn_care', 'infection', 'surgical'].includes(key)
+      : ['wound_care', 'dressing', 'reference'].includes(key);
+  });
 
   return (
     <div className="space-y-6">
@@ -49,7 +62,7 @@ export function GuidelinesClient() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {Object.entries(content.filters).map(([key, label]) => {
+        {filters.map(([key, label]) => {
           const Icon = categoryIcons[key];
           return (
             <button
@@ -71,12 +84,12 @@ export function GuidelinesClient() {
           const isOpen = expanded === guideline.id;
           return (
             <motion.div key={guideline.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <button onClick={() => setExpanded(isOpen ? null : guideline.id)} className="w-full px-5 py-4 flex items-center justify-between text-left">
+              <button disabled={Boolean(guideline.placeholderStatus)} onClick={() => setExpanded(isOpen ? null : guideline.id)} className="w-full px-5 py-4 flex items-center justify-between text-left disabled:cursor-default">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">{guideline.title}</h3>
                   <p className="text-xs text-gray-500 mt-1">{guideline.summary}</p>
                 </div>
-                {isOpen ? <ChevronUp className="w-5 h-5 text-gray-400 shrink-0" /> : <ChevronDown className="w-5 h-5 text-gray-400 shrink-0" />}
+                {!guideline.placeholderStatus && (isOpen ? <ChevronUp className="w-5 h-5 text-gray-400 shrink-0" /> : <ChevronDown className="w-5 h-5 text-gray-400 shrink-0" />)}
               </button>
 
               <AnimatePresence>

@@ -8,12 +8,14 @@ import { LayoutDashboard, Brain, Calculator, Droplets, BookOpen, MessageSquare, 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, ReactNode, useCallback } from 'react';
+import { HcpAssessmentModeProvider, useHcpAssessmentMode } from '@/components/hcp-assessment-mode';
+import type { AssessmentType } from '@/lib/assessment-type';
 
 const navItems = [
   { href: '/hcp', icon: LayoutDashboard, labelKey: 'hcp.dashboard', shortKey: 'hcp.dashboard' },
   { href: '/hcp/analysis', icon: Brain, labelKey: 'hcp.analysis', shortKey: 'hcp.analysis' },
-  { href: '/hcp/tbsa', icon: Calculator, labelKey: 'hcp.tbsa', shortKey: 'hcp.tbsa' },
-  { href: '/hcp/parkland', icon: Droplets, labelKey: 'hcp.parkland', shortKey: 'hcp.parkland' },
+  { href: '/hcp/tbsa', icon: Calculator, labelKey: 'hcp.tbsa', shortKey: 'hcp.tbsa', burnOnly: true },
+  { href: '/hcp/parkland', icon: Droplets, labelKey: 'hcp.parkland', shortKey: 'hcp.parkland', burnOnly: true },
   { href: '/hcp/guidelines', icon: BookOpen, labelKey: 'hcp.guidelines', shortKey: 'hcp.guidelines' },
   { href: '/hcp/chat', icon: MessageSquare, labelKey: 'hcp.chat', shortKey: 'hcp.chat_short' },
   { href: '/hcp/history', icon: History, labelKey: 'hcp.history', shortKey: 'hcp.history' },
@@ -25,8 +27,9 @@ interface HcpUser {
   email: string;
 }
 
-export function HcpLayoutClient({ children }: { children: ReactNode }) {
+function HcpLayoutContent({ children }: { children: ReactNode }) {
   const { t, lang } = useLanguage();
+  const { assessmentType, setAssessmentType } = useHcpAssessmentMode();
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -34,6 +37,14 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
   const [authChecked, setAuthChecked] = useState(false);
   const [serverSession, setServerSession] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const visibleNavItems = navItems.filter((item) => !item.burnOnly || assessmentType === 'acute_burn');
+
+  const switchMode = useCallback((mode: AssessmentType) => {
+    setAssessmentType(mode);
+    if (mode === 'general_wound' && (pathname === '/hcp/tbsa' || pathname === '/hcp/parkland')) {
+      router.push('/hcp');
+    }
+  }, [pathname, router, setAssessmentType]);
 
   useEffect(() => {
     let cancelled = false;
@@ -89,6 +100,12 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
     }
   }, [authChecked, user, router]);
 
+  useEffect(() => {
+    if (assessmentType === 'general_wound' && (pathname === '/hcp/tbsa' || pathname === '/hcp/parkland')) {
+      router.replace('/hcp');
+    }
+  }, [assessmentType, pathname, router]);
+
   const handleLogout = useCallback(() => {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('hcp_auth');
@@ -128,7 +145,21 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-1">
-          {navItems?.map((item: any) => {
+          <div className="mb-3 rounded-xl border border-gray-200 bg-gray-50 p-1" role="group" aria-label={t('hcp.assessment_mode')}>
+            {(['acute_burn', 'general_wound'] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => switchMode(mode)}
+                className={`w-full rounded-lg px-2 py-2 text-left text-xs font-semibold transition-colors ${
+                  assessmentType === mode ? 'bg-[#8B0000] text-white shadow-sm' : 'text-gray-600 hover:bg-white'
+                }`}
+              >
+                {t(`hcp.mode.${mode}`)}
+              </button>
+            ))}
+          </div>
+          {visibleNavItems.map((item: any) => {
             const active = pathname === item?.href;
             return (
               <Link
@@ -170,7 +201,21 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
           <button onClick={() => setMobileOpen(false)}><X className="w-5 h-5" /></button>
         </div>
         <nav className="p-3 space-y-1">
-          {navItems?.map((item: any) => {
+          <div className="mb-3 rounded-xl border border-gray-200 bg-gray-50 p-1">
+            {(['acute_burn', 'general_wound'] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => switchMode(mode)}
+                className={`w-full rounded-lg px-2 py-2 text-left text-xs font-semibold ${
+                  assessmentType === mode ? 'bg-[#8B0000] text-white' : 'text-gray-600'
+                }`}
+              >
+                {t(`hcp.mode.${mode}`)}
+              </button>
+            ))}
+          </div>
+          {visibleNavItems.map((item: any) => {
             const active = pathname === item?.href;
             return (
               <Link
@@ -209,6 +254,9 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <span className="hidden rounded-full bg-[#8B0000]/10 px-3 py-1 text-xs font-semibold text-[#8B0000] sm:inline">
+                {t(`hcp.mode.${assessmentType}`)}
+              </span>
               <DemoEnvironmentBadge />
               <LanguageToggleDark />
               {/* User Profile */}
@@ -255,7 +303,7 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
       {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white border-t border-gray-200 safe-area-bottom">
         <div className="flex items-center justify-around px-1 py-1">
-          {navItems?.map((item: any) => {
+          {visibleNavItems.map((item: any) => {
             const active = pathname === item?.href;
             return (
               <Link
@@ -283,5 +331,13 @@ export function HcpLayoutClient({ children }: { children: ReactNode }) {
         </div>
       </nav>
     </div>
+  );
+}
+
+export function HcpLayoutClient({ children }: { children: ReactNode }) {
+  return (
+    <HcpAssessmentModeProvider>
+      <HcpLayoutContent>{children}</HcpLayoutContent>
+    </HcpAssessmentModeProvider>
   );
 }

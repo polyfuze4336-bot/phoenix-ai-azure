@@ -18,6 +18,7 @@ import {
   computeParkland,
   getAnalysisTimeoutMs,
   runAnalysisPipeline,
+  runGeneralWoundAnalysis,
   type PatientContext,
 } from '@/lib/ai/analysis/pipeline';
 import { toFlatHcpAnalysis } from '@/lib/ai/schemas/burn-wound-analysis';
@@ -30,6 +31,7 @@ import {
   recordImageAnalysisEvent,
   type ImageAnalysisTelemetryContext,
 } from '@/lib/telemetry/analysis-events';
+import { parseAssessmentType } from '@/lib/assessment-type';
 
 /** Coerce an untrusted patient-context object into the typed shape (no invented values). */
 function readPatientContext(raw: unknown): PatientContext | undefined {
@@ -43,6 +45,8 @@ function readPatientContext(raw: unknown): PatientContext | undefined {
     mechanism: typeof p.mechanism === 'string' ? p.mechanism : undefined,
     timeSinceInjury: typeof p.timeSinceInjury === 'string' ? p.timeSinceInjury : undefined,
     freeText: typeof p.freeText === 'string' ? p.freeText.slice(0, 2000) : undefined,
+    comorbidities: typeof p.comorbidities === 'string' ? p.comorbidities.slice(0, 2000) : undefined,
+    socialContext: typeof p.socialContext === 'string' ? p.socialContext.slice(0, 2000) : undefined,
   };
   return Object.values(ctx).some((v) => v !== undefined) ? ctx : undefined;
 }
@@ -59,8 +63,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { image, mimeType } = body ?? {};
     const language = parseRequestedLanguage(body?.language);
+    const assessmentType = parseAssessmentType(body?.assessmentType);
     if (!language) {
       return new Response(JSON.stringify({ error: 'Invalid language. Use "en" or "ms".' }), { status: 400 });
+    }
+    if (!assessmentType) {
+      return new Response(JSON.stringify({ error: 'Invalid assessment type.' }), { status: 400 });
     }
 
     const validation = validateImageInput({ image, mimeType });
@@ -107,6 +115,49 @@ export async function POST(request: NextRequest) {
 
     const imageDataUrl = `data:${validation.mimeType};base64,${validation.base64}`;
 
+    if (assessmentType === 'general_wound') {
+      try {
+        const generalWound = await runGeneralWoundAnalysis({
+          imageDataUrl,
+          language,
+          patient,
+          correlationId,
+        });
+        recordImageAnalysisEvent('image_analysis_completed', {
+          ...analysisTelemetry,
+          httpStatus: 200,
+          latencyMs: Date.now() - requestStartedAt,
+        });
+        return createResultSseResponse({
+          result: {
+            language,
+            assessmentType,
+            fitzpatrickType: generalWound.fitzpatrickPhototype,
+            fitzpatrickNote: generalWound.imageQuality.note,
+            woundCategory: generalWound.woundCategory,
+            woundType: generalWound.woundCategory,
+            severity: generalWound.analysisQuality,
+            characteristics: generalWound.woundCharacteristics,
+            confidence: generalWound.confidenceLevel,
+            isBurn: false,
+            generalWound,
+          },
+          processingEvent: { status: 'processing', message: 'Analyzing' },
+          correlationId,
+        });
+      } catch (err) {
+        const response = aiErrorResponse(err, 'LLM API error');
+        const failure = imageAnalysisFailure(err);
+        recordImageAnalysisEvent('image_analysis_failed', {
+          ...analysisTelemetry,
+          errorCategory: failure.category,
+          httpStatus: response.status,
+          latencyMs: Date.now() - requestStartedAt,
+        });
+        return response;
+      }
+    }
+
     // --- Staged pipeline (default): multi-stage, evidence-gated, deterministic calc.
     if (pipelineMode === 'staged') {
       try {
@@ -133,7 +184,7 @@ export async function POST(request: NextRequest) {
           latencyMs: Date.now() - requestStartedAt,
         });
         return createResultSseResponse({
-          result: { ...flat, structured: rich, meta, language },
+          result: { ...flat, structured: rich, meta, language, assessmentType },
           processingEvent: { status: 'processing', message: 'Analyzing' },
           correlationId,
         });
@@ -176,7 +227,7 @@ export async function POST(request: NextRequest) {
               latencyMs: Date.now() - requestStartedAt,
             });
             return createResultSseResponse({
-              result: { ...parsed, parklandFluid: parkland.summary, language, pipelineUsed: 'single-fallback' },
+              result: { ...parsed, parklandFluid: parkland.summary, language, assessmentType, pipelineUsed: 'single-fallback' },
               processingEvent: { status: 'processing', message: 'Analyzing' },
               correlationId,
             });
@@ -255,7 +306,7 @@ export async function POST(request: NextRequest) {
       language,
     );
     return createResultSseResponse({
-      result: { ...parsed, parklandFluid: parkland.summary, language },
+      result: { ...parsed, parklandFluid: parkland.summary, language, assessmentType },
       processingEvent: { status: 'processing', message: 'Analyzing' },
       correlationId,
     });

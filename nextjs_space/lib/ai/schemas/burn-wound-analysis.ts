@@ -106,6 +106,7 @@ export const interpretationSchema = z.object({
   exudate: clinicalFieldLoose,
   infectionSigns: clinicalFieldLoose,
   edgesAndPeriwound: clinicalFieldLoose,
+  repairRegeneration: clinicalFieldLoose,
   severity: str(),
   // Quantification — separates visual extent from measured dimensions.
   visualExtent: str(), // qualitative, e.g. "small area on dorsal hand"
@@ -175,6 +176,14 @@ export const burnWoundAnalysisSchema = z.object({
   }),
   observation: visualObservationSchema,
   interpretation: interpretationSchema,
+  timers: z.object({
+    tissueManagement: str(),
+    infectionInflammation: str(),
+    moistureImbalance: str(),
+    edgeOfWound: str(),
+    repairRegeneration: str(),
+    socialPatientFactors: str(),
+  }),
   management: managementSchema,
   parkland: parklandBlock,
   confidenceByCategory: z.record(z.string(), confidenceLevel).catch({}),

@@ -62,10 +62,12 @@ model AnalysisRecord {
   confidence     String?
   tbsaEstimate   String?
   isBurn         Boolean  @default(false)
+  assessmentType String?
   result         Json
   createdAt      DateTime @default(now())
 
   @@index([createdAt])
+  @@index([assessmentType, createdAt])
 }
 
 model Article {

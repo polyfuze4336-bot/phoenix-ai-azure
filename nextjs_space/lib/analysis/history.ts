@@ -15,6 +15,7 @@
 
 import { prisma, withDbRetry } from '@/lib/db';
 import { getStorageProvider, validateUpload } from '@/lib/storage/storage-provider';
+import type { AssessmentType } from '@/lib/assessment-type';
 
 /** The structured HCP wound assessment produced by /api/analyze-wound. */
 export type HcpAnalysisResult = Record<string, unknown> & {
@@ -34,6 +35,7 @@ export interface SaveAnalysisInput {
   mimeType?: string | null;
   clinicianName?: string | null;
   clinicianEmail?: string | null;
+  assessmentType: AssessmentType;
 }
 
 export interface AnalysisRecordSummary {
@@ -48,6 +50,7 @@ export interface AnalysisRecordSummary {
   tbsaEstimate: string | null;
   isBurn: boolean;
   hasImage: boolean;
+  assessmentType: AssessmentType | null;
 }
 
 export interface AnalysisRecordDetail extends AnalysisRecordSummary {
@@ -107,6 +110,7 @@ export async function saveAnalysisRecord(input: SaveAnalysisInput): Promise<{ id
         confidence: str(result.confidence),
         tbsaEstimate: str(result.tbsaEstimate),
         isBurn: result.isBurn === true,
+        assessmentType: input.assessmentType,
         result: result as object,
       },
       select: { id: true },
@@ -117,9 +121,14 @@ export async function saveAnalysisRecord(input: SaveAnalysisInput): Promise<{ id
 }
 
 /** Return retained analyses, newest first, for the history list. */
-export async function listAnalysisRecords(limit = 100): Promise<AnalysisRecordSummary[]> {
-  const rows = await withDbRetry(() =>
-    prisma.analysisRecord.findMany({
+export async function listAnalysisRecords(
+  assessmentType: AssessmentType,
+  limit = 100,
+): Promise<{ records: AnalysisRecordSummary[]; legacyCount: number }> {
+  const [rows, legacyCount] = await withDbRetry(() =>
+    prisma.$transaction([
+      prisma.analysisRecord.findMany({
+      where: { assessmentType },
       orderBy: { createdAt: 'desc' },
       take: Math.min(Math.max(limit, 1), 200),
       select: {
@@ -134,11 +143,14 @@ export async function listAnalysisRecords(limit = 100): Promise<AnalysisRecordSu
         tbsaEstimate: true,
         isBurn: true,
         imageKey: true,
+        assessmentType: true,
       },
-    }),
+      }),
+      prisma.analysisRecord.count({ where: { assessmentType: null } }),
+    ]),
   );
 
-  return rows.map((r) => ({
+  return { records: rows.map((r) => ({
     id: r.id,
     createdAt: r.createdAt.toISOString(),
     clinicianName: r.clinicianName,
@@ -150,7 +162,8 @@ export async function listAnalysisRecords(limit = 100): Promise<AnalysisRecordSu
     tbsaEstimate: r.tbsaEstimate,
     isBurn: r.isBurn,
     hasImage: Boolean(r.imageKey),
-  }));
+    assessmentType: r.assessmentType as AssessmentType,
+  })), legacyCount };
 }
 
 /** Return a single retained analysis with a fresh image SAS URL. */
@@ -184,6 +197,7 @@ export async function getAnalysisRecord(id: string): Promise<AnalysisRecordDetai
     tbsaEstimate: row.tbsaEstimate,
     isBurn: row.isBurn,
     hasImage: Boolean(row.imageKey),
+    assessmentType: row.assessmentType as AssessmentType | null,
     result: (row.result as HcpAnalysisResult) ?? {},
     imageUrl,
     imageMimeType: row.imageMimeType,

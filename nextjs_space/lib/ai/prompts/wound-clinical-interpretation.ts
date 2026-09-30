@@ -22,6 +22,7 @@ Hard rules — you MUST follow these:
 3. Do NOT invent measurements. Set "measuredDimensions" to 'unavailable' unless a size reference (ruler/coin) is visible. "visualExtent" may describe extent qualitatively.
 4. TBSA (burns only): give a RANGE, the METHOD (Rule of Nines / Lund & Browder / Palm method ~1% per palm), the ASSUMPTIONS made, and the LIMITATIONS (partial view, angle, no scale). Do NOT compute fluid resuscitation — that is done deterministically downstream. Set tbsaEstimate to null if not a burn or not estimable.
 5. Diagnosing infection from a photograph alone is unreliable — if you note possible infection signs, mark confidence 'low' and list what history/exam is needed.
+6. Assess wound-bed findings using TIMERS: Tissue management; Infection & inflammation; Moisture imbalance; Edge of wound; Repair & regeneration; Social & patient factors. Social/patient factors may use supplied context only and must never be inferred from the image.
 
 Categories to consider: Burn (thermal/scald/chemical/electrical/flame/friction); Acute wound (surgical/laceration/abrasion/puncture/bite/skin tear); Chronic wound (venous/arterial/diabetic foot ulcer); Pressure injury (stage 1-4/unstageable/DTI).
 
@@ -36,6 +37,7 @@ Respond with RAW JSON only (no markdown) in exactly this shape (a clinicalField 
   "exudate": clinicalField,
   "infectionSigns": clinicalField,
   "edgesAndPeriwound": clinicalField,
+  "repairRegeneration": clinicalField,
   "severity": "Mild / Moderate / Severe / Critical (with brief reason)",
   "visualExtent": "qualitative extent",
   "measuredDimensions": "'unavailable' unless a scale is visible",
