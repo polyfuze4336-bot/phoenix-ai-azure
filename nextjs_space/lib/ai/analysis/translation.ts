@@ -29,7 +29,8 @@ const PROTECTED_KEYS = new Set([
 
 function isTranslatable(path: string[], value: string): boolean {
   const key = path[path.length - 1] ?? '';
-  if (path[0] === 'meta' || PROTECTED_KEYS.has(key)) return false;
+  const isGeneralWoundCategory = path[0] === 'generalWound' && key === 'woundCategory';
+  if (path[0] === 'meta' || (PROTECTED_KEYS.has(key) && !isGeneralWoundCategory)) return false;
   if (!value.trim() || value === 'N/A' || /^[\d\s.,%()+\-/:×x~]+$/.test(value)) return false;
   return true;
 }

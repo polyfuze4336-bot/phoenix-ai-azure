@@ -167,7 +167,7 @@ export const analysisQuality = z
 export type AnalysisQuality = z.infer<typeof analysisQuality>;
 
 export const burnWoundAnalysisSchema = z.object({
-  schemaVersion: z.literal('2.0').catch('2.0'),
+  schemaVersion: z.literal('2.1').catch('2.1'),
   analysisQuality,
   imageQuality: z.object({
     adequate: boolLoose,

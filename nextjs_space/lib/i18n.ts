@@ -452,6 +452,7 @@ const canonicalLabels: Record<string, Record<AppLanguage, string>> = {
   purulent: { en: 'Purulent', ms: 'Bernanah' },
   pending: { en: 'Pending', ms: 'Menunggu' },
   completed: { en: 'Completed', ms: 'Selesai' },
+  'general wound': { en: 'General Wound', ms: 'Luka Umum' },
 };
 
 export function translateCanonicalValue(value: string | null | undefined, lang: AppLanguage): string {

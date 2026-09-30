@@ -626,7 +626,7 @@ function assemble(args: {
     analysisQuality === 'HIGH' ? 'High' : analysisQuality === 'MODERATE' ? 'Moderate' : analysisQuality === 'LOW' ? 'Low' : 'Insufficient';
 
   const candidate = {
-    schemaVersion: '2.0' as const,
+    schemaVersion: '2.1' as const,
     analysisQuality,
     imageQuality: { adequate: observation.imageQualityAdequate, issues, note: observation.imageQualityNote },
     observation,

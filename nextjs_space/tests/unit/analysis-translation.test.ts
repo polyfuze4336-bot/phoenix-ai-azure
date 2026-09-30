@@ -47,6 +47,23 @@ test('translated narrative preserves canonical and deterministic clinical values
   assert.equal((result.meta as any).analysisId, 'unchanged-id');
 });
 
+test('translates free-text General Wound categories while preserving canonical root categories', () => {
+  const generalWoundSource = {
+    language: 'en',
+    woundCategory: 'General Wound',
+    generalWound: {
+      woundCategory: 'Chronic wound',
+    },
+  };
+
+  const result = applyAnalysisTranslations(generalWoundSource, [
+    { id: 'generalWound.woundCategory', text: 'Luka kronik' },
+  ], 'ms');
+
+  assert.equal(result.woundCategory, 'General Wound');
+  assert.equal((result.generalWound as Record<string, unknown>).woundCategory, 'Luka kronik');
+});
+
 test('translation is rejected if any numeric value changes', () => {
   assert.throws(() => applyAnalysisTranslations(source, [
     { id: 'characteristics', text: 'Lepuh pada 16.0% TBSA' },

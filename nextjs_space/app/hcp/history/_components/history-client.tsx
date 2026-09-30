@@ -60,25 +60,36 @@ export function HistoryClient() {
   const [translationError, setTranslationError] = useState(false);
   const [legacyCount, setLegacyCount] = useState(0);
   const translatedResultsRef = useRef<Record<string, Partial<Record<AppLanguage, Record<string, any>>>>>({});
+  const listRequestRef = useRef(0);
+  const detailRequestRef = useRef(0);
 
   const loadList = useCallback(async () => {
+    const requestId = ++listRequestRef.current;
     setLoading(true);
     setError('');
     try {
       const res = await fetch(`/api/hcp/analyses?assessmentType=${assessmentType}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(t('history.load_error'));
+      if (requestId !== listRequestRef.current) return;
       setRecords(Array.isArray(data?.records) ? data.records : []);
       setLegacyCount(typeof data?.legacyCount === 'number' ? data.legacyCount : 0);
     } catch (e: any) {
+      if (requestId !== listRequestRef.current) return;
       setError(e?.message ?? t('history.load_error'));
       setRecords([]);
     } finally {
-      setLoading(false);
+      if (requestId === listRequestRef.current) setLoading(false);
     }
   }, [assessmentType, t]);
 
   useEffect(() => {
+    detailRequestRef.current += 1;
+    setSelectedId(null);
+    setDetail(null);
+    setDetailLoading(false);
+    setDetailTranslating(false);
+    setTranslationError(false);
     loadList();
   }, [loadList]);
 
@@ -120,6 +131,7 @@ export function HistoryClient() {
   }, [detail, lang]);
 
   const selectRecord = useCallback(async (id: string) => {
+    const requestId = ++detailRequestRef.current;
     setSelectedId(id);
     setDetail(null);
     setDetailLoading(true);
@@ -129,6 +141,7 @@ export function HistoryClient() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(t('history.detail_error'));
       const record = data?.record ?? null;
+      if (requestId !== detailRequestRef.current || record?.assessmentType !== assessmentType) return;
       if (record?.result?.language === 'en' || record?.result?.language === 'ms') {
         translatedResultsRef.current[record.id] = {
           ...translatedResultsRef.current[record.id],
@@ -137,11 +150,11 @@ export function HistoryClient() {
       }
       setDetail(record);
     } catch {
-      setDetail(null);
+      if (requestId === detailRequestRef.current) setDetail(null);
     } finally {
-      setDetailLoading(false);
+      if (requestId === detailRequestRef.current) setDetailLoading(false);
     }
-  }, [t]);
+  }, [assessmentType, t]);
 
   return (
     <div className="space-y-6">
