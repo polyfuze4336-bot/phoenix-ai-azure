@@ -4,7 +4,7 @@
 flowchart TB
     subgraph Interfaces["Client Interfaces"]
         HCPUI["HCP Interface\nAcute Burn / General Wound mode"]
-        COMMUI["Community Interface\n(chat)"]
+        COMMUI["Community Interface\n(chat + guided burn assessment)"]
     end
 
     subgraph Routes["Next.js API Routes"]
@@ -12,6 +12,7 @@ flowchart TB
         RHCPAN["/api/analyze-wound\n(explicit mode, validated EN/MS)"]
         RHCPTRANS["/api/analyze-wound/translate\n(text-only existing result)"]
         RCOMCHAT["/api/community-chat\n(validated EN/MS)"]
+        RCOMBURN["/api/community-burn\n(validated image + advisory observation)"]
     end
 
     subgraph Prompts["Prompt Layer (lib/ai/prompts)"]
@@ -59,6 +60,9 @@ flowchart TB
     HCPUI --> RHCPAN
     HCPUI -->|"language switch; no image"| RHCPTRANS
     COMMUI --> RCOMCHAT
+    COMMUI -->|"questionnaire first, optional image"| RCOMBURN
+    RCOMBURN --> VALIN
+    RCOMBURN --> FACTORY
 
     RHCPCHAT --> PHCPCHAT --> FACTORY
     RHCPAN --> ORCH

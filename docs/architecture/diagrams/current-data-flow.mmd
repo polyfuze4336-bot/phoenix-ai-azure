@@ -45,6 +45,17 @@ flowchart TB
         S3 --> UI3
     end
 
+    subgraph CommBurn["Community Burn Assessment"]
+        U5["User"] --> Q5["Bilingual questionnaire"]
+        Q5 --> D5["Deterministic score + red flags\nMinor/Major/indeterminate; clinic/hospital/999"]
+        Q5 --> IMG5["Optional image upload after questions"]
+        IMG5 --> R5["/api/community-burn"]
+        R5 --> V5["Image MIME/base64/signature validation"]
+        V5 --> F5["Foundry vision: supporting observation only"]
+        F5 --> D5
+        D5 --> OUT5["Community result + First Aid Tips + professional notice"]
+    end
+
     subgraph CommEducation["Community First Aid Video"]
         U4["User"] --> UI4["First Aid Video UI + global EN/MS content"]
         UI4 --> R4["Dynamic Next.js Server Component"]

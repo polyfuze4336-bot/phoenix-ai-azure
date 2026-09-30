@@ -16,6 +16,20 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.4.0] — 2026-09-30
+
+### Changed
+- Extended Community Self-Assessment with a questionnaire-first public burn assessment, followed
+  by optional validated image analysis. Existing scores and thresholds remain unchanged; unmapped
+  inputs safely yield an indeterminate result unless deterministic escalation applies.
+- Public results use Minor/Major (or indeterminate), with separate clinic/hospital/999 dispositions;
+  prototype red-flag escalation cannot be downgraded by image interpretation. First Aid education
+  is reordered and expanded in both languages.
+
+### Boundaries
+- No HCP analysis, persistence, identity, Azure resource, or deployment topology change.
+- See [CHANGE-20260930](./changes/CHANGE-20260930-community-burn-assessment.md).
+
 ## [8.3.0] — 2026-09-30
 
 ### Changed

@@ -1,0 +1,22 @@
+# CHANGE-20260930 — Community burn assessment
+
+## Impact
+- **Level:** MEDIUM
+- **Architecture version:** `8.3.0` → `8.4.0`
+- **ADR:** Not required; the existing Community UI and Azure vision provider are reused without
+  changing identity, data retention or resource topology.
+
+## Changes
+- Community questionnaire and existing burn score run before optional image upload. Unmapped
+  mechanisms cannot be assigned new numeric scores; an indeterminate result is shown when no
+  deterministic escalation applies. Existing minor/moderate/emergency tiers map to Minor/Major/Major.
+- Explicit prototype red flags take precedence over image observations. Dispositions are primary
+  care, hospital or hospital plus 999. Age and time are context only.
+- Every result includes professional-care guidance and First Aid Tips; bilingual First Aid guides
+  are reorganized without removing the existing wound or sunburn guidance.
+- The image API validates input and returns only plain-language supporting observations. Images
+  and questionnaires are not logged or retained.
+
+## Limitations
+- Prototype escalation rules and image interpretation require clinical review; this is not a
+  diagnostic or clinically validated tool. No image alone can classify a burn safely.
