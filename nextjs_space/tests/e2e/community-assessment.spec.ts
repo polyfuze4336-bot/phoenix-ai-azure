@@ -49,7 +49,7 @@ for (const lang of ['en', 'ms'] as const) {
     await fillQuestions(page, lang);
     await page.getByRole('button', { name: text.assess }).click();
     await expect(page.getByRole('heading', { name: text.minor })).toBeVisible();
-    await expect(page.getByText(new RegExp(`${text.age}: 30`))).toBeVisible();
+    await expect(page.getByText(`${text.age}: 30. ${text.time}: 2.`, { exact: true })).toBeVisible();
     await expect(page.getByText(text.notice, { exact: true })).toBeVisible();
 
     await page.goto('/community/assessment');
@@ -71,12 +71,14 @@ for (const lang of ['en', 'ms'] as const) {
     await page.getByRole('button', { name: text.assess }).click();
     await expect(page.getByRole('heading', { name: text.major })).toBeVisible();
     await expect(page.getByRole('link', { name: lang === 'en' ? 'Call 999 immediately' : 'Hubungi 999 segera' })).toHaveAttribute('href', 'tel:999');
+    await expect(page.getByRole('link', { name: lang === 'en' ? 'First Aid Tips' : 'Tips Pertolongan Cemas' })).toHaveAttribute('href', '/community/first-aid');
     await expect(page.getByText(text.notice, { exact: true })).toBeVisible();
 
     await page.goto('/community/assessment');
     await fillQuestions(page, lang, { cause: text.contact });
     await page.getByRole('button', { name: text.assess }).click();
     await expect(page.getByRole('heading', { name: text.indeterminate })).toBeVisible();
+    await expect(page.getByRole('link', { name: lang === 'en' ? 'First Aid Tips' : 'Tips Pertolongan Cemas' })).toHaveAttribute('href', '/community/first-aid');
     await expect(page.getByText(text.notice, { exact: true })).toBeVisible();
   });
 

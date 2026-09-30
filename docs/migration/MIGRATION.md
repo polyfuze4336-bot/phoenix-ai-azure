@@ -1702,3 +1702,10 @@ configuration while retaining automatic Azure deployment.
 - First Aid order is Flame, Contact/Scald, Chemical, Electrical, Wound; existing Sunburn
   guidance remains inside the Contact/Scald card. These rules require clinical/manual review
   and do not establish diagnostic accuracy or regulatory approval.
+- Files added: Community burn scoring library, optional vision API, unit/RAI tests, architecture
+  change record. Modified: Community assessment UI, EN/BM content and First Aid presentation,
+  browser/API tests, architecture/RAI records and migration audit trail. No files deleted.
+- Validation: build (test-only offline font responses), TypeScript, lint, unit 134/134,
+  RAI 35/35, integration 14/14, API 24/24, focused Community E2E 13/13 and architecture drift
+  PASS. Full E2E includes unrelated existing HCP assertion failures. Azure model behavior,
+  clinical rule thresholds and accuracy need manual review before clinical use.

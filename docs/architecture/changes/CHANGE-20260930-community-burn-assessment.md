@@ -21,3 +21,11 @@
 ## Limitations
 - Prototype escalation rules and image interpretation require clinical review; this is not a
   diagnostic or clinically validated tool. No image alone can classify a burn safely.
+
+## Validation
+- PASS: production build (offline Next.js test-only font responses), typecheck, lint,
+  134 unit, 35 RAI, 14 integration, 24 API, 13 focused Community browser tests,
+  and architecture drift validation. Community mobile widths 320–430px, tablet and
+  desktop are covered by browser tests.
+- Full E2E also exercises HCP flows; unrelated pre-existing HCP assertions require
+  maintenance. Live Azure image interpretation and clinical accuracy were not tested.
