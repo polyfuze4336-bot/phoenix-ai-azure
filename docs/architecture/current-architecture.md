@@ -6,7 +6,7 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.4.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.5.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -161,7 +161,7 @@ Companion diagrams:
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |
 | Global English / Bahasa Melayu UI | Root `LanguageProvider`, `components/language-toggle.tsx`, `lib/i18n/{en,ms,index}.ts`; persisted `AppLanguage` (`en`/`ms`) | Implemented |
 | Bilingual clinical/data notices + demo boundary | `components/clinical-ai-notice.tsx`, `components/demo-environment-badge.tsx`; contextual notices on analysis/upload/results, chat/input, TBSA and Parkland | Implemented |
-| Analysis failure recovery | `app/hcp/analysis/_components/analysis-client.tsx`; selected image and form context remain available with exact bilingual retry/replacement actions | Implemented |
+| Analysis failure recovery | `app/hcp/analysis/_components/analysis-client.tsx`; selected image and form context remain available with bilingual categorized errors, bounded browser wait, retry/replacement and manual-assessment guidance; no raw provider response shown | Implemented |
 | Existing-result language switching | HCP analysis and History clients call text-only `/api/analyze-wound/translate`, cache EN/MS representations, retain the original on failure, and never resend the image | Implemented |
 | Responsive interface + theming | Tailwind + shadcn/ui, `components/theme-*` | Implemented |
 
@@ -192,7 +192,7 @@ Companion diagrams:
 | Staged analysis prompts | `lib/ai/prompts/{wound-visual-observation,wound-clinical-interpretation,wound-management,wound-analysis-critic}.ts`; receive the selected output language | Implemented |
 | AI output-language validation | `lib/ai/language.ts`; detects predominantly wrong-language completions, retries once with a rewrite instruction, logs language codes only | Implemented |
 | Existing-analysis translation | `lib/ai/analysis/translation.ts`, `/api/analyze-wound/translate`; translates narrative text only, validates protected canonical/numeric values unchanged, and receives no image | Implemented |
-| Staged analysis pipeline | `lib/ai/analysis/pipeline.ts` (`runAnalysisPipeline`, `assembleAnalysis`) — default for `/api/analyze-wound`; rejects empty/malformed core output, retains explicit unreadable/non-burn output as a low-information result, preserves canonical structured enums while localizing narrative EN/MS; flag `AI_ANALYSIS_PIPELINE=single` reverts | Implemented |
+| Staged analysis pipeline | `lib/ai/analysis/pipeline.ts` (`runAnalysisPipeline`, `runGeneralWoundAnalysis`, `assembleAnalysis`) — explicit mode chooses separate General Wound prompt/schema without burn-only fields or Acute Burn observation/interpretation and deterministic Parkland; invalid core or single-pass output fails explicitly, preserves canonical structured enums while localizing narrative EN/MS; flag `AI_ANALYSIS_PIPELINE=single` applies only to Acute Burn | Implemented |
 | Deterministic clinical calc | `lib/clinical/{parkland,tbsa}.ts` reused by the pipeline — Image Analysis requires an explicit adult/child category, applies >=15%/>=10% indication thresholds, and calculates only with supplied weight | Implemented |
 | Rich analysis schema + adapter | `lib/ai/schemas/burn-wound-analysis.ts` (observation vs interpretation, field confidence, gaps) + flat back-compat adapter | Implemented |
 | Streaming | `lib/ai/streaming/{sse,collect,text-stream}.ts`; interrupted/empty structured streams are categorized | Implemented |
@@ -202,7 +202,7 @@ Companion diagrams:
 | Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
 | API reliability harness | `tests/reliability/image-analysis-reliability.ts` with safe demo-image inputs; sequential and optional concurrent execution | Implemented; live execution operator-triggered |
 | AI telemetry | `lib/ai/telemetry.ts`, `lib/telemetry/analysis-events.ts`; privacy-safe analysis lifecycle events | Implemented |
-| Azure filter classification | `lib/ai/content-filter.ts`, transport and stream collection; records only allowlisted input/output category/severity metadata, never raw errors or image content | Implemented |
+| Azure filter classification | `lib/ai/content-filter.ts`, transport and stream collection; input/output filter and explicit refusal are categorized without bypassing Microsoft.Default; HCP sees a neutral bilingual manual-assessment fallback. Only allowlisted category/severity metadata are recorded, never raw errors or image content | Implemented |
 
 **Wound image analysis flow (`/api/analyze-wound`).** The Original HCP client sends image data to
 the API and consumes its SSE completion. The default `staged` pipeline runs four

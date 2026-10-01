@@ -232,12 +232,14 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'output',
     status: 'active',
     description:
-      'Model output is extracted and validated against a Zod schema. Fenced or commentary-wrapped JSON is accepted and malformed structured output receives one bounded repair attempt. Empty or malformed core output stops the analysis; explicit unreadable-image or non-burn output is retained as a low-information result instead of inventing clinical findings. Non-core management or critic failure is marked unavailable.',
+      'Model output is extracted and validated against mode-specific Zod schemas. Fenced or commentary-wrapped JSON is accepted and malformed structured output receives one bounded repair attempt. Empty or malformed core output stops the analysis, including invalid Acute Burn single-pass output; General Wound requires its own clinical fields without burn quantities. Non-core management or critic failure is marked unavailable.',
     evidence: [
       'lib/ai/validation/wound-analysis-schema.ts',
       'lib/ai/schemas/burn-wound-analysis.ts',
+      'lib/ai/schemas/general-wound-analysis.ts',
+      'app/api/analyze-wound/route.ts',
     ],
-    tests: ['tests/unit/wound-schema.test.ts', 'tests/unit/ai-parsing.test.ts', 'tests/unit/analysis-pipeline.test.ts'],
+    tests: ['tests/unit/wound-schema.test.ts', 'tests/unit/ai-parsing.test.ts', 'tests/unit/analysis-pipeline.test.ts', 'tests/unit/general-wound-schema.test.ts', 'tests/unit/hcp-analysis-provider.test.ts'],
     userVisible: false,
   },
   {
@@ -283,9 +285,9 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'output',
     status: 'active',
     description:
-      'On model or validation failure the app returns a labelled unavailable state or actionable input error that preserves the medical disclaimer instead of guessing a clinical result.',
-    evidence: ['lib/ai/validation/wound-analysis-schema.ts', 'app/hcp/analysis/_components/analysis-client.tsx'],
-    tests: ['tests/unit/ai-parsing.test.ts', 'tests/api/routes.spec.ts'],
+      'On model or validation failure the HCP route returns a categorized error rather than a fabricated completed clinical result. Provider refusal has neutral bilingual manual-assessment guidance; the selected image and retry remain available.',
+    evidence: ['lib/ai/validation/wound-analysis-schema.ts', 'app/api/analyze-wound/route.ts', 'app/hcp/analysis/_components/analysis-client.tsx'],
+    tests: ['tests/unit/ai-parsing.test.ts', 'tests/api/routes.spec.ts', 'tests/e2e/hcp-analysis-retry.spec.ts', 'tests/rai/rai-safety.test.ts'],
     userVisible: true,
   },
   {

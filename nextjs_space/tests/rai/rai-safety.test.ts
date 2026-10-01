@@ -9,6 +9,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { assembleAnalysis } from '../../lib/ai/analysis/pipeline';
 import { baseObservation, baseInterpretation, baseManagement, passingCritic as critic } from './_fixtures';
+import { WOUND_VISUAL_OBSERVATION_PROMPT } from '../../lib/ai/prompts/wound-visual-observation';
+import { WOUND_CLINICAL_INTERPRETATION_PROMPT } from '../../lib/ai/prompts/wound-clinical-interpretation';
+import { GENERAL_WOUND_ANALYSIS_PROMPT } from '../../lib/ai/prompts/general-wound-analysis';
+import { hcpWoundAnalysisSystemPrompt } from '../../lib/ai/prompts/hcp-wound-analysis';
+
+test('RAI-SAFE-010: both HCP modes frame private-area images as medical without unrelated anatomy', () => {
+  for (const prompt of [
+    WOUND_VISUAL_OBSERVATION_PROMPT, WOUND_CLINICAL_INTERPRETATION_PROMPT,
+    GENERAL_WOUND_ANALYSIS_PROMPT, hcpWoundAnalysisSystemPrompt('en'),
+  ]) {
+    assert.match(prompt, /private anatomical area/i);
+    assert.match(prompt, /unrelated intimate anatomy|unrelated anatomy/i);
+  }
+});
 
 test('RAI-SAFE-006: Parkland is never computed from an assumed weight', () => {
   const a = assembleAnalysis({

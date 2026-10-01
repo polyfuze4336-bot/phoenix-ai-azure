@@ -13,10 +13,10 @@
  */
 
 /** Stage 1 — objective visual observation prompt. */
-export const WOUND_VISUAL_OBSERVATION_PROMPT_VERSION = '2.2.0';
+export const WOUND_VISUAL_OBSERVATION_PROMPT_VERSION = '2.3.0';
 
 /** Stage 2 — clinical interpretation prompt (observation vs interpretation). */
-export const WOUND_CLINICAL_INTERPRETATION_PROMPT_VERSION = '2.3.0';
+export const WOUND_CLINICAL_INTERPRETATION_PROMPT_VERSION = '2.4.0';
 
 /** Stage 3 — management + referral guidance prompt. */
 export const WOUND_MANAGEMENT_PROMPT_VERSION = '2.2.0';
@@ -25,19 +25,19 @@ export const WOUND_MANAGEMENT_PROMPT_VERSION = '2.2.0';
 export const WOUND_ANALYSIS_CRITIC_PROMPT_VERSION = '2.2.0';
 
 /** Single-pass fallback HCP prompt (used only when `AI_ANALYSIS_PIPELINE=single`). */
-export const HCP_WOUND_ANALYSIS_PROMPT_VERSION = '1.1.0';
+export const HCP_WOUND_ANALYSIS_PROMPT_VERSION = '1.2.0';
 
 /** HCP clinical chat system prompt. */
 export const HCP_CHAT_PROMPT_VERSION = '1.2.0';
 
 /** Dedicated General Wound assessment prompt. */
-export const GENERAL_WOUND_ANALYSIS_PROMPT_VERSION = '1.0.0';
+export const GENERAL_WOUND_ANALYSIS_PROMPT_VERSION = '1.1.0';
 
 /** Community (public) analysis + chat prompts. */
 export const COMMUNITY_WOUND_ANALYSIS_PROMPT_VERSION = '1.1.0';
 
 /** The staged analysis pipeline (`lib/ai/analysis/pipeline.ts`) as a whole. */
-export const ANALYSIS_PIPELINE_VERSION = '2.3.0';
+export const ANALYSIS_PIPELINE_VERSION = '2.4.0';
 
 /** The rich structured output schema (`lib/ai/schemas/burn-wound-analysis.ts`). */
 export const ANALYSIS_SCHEMA_VERSION = '2.1';

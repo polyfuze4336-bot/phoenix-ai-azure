@@ -16,6 +16,19 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.5.0] — 2026-10-01
+
+### Changed
+- HCP analysis now rejects invalid single-pass model output instead of reporting completion;
+  General Wound requires its own core fields and never requires burn-only quantities.
+- Provider refusals and failed/unfinished streams return recoverable, bilingual HCP errors;
+  clinical-image prompts clarify medically necessary private-area observations without changing
+  the Azure content-filter policy or model.
+- See [CHANGE-20261001](./changes/CHANGE-20261001-hcp-clinical-image-reliability.md).
+
+### Boundaries
+- No change to Azure resources, identity, storage, database, clinical calculators, or deployment.
+
 ## [8.4.0] — 2026-09-30
 
 ### Changed

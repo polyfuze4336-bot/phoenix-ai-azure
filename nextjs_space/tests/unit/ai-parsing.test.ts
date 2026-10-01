@@ -9,6 +9,7 @@ import {
   parseHcpWoundAnalysis,
   parseCommunityWoundAnalysis,
   HCP_ASSESSMENT_UNAVAILABLE,
+  hasHcpCoreFields,
   COMMUNITY_ASSESSMENT_UNAVAILABLE,
 } from '../../lib/ai/validation/wound-analysis-schema';
 
@@ -43,6 +44,14 @@ test('parseHcpWoundAnalysis: JSON array or non-object -> fallback', () => {
 
 test('parseHcpWoundAnalysis: object without any signal key -> fallback', () => {
   assert.deepEqual(parseHcpWoundAnalysis(JSON.stringify({ foo: 'bar' })), HCP_ASSESSMENT_UNAVAILABLE);
+});
+
+test('a single-pass HCP result needs clinical core fields before the route may report completion', () => {
+  assert.equal(hasHcpCoreFields('{"woundType":"Scald"}'), false);
+  assert.equal(hasHcpCoreFields('{"woundType":"Scald","woundCategory":"Burn","characteristics":"Blister","isBurn":true}'), false);
+  assert.equal(hasHcpCoreFields('{"woundType":"Scald","woundCategory":"Burn","characteristics":"Blister","isBurn":true,"tbsaEstimate":"unknown"}'), true);
+  assert.equal(hasHcpCoreFields('{"woundType":"Scald","woundCategory":"Burn","characteristics":"Blister","isBurn":true,"tbsaEstimate":15}'), true);
+  assert.equal(hasHcpCoreFields('{"woundType":"Wound","woundCategory":"Acute wound","characteristics":"Visible tissue","isBurn":false}'), true);
 });
 
 test('parseHcpWoundAnalysis: tolerant coercion of number/boolean to string', () => {

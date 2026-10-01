@@ -255,7 +255,7 @@ function instrumentStream(
         observe(value);
         controller.enqueue(value);
       } catch (err) {
-        settle('error', (err as { message?: string })?.message ?? 'stream_error');
+        settle('error', 'stream_error');
         controller.error(err);
       }
     },
@@ -348,9 +348,7 @@ export async function streamOpenAiCompatible(
             code: 'bad_request',
             category: 'AI_CONTENT_FILTER',
             status: 422,
-            clientMessage:
-              'Azure AI could not process this clinical image under the configured content filter. ' +
-              'The image was not analyzed. Contact the Azure administrator if legitimate clinical images are consistently blocked.',
+            clientMessage: 'This clinical image could not be analysed by the AI service. Please use clinical judgement and complete the assessment manually.',
             correlationId,
             contentFilter,
           });

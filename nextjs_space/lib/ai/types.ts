@@ -89,6 +89,7 @@ export type AiErrorCode =
 
 export type AiErrorCategory =
   | 'AI_CONTENT_FILTER'
+  | 'AI_CONFIG_ERROR'
   | 'AI_TIMEOUT'
   | 'AI_RATE_LIMIT'
   | 'AI_AUTH_ERROR'

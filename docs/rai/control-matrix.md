@@ -4,6 +4,11 @@ Stable control IDs. The authoritative, machine-readable version is
 [`lib/rai/controls.ts`](../../nextjs_space/lib/rai/controls.ts); this table is a human-readable mirror.
 Status: **Active** (implemented + evidenced) · **Partial** · **Planned**.
 
+The HCP clinical-image reliability correction keeps RAI-SAFE-003, RAI-SAFE-010,
+RAI-REL-002 and RAI-PRIV-003 **Active**: mode-specific validation, neutral
+EN/BM refusal recovery and metadata-only error reporting have test evidence in
+the implementation inventory. Live Azure filtering remains outside application control.
+
 | ID | Title | Principle | Layer | Status |
 | --- | --- | --- | --- | --- |
 | RAI-SAFE-001 | Image input validation | Reliability & Safety | Input | Active |

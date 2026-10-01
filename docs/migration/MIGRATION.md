@@ -10,6 +10,71 @@ technically possible.
 
 ---
 
+## 2026-10-01 — HCP clinical-image analysis investigation
+
+**Deployed incident status:** The exact failure for either Acute Burn or General Wound
+cannot be established from this repository: this task has no access to the running
+Container App's environment, application traces, provider request IDs or sanitized
+Azure AI responses. No assumption that safety filtering, schema drift or configuration
+is *the* deployed root cause is justified. A repository-reproducible defect was found:
+the `AI_ANALYSIS_PIPELINE=single` Acute Burn route previously returned HTTP 200 and
+recorded a completion when the parsed model result was the explicit unavailable
+sentinel. General Wound's core-field gate previously accepted a category and any
+`timers` object, allowing missing clinical fields to be silently defaulted. Both
+routes already carried an explicit assessment mode and used separate prompts and
+schemas; no evidence that they crossed schemas was found. Neither defect alone
+proves what happened in the deployed revision.
+
+The route now rejects unavailable single-pass output and checks General Wound's own
+core clinical/TIMERS/management fields, with no burn-only fields. Acute Burn retains
+deterministic Parkland/TBSA/Lund & Browder calculation and its existing staged or
+single-pass selection. Prompts for both modes now clarify that medically necessary
+private-area wound/burn images are clinical inputs, and restrict interpretation to
+relevant findings. Image validation remains content-neutral. Input/output Azure
+refusals are **not** bypassed; the clinician gets neutral EN/BM manual-assessment
+guidance and retry. Client failures are categorized, bilingual and bounded; no
+raw provider response is rendered. The analysis route logs only failure categories,
+not image content, base64, provider raw errors or clinical context. Existing
+authorized history storage behavior was not changed.
+
+**Production configuration check (names only):** The current deployed target is
+Azure **Container Apps** (`infra/modules/container-app.bicep`), not the older
+App Service target. The container's runtime environment needs `AZURE_AI_ENDPOINT`
+(a bare Azure AI account endpoint), `AZURE_AI_MODEL_DEPLOYMENT` (a vision-capable
+deployment; infrastructure specifies `gpt-4o`), `AZURE_AI_API_VERSION` (currently
+`2024-10-21`), `AZURE_AI_AUTH=identity` and `AZURE_CLIENT_ID` for the user-assigned
+identity. The code also accepts `AZURE_AI_PROJECT_ENDPOINT` or `AZURE_OPENAI_ENDPOINT`,
+`AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_VERSION`, and purpose-specific
+`AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT`; an optional dedicated analysis deployment must
+also support vision and JSON-object completions. Key-based authentication requires
+`AZURE_AI_API_KEY` (or legacy `AZURE_OPENAI_API_KEY`) and is not provisioned here.
+`AI_ANALYSIS_PIPELINE` defaults to `staged`; `AI_ANALYSIS_TIMEOUT_MS` is optional.
+Local `.env` or CLI credentials do not configure the running Container App.
+The Bicep variable names match the provider's runtime names, but no check of *live
+setting presence or values* was possible. No manual configuration change has been
+established or performed. If a setting is absent/incorrect, an operator must correct
+the **Container App revision's** environment and restart/activate a new revision;
+an App Service slot setting applies only to a separately hosted App Service deployment.
+
+**Evidence required to identify the deployed root cause:** obtain the failing
+revision/image SHA and timestamp, assessment mode, sanitized `image_analysis_failed`
+category, API HTTP status and correlation ID, Azure provider HTTP status/request ID
+and any allowlisted filter source/category/severity, plus a presence-only runtime
+inventory of the above variable names, the account endpoint *type*, model deployment
+vision/JSON support, API version, user-assigned identity assignment and Cognitive
+Services OpenAI User role. Compare the deployed revision to the fixed code. Do not
+send images, raw provider payloads, tokens or patient identifiers. Live de-identified
+tests for ordinary/private-area images in both modes and clinician review remain
+required; no claim of clinical validation or universal provider acceptance is made.
+
+**Validation:** Unit `147/147`, RAI `36/36`, integration `14/14`, API `24/24`,
+HCP retry/refusal Playwright `3/3`; TypeScript, lint and architecture drift check
+passed. The sandbox's normal `npm run build` could not resolve
+`fonts.googleapis.com`; the unchanged application built with Next's test-only
+font response hook. No live Azure model or intimate patient image was used.
+
+---
+
 ## Source application analysis
 
 | Aspect | Finding |
