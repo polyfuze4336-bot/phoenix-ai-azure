@@ -8,7 +8,7 @@ import { NextRequest } from 'next/server';
 import { AiMessage, AiError } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
 import { createResultSseResponse } from '@/lib/ai/streaming/sse';
-import { parseHcpWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
+import { HCP_ASSESSMENT_UNAVAILABLE, parseHcpWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
 import { validateImageInput, checkRequestBodySize } from '@/lib/ai/validation/image-input';
 import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
 import { trackEvent } from '@/lib/telemetry/server';
@@ -217,6 +217,9 @@ export async function POST(request: NextRequest) {
               })).body,
             });
             const parsed = parseHcpWoundAnalysis(fallback.text);
+            if (parsed === HCP_ASSESSMENT_UNAVAILABLE) {
+              throw new AiError({ code: 'upstream_error', category: 'AI_SCHEMA_VALIDATION_FAILED', status: 502, clientMessage: 'The AI response could not be validated.' });
+            }
             const parkland = computeParkland(
               parsed.isBurn, Number.parseFloat(parsed.tbsaEstimate),
               patient?.ageGroup, patient?.weightKg, language,
@@ -292,12 +295,10 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    recordImageAnalysisEvent('image_analysis_completed', {
-      ...analysisTelemetry,
-      httpStatus: 200,
-      latencyMs: Date.now() - requestStartedAt,
-    });
     const parsed = parseHcpWoundAnalysis(completion.text);
+    if (parsed === HCP_ASSESSMENT_UNAVAILABLE) {
+      throw new AiError({ code: 'upstream_error', category: 'AI_SCHEMA_VALIDATION_FAILED', status: 502, clientMessage: 'The AI response could not be validated.' });
+    }
     const parkland = computeParkland(
       parsed.isBurn,
       Number.parseFloat(parsed.tbsaEstimate),
@@ -305,24 +306,30 @@ export async function POST(request: NextRequest) {
       patient?.weightKg,
       language,
     );
+    recordImageAnalysisEvent('image_analysis_completed', {
+      ...analysisTelemetry,
+      httpStatus: 200,
+      latencyMs: Date.now() - requestStartedAt,
+    });
     return createResultSseResponse({
       result: { ...parsed, parklandFluid: parkland.summary, language, assessmentType },
       processingEvent: { status: 'processing', message: 'Analyzing' },
       correlationId,
     });
-  } catch (error: any) {
-    console.error('Analyze wound error:', error);
+  } catch (error) {
+    const response = aiErrorResponse(error);
+    console.error('Analyze wound failed:', {
+      category: error instanceof AiError ? error.category : 'UNKNOWN',
+      assessmentType: analysisTelemetry ? 'validated' : 'pre-validation',
+    });
     if (analysisTelemetry) {
       recordImageAnalysisEvent('image_analysis_failed', {
         ...analysisTelemetry,
-        errorCategory: 'UNKNOWN',
-        httpStatus: 500,
+        errorCategory: imageAnalysisFailure(error).category,
+        httpStatus: response.status,
         latencyMs: Date.now() - requestStartedAt,
       });
     }
-    return new Response(JSON.stringify({
-      error: 'The AI assessment could not be completed. Please try again.',
-      code: 'UNKNOWN',
-    }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    return response;
   }
 }

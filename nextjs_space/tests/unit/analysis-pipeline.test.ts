@@ -12,6 +12,7 @@ import assert from 'node:assert/strict';
 import {
   assembleAnalysis,
   getAnalysisTimeoutMs,
+  hasGeneralWoundSignal,
   hasInterpretationSignal,
   hasObservationSignal,
 } from '../../lib/ai/analysis/pipeline';
@@ -92,6 +93,26 @@ test('core stage signal gates reject empty tolerant-schema inputs', () => {
     woundCategory: { interpretation: 'Burn' },
     burnDepth: { interpretation: 'Superficial partial thickness' },
   }), true);
+});
+
+test('General Wound requires its own clinical fields, not burn-only quantities', () => {
+  const general = {
+    woundCategory: 'Chronic wound',
+    woundCharacteristics: 'Visible slough',
+    confidenceLevel: 'moderate',
+    timers: {
+      tissueManagement: 'Assess slough', infectionInflammation: 'Examine for infection',
+      moistureImbalance: 'Assess exudate', edgeOfWound: 'Irregular',
+      repairRegeneration: 'Monitor', socialPatientFactors: 'Not supplied',
+    },
+    managementRecommendations: {
+      woundCareProtocol: 'Review', dressingRecommendations: 'Assess moisture',
+      referralCriteria: 'Escalate for red flags', followUpSchedule: 'Clinical follow-up',
+    },
+  };
+  assert.equal(hasGeneralWoundSignal(general), true);
+  assert.equal(hasGeneralWoundSignal({ woundCategory: 'Wound', timers: {} }), false);
+  assert.equal(hasGeneralWoundSignal({ ...general, managementRecommendations: {} }), false);
 });
 
 test('analysis timeout is configurable and bounded', () => {

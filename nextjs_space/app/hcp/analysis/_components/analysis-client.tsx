@@ -78,9 +78,24 @@ async function saveAnalysisToHistory(result: AnalysisResult, image: string, mime
   }
 }
 
-async function responseError(response: Response, fallback: string): Promise<string> {
+async function responseError(response: Response): Promise<string> {
   const body = await response.json().catch(() => undefined);
-  return typeof body?.error === 'string' ? body.error : fallback;
+  const code = typeof body?.code === 'string' ? body.code : '';
+  const key: Record<string, string> = {
+    IMAGE_INVALID: 'analysis.image_invalid',
+    IMAGE_TOO_LARGE: 'analysis.image_too_large',
+    AI_CONTENT_FILTER: 'analysis.provider_safety_filter',
+    AI_CONFIG_ERROR: 'analysis.configuration_error',
+    AI_TIMEOUT: 'analysis.request_timeout',
+    AI_AUTH_ERROR: 'analysis.provider_unavailable',
+    AI_UPSTREAM_5XX: 'analysis.provider_unavailable',
+    AI_RATE_LIMIT: 'analysis.provider_unavailable',
+    AI_INVALID_JSON: 'analysis.response_invalid',
+    AI_SCHEMA_VALIDATION_FAILED: 'analysis.response_invalid',
+    AI_EMPTY_RESPONSE: 'analysis.response_invalid',
+    AI_STREAM_INTERRUPTED: 'analysis.response_invalid',
+  };
+  return key[code] ?? 'analysis.failed';
 }
 
 export function AnalysisClient() {
@@ -190,7 +205,7 @@ export function AnalysisClient() {
       for (const line of (lines ?? [])) {
         if (line?.startsWith('data: ')) {
           const data = line?.slice(6);
-          if (data === '[DONE]') return null;
+          if (data === '[DONE]') throw new Error('analysis.stream_interrupted');
           try {
             const parsed = JSON.parse(data);
             if (parsed?.status === 'completed' && parsed?.result) return parsed.result as AnalysisResult;
@@ -198,8 +213,8 @@ export function AnalysisClient() {
         }
       }
     }
-    throw new Error(t('analysis.stream_interrupted'));
-  }, [t]);
+    throw new Error('analysis.stream_interrupted');
+  }, []);
 
   const applyIngestedImage = useCallback(async (file: File) => {
     const result = await ingestImage(file);
@@ -210,14 +225,14 @@ export function AnalysisClient() {
         result.error.code === 'IMAGE_DECODE_FAILED' ? 'analysis.image_decode_failed' :
         result.error.code === 'IMAGE_NORMALIZATION_FAILED' ? 'analysis.image_normalization_failed' :
         'analysis.image_invalid';
-      setError(t(msgKey));
+      setError(msgKey);
       return;
     }
     lastBase64Ref.current = result.image.base64;
     lastMimeRef.current = 'image/jpeg';
     setImageFile(file);
     setImagePreview(result.image.previewDataUrl);
-  }, [t]);
+  }, []);
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e?.target?.files?.[0];
@@ -248,9 +263,9 @@ export function AnalysisClient() {
       const file = new File([blob], 'demo-image.png', { type: 'image/png' });
       await applyIngestedImage(file);
     } catch {
-      setError(t('analysis.image_invalid'));
+      setError('analysis.image_invalid');
     }
-  }, [applyIngestedImage, t]);
+  }, [applyIngestedImage]);
 
   const analyzeImage = useCallback(async (retryCount: number) => {
     if (!imageFile || !lastBase64Ref.current) return;
@@ -270,26 +285,32 @@ export function AnalysisClient() {
           'x-analysis-retry-count': String(retryCount),
         },
         body: JSON.stringify({ image: base64, mimeType: mime, patient: patientContext(), language: lang, assessmentType }),
+        signal: AbortSignal.timeout(210_000),
       });
 
-      if (!response?.ok) throw new Error(await responseError(response, t('analysis.failed')));
+      if (!response?.ok) throw new Error(await responseError(response));
 
       const completed = await readAnalysisStream(response);
       if (assessmentTypeRef.current !== requestAssessmentType) return;
-      if (completed) {
+      if (completed && (assessmentType === 'general_wound' ? completed.generalWound : completed.structured || completed.woundType)) {
         const localized = { ...completed, language: lang };
         translationsRef.current = { [lang]: localized };
         setResult(localized);
         setAnalysisFailed(false);
         void saveAnalysisToHistory(completed, base64, mime, assessmentType);
+      } else {
+        throw new Error('analysis.response_invalid');
       }
     } catch (err: any) {
       setAnalysisFailed(true);
-      setError(err?.message ?? t('analysis.failed'));
+      setError(err?.name === 'TimeoutError' || err?.name === 'AbortError'
+        ? 'analysis.request_timeout'
+        : typeof err?.message === 'string' && err.message.startsWith('analysis.')
+          ? err.message : 'analysis.failed');
     } finally {
       setAnalyzing(false);
     }
-  }, [assessmentType, imageFile, lang, patientContext, readAnalysisStream, t]);
+  }, [assessmentType, imageFile, lang, patientContext, readAnalysisStream]);
 
   const retryAnalysis = useCallback(() => {
     const retryCount = Math.min(10, analysisRetryCount + 1);
@@ -316,8 +337,9 @@ export function AnalysisClient() {
           language: lang,
           assessmentType,
         }),
+        signal: AbortSignal.timeout(210_000),
       });
-      if (!response?.ok) throw new Error(await responseError(response, t('analysis.refine_failed')));
+      if (!response?.ok) throw new Error(await responseError(response));
       const completed = await readAnalysisStream(response);
       if (assessmentTypeRef.current !== requestAssessmentType) return;
       if (completed) {
@@ -327,11 +349,14 @@ export function AnalysisClient() {
         void saveAnalysisToHistory(completed, lastBase64Ref.current, lastMimeRef.current, assessmentType);
       }
     } catch (err: any) {
-      setError(err?.message ?? t('analysis.refine_failed'));
+      setError(err?.name === 'TimeoutError' || err?.name === 'AbortError'
+        ? 'analysis.request_timeout'
+        : typeof err?.message === 'string' && err.message.startsWith('analysis.')
+          ? err.message : 'analysis.refine_failed');
     } finally {
       setRefining(false);
     }
-  }, [assessmentType, lang, result, patientContext, readAnalysisStream, t]);
+  }, [assessmentType, lang, result, patientContext, readAnalysisStream]);
 
   const clearImage = useCallback(() => {
     setImagePreview(null);
@@ -503,7 +528,7 @@ export function AnalysisClient() {
               </div>
             </div>
           )}
-          {error && <div role="alert" className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">{error}</div>}
+          {error && <div role="alert" className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">{t(error)}</div>}
         </div>
 
         {/* Results Section */}

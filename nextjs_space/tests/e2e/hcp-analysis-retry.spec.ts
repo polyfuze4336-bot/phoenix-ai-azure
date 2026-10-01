@@ -11,6 +11,34 @@ test('failed analysis retains context and provides bilingual retry actions', asy
       contentType: 'application/json',
       body: JSON.stringify({ error: 'Unavailable', code: 'AI_UPSTREAM_5XX' }),
     });
+
+    for (const mode of ['Acute Burn Injury', 'General Wound']) {
+      test(`${mode} shows a bilingual clinical refusal without raw provider details`, async ({ page }) => {
+        await seedHcpAuth(page);
+        await page.route('**/api/analyze-wound', async (route) => {
+          expect(route.request().postDataJSON().assessmentType).toBe(
+            mode === 'General Wound' ? 'general_wound' : 'acute_burn',
+          );
+          await route.fulfill({
+            status: 422, contentType: 'application/json',
+            body: JSON.stringify({ code: 'AI_CONTENT_FILTER', error: 'Raw provider detail that must not appear' }),
+          });
+        });
+        await page.goto('/hcp/analysis');
+        if (mode === 'General Wound') {
+          await page.locator('aside').first().getByRole('button', { name: mode }).click();
+        }
+        await page.locator('input[type="file"]').setInputFiles({
+          name: 'clinical-demo.png', mimeType: 'image/png', buffer: TINY_PNG,
+        });
+        await page.getByRole('button', { name: 'Analyze Image' }).click();
+        await expect(page.getByText('This clinical image could not be analysed by the AI service. Please use clinical judgement and complete the assessment manually.')).toBeVisible();
+        await expect(page.getByText('Raw provider detail that must not appear')).toHaveCount(0);
+        await expect(page.getByRole('button', { name: 'Retry Analysis' })).toBeVisible();
+        await toggleLanguage(page);
+        await expect(page.getByText('Imej klinikal ini tidak dapat dianalisis oleh perkhidmatan AI. Sila gunakan pertimbangan klinikal dan lengkapkan penilaian secara manual.')).toBeVisible();
+      });
+    }
   });
 
   await page.goto('/hcp/analysis');

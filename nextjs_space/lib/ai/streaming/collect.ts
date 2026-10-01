@@ -39,14 +39,12 @@ export async function collectCompletion(
       return false;
     }
     const choice = parsed?.choices?.[0];
-    if (choice?.finish_reason === 'content_filter') {
+    if (choice?.finish_reason === 'content_filter' || choice?.delta?.refusal || choice?.message?.refusal) {
       throw new AiError({
         code: 'upstream_error',
         category: 'AI_CONTENT_FILTER',
         status: 422,
-        clientMessage:
-          'Azure AI stopped the assessment under the configured content filter. ' +
-          'The clinical result is unavailable. Contact the Azure administrator if legitimate clinical images are consistently blocked.',
+        clientMessage: 'This clinical image could not be analysed by the AI service. Please use clinical judgement and complete the assessment manually.',
         contentFilter: extractContentFilterDetails(choice, 'output') ?? { source: 'output', categories: [] },
       });
     }

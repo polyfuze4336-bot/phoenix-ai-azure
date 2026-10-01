@@ -87,6 +87,7 @@ export class AzureFoundryProvider implements AiProvider {
       console.error(`[Phoenix AI] ${MISSING_CONFIG_MESSAGE}`);
       throw new AiError({
         code: 'missing_credentials',
+        category: 'AI_CONFIG_ERROR',
         status: 500,
         clientMessage: MISSING_CONFIG_MESSAGE,
       });
@@ -131,6 +132,7 @@ export class AzureFoundryProvider implements AiProvider {
         );
         throw new AiError({
           code: 'missing_credentials',
+          category: 'AI_CONFIG_ERROR',
           status: 500,
           clientMessage: MISSING_CONFIG_MESSAGE,
         });
@@ -155,6 +157,7 @@ export class AzureFoundryProvider implements AiProvider {
       );
       throw new AiError({
         code: 'missing_credentials',
+        category: 'AI_CONFIG_ERROR',
         status: 500,
         clientMessage: MISSING_CONFIG_MESSAGE,
         cause: err,

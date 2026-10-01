@@ -53,3 +53,31 @@ test('general wound prompt excludes burn-only calculations and protects unsuppor
   assert.match(GENERAL_WOUND_ANALYSIS_PROMPT, /Do not infer comorbidities or social factors/);
   assert.match(GENERAL_WOUND_ANALYSIS_PROMPT, /S — Social & patient factors/);
 });
+
+test('general wound schema accepts intimate-site clinical findings without burn-only fields', () => {
+  const result = generalWoundAnalysisSchema.safeParse({
+    imageQuality: { adequate: true },
+    observation: {
+      imageQualityAdequate: true, scalePresent: false,
+      anatomicalLocation: 'perineal region', visibleFindings: ['slough'],
+    },
+    fitzpatrickPhototype: 'Unable to determine reliably',
+    woundCategory: 'General wound',
+    woundCharacteristics: 'Visible slough',
+    confidenceLevel: 'low',
+    timers: {
+      tissueManagement: 'Assess tissue', infectionInflammation: 'Examine',
+      moistureImbalance: 'Assess exudate', edgeOfWound: 'Assess edge',
+      repairRegeneration: 'Monitor', socialPatientFactors: 'Not supplied',
+    },
+    managementRecommendations: {
+      woundCareProtocol: 'Clinical review', dressingRecommendations: 'Assess',
+      referralCriteria: 'Escalate', followUpSchedule: 'Review',
+    },
+  });
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal('tbsaEstimate' in result.data, false);
+    assert.equal('parkland' in result.data, false);
+  }
+});

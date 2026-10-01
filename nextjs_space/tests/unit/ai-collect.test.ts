@@ -42,6 +42,17 @@ test('collectCompletion classifies an Azure output content-filter stop', async (
   );
 });
 
+test('collectCompletion handles provider refusal without returning its raw text', async () => {
+  await assert.rejects(
+    collectCompletion(stream(
+      'data: {"choices":[{"delta":{"refusal":"Raw provider detail that must not be shown"}}]}\n\ndata: [DONE]\n',
+    )),
+    (error: unknown) => error instanceof AiError &&
+      error.category === 'AI_CONTENT_FILTER' &&
+      !error.clientMessage.includes('Raw provider detail'),
+  );
+});
+
 test('parseJsonObject tolerates markdown fences and leading commentary', () => {
   assert.deepEqual(parseJsonObject('Result follows:\n```json\n{"ok":true}\n```'), { ok: true });
 });

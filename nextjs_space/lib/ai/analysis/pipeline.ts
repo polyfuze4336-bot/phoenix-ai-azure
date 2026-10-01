@@ -223,6 +223,20 @@ function coreStageError(category: StageResult['category']): AiError {
   });
 }
 
+export function hasGeneralWoundSignal(value: Record<string, unknown>): boolean {
+  const timers = value.timers;
+  const management = value.managementRecommendations;
+  return typeof value.woundCategory === 'string' && value.woundCategory.trim().length > 0 &&
+    typeof value.woundCharacteristics === 'string' && value.woundCharacteristics.trim().length > 0 &&
+    typeof value.confidenceLevel === 'string' &&
+    !!timers && typeof timers === 'object' &&
+    ['tissueManagement', 'infectionInflammation', 'moistureImbalance', 'edgeOfWound', 'repairRegeneration', 'socialPatientFactors']
+      .every((key) => typeof (timers as Record<string, unknown>)[key] === 'string') &&
+    !!management && typeof management === 'object' &&
+    ['woundCareProtocol', 'dressingRecommendations', 'referralCriteria', 'followUpSchedule']
+      .every((key) => typeof (management as Record<string, unknown>)[key] === 'string');
+}
+
 /* ----------------------------------------------------- deterministic helpers */
 
 const CONF_ORDER: ConfidenceLevel[] = ['insufficient', 'low', 'moderate', 'high'];
@@ -424,7 +438,7 @@ export async function runGeneralWoundAnalysis(input: PipelineInput): Promise<Gen
     language,
     correlationId,
     'analyze-wound:general-assessment',
-    (value) => typeof value.woundCategory === 'string' && Boolean(value.timers),
+    hasGeneralWoundSignal,
   );
   if (!analysisStage.value) throw coreStageError(analysisStage.category);
 
