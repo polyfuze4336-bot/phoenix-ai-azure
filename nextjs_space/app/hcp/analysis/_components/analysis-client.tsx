@@ -83,6 +83,7 @@ async function responseError(response: Response): Promise<string> {
   const code = typeof body?.code === 'string' ? body.code : '';
   const key: Record<string, string> = {
     IMAGE_INVALID: 'analysis.image_invalid',
+    IMAGE_UNSUPPORTED_FORMAT: 'analysis.image_type_unsupported',
     IMAGE_TOO_LARGE: 'analysis.image_too_large',
     AI_CONTENT_FILTER: 'analysis.provider_safety_filter',
     AI_CONFIG_ERROR: 'analysis.configuration_error',
@@ -574,10 +575,10 @@ export function AnalysisClient() {
                   <span className="text-sm font-medium text-gray-500">{t('analysis.burn_degree')}</span>
                   <span className="ml-3 min-w-0 break-words text-right text-sm font-semibold text-gray-900">{translateCanonicalValue(result?.burnDegree, lang)}</span>
                 </div>}
-                <div className="p-4 flex items-center justify-between">
+                {(assessmentType === 'acute_burn' || result?.severity) && <div className="p-4 flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500">{t('analysis.severity')}</span>
                   <span className={`text-xs font-semibold px-3 py-1 rounded-full ${severityColor(result?.severity ?? '')}`}>{translateCanonicalValue(result?.severity, lang)}</span>
-                </div>
+                </div>}
                 <div className="p-4">
                   <span className="text-sm font-medium text-gray-500 block mb-2">{t('analysis.characteristics')}</span>
                   <p className="text-sm text-gray-700">{result?.characteristics ?? 'N/A'}</p>

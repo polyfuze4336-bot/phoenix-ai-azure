@@ -47,10 +47,9 @@ are context only and shown in the result. Uncertain symptoms that do not indepen
 escalate still receive an explicit professional-discussion notice. These new escalation rules have **not** been clinically validated and need
 clinical review (**RAI-SAFE-013**, `tests/rai/community-burn.test.ts`).
 
-If the model or validation fails, the app returns an explicit, clearly-labelled
-"assessment could not be completed" state that preserves the medical disclaimer rather than guessing
-a result (**RAI-SAFE-010**,
-[`lib/ai/validation/wound-analysis-schema.ts`](../../nextjs_space/lib/ai/validation/wound-analysis-schema.ts)).
+If HCP model or validation fails, the API returns a categorized failure and the client
+retains retry/manual-assessment guidance rather than reporting a completed clinical
+result (**RAI-SAFE-010**, [`app/api/analyze-wound/route.ts`](../../nextjs_space/app/api/analyze-wound/route.ts)).
 
 Before model invocation, image input is limited to JPEG, PNG, WebP, and GIF; data URLs are
 normalized and MIME type, base64 syntax, decoded size, file signature, dimensions, and structural
@@ -66,6 +65,11 @@ than invented (**RAI-SAFE-003**).
 Azure input and output content-filter stops are classified from allowlisted structured fields
 (source, category, severity) without recording raw provider errors or image content. The repository
 provisions `Microsoft.Default`; a live policy/category must still be verified manually in Azure.
+An explicit model refusal is treated the same way: it is not replaced with a fabricated result.
+The HCP interface provides a neutral bilingual retry/manual-assessment path. Clinical imagery of
+normally private body regions is not rejected by the image validator based on anatomy; prompts
+request only medically necessary wound findings and respect patient dignity. This cannot guarantee
+that Azure will accept every image or that any assessment is clinically accurate.
 
 ## Boundaries
 A single photograph cannot establish depth progression, infection, pain or sensation with certainty.

@@ -255,7 +255,7 @@ function instrumentStream(
         observe(value);
         controller.enqueue(value);
       } catch (err) {
-        settle('error', (err as { message?: string })?.message ?? 'stream_error');
+        settle('error', 'stream_error');
         controller.error(err);
       }
     },

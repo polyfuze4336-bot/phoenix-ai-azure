@@ -8,7 +8,7 @@ import { NextRequest } from 'next/server';
 import { AiMessage, AiError } from '@/lib/ai/types';
 import { getAiProvider, aiErrorResponse } from '@/lib/ai/ai-provider';
 import { createResultSseResponse } from '@/lib/ai/streaming/sse';
-import { HCP_ASSESSMENT_UNAVAILABLE, parseHcpWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
+import { HCP_ASSESSMENT_UNAVAILABLE, hasHcpCoreFields, parseHcpWoundAnalysis } from '@/lib/ai/validation/wound-analysis-schema';
 import { validateImageInput, checkRequestBodySize } from '@/lib/ai/validation/image-input';
 import { getOrCreateCorrelationId } from '@/lib/telemetry/correlation';
 import { trackEvent } from '@/lib/telemetry/server';
@@ -54,6 +54,7 @@ function readPatientContext(raw: unknown): PatientContext | undefined {
 export async function POST(request: NextRequest) {
   const requestStartedAt = Date.now();
   let analysisTelemetry: Omit<ImageAnalysisTelemetryContext, 'errorCategory' | 'httpStatus' | 'latencyMs'> | undefined;
+  let validatedAssessmentType: 'acute_burn' | 'general_wound' | undefined;
   try {
     const bodySize = checkRequestBodySize(request.headers.get('content-length'));
     if (!bodySize.ok) {
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
     if (!assessmentType) {
       return new Response(JSON.stringify({ error: 'Invalid assessment type.' }), { status: 400 });
     }
+    validatedAssessmentType = assessmentType;
 
     const validation = validateImageInput({ image, mimeType });
     if (!validation.ok) {
@@ -134,8 +136,8 @@ export async function POST(request: NextRequest) {
             assessmentType,
             fitzpatrickType: generalWound.fitzpatrickPhototype,
             fitzpatrickNote: generalWound.imageQuality.note,
-            woundCategory: 'General Wound',
-            woundType: 'General Wound',
+            woundCategory: generalWound.woundCategory,
+            woundType: generalWound.woundCategory,
             severity: '',
             characteristics: generalWound.woundCharacteristics,
             confidence: generalWound.confidenceLevel,
@@ -217,7 +219,7 @@ export async function POST(request: NextRequest) {
               })).body,
             });
             const parsed = parseHcpWoundAnalysis(fallback.text);
-            if (parsed === HCP_ASSESSMENT_UNAVAILABLE) {
+            if (parsed === HCP_ASSESSMENT_UNAVAILABLE || !hasHcpCoreFields(fallback.text)) {
               throw new AiError({ code: 'upstream_error', category: 'AI_SCHEMA_VALIDATION_FAILED', status: 502, clientMessage: 'The AI response could not be validated.' });
             }
             const parkland = computeParkland(
@@ -296,7 +298,7 @@ export async function POST(request: NextRequest) {
     }
 
     const parsed = parseHcpWoundAnalysis(completion.text);
-    if (parsed === HCP_ASSESSMENT_UNAVAILABLE) {
+    if (parsed === HCP_ASSESSMENT_UNAVAILABLE || !hasHcpCoreFields(completion.text)) {
       throw new AiError({ code: 'upstream_error', category: 'AI_SCHEMA_VALIDATION_FAILED', status: 502, clientMessage: 'The AI response could not be validated.' });
     }
     const parkland = computeParkland(
@@ -320,7 +322,7 @@ export async function POST(request: NextRequest) {
     const response = aiErrorResponse(error);
     console.error('Analyze wound failed:', {
       category: error instanceof AiError ? error.category : 'UNKNOWN',
-      assessmentType: analysisTelemetry ? 'validated' : 'pre-validation',
+      assessmentType: validatedAssessmentType ?? 'pre-validation',
     });
     if (analysisTelemetry) {
       recordImageAnalysisEvent('image_analysis_failed', {

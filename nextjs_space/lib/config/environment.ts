@@ -46,7 +46,11 @@ export function getAiConfig(): AiConfig {
   const endpointPresent = Boolean(
     firstEnv('AZURE_AI_ENDPOINT', 'AZURE_AI_PROJECT_ENDPOINT', 'AZURE_OPENAI_ENDPOINT'),
   );
-  const deploymentPresent = Boolean(firstEnv('AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT', 'AZURE_AI_CHAT_MODEL_DEPLOYMENT', 'AZURE_AI_MODEL_DEPLOYMENT', 'AZURE_OPENAI_DEPLOYMENT'));
+  const sharedDeployment = firstEnv('AZURE_AI_MODEL_DEPLOYMENT', 'AZURE_OPENAI_DEPLOYMENT');
+  const deploymentPresent = Boolean(
+    (firstEnv('AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT') || sharedDeployment) &&
+    (firstEnv('AZURE_AI_CHAT_MODEL_DEPLOYMENT') || sharedDeployment),
+  );
   const authMode = (process.env.AZURE_AI_AUTH ?? 'identity').trim().toLowerCase() === 'key'
     ? 'key'
     : 'identity';
@@ -147,7 +151,7 @@ export function validateEnvironment(): EnvValidationResult {
   }
   if (!ai.deploymentPresent) {
     errors.push(
-      'Azure AI model deployment is not set (AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT / AZURE_AI_CHAT_MODEL_DEPLOYMENT / AZURE_AI_MODEL_DEPLOYMENT / AZURE_OPENAI_DEPLOYMENT). AI features will fail.',
+      'Azure AI model deployment is not set for both analysis and chat (AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT / AZURE_AI_CHAT_MODEL_DEPLOYMENT or AZURE_AI_MODEL_DEPLOYMENT / AZURE_OPENAI_DEPLOYMENT). AI features will fail.',
     );
   }
   if (ai.authMode === 'key' && !ai.apiKeyPresent) {

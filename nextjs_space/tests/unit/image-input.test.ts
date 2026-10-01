@@ -43,7 +43,10 @@ test('validateImageInput: normalizes a data URL and uses its MIME type', () => {
 test('validateImageInput: disallowed MIME type is rejected', () => {
   const result = validateImageInput({ image: tinyPngBase64, mimeType: 'image/heic' });
   assert.equal(result.ok, false);
-  if (!result.ok) assert.match(result.error, /unsupported image type/i);
+  if (!result.ok) {
+    assert.equal(result.code, 'IMAGE_UNSUPPORTED_FORMAT');
+    assert.match(result.error, /unsupported image type/i);
+  }
 });
 
 test('validateImageInput: malformed base64 is rejected', () => {

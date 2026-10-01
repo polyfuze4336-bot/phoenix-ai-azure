@@ -119,7 +119,7 @@ test('POST /api/analyze-wound rejects a missing image with 400', async ({ reques
 test('POST /api/analyze-wound rejects unsupported HEIC before model invocation', async ({ request }) => {
   const res = await postJson(request, '/api/analyze-wound', { image: TINY_PNG_B64, mimeType: 'image/heic', language: 'en', assessmentType: 'acute_burn' });
   expect(res.status()).toBe(400);
-  await expect(res.json()).resolves.toMatchObject({ error: expect.stringMatching(/JPEG, PNG, WebP, or GIF/) });
+  await expect(res.json()).resolves.toMatchObject({ code: 'IMAGE_UNSUPPORTED_FORMAT', error: expect.stringMatching(/JPEG, PNG, WebP, or GIF/) });
 });
 
 test('POST /api/analyze-wound rejects MIME/content mismatch before model invocation', async ({ request }) => {

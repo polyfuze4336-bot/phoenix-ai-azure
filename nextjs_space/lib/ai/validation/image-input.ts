@@ -66,7 +66,7 @@ export interface ImageInput {
   mimeType?: unknown;
 }
 
-export type ImageValidationErrorCode = 'IMAGE_INVALID' | 'IMAGE_TOO_LARGE';
+export type ImageValidationErrorCode = 'IMAGE_INVALID' | 'IMAGE_TOO_LARGE' | 'IMAGE_UNSUPPORTED_FORMAT';
 
 export type ImageValidationResult =
   | { ok: true; mimeType: string; base64: string; bytes: number; width: number; height: number }
@@ -200,7 +200,7 @@ export function validateImageInput(input: ImageInput): ImageValidationResult {
   const resolvedMime = suppliedMime ?? dataUrlMime ?? 'image/jpeg';
 
   if (!ALLOWED_IMAGE_MIME_TYPES.includes(resolvedMime as (typeof ALLOWED_IMAGE_MIME_TYPES)[number])) {
-    return invalidImage('Unsupported image type. Please upload a JPEG, PNG, WebP, or GIF image.');
+    return { ok: false, code: 'IMAGE_UNSUPPORTED_FORMAT', error: 'Unsupported image type. Please upload a JPEG, PNG, WebP, or GIF image.' };
   }
 
   const unpaddedBase64 = (dataUrl?.[2] ?? rawImage).replace(/\s/g, '');

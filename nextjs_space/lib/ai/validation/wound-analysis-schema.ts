@@ -21,6 +21,7 @@
 
 import { z } from 'zod';
 import { StructuredResultPhase } from '../streaming/sse';
+import { parseJsonObject } from '../streaming/collect';
 
 /** A string field that tolerantly coerces numbers/booleans and defaults on miss. */
 const strField = (fallback = 'N/A') =>
@@ -91,6 +92,16 @@ const HCP_SIGNAL_KEYS = [
   'tissueComposition',
 ];
 const COMMUNITY_SIGNAL_KEYS = ['description', 'recommendation', 'firstAidTips'];
+
+/** Core fields required before a single-pass HCP result may be reported as completed. */
+export function hasHcpCoreFields(buffer: string): boolean {
+  const obj = parseJsonObject(buffer);
+  return !!obj &&
+    typeof obj.woundType === 'string' && !!obj.woundType.trim() &&
+    typeof obj.woundCategory === 'string' && !!obj.woundCategory.trim() &&
+    typeof obj.characteristics === 'string' && !!obj.characteristics.trim() &&
+    (typeof obj.isBurn === 'boolean' || ['true', 'false', 'yes', 'no'].includes(String(obj.isBurn).toLowerCase()));
+}
 
 const HCP_UNAVAILABLE_MESSAGE =
   'The AI assessment could not be completed: the model did not return a valid ' +

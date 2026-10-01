@@ -17,6 +17,7 @@ import {
 const AI_KEYS = [
   'AZURE_AI_ENDPOINT', 'AZURE_AI_PROJECT_ENDPOINT', 'AZURE_OPENAI_ENDPOINT',
   'AZURE_AI_MODEL_DEPLOYMENT', 'AZURE_OPENAI_DEPLOYMENT', 'AZURE_AI_AUTH',
+  'AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT', 'AZURE_AI_CHAT_MODEL_DEPLOYMENT',
   'AZURE_AI_API_KEY', 'AZURE_OPENAI_API_KEY', 'AZURE_CLIENT_ID',
   'DATABASE_URL', 'AZURE_STORAGE_ACCOUNT_URL', 'AZURE_STORAGE_ACCOUNT',
   'AZURE_STORAGE_CONTAINER', 'NEXTAUTH_URL', 'WEBSITE_HOSTNAME',
@@ -52,6 +53,18 @@ test('getAiConfig: identity mode configured with endpoint + deployment', () => {
       assert.equal(cfg.deploymentPresent, true);
     },
   );
+});
+
+test('getAiConfig: dedicated deployments require both analysis and chat coverage', () => {
+  withEnv({
+    AZURE_AI_ENDPOINT: 'https://x.openai.azure.com',
+    AZURE_AI_CHAT_MODEL_DEPLOYMENT: 'chat',
+  }, () => assert.equal(getAiConfig().configured, false));
+  withEnv({
+    AZURE_AI_ENDPOINT: 'https://x.openai.azure.com',
+    AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT: 'vision',
+    AZURE_AI_CHAT_MODEL_DEPLOYMENT: 'chat',
+  }, () => assert.equal(getAiConfig().configured, true));
 });
 
 test('getAiConfig: key mode requires an API key to be configured', () => {

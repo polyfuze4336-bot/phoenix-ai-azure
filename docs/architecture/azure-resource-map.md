@@ -39,6 +39,9 @@
 > The `8.1.0` Community first-aid video library is an application-only extension of that integration.
 > It adds no Azure resource, identity, secret, model deployment, database, storage, network
 > configuration, SKU, region or workflow.
+> The `8.5.0` HCP analysis reliability correction reuses the same Container App, Azure AI
+> deployment, managed identity and Microsoft.Default filter. No Azure resource or app setting is
+> changed automatically; production settings and filter incidents require manual verification.
 
 ## Environment
 
