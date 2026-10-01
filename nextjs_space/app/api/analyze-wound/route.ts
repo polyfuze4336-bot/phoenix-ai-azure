@@ -191,6 +191,7 @@ export async function POST(request: NextRequest) {
           correlationId,
         });
       } catch (err) {
+        let finalError: unknown = err;
         // Transient failures fall back to single-pass for demo resilience.
         const isTransient = err instanceof AiError &&
           ['AI_TIMEOUT', 'AI_RATE_LIMIT', 'AI_UPSTREAM_5XX', 'AI_STREAM_INTERRUPTED'].includes(err.category);
@@ -236,10 +237,12 @@ export async function POST(request: NextRequest) {
               processingEvent: { status: 'processing', message: 'Analyzing' },
               correlationId,
             });
-          } catch { /* fall through to original error */ }
+          } catch (fallbackError) {
+            if (fallbackError instanceof AiError) finalError = fallbackError;
+          }
         }
-        const response = aiErrorResponse(err, 'LLM API error');
-        const failure = imageAnalysisFailure(err);
+        const response = aiErrorResponse(finalError, 'LLM API error');
+        const failure = imageAnalysisFailure(finalError);
         recordImageAnalysisEvent('image_analysis_failed', {
           ...analysisTelemetry,
           errorCategory: failure.category,

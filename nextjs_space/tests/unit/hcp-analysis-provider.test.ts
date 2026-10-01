@@ -6,6 +6,8 @@ import { runAnalysisPipeline, runGeneralWoundAnalysis } from '../../lib/ai/analy
 import { baseInterpretation, baseManagement, baseObservation, passingCritic } from '../rai/_fixtures';
 import { WOUND_VISUAL_OBSERVATION_PROMPT } from '../../lib/ai/prompts/wound-visual-observation';
 import { GENERAL_WOUND_ANALYSIS_PROMPT } from '../../lib/ai/prompts/general-wound-analysis';
+import { NextRequest } from 'next/server';
+import { POST } from '../../app/api/analyze-wound/route';
 
 function completion(value: unknown) {
   const body = new TextEncoder().encode(
@@ -93,4 +95,28 @@ for (const run of [runAnalysisPipeline, runGeneralWoundAnalysis]) {
 test('both clinical prompts frame sensitive locations as medical observations only', () => {
   assert.match(WOUND_VISUAL_OBSERVATION_PROMPT, /normally private anatomical area/i);
   assert.match(GENERAL_WOUND_ANALYSIS_PROMPT, /normally private anatomical areas/i);
+});
+
+test('the HCP route reports fallback refusal instead of the preceding stage timeout', async (t) => {
+  let requests = 0;
+  t.mock.method(AzureFoundryProvider.prototype, 'streamChatCompletion', async () => {
+    requests += 1;
+    throw new AiError({
+      code: 'upstream_error',
+      category: requests === 1 ? 'AI_TIMEOUT' : 'AI_CONTENT_FILTER',
+      status: requests === 1 ? 504 : 422,
+      clientMessage: requests === 1 ? 'Timed out' : 'Neutral clinical image refusal',
+    });
+  });
+  const request = new NextRequest('http://localhost/api/analyze-wound', {
+    method: 'POST',
+    body: JSON.stringify({
+      image: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      mimeType: 'image/png', language: 'en', assessmentType: 'acute_burn',
+    }),
+  });
+  const response = await POST(request);
+  assert.equal(requests, 2);
+  assert.equal(response.status, 422);
+  assert.equal((await response.json()).code, 'AI_CONTENT_FILTER');
 });

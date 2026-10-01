@@ -67,7 +67,7 @@ send images, raw provider payloads, tokens or patient identifiers. Live de-ident
 tests for ordinary/private-area images in both modes and clinician review remain
 required; no claim of clinical validation or universal provider acceptance is made.
 
-**Validation:** Unit `146/146`, RAI `36/36`, integration `14/14`, API `24/24`,
+**Validation:** Unit `147/147`, RAI `36/36`, integration `14/14`, API `24/24`,
 HCP retry/refusal Playwright `3/3`; TypeScript, lint and architecture drift check
 passed. The sandbox's normal `npm run build` could not resolve
 `fonts.googleapis.com`; the unchanged application built with Next's test-only

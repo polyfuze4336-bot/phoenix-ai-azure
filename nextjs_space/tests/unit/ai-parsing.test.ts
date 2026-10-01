@@ -48,7 +48,9 @@ test('parseHcpWoundAnalysis: object without any signal key -> fallback', () => {
 
 test('a single-pass HCP result needs clinical core fields before the route may report completion', () => {
   assert.equal(hasHcpCoreFields('{"woundType":"Scald"}'), false);
-  assert.equal(hasHcpCoreFields('{"woundType":"Scald","woundCategory":"Burn","characteristics":"Blister","isBurn":true}'), true);
+  assert.equal(hasHcpCoreFields('{"woundType":"Scald","woundCategory":"Burn","characteristics":"Blister","isBurn":true}'), false);
+  assert.equal(hasHcpCoreFields('{"woundType":"Scald","woundCategory":"Burn","characteristics":"Blister","isBurn":true,"tbsaEstimate":"unknown"}'), true);
+  assert.equal(hasHcpCoreFields('{"woundType":"Scald","woundCategory":"Burn","characteristics":"Blister","isBurn":true,"tbsaEstimate":15}'), true);
   assert.equal(hasHcpCoreFields('{"woundType":"Wound","woundCategory":"Acute wound","characteristics":"Visible tissue","isBurn":false}'), true);
 });
 

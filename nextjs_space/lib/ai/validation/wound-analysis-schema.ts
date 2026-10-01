@@ -96,11 +96,19 @@ const COMMUNITY_SIGNAL_KEYS = ['description', 'recommendation', 'firstAidTips'];
 /** Core fields required before a single-pass HCP result may be reported as completed. */
 export function hasHcpCoreFields(buffer: string): boolean {
   const obj = parseJsonObject(buffer);
+  const isBurn = obj?.isBurn === true || ['true', 'yes'].includes(String(obj?.isBurn).toLowerCase());
+  const tbsa = obj?.tbsaEstimate;
+  const burnExtentKnown = (typeof tbsa === 'number' && Number.isFinite(tbsa) && tbsa >= 0 && tbsa <= 100) ||
+    (typeof tbsa === 'string' && (
+      /^(unknown|unable_to_determine|not_assessable)$/i.test(tbsa.trim()) ||
+      (/^\d+(?:\.\d+)?$/.test(tbsa.trim()) && Number(tbsa) <= 100)
+    ));
   return !!obj &&
     typeof obj.woundType === 'string' && !!obj.woundType.trim() &&
     typeof obj.woundCategory === 'string' && !!obj.woundCategory.trim() &&
     typeof obj.characteristics === 'string' && !!obj.characteristics.trim() &&
-    (typeof obj.isBurn === 'boolean' || ['true', 'false', 'yes', 'no'].includes(String(obj.isBurn).toLowerCase()));
+    (typeof obj.isBurn === 'boolean' || ['true', 'false', 'yes', 'no'].includes(String(obj.isBurn).toLowerCase())) &&
+    (!isBurn || burnExtentKnown);
 }
 
 const HCP_UNAVAILABLE_MESSAGE =
