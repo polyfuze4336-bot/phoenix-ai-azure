@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
     trackEvent('hcp_analysis_requested', {
       correlationId,
       hasImage: true,
+      assessmentType,
       pipeline: pipelineMode,
       refine: Boolean(refineAnswers),
     });
@@ -148,6 +149,11 @@ export async function POST(request: NextRequest) {
           correlationId,
         });
       } catch (err) {
+        console.error('[Phoenix AI] HCP analysis failed', {
+          assessmentType,
+          stage: 'general_wound',
+          category: imageAnalysisFailure(err).category,
+        });
         const response = aiErrorResponse(err, 'LLM API error');
         const failure = imageAnalysisFailure(err);
         recordImageAnalysisEvent('image_analysis_failed', {
@@ -241,6 +247,11 @@ export async function POST(request: NextRequest) {
             if (fallbackError instanceof AiError) finalError = fallbackError;
           }
         }
+        console.error('[Phoenix AI] HCP analysis failed', {
+          assessmentType,
+          stage: 'acute_burn_staged',
+          category: imageAnalysisFailure(finalError).category,
+        });
         const response = aiErrorResponse(finalError, 'LLM API error');
         const failure = imageAnalysisFailure(finalError);
         recordImageAnalysisEvent('image_analysis_failed', {
@@ -286,6 +297,11 @@ export async function POST(request: NextRequest) {
         })).body,
       });
     } catch (err) {
+      console.error('[Phoenix AI] HCP analysis failed', {
+        assessmentType,
+        stage: 'acute_burn_single',
+        category: imageAnalysisFailure(err).category,
+      });
       const response = aiErrorResponse(err, 'LLM API error');
       const failure = imageAnalysisFailure(err);
       recordImageAnalysisEvent('image_analysis_failed', {
@@ -326,6 +342,7 @@ export async function POST(request: NextRequest) {
     console.error('Analyze wound failed:', {
       category: error instanceof AiError ? error.category : 'UNKNOWN',
       assessmentType: validatedAssessmentType ?? 'pre-validation',
+      stage: 'route',
     });
     if (analysisTelemetry) {
       recordImageAnalysisEvent('image_analysis_failed', {

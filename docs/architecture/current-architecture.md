@@ -6,7 +6,7 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.5.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.6.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -155,7 +155,7 @@ Companion diagrams:
 | Element | Location | Status |
 | --- | --- | --- |
 | Public landing (single Phoenix AI entry) | `app/page.tsx`, `app/_components/landing-client.tsx` | Implemented |
-| HCP portal | `app/hcp/*`, `components/hcp-assessment-mode.tsx` | Implemented — shared shell with persisted `acute_burn` and `general_wound` modes; TBSA and Parkland are burn-only |
+| HCP portal | `app/hcp/*`, `components/hcp-assessment-mode.tsx` | Implemented — persistent top-header selector for `acute_burn` and `general_wound`; sidebar and mobile navigation show only active-mode pages, with TBSA and Parkland burn-only |
 | Community portal (chat, assessment with severity-appropriate professional-care disposition on every result, articles, first-aid, first-aid video and burn prevention; retired image route redirects home) | `app/community/*` | Implemented |
 | Retired alternate experience | Runtime source, components, libraries, flags, assets and tests removed; recoverable from Git history only | Removed |
 | PWA install + service worker | `components/pwa-install-prompt.tsx`, `components/pwa-register.tsx`, `public/` | Implemented |

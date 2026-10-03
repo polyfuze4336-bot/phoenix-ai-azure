@@ -42,6 +42,8 @@
 > The `8.5.0` HCP analysis reliability correction reuses the same Container App, Azure AI
 > deployment, managed identity and Microsoft.Default filter. No Azure resource or app setting is
 > changed automatically; production settings and filter incidents require manual verification.
+> The `8.6.0` HCP selector/diagnostics update changes no Azure resource, secret, identity, model
+> deployment, content-filter policy, or runtime environment variable.
 
 ## Environment
 

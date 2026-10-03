@@ -10,6 +10,44 @@ technically possible.
 
 ---
 
+## 2026-10-03 — HCP top-level mode selection and deployed-analysis triage
+
+Moved the existing `acute_burn` / `general_wound` selector to the persistent,
+responsive HCP header above the content, removing both sidebar copies. The existing
+localStorage-backed context and mode-filtered sidebar/mobile navigation remain in use:
+General Wound never shows TBSA or Parkland. EN/BM labels reuse the global language
+system; neutral safety/refusal, timeout and response-validation messages now use the
+requested bilingual wording. Clinical-image prompts explicitly permit medically
+relevant private-region findings without bypassing Azure safety filtering.
+
+**Root-cause status:** The repository cannot establish the live failure stage for
+either mode or prove that they share one root cause. A previous change (2026-10-01)
+already addressed reproducible output-validation defects; no evidence establishes
+that the deployed revision includes that change or that image conversion, provider
+auth, filtering, schema validation, or history persistence explains the incident.
+The client converts uploads to a canonical JPEG, sends bare base64 with
+`mimeType=image/jpeg` and explicit assessment type, and the API reconstructs one
+provider-compatible data URL. History persistence is best-effort *after* displaying
+the result. Burn and General Wound use distinct prompt/schema paths.
+
+On the next failing **Container App** request, correlate the deployed revision/SHA,
+timestamp and mode with sanitized route stage/category, API status/correlation ID,
+provider HTTP status and validated provider request ID. Obtain presence-only values
+for runtime `AZURE_AI_ENDPOINT` (bare account endpoint),
+`AZURE_AI_MODEL_DEPLOYMENT` (vision + JSON-capable deployment),
+`AZURE_AI_API_VERSION` (`2024-10-21`), `AZURE_AI_AUTH` (`identity`),
+`AZURE_CLIENT_ID` (assigned identity with Cognitive Services OpenAI User role),
+and optional `AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT`, `AI_ANALYSIS_PIPELINE`,
+`AI_ANALYSIS_TIMEOUT_MS`, `AZURE_AI_MAX_IMAGE_MB`; verify actual endpoint type,
+model support, identity assignment and current Azure filter decision. Bicep
+declares the first five runtime names; no live config or secrets were available
+here. Set corrected values on the Container App revision (not an old App Service
+slot) and activate/restart a new revision only if the evidence requires it.
+No production settings were changed; no redeployment is needed merely to inspect
+logs, but code changes require deployment after merge by an operator.
+
+---
+
 ## 2026-10-01 — HCP clinical-image analysis investigation
 
 **Deployed incident status:** The exact failure for either Acute Burn or General Wound

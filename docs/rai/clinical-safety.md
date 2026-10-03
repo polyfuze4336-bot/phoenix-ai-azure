@@ -70,6 +70,10 @@ The HCP interface provides a neutral bilingual retry/manual-assessment path. Cli
 normally private body regions is not rejected by the image validator based on anatomy; prompts
 request only medically necessary wound findings and respect patient dignity. This cannot guarantee
 that Azure will accept every image or that any assessment is clinically accurate.
+Failure diagnostics record the assessment mode, stage and sanitized category, and provider HTTP
+status and validated request ID when available. They do not record image bytes, raw provider
+responses or patient context. These diagnostics cannot establish the deployed failure cause
+without live revision and request correlation.
 
 ## Boundaries
 A single photograph cannot establish depth progression, infection, pain or sensation with certainty.

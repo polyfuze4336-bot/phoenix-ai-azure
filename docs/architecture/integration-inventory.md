@@ -54,6 +54,11 @@
 > `/api/community-analyze` path no longer uses `INT-BROWSER-APP` or `INT-APP-FOUNDRY`; retained HCP
 > image analysis and HCP/Community chat continue on those integrations without contract changes.
 >
+> **The HCP top selector and safe provider diagnostics add no new integration.** The existing
+> browser mode context still routes `acute_burn` / `general_wound` through `INT-BROWSER-APP`;
+> server-side failure logs carry only mode/stage/category or provider status and a validated
+> request ID. No images, patient context, tokens or raw provider bodies are logged.
+>
 > **Existing-result translation adds no external integration.** It reuses `INT-BROWSER-APP` and
 > `INT-APP-FOUNDRY`, sends only the existing structured result, never resends the image, validates
 > numeric/canonical values unchanged, and caches EN/MS representations in the browser session.

@@ -16,6 +16,15 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.6.0] — 2026-10-03
+
+### Changed
+- The existing HCP assessment-mode control moved from both sidebars to the persistent,
+  responsive top header; sidebar and mobile navigation remain filtered by mode.
+- Analysis diagnostics now include a sanitized mode/stage/category and, on provider
+  HTTP failures, status and allowlisted provider request ID. No Azure setting or
+  filtering policy changed. See [CHANGE-20261003](./changes/CHANGE-20261003-hcp-mode-and-analysis-diagnostics.md).
+
 ## [8.5.0] — 2026-10-01
 
 ### Changed

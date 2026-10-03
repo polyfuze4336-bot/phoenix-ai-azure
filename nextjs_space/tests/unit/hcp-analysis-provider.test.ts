@@ -90,11 +90,32 @@ for (const run of [runAnalysisPipeline, runGeneralWoundAnalysis]) {
       (error: unknown) => error instanceof AiError && error.category === 'AI_CONTENT_FILTER',
     );
   });
+
+  test(`${run.name} propagates provider timeout without a clinical result`, async (t) => {
+    t.mock.method(AzureFoundryProvider.prototype, 'streamChatCompletion', async () => {
+      throw new AiError({
+        code: 'timeout', category: 'AI_TIMEOUT', status: 504,
+        clientMessage: 'The AI analysis took too long to respond.',
+      });
+    });
+    await assert.rejects(
+      run({ imageDataUrl: 'data:image/jpeg;base64,TEST', language: 'ms' }),
+      (error: unknown) => error instanceof AiError && error.category === 'AI_TIMEOUT',
+    );
+  });
+
+  test(`${run.name} rejects malformed provider output without inventing findings`, async (t) => {
+    t.mock.method(AzureFoundryProvider.prototype, 'streamChatCompletion', async () => completion({}));
+    await assert.rejects(
+      run({ imageDataUrl: 'data:image/jpeg;base64,TEST', language: 'en' }),
+      (error: unknown) => error instanceof AiError && error.category === 'AI_SCHEMA_VALIDATION_FAILED',
+    );
+  });
 }
 
 test('both clinical prompts frame sensitive locations as medical observations only', () => {
-  assert.match(WOUND_VISUAL_OBSERVATION_PROMPT, /normally private anatomical area/i);
-  assert.match(GENERAL_WOUND_ANALYSIS_PROMPT, /normally private anatomical areas/i);
+  assert.match(WOUND_VISUAL_OBSERVATION_PROMPT, /normally private anatomical regions/i);
+  assert.match(GENERAL_WOUND_ANALYSIS_PROMPT, /normally private anatomical regions/i);
 });
 
 test('the HCP route reports fallback refusal instead of the preceding stage timeout', async (t) => {

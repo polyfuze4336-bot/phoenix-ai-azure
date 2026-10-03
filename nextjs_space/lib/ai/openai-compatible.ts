@@ -333,6 +333,12 @@ export async function streamOpenAiCompatible(
       });
 
       if (!response?.ok) {
+        const requestId = response.headers.get('apim-request-id') ?? response.headers.get('x-ms-request-id');
+        console.error('[Phoenix AI] AI provider request failed', {
+          stage: config.route ?? request.route ?? 'unknown',
+          httpStatus: response.status,
+          requestId: requestId && /^[a-zA-Z0-9-]{1,128}$/.test(requestId) ? requestId : undefined,
+        });
         const upstreamText = await safeText(response);
         let upstreamError: unknown;
         try {
