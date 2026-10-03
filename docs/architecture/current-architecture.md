@@ -6,7 +6,7 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.6.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.7.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -40,7 +40,7 @@ healthcare professionals (HCP), and simplified guidance for the public (Communit
 | AI processing | Environment-owned Azure AI Services S0 account with `gpt-4o` via `lib/ai`, managed identity — **Implemented** |
 | Data handling | Azure PostgreSQL Flexible Server 17.10 via Prisma; used by HCP history; other screens render demo content — **Partially implemented** |
 | Authentication | Server-verified **demo** login by default; Microsoft Entra ID **opt-in** placeholder — **Mock/demo + Optional** |
-| Storage | Azure Blob provider present + infra provisioned; no UI workflow persists files — **Configured but unused** |
+| Storage | Verified Entra HCP history saves validated images to private Azure Blob; demo identity cannot authorize retained images — **Partially implemented** |
 | Monitoring | Application Insights + Log Analytics + health probes + metric alerts — **Implemented** |
 | Development | GitHub Codespaces with Node.js 22, npm dependencies, Azure/GitHub CLIs, Copilot extensions, and port 3000 forwarding — **Implemented** |
 | Deployment | Direct pushes to `main` run one approval-free `deploy.yml` path using GitHub OIDC; explicit manual rollback restores a known immutable SHA image without rewriting history; infrastructure is manual-only — **Implemented** |
@@ -70,7 +70,7 @@ flowchart TB
         Auth["Auth Layer: demo default — DEMO / Entra — OPTIONAL"]
         AIProvider["AI Provider Layer (lib/ai) — ACTIVE"]
         Data["Data Access Layer (lib/db, Prisma) — ACTIVE"]
-        Storage["Storage Provider Layer (lib/storage) — OPTIONAL"]
+        Storage["Storage Provider Layer (lib/storage) — ACTIVE"]
         RuntimeConfig["Video library + runtime validation — ACTIVE"]
         Telemetry["Telemetry Layer (lib/telemetry) — ACTIVE"]
     end
@@ -82,7 +82,7 @@ flowchart TB
         ACR["Azure Container Registry (Basic) — ACTIVE"]
         Foundry["Environment-owned Azure AI Services gpt-4o — ACTIVE"]
         PostgreSQL["Azure Database for PostgreSQL Flexible Server — ACTIVE"]
-        Blob["Azure Blob Storage (private clinical-uploads) — OPTIONAL"]
+        Blob["Azure Blob Storage (private clinical-uploads) — ACTIVE"]
         KV["Azure Key Vault — ACTIVE"]
         MI["User-assigned Managed Identity — ACTIVE"]
         Insights["Application Insights — ACTIVE"]
@@ -120,7 +120,7 @@ flowchart TB
 
     AIProvider -->|"managed identity"| Foundry
     Data -->|"sslmode=require"| PostgreSQL
-    Storage -.->|"managed identity (not wired to UI)"| Blob
+    Storage -->|"managed identity; Entra HCP history only"| Blob
     Auth -.->|"AUTH_MODE=entra (opt-in)"| KV
 
     Next --> ContainerApp
@@ -243,7 +243,7 @@ migration because language metadata is stored inside the existing JSON result.
 
 | Element | Location | Status |
 | --- | --- | --- |
-| Azure Blob provider | `lib/storage/{azure-blob-provider,storage-provider,types}.ts` (managed identity, private container, SAS reads) | **Configured but unused** — no UI workflow persists files |
+| Azure Blob provider | `lib/storage/{azure-blob-provider,storage-provider,types}.ts` (managed identity, private container, SAS reads) | **Implemented for Entra HCP history**; not used in demo mode |
 | Remaining S3 code | — | **None** (removed; see [removals.md](../migration/removals.md)) |
 | Browser-based image handling | client-side `FileReader` → base64 image payload(s) to AI routes | Implemented |
 | Temporary image processing | ephemeral base64 in request body | Implemented |
@@ -318,7 +318,7 @@ workflow** in the deployed demo:
 
 | Capability | Source | Deployed behaviour |
 | --- | --- | --- |
-| Blob Storage | `lib/storage/*` present | Storage account provisioned; readiness reports `blob-storage=ok`, but **no UI persists files** |
+| Blob Storage | `lib/storage/*` present | Private clinical images retained with Entra HCP history; readiness reports `blob-storage=ok` |
 | Entra ID auth | `lib/auth/entra-*` present | `AUTH_MODE=demo` in the demo → Entra path inactive |
 | PostgreSQL persistence | full Prisma schema | A server-verified Entra HCP session can retain/read only its own `AnalysisRecord` history; demo mode does not retain/read records; other models hold parity demo content |
 

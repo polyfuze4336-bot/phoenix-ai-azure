@@ -16,6 +16,13 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.7.0] — 2026-10-03
+
+### Changed
+- HCP history saves now require a verified Entra session and persist validated images to private Blob Storage before writing their mode-tagged PostgreSQL record; ambiguous save retries reuse a client-generated ID, and failed DB writes attempt blob cleanup.
+- History reads enforce clinician ownership (administrator may inspect legacy records), expose unclassified legacy records separately, and report unavailable images without dropping structured results. Demo-mode history is explicitly unavailable because client-only identity cannot authorize retained clinical data.
+- See [CHANGE-20261003 history persistence](./changes/CHANGE-20261003-hcp-history-persistence.md).
+
 ## [8.6.0] — 2026-10-03
 
 ### Changed

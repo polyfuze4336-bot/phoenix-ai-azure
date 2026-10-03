@@ -10,6 +10,54 @@ technically possible.
 
 ---
 
+## 2026-10-03 — Persistent HCP analysis history (Entra sessions)
+
+**Previous storage:** `AnalysisRecord` already stored results, mode and optional image
+reference in PostgreSQL; `lib/analysis/history.ts` uploaded images to the private
+`clinical-uploads` Azure Blob container (not a local filesystem). The browser
+held only the selected image/preview and a mode preference; it did not provide
+durable history storage. However, history saves were fire-and-forget, failed saves
+were invisible, and the default demo identity had no server-verified session
+for secure retained-data access. History APIs previously trusted client-supplied
+clinician identity. The live persistence of older records and blobs is not
+verifiable from this repository.
+
+**Now:** With `AUTH_MODE=entra`, each completed Acute Burn or General Wound result
+uses a retry-stable UUID. The history route verifies the session, validates the
+image, uploads it to private Azure Blob Storage using managed identity, and
+persists a mode-tagged result, clinician identity and opaque blob path in the
+existing PostgreSQL `AnalysisRecord` table. Database-write failure triggers
+best-effort blob cleanup; an ambiguous response can be retried by ID without
+creating a duplicate. Save failures are shown separately from the clinical
+result with a Retry action. Authenticated history reads filter by mode and
+clinician; administrators can inspect unclassified legacy rows separately.
+Existing records are not changed or deleted. A missing/unreadable old blob
+shows the EN/BM unavailable-image placeholder while retaining its result.
+Image detail resolves a short-lived, read-only user-delegation SAS; the
+container is private and no permanent public URL is stored. No database
+migration or new Azure storage resource is required.
+
+**Limitation:** Default client-only demo sessions cannot securely authorize
+retained clinical images, so demo history saves/reads return 401 with a bilingual
+explanation in the UI. This is not full persistence for the default demo
+experience; an operator must enable verified Entra auth to use retained
+history. No live Azure data/storage access was available to determine which
+legacy images can be recovered. Do not fabricate missing images or infer that
+all old references work. No automatic retention period is imposed; the
+organisation must approve retention/deletion policy.
+
+**Operator configuration (Container App, not retired App Service):** Verify
+runtime `AUTH_MODE=entra`, `SESSION_SECRET` (server-side, stored securely),
+`DATABASE_URL` (Key Vault-backed), `AZURE_STORAGE_ACCOUNT_URL` or
+`AZURE_STORAGE_ACCOUNT`, `AZURE_STORAGE_CONTAINER` and `AZURE_CLIENT_ID`.
+Verify the attached identity has Storage Blob Data Contributor on the existing
+private storage account and can request a user-delegation key; confirm the
+container denies public access. Configure Entra sign-in according to the
+existing authentication setup, and activate/restart the Container App revision
+after changes. No production settings or deployed resources were changed here.
+
+---
+
 ## 2026-10-03 — HCP top-level mode selection and deployed-analysis triage
 
 Moved the existing `acute_burn` / `general_wound` selector to the persistent,

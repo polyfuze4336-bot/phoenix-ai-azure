@@ -383,11 +383,11 @@ export const RAI_CONTROLS: RaiControl[] = [
     title: 'Analysis persistence / audit record',
     principle: 'accountability',
     layer: 'oversight',
-    status: 'active',
+    status: 'partial',
     description:
-      'Assessments can be persisted with their result, image reference and timestamp, providing an auditable record of AI-assisted decisions.',
-    evidence: ['lib/analysis/history.ts', 'prisma/schema.prisma'],
-    tests: ['tests/unit/db-mappings.test.ts'],
+      'Verified Entra HCP sessions can persist mode-tagged assessments with validated images in private Blob Storage and results in PostgreSQL. Client-only demo sessions cannot securely authorize retained records; missing legacy images cannot be recovered from this repository.',
+    evidence: ['lib/analysis/history.ts', 'app/api/hcp/analyses/route.ts', 'app/api/hcp/analyses/[id]/route.ts', 'prisma/schema.prisma'],
+    tests: ['tests/unit/analysis-history.test.ts', 'tests/api/routes.spec.ts'],
     userVisible: true,
   },
 

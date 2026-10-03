@@ -6,10 +6,9 @@
  * mints short-lived read URLs, so a storage account key never reaches the browser.
  *
  * IMPORTANT (parity + privacy):
- * - No current Phoenix AI workflow persists user files — wound/burn images are read
- *   client-side via FileReader and sent to the AI routes as ephemeral base64. This
- *   provider is therefore intentionally NOT wired into any UI workflow; it exists as
- *   a secure building block for any future feature that genuinely needs persistence.
+ * - Verified Entra HCP analysis history persists validated wound/burn images here;
+ *   model inference still receives ephemeral base64 from the client. Demo-mode
+ *   identity cannot authorize retained clinical images.
  * - Clinical images must only ever live in a PRIVATE container. Never make the
  *   container public and never log image bytes or metadata values.
  */

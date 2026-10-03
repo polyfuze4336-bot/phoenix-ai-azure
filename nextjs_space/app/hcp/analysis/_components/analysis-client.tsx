@@ -53,29 +53,16 @@ interface PatientContext {
 }
 
 /**
- * Best-effort persistence of a completed analysis (image + result) to the clinician
- * history page. Fire-and-forget: a save failure must NEVER disrupt the analysis view.
+ * Persist a completed assessment separately from inference. A failed save must
+ * never be mistaken for retained history or hide the clinical result.
  */
-async function saveAnalysisToHistory(result: AnalysisResult, image: string, mimeType: string, assessmentType: AssessmentType) {
-  try {
-    let clinician: { name?: string; email?: string } | undefined;
-    if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem('hcp_auth');
-      if (stored) {
-        try {
-          const u = JSON.parse(stored);
-          clinician = { name: u?.name, email: u?.email };
-        } catch { /* ignore malformed session */ }
-      }
-    }
-    await fetch('/api/hcp/analyses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ result, image, mimeType, clinician, assessmentType }),
-    });
-  } catch {
-    /* best-effort only */
-  }
+async function saveAnalysisToHistory(id: string, result: AnalysisResult, image: string, mimeType: string, assessmentType: AssessmentType) {
+  const response = await fetch('/api/hcp/analyses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, result, image, mimeType, assessmentType }),
+  });
+  if (!response.ok) throw new Error(response.status === 401 ? 'history.auth_required' : 'history.save_failed');
 }
 
 async function responseError(response: Response): Promise<string> {
@@ -109,6 +96,9 @@ export function AnalysisClient() {
   const [error, setError] = useState<string | null>(null);
   const [analysisFailed, setAnalysisFailed] = useState(false);
   const [analysisRetryCount, setAnalysisRetryCount] = useState(0);
+  const [historySaveError, setHistorySaveError] = useState<string | null>(null);
+  const [savingHistory, setSavingHistory] = useState(false);
+  const historyIdRef = useRef('');
   const [refining, setRefining] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [translationError, setTranslationError] = useState(false);
@@ -129,6 +119,8 @@ export function AnalysisClient() {
     setResult(null);
     setError(null);
     setAnalysisFailed(false);
+    setHistorySaveError(null);
+    historyIdRef.current = '';
     translationsRef.current = {};
   }, [assessmentType]);
 
@@ -274,6 +266,7 @@ export function AnalysisClient() {
     setAnalyzing(true);
     setError(null);
     setAnalysisFailed(false);
+    setHistorySaveError(null);
     try {
       // Use pre-normalized canonical JPEG — set during ingestImage, consistent across retries.
       const base64 = lastBase64Ref.current;
@@ -298,7 +291,15 @@ export function AnalysisClient() {
         translationsRef.current = { [lang]: localized };
         setResult(localized);
         setAnalysisFailed(false);
-        void saveAnalysisToHistory(completed, base64, mime, assessmentType);
+        setSavingHistory(true);
+        historyIdRef.current = crypto.randomUUID();
+        void saveAnalysisToHistory(historyIdRef.current, completed, base64, mime, assessmentType)
+          .catch((saveError) => {
+            if (assessmentTypeRef.current === requestAssessmentType) {
+              setHistorySaveError(saveError?.message === 'history.auth_required' ? 'history.auth_required' : 'history.save_failed');
+            }
+          })
+          .finally(() => setSavingHistory(false));
       } else {
         throw new Error('analysis.response_invalid');
       }
@@ -347,7 +348,16 @@ export function AnalysisClient() {
         const localized = { ...completed, language: lang };
         translationsRef.current = { [lang]: localized };
         setResult(localized);
-        void saveAnalysisToHistory(completed, lastBase64Ref.current, lastMimeRef.current, assessmentType);
+        setHistorySaveError(null);
+        setSavingHistory(true);
+        historyIdRef.current = crypto.randomUUID();
+        void saveAnalysisToHistory(historyIdRef.current, completed, lastBase64Ref.current, lastMimeRef.current, assessmentType)
+          .catch((saveError) => {
+            if (assessmentTypeRef.current === requestAssessmentType) {
+              setHistorySaveError(saveError?.message === 'history.auth_required' ? 'history.auth_required' : 'history.save_failed');
+            }
+          })
+          .finally(() => setSavingHistory(false));
       }
     } catch (err: any) {
       setError(err?.name === 'TimeoutError' || err?.name === 'AbortError'
@@ -366,6 +376,7 @@ export function AnalysisClient() {
     setError(null);
     setAnalysisFailed(false);
     setAnalysisRetryCount(0);
+    setHistorySaveError(null);
     setTranslationError(false);
     translationsRef.current = {};
   }, []);
@@ -538,6 +549,26 @@ export function AnalysisClient() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="min-w-0 max-w-full space-y-4 break-words">
               <h2 className="font-display text-lg font-bold text-gray-900">{t('analysis.results')}</h2>
               <ClinicalAiNotice />
+              {savingHistory && <p className="text-sm text-gray-500">{t('history.saving')}</p>}
+              {historySaveError && (
+                <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  {t(historySaveError)}
+                  {historySaveError === 'history.save_failed' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHistorySaveError(null);
+                        setSavingHistory(true);
+                        void saveAnalysisToHistory(historyIdRef.current, result, lastBase64Ref.current, lastMimeRef.current, assessmentType)
+                          .catch((saveError) => setHistorySaveError(saveError?.message === 'history.auth_required' ? 'history.auth_required' : 'history.save_failed'))
+                          .finally(() => setSavingHistory(false));
+                      }}
+                      disabled={savingHistory}
+                      className="ml-2 font-semibold underline"
+                    >{t('history.retry_save')}</button>
+                  )}
+                </div>
+              )}
               {translating && (
                 <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
                   <Loader2 className="h-4 w-4 animate-spin" /> {t('analysis.translating')}

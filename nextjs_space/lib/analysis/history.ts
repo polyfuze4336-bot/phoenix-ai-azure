@@ -6,15 +6,16 @@
  *    accessed only through short-lived user-delegation SAS URLs.
  *  - PostgreSQL (Prisma model `AnalysisRecord`) for the structured assessment.
  *
- * Demo-auth note: the clinician name/email are supplied by the (client-side) demo
- * session and are stored for display only. They are NOT a security boundary — do
- * not use them for access control.
+ * History routes require a server-verified Entra HCP session. Demo identity is
+ * client-only and must never grant access to retained clinical data.
  *
  * SERVER-ONLY. Never import from a client component.
  */
 
 import { prisma, withDbRetry } from '@/lib/db';
 import { getStorageProvider, validateUpload } from '@/lib/storage/storage-provider';
+import type { StorageProvider } from '@/lib/storage/types';
+import { validateImageInput } from '@/lib/ai/validation/image-input';
 import type { AssessmentType } from '@/lib/assessment-type';
 
 /** The structured HCP wound assessment produced by /api/analyze-wound. */
@@ -29,6 +30,7 @@ export type HcpAnalysisResult = Record<string, unknown> & {
 };
 
 export interface SaveAnalysisInput {
+  id: string;
   result: HcpAnalysisResult;
   /** Base64 image payload (no data-URL prefix), as sent to the analysis route. */
   image?: string | null;
@@ -69,7 +71,21 @@ function str(value: unknown): string | null {
  * Persist an analysis result (and its image) for later reference.
  * Uploads the image to Blob Storage first, then writes the DB row.
  */
-export async function saveAnalysisRecord(input: SaveAnalysisInput): Promise<{ id: string }> {
+export async function saveAnalysisRecord(
+  input: SaveAnalysisInput,
+  dependencies: {
+    storage?: StorageProvider;
+    records?: Pick<typeof prisma.analysisRecord, 'findUnique' | 'create'>;
+  } = {},
+): Promise<{ id: string }> {
+  const records = dependencies.records ?? prisma.analysisRecord;
+  const existing = await withDbRetry(() => records.findUnique({ where: { id: input.id } }));
+  if (existing) {
+    if (existing.clinicianEmail !== input.clinicianEmail || existing.assessmentType !== input.assessmentType) {
+      throw new Error('History ID already in use');
+    }
+    return { id: existing.id };
+  }
   const { result } = input;
   if (!result || typeof result !== 'object') {
     throw new Error('An analysis result is required.');
@@ -78,75 +94,94 @@ export async function saveAnalysisRecord(input: SaveAnalysisInput): Promise<{ id
   let imageKey: string | null = null;
   let imageMimeType: string | null = null;
 
-  const base64 = str(input.image);
-  const mime = str(input.mimeType);
-  if (base64 && mime) {
-    const data = Buffer.from(base64, 'base64');
-    const validation = validateUpload(mime, data.byteLength);
-    if (!validation.ok) {
-      throw new Error(validation.error);
+  const image = validateImageInput({ image: input.image, mimeType: input.mimeType });
+  if (!image.ok) throw new Error('image_validation_failed');
+  const data = Buffer.from(image.base64, 'base64');
+  const validation = validateUpload(image.mimeType, data.byteLength);
+  if (!validation.ok) throw new Error('image_validation_failed');
+  const storage = dependencies.storage ?? getStorageProvider();
+  const uploaded = await storage.upload({
+    data,
+    contentType: validation.contentType,
+    category: 'wound-analysis',
+    metadata: { source: 'phoenix-ai' },
+  });
+  imageKey = uploaded.blobPath;
+  imageMimeType = validation.contentType;
+
+  try {
+    const record = await withDbRetry(() =>
+      records.create({
+        data: {
+          id: input.id,
+          clinicianName: str(input.clinicianName),
+          clinicianEmail: str(input.clinicianEmail),
+          imageKey,
+          imageMimeType,
+          woundCategory: str(result.woundCategory),
+          woundType: str(result.woundType),
+          burnDegree: str(result.burnDegree),
+          severity: str(result.severity),
+          confidence: str(result.confidence),
+          tbsaEstimate: str(result.tbsaEstimate),
+          isBurn: result.isBurn === true,
+          assessmentType: input.assessmentType,
+          result: result as object,
+        },
+        select: { id: true },
+      }),
+    );
+    return { id: record.id };
+  } catch (error) {
+    // A lost DB response may follow a committed insert. Keep its referenced blob.
+    const committed = await withDbRetry(() => records.findUnique({ where: { id: input.id } })).catch(() => null);
+    if (committed?.imageKey === uploaded.blobPath &&
+        committed.clinicianEmail === input.clinicianEmail &&
+        committed.assessmentType === input.assessmentType) {
+      return { id: committed.id };
     }
-    const uploaded = await getStorageProvider().upload({
-      data,
-      contentType: validation.contentType,
-      category: 'wound-analysis',
-      metadata: { source: 'phoenix-ai' },
-    });
-    imageKey = uploaded.blobPath;
-    imageMimeType = validation.contentType;
+    try {
+      await storage.delete(uploaded.blobPath);
+    } catch {
+      console.error('[Phoenix AI] history orphan cleanup failed', { category: 'database_save_failed' });
+    }
+    if (committed && committed.clinicianEmail === input.clinicianEmail && committed.assessmentType === input.assessmentType) {
+      return { id: committed.id };
+    }
+    throw error;
   }
-
-  const record = await withDbRetry(() =>
-    prisma.analysisRecord.create({
-      data: {
-        clinicianName: str(input.clinicianName),
-        clinicianEmail: str(input.clinicianEmail),
-        imageKey,
-        imageMimeType,
-        woundCategory: str(result.woundCategory),
-        woundType: str(result.woundType),
-        burnDegree: str(result.burnDegree),
-        severity: str(result.severity),
-        confidence: str(result.confidence),
-        tbsaEstimate: str(result.tbsaEstimate),
-        isBurn: result.isBurn === true,
-        assessmentType: input.assessmentType,
-        result: result as object,
-      },
-      select: { id: true },
-    }),
-  );
-
-  return { id: record.id };
 }
 
 /** Return retained analyses, newest first, for the history list. */
 export async function listAnalysisRecords(
-  assessmentType: AssessmentType,
+  assessmentType: AssessmentType | null,
+  ownerEmail: string,
+  isAdministrator = false,
   limit = 100,
 ): Promise<{ records: AnalysisRecordSummary[]; legacyCount: number }> {
+  const ownerFilter = isAdministrator ? {} : { clinicianEmail: ownerEmail };
   const [rows, legacyCount] = await withDbRetry(() =>
     prisma.$transaction([
       prisma.analysisRecord.findMany({
-      where: { assessmentType },
-      orderBy: { createdAt: 'desc' },
-      take: Math.min(Math.max(limit, 1), 200),
-      select: {
-        id: true,
-        createdAt: true,
-        clinicianName: true,
-        woundCategory: true,
-        woundType: true,
-        burnDegree: true,
-        severity: true,
-        confidence: true,
-        tbsaEstimate: true,
-        isBurn: true,
-        imageKey: true,
-        assessmentType: true,
-      },
+        where: { ...ownerFilter, assessmentType },
+        orderBy: { createdAt: 'desc' },
+        take: Math.min(Math.max(limit, 1), 200),
+        select: {
+          id: true,
+          createdAt: true,
+          clinicianName: true,
+          woundCategory: true,
+          woundType: true,
+          burnDegree: true,
+          severity: true,
+          confidence: true,
+          tbsaEstimate: true,
+          isBurn: true,
+          imageKey: true,
+          assessmentType: true,
+        },
       }),
-      prisma.analysisRecord.count({ where: { assessmentType: null } }),
+      prisma.analysisRecord.count({ where: { ...ownerFilter, assessmentType: null } }),
     ]),
   );
 
@@ -162,22 +197,30 @@ export async function listAnalysisRecords(
     tbsaEstimate: r.tbsaEstimate,
     isBurn: r.isBurn,
     hasImage: Boolean(r.imageKey),
-    assessmentType: r.assessmentType as AssessmentType,
+    assessmentType: r.assessmentType as AssessmentType | null,
   })), legacyCount };
 }
 
 /** Return a single retained analysis with a fresh image SAS URL. */
-export async function getAnalysisRecord(id: string): Promise<AnalysisRecordDetail | null> {
+export async function getAnalysisRecord(
+  id: string,
+  ownerEmail: string,
+  isAdministrator = false,
+  dependencies: { storage?: StorageProvider; records?: Pick<typeof prisma.analysisRecord, 'findUnique'> } = {},
+): Promise<AnalysisRecordDetail | null> {
   const row = await withDbRetry(() =>
-    prisma.analysisRecord.findUnique({ where: { id } }),
+    (dependencies.records ?? prisma.analysisRecord).findUnique({ where: { id } }),
   );
-  if (!row) return null;
+  if (!row || (!isAdministrator && row.clinicianEmail !== ownerEmail)) return null;
 
   let imageUrl: string | null = null;
   if (row.imageKey) {
     try {
-      const read = await getStorageProvider().getReadUrl(row.imageKey);
-      imageUrl = read.url;
+      const storage = dependencies.storage ?? getStorageProvider();
+      if (await storage.exists(row.imageKey)) {
+        const read = await storage.getReadUrl(row.imageKey);
+        imageUrl = read.url;
+      }
     } catch {
       // A missing/unreadable blob must not break viewing the textual assessment.
       imageUrl = null;

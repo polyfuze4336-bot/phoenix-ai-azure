@@ -68,11 +68,11 @@
 | DB-POSTGRES | PostgreSQL database | Data | Azure PostgreSQL Flexible Server 17.10 | infra + `DATABASE_URL` | Relational store | INFRA-MI | ACTIVE | Phoenix AI team |
 | DB-ANALYSISRECORD | Analysis history model | Data | Prisma model | `prisma/schema.prisma` | Persist HCP analyses with explicit assessment type; preserve legacy rows as nullable/unclassified | DB-PRISMA | ACTIVE | Phoenix AI team |
 | DB-LEGACY-MODELS | Case/ChatMessage/Article | Data | Prisma models | `prisma/schema.prisma` | Retained-for-parity models | DB-PRISMA | OPTIONAL | Phoenix AI team |
-| STORAGE-BLOB | Blob storage provider | Lib | @azure/storage-blob + identity | `lib/storage/*` | Private file storage | INFRA-MI, INFRA-STORAGE | OPTIONAL | Phoenix AI team |
+| STORAGE-BLOB | Blob storage provider | Lib | @azure/storage-blob + identity | `lib/storage/*` | Private clinical image storage for verified Entra HCP history; short-lived read-only user-delegation SAS | INFRA-MI, INFRA-STORAGE | ACTIVE | Phoenix AI team |
 | AUTH-DEMO | Demo auth provider | Lib | TypeScript | `lib/auth/demo-*.ts`, `auth-config.ts` | One server-verified fictional DEMO/TEST-only account, with no quick-login bypass or visible credential disclosure (default) | AUTH-SESSION | DEMO | Phoenix AI team |
 | AUTH-ENTRA | Entra ID provider | Lib | OIDC + jose | `lib/auth/entra-*.ts` | Opt-in SSO | AUTH-SESSION | OPTIONAL | Phoenix AI team |
 | AUTH-SESSION | Session cookie | Lib | jose HS256 | `lib/auth/session.ts`, `current-session.ts` | Signed httpOnly session | — | ACTIVE | Phoenix AI team |
-| ANALYSIS-HISTORY | Analysis history service | Lib | TypeScript | `lib/analysis/history.ts` | Read/write AnalysisRecord | DB-PRISMA | ACTIVE | Phoenix AI team |
+| ANALYSIS-HISTORY | Analysis history service | Lib | TypeScript | `lib/analysis/history.ts` | Validate and upload image before PostgreSQL write; remove blob on failed write; filter by mode/owner, preserve legacy/unavailable images | DB-PRISMA, STORAGE-BLOB | ACTIVE | Phoenix AI team |
 | CFG-ENV | Runtime config/validation | Lib | TypeScript | `lib/config/environment.ts`, `lib/config/first-aid-video.ts`, `lib/config/first-aid-videos.ts` | Feature gating, allowlisted Community video-library validation, deduplication and runtime featured override | — | ACTIVE | Phoenix AI team |
 | HEALTH-READINESS | Readiness checks | Lib | TypeScript | `lib/health/readiness.ts` | Dependency probes | AI-PROVIDER, DB-PRISMA, STORAGE-BLOB | ACTIVE | Phoenix AI team |
 | OBS-APPINSIGHTS | App Insights telemetry | Lib/Infra | applicationinsights + web SDK | `lib/telemetry/*`, `components/telemetry-provider.tsx` | Privacy-safe telemetry including analysis reliability dimensions; never image/content payloads | — | ACTIVE | Phoenix AI team |
