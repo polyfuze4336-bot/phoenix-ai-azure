@@ -12,3 +12,6 @@
   provider status, or whether both modes fail at the same stage. Operators must
   correlate live revision, sanitized logs and configuration presence before
   attributing or changing a production setting.
+- **Validation:** unit/RAI/integration suites, lint, drift check and CodeQL passed.
+  Build is blocked by sandbox Google Fonts DNS; typecheck also reports existing
+  `lib/analysis/history.ts` errors. Browser/API suites need a successful build.

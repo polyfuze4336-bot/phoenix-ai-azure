@@ -26,4 +26,9 @@ test('HCP switches between burn and general wound modes without logout', async (
   await expect(page.getByText('Wound Infection Reference')).toBeVisible();
   await expect(page.getByText('General Wound Reference')).toBeVisible();
   await expect(page.getByText('Reference document will be added later.').first()).toBeVisible();
+
+  await page.getByRole('button', { name: /Bahasa Malaysia/i }).click();
+  const bmSelector = page.getByRole('group', { name: 'Mod penilaian' });
+  await expect(bmSelector.getByRole('button', { name: 'Luka Umum' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(bmSelector.getByRole('button', { name: 'Kecederaan Kelecuran Akut' })).toBeVisible();
 });

@@ -46,6 +46,14 @@ slot) and activate/restart a new revision only if the evidence requires it.
 No production settings were changed; no redeployment is needed merely to inspect
 logs, but code changes require deployment after merge by an operator.
 
+**Checks:** 152 unit, 36 RAI and 14 integration tests passed; lint, architecture
+drift validation and secret scan passed; CodeQL reported no findings. A normal
+`npm run build` could not reach `fonts.googleapis.com` in this sandbox. TypeScript
+reports pre-existing errors in `lib/analysis/history.ts`; no history code was changed.
+API and browser E2E suites require a successful production build and were not run.
+Neither mode was exercised against live Azure; clinical accuracy and sensitive-area
+provider acceptance remain unverified.
+
 ---
 
 ## 2026-10-01 — HCP clinical-image analysis investigation
