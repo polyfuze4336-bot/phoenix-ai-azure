@@ -26,6 +26,12 @@ clinician, not the model. This is asserted in
   without re-uploading (**RAI-SAFE-012**).
 
 ## Persistence
-Reviewed assessments can be persisted with their result, image reference and timestamp
-([`lib/analysis/history.ts`](../../nextjs_space/lib/analysis/history.ts)), providing an auditable
-record of AI-assisted decisions (**RAI-ACCT-002**).
+Verified Entra HCP sessions can persist assessments with their result, mode, timestamp
+and opaque private image reference
+([`lib/analysis/history.ts`](../../nextjs_space/lib/analysis/history.ts)). History-save
+failure is visible and retryable without hiding the AI result. Demo sessions are
+client-only and cannot authorize access to retained clinical images; demo analyses
+are **not** persisted. Legacy records remain available to authorized clinicians
+(unclassified records are visible separately); missing images show a neutral
+placeholder rather than deleting the structured result. **RAI-ACCT-002 is Partial**
+until verified identity and storage are operational for the intended HCP population.

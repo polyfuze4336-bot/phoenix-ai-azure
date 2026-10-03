@@ -39,7 +39,7 @@ flowchart LR
     MI --> APP
     APP -->|"managed identity"| AI
     APP -->|"sslmode=require"| PG
-    APP -.->|"managed identity (optional, not wired)"| BLOB
+    APP -->|"managed identity; Entra HCP history"| BLOB
     APP -->|"Key Vault secret reference"| KV
     APP --> AIAPP
     AIAPP --> LAW

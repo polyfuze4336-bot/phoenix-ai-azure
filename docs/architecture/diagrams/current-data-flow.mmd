@@ -1,6 +1,6 @@
 %% Phoenix AI — Current (AS-IS) data-flow diagram
 %% Reflects actual API routes and the AI provider layer at HEAD.
-%% Blob Storage is shown as OPTIONAL because no current workflow persists user files
+%% Entra-authenticated HCP history writes images to private Blob Storage; demo mode does not retain.
 %% (inference payloads are ephemeral; the original HCP client may make a separate
 %% Entra-session-authorized retention request after analysis).
 flowchart TB
@@ -30,8 +30,10 @@ flowchart TB
         UI2 -->|"language switch: structured result only"| TR2["/api/analyze-wound/translate"]
         TR2 --> TV2["Narrative translation\ncanonical/numeric validation"]
         TV2 -->|"cached EN/MS; original retained on failure"| UI2
-        R2 -.->|"Entra session only: persist/filter explicit assessment type"| DB2["PostgreSQL (lib/analysis/history)"]
-        R2 -.->|"Entra session only: private image"| BLOB2["Azure Blob Storage"]
+        UI2 -.->|"verified Entra session: save/retry stable ID"| HIST2["/api/hcp/analyses"]
+        HIST2 -->|"validate and upload image first"| BLOB2["Private Azure Blob Storage"]
+        HIST2 -->|"mode, result, owner and blob path"| DB2["PostgreSQL (AnalysisRecord)"]
+        DB2 -.->|"owner-filtered history; fresh read-only SAS if image exists"| HIST2
     end
 
     subgraph CommChat["Community Chat"]

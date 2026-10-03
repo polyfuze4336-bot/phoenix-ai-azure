@@ -92,6 +92,23 @@ test('GET /api/health/live returns 200', async ({ request }) => {
   expect(res.status()).toBe(200);
 });
 
+test('demo identity cannot save or read retained clinical history or images', async ({ request }) => {
+  const list = await request.get('/api/hcp/analyses?assessmentType=acute_burn');
+  const legacy = await request.get('/api/hcp/analyses?assessmentType=legacy');
+  const detail = await request.get('/api/hcp/analyses/00000000-0000-4000-8000-000000000000');
+  const save = await postJson(request, '/api/hcp/analyses', {
+    id: '00000000-0000-4000-8000-000000000000',
+    assessmentType: 'general_wound',
+    image: TINY_PNG_B64,
+    mimeType: 'image/png',
+    result: { woundType: 'wound' },
+  });
+  for (const response of [list, legacy, detail, save]) {
+    expect(response.status()).toBe(401);
+    expect(JSON.stringify(await response.json())).not.toContain('imageUrl');
+  }
+});
+
 test('GET /api/health/db returns a JSON status (200 or 503)', async ({ request }) => {
   const res = await request.get('/api/health/db');
   expect([200, 503]).toContain(res.status());

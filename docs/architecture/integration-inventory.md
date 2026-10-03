@@ -13,7 +13,7 @@
 | INT-COMMUNITY-YOUTUBE | Community browser | YouTube privacy-enhanced embed (`www.youtube-nocookie.com`) | HTTPS iframe | Stream curated burn first-aid education videos only on the Community First Aid Video page | None | Validated 11-character YouTube video IDs embedded in normalized player URLs; raw environment values and unrelated configuration are not exposed | ACTIVE |
 | INT-APP-FOUNDRY | Next.js AI provider (`lib/ai`) | Environment-owned Microsoft Foundry / Azure AI Services account | HTTPS (OpenAI-compatible) | Chat + multimodal wound analysis under strict selected-language instructions; completed output is checked and retried once when predominantly wrong-language | Managed identity (Bearer, `cognitiveservices.azure.com`) | Prompts, language instruction, image content, model completions; telemetry records language codes only | ACTIVE |
 | INT-APP-POSTGRES | Next.js data layer (`lib/db.ts` / Prisma) | Azure PostgreSQL Flexible Server 17.10 (`phoenix`) | PostgreSQL wire (TLS, `sslmode=require`) | Persist/read and assessment-type-filter HCP AnalysisRecord after server-verified Entra session authorization; unavailable in demo auth | Direct `DATABASE_URL` credentials | Authorized retained analysis records, including explicit nullable assessment type | ACTIVE |
-| INT-APP-BLOB | Next.js storage provider (`lib/storage`) | Azure Blob Storage (`stphxyun55ezsi4yoq`, `clinical-uploads`) | HTTPS (Blob REST) | File persistence capability | Managed identity | (none in current UI) | OPTIONAL |
+| INT-APP-BLOB | Next.js storage provider (`lib/storage`) | Azure Blob Storage (`stphxyun55ezsi4yoq`, `clinical-uploads`) | HTTPS (Blob REST) | Entra-authenticated HCP history images, private upload and short-lived read-only SAS | Managed identity | Validated image bytes and opaque blob path; never a permanent public URL | ACTIVE |
 | INT-APP-KV | Azure Container App | Azure Key Vault (`kv-phx-<token>`) | HTTPS (Key Vault REST) | Resolve `DATABASE_URL` and optional Entra secrets through Container Apps secret references | Managed identity | Secret values exposed only as container environment variables | ACTIVE |
 | INT-APP-APPINSIGHTS | Next.js telemetry (`lib/telemetry`, browser SDK) | Application Insights (`appi-phoenixai-yun55ezsi4yoq`) | HTTPS (ingestion) | Requests, events, traces, exceptions, and image-analysis lifecycle reliability | Instrumentation/connection string | Error category, HTTP status, configured model deployment, retry count, latency, bounded image-size bucket, MIME type, and requested language; no image/base64/identifier/prompt/clinical-response content | ACTIVE |
 | INT-APPINSIGHTS-LAW | Application Insights | Log Analytics (`log-phoenixai-yun55ezsi4yoq`) | Azure internal | Workspace-based log storage | Azure platform | Telemetry logs | ACTIVE |
@@ -53,6 +53,11 @@
 > **Community Image Check retirement removes one caller from existing integrations.** The
 > `/api/community-analyze` path no longer uses `INT-BROWSER-APP` or `INT-APP-FOUNDRY`; retained HCP
 > image analysis and HCP/Community chat continue on those integrations without contract changes.
+>
+> **The HCP top selector and safe provider diagnostics add no new integration.** The existing
+> browser mode context still routes `acute_burn` / `general_wound` through `INT-BROWSER-APP`;
+> server-side failure logs carry only mode/stage/category or provider status and a validated
+> request ID. No images, patient context, tokens or raw provider bodies are logged.
 >
 > **Existing-result translation adds no external integration.** It reuses `INT-BROWSER-APP` and
 > `INT-APP-FOUNDRY`, sends only the existing structured result, never resends the image, validates

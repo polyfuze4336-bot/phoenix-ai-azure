@@ -383,11 +383,11 @@ export const RAI_CONTROLS: RaiControl[] = [
     title: 'Analysis persistence / audit record',
     principle: 'accountability',
     layer: 'oversight',
-    status: 'active',
+    status: 'partial',
     description:
-      'Assessments can be persisted with their result, image reference and timestamp, providing an auditable record of AI-assisted decisions.',
-    evidence: ['lib/analysis/history.ts', 'prisma/schema.prisma'],
-    tests: ['tests/unit/db-mappings.test.ts'],
+      'Verified Entra HCP sessions can persist mode-tagged assessments with validated images in private Blob Storage and results in PostgreSQL. Client-only demo sessions cannot securely authorize retained records; missing legacy images cannot be recovered from this repository.',
+    evidence: ['lib/analysis/history.ts', 'app/api/hcp/analyses/route.ts', 'app/api/hcp/analyses/[id]/route.ts', 'prisma/schema.prisma'],
+    tests: ['tests/unit/analysis-history.test.ts', 'tests/api/routes.spec.ts'],
     userVisible: true,
   },
 
@@ -421,15 +421,16 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'operations',
     status: 'active',
     description:
-      'Telemetry records counts, latencies and bounded operational metadata only. Analysis events may include image size bucket, MIME type, and allowlisted Azure content-filter source/category/severity, while blocked-key sanitisation prevents image bytes, Base64, patient identifiers, raw provider errors, prompts, clinical responses, transcripts, tokens and secrets from being logged.',
+      'Telemetry records counts, latencies and bounded operational metadata only. Analysis events may include image size bucket, MIME type, and allowlisted Azure content-filter source/category/severity; provider failures log HTTP status and a validated provider request ID. Blocked-key sanitisation prevents image bytes, Base64, patient identifiers, raw provider errors, prompts, clinical responses, transcripts, tokens and secrets from being logged.',
     evidence: [
       'lib/telemetry/server.ts',
       'lib/telemetry/client.ts',
       'lib/telemetry/analysis-events.ts',
       'lib/ai/telemetry.ts',
+      'lib/ai/openai-compatible.ts',
       'app/api/analyze-wound/route.ts',
     ],
-    tests: ['tests/rai/rai-telemetry.test.ts'],
+    tests: ['tests/rai/rai-telemetry.test.ts', 'tests/unit/ai-transport.test.ts'],
     userVisible: false,
   },
   {

@@ -19,7 +19,7 @@ test('RAI-SAFE-010: both HCP modes frame private-area images as medical without 
     WOUND_VISUAL_OBSERVATION_PROMPT, WOUND_CLINICAL_INTERPRETATION_PROMPT,
     GENERAL_WOUND_ANALYSIS_PROMPT, hcpWoundAnalysisSystemPrompt('en'),
   ]) {
-    assert.match(prompt, /private anatomical area/i);
+    assert.match(prompt, /private anatomical (area|region)/i);
     assert.match(prompt, /unrelated intimate anatomy|unrelated anatomy/i);
   }
 });

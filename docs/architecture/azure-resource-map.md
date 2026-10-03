@@ -42,6 +42,11 @@
 > The `8.5.0` HCP analysis reliability correction reuses the same Container App, Azure AI
 > deployment, managed identity and Microsoft.Default filter. No Azure resource or app setting is
 > changed automatically; production settings and filter incidents require manual verification.
+> The `8.6.0` HCP selector/diagnostics update changes no Azure resource, secret, identity, model
+> deployment, content-filter policy, or runtime environment variable.
+> The `8.7.0` HCP history path uses the existing private Blob account and PostgreSQL model.
+> Entra session configuration and managed-identity Blob permissions require live operator verification;
+> no resources or settings are changed automatically.
 
 ## Environment
 
@@ -65,7 +70,7 @@
 | Retired compute-plan source | Not deployed | — | `infra/modules/app-service-plan.bicep` | INFRA-PLAN (DEPRECATED) | none |
 | AI model | Azure AI Services S0 | `aif-phoenixai-<token>` (`gpt-4o` 2024-11-20 GlobalStandard) | `infra/modules/foundry-connection.bicep` | AZ-FOUNDRY | bfgs-demo |
 | Relational database | PostgreSQL Flexible Server 17.10, Burstable `Standard_B1ms`, 32 GiB | `psql-phoenixai-oaprp7dte7bw2` | `infra/modules/postgresql.bicep` | DB-POSTGRES | bfgs-demo |
-| File storage | Storage Account (Blob) | `stphx<token>` (container `clinical-uploads`) | `infra/modules/storage.bicep` | STORAGE-BLOB (OPTIONAL) | bfgs-demo |
+| File storage | Storage Account (Blob) | `stphx<token>` (container `clinical-uploads`) | `infra/modules/storage.bicep` | STORAGE-BLOB (ACTIVE with Entra history) | bfgs-demo |
 | Secret store | Key Vault | `kv-phx-<token>` | `infra/modules/key-vault.bicep` | INFRA-KV | bfgs-demo |
 | Workload identity | User-assigned Managed Identity | `id-phoenixai-<token>` | `infra/modules/managed-identity.bicep` | INFRA-MI | bfgs-demo |
 | Log store | Log Analytics Workspace | `log-phoenixai-<token>` | `infra/modules/log-analytics.bicep` | INFRA-LAW | bfgs-demo |
@@ -81,8 +86,8 @@
 
 - **DATABASE_URL** is stored in Key Vault and consumed through a Container Apps Key Vault-backed secret.
   It is never reproduced in this document.
-- Blob Storage is provisioned and reachable (readiness `blob-storage=ok`) but **no UI workflow
-  persists files** — see [current-architecture.md §4](./current-architecture.md#4-source-vs-deployment).
+- Blob Storage is used for verified Entra HCP history images only; demo-mode history is not
+  retained because the client-only demo identity cannot secure access to clinical records.
 - The application authenticates to Azure AI and Storage using the **user-assigned managed
   identity** (`id-phoenixai-<token>`); no keys are stored in application settings.
 - Bicep declares `raiPolicyName: Microsoft.Default` for `gpt-4o`. Repository evidence cannot prove

@@ -20,6 +20,7 @@ Documented, honestly. Each has a stable ID in the governed control register and 
 | LIM-013 | The `>=95%` image-analysis reliability target measures API completion for safe demo images under the recorded test conditions only. It is not a clinical-accuracy result, production SLA, or assurance that all images will complete. |
 | LIM-014 | Azure content filtering may block legitimate clinical burn/wound imagery, including private-area wounds. The app offers neutral EN/BM retry/manual-assessment guidance; only an Azure administrator can verify the live policy and apply a least-permissive supported healthcare configuration. Phoenix AI does not bypass the filter or guarantee every image can be analysed. |
 | LIM-015 | Existing-result translation is model-assisted and structurally validated to preserve protected canonical and numeric values, but clinical wording still requires clinician review. If validation or translation fails, the original result remains visible. |
+| LIM-016 | HCP history persistence requires verified Entra sessions, live PostgreSQL and private Blob Storage. Default client-only demo sessions cannot securely save or retrieve retained clinical images. Legacy blobs cannot be verified or reconstructed from source code. Organisational retention and deletion policy remains to be established. |
 
 These limitations are not defects to hide — they define the responsible scope of the tool. See
 [rai-roadmap.md](./rai-roadmap.md) for what is planned.

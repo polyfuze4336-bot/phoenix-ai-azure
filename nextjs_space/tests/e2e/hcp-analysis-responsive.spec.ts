@@ -120,6 +120,10 @@ test('analysis results remain contained at phone, tablet, and desktop widths', a
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/hcp/analysis');
     await expect(page.getByRole('heading', { name: 'AI Wound & Burn Analysis' })).toBeVisible();
+    const selector = page.getByRole('group', { name: 'Assessment mode' });
+    await expect(selector.getByRole('button', { name: 'Acute Burn Injury' })).toBeVisible();
+    await expect(selector.getByRole('button', { name: 'General Wound' })).toBeVisible();
+    await expect(selector).toBeInViewport();
     await expectViewportContained(page, width);
 
     await page.locator('input[type="file"]').setInputFiles({

@@ -50,6 +50,7 @@ function formatDate(iso: string, lang: AppLanguage) {
 export function HistoryClient() {
   const { t, lang } = useLanguage();
   const { assessmentType } = useHcpAssessmentMode();
+  const [historyFilter, setHistoryFilter] = useState<AssessmentType | 'legacy'>(assessmentType);
   const [records, setRecords] = useState<RecordSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -59,6 +60,7 @@ export function HistoryClient() {
   const [detailTranslating, setDetailTranslating] = useState(false);
   const [translationError, setTranslationError] = useState(false);
   const [legacyCount, setLegacyCount] = useState(0);
+  const [imageFailed, setImageFailed] = useState(false);
   const translatedResultsRef = useRef<Record<string, Partial<Record<AppLanguage, Record<string, any>>>>>({});
   const listRequestRef = useRef(0);
   const detailRequestRef = useRef(0);
@@ -68,9 +70,9 @@ export function HistoryClient() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/hcp/analyses?assessmentType=${assessmentType}`);
+      const res = await fetch(`/api/hcp/analyses?assessmentType=${historyFilter}`, { cache: 'no-store' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(t('history.load_error'));
+      if (!res.ok) throw new Error(t(res.status === 401 ? 'history.auth_required' : 'history.load_error'));
       if (requestId !== listRequestRef.current) return;
       setRecords(Array.isArray(data?.records) ? data.records : []);
       setLegacyCount(typeof data?.legacyCount === 'number' ? data.legacyCount : 0);
@@ -81,7 +83,11 @@ export function HistoryClient() {
     } finally {
       if (requestId === listRequestRef.current) setLoading(false);
     }
-  }, [assessmentType, t]);
+  }, [historyFilter, t]);
+
+  useEffect(() => {
+    setHistoryFilter(assessmentType);
+  }, [assessmentType]);
 
   useEffect(() => {
     detailRequestRef.current += 1;
@@ -90,6 +96,7 @@ export function HistoryClient() {
     setDetailLoading(false);
     setDetailTranslating(false);
     setTranslationError(false);
+    setImageFailed(false);
     loadList();
   }, [loadList]);
 
@@ -135,13 +142,15 @@ export function HistoryClient() {
     setSelectedId(id);
     setDetail(null);
     setDetailLoading(true);
+    setImageFailed(false);
     setTranslationError(false);
     try {
-      const res = await fetch(`/api/hcp/analyses/${id}`);
+      const res = await fetch(`/api/hcp/analyses/${encodeURIComponent(id)}`, { cache: 'no-store' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(t('history.detail_error'));
       const record = data?.record ?? null;
-      if (requestId !== detailRequestRef.current || record?.assessmentType !== assessmentType) return;
+      if (requestId !== detailRequestRef.current ||
+          (historyFilter === 'legacy' ? record?.assessmentType !== null : record?.assessmentType !== historyFilter)) return;
       if (record?.result?.language === 'en' || record?.result?.language === 'ms') {
         translatedResultsRef.current[record.id] = {
           ...translatedResultsRef.current[record.id],
@@ -154,7 +163,7 @@ export function HistoryClient() {
     } finally {
       if (requestId === detailRequestRef.current) setDetailLoading(false);
     }
-  }, [assessmentType, t]);
+  }, [historyFilter, t]);
 
   return (
     <div className="space-y-6">
@@ -182,6 +191,9 @@ export function HistoryClient() {
       {legacyCount > 0 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
           {t('history.legacy_notice').replace('{count}', String(legacyCount))}
+          <button type="button" className="ml-2 font-semibold underline" onClick={() => setHistoryFilter(historyFilter === 'legacy' ? assessmentType : 'legacy')}>
+            {t(historyFilter === 'legacy' ? 'history.current_mode' : 'history.legacy_view')}
+          </button>
         </div>
       )}
 
@@ -290,22 +302,24 @@ export function HistoryClient() {
                   {t('analysis.translation_failed')}
                 </div>
               )}
-              {detail.imageUrl ? (
+              {detail.imageUrl && !imageFailed ? (
                 <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={detail.imageUrl} alt={t('history.image_alt')} className="w-full h-full object-contain" />
+                  <img src={detail.imageUrl} alt={t('history.image_alt')} onError={() => setImageFailed(true)} className="w-full h-full object-contain" />
                 </div>
-              ) : detail.hasImage ? (
+              ) : (
                 <div className="rounded-xl bg-gray-50 border border-gray-100 p-8 text-center text-sm text-gray-400">
                   <ImageOff className="w-10 h-10 text-gray-200 mx-auto mb-2" /> {t('history.image_unavailable')}
+                  {imageFailed && <p className="mt-2">{t('history.image_load_failed')}</p>}
+                  {imageFailed && <button type="button" className="mt-2 font-semibold text-[#8B0000] underline" onClick={() => void selectRecord(detail.id)}>{t('history.refresh')}</button>}
                 </div>
-              ) : null}
+              )}
 
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y">
                 <DetailRow label={t('history.date')} value={formatDate(detail.createdAt, lang)} />
                 <DetailRow label={t('analysis.wound_category')} value={translateCanonicalValue(detail.result?.woundCategory ?? detail.woundCategory, lang)} />
                 <DetailRow label={t('analysis.wound_type')} value={translateCanonicalValue(detail.result?.woundType ?? detail.woundType, lang)} />
-                {detail.result?.burnDegree && detail.result.burnDegree !== 'N/A' && (
+                {detail.assessmentType !== 'general_wound' && detail.result?.burnDegree && detail.result.burnDegree !== 'N/A' && (
                   <DetailRow label={t('history.burn_degree')} value={translateCanonicalValue(detail.result.burnDegree, lang)} />
                 )}
                 {detail.severity && (

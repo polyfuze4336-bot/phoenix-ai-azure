@@ -74,6 +74,29 @@ test('transport does not retry a non-allowlisted 501 response', async () => {
   }
 });
 
+test('provider failure diagnostics expose only stage, status and validated request ID', async (t) => {
+  const originalFetch = globalThis.fetch;
+  const logged: unknown[][] = [];
+  t.mock.method(console, 'error', (...args: unknown[]) => { logged.push(args); });
+  globalThis.fetch = async () => new Response('private raw provider response', {
+    status: 400,
+    headers: { 'apim-request-id': 'request-123' },
+  });
+  try {
+    await assert.rejects(streamOpenAiCompatible(
+      { ...request, retries: 0 },
+      { ...config, route: 'analyze-wound:general-observation' },
+    ));
+    const diagnostic = logged.find(([message]) => message === '[Phoenix AI] AI provider request failed');
+    assert.deepEqual(diagnostic?.[1], {
+      stage: 'analyze-wound:general-observation', httpStatus: 400, requestId: 'request-123',
+    });
+    assert.doesNotMatch(JSON.stringify(logged), /private raw provider response/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('transport safely classifies an Azure input content-filter rejection', async () => {
   const originalFetch = globalThis.fetch;
   let calls = 0;

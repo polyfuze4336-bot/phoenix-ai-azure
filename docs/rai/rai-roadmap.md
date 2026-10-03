@@ -26,6 +26,9 @@ Honest staging. **Implemented** items are in the product today; **Next** and **F
 - Version-pinned guideline citations to replace curated general references (upgrade RAI-TRANS-005
   Partial → Active).
 - Persisted clinical-review audit trail wired to real cases (extend RAI-ACCT-001 beyond demo state).
+- Operate verified Entra HCP identity, private Blob image retention and PostgreSQL history
+  together in the target environment; establish an organisational retention/deletion
+  policy before promising durable audit coverage in the default demo mode (RAI-ACCT-002).
 - Formal WCAG accessibility audit (upgrade RAI-INCL-002 Partial → Active).
 - Continuous evaluation published as a tracked CI artifact and trend.
 

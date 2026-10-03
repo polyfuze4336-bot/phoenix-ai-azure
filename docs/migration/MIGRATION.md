@@ -10,6 +10,100 @@ technically possible.
 
 ---
 
+## 2026-10-03 — Persistent HCP analysis history (Entra sessions)
+
+**Previous storage:** `AnalysisRecord` already stored results, mode and optional image
+reference in PostgreSQL; `lib/analysis/history.ts` uploaded images to the private
+`clinical-uploads` Azure Blob container (not a local filesystem). The browser
+held only the selected image/preview and a mode preference; it did not provide
+durable history storage. However, history saves were fire-and-forget, failed saves
+were invisible, and the default demo identity had no server-verified session
+for secure retained-data access. History APIs previously trusted client-supplied
+clinician identity. The live persistence of older records and blobs is not
+verifiable from this repository.
+
+**Now:** With `AUTH_MODE=entra`, each completed Acute Burn or General Wound result
+uses a retry-stable UUID. The history route verifies the session, validates the
+image, uploads it to private Azure Blob Storage using managed identity, and
+persists a mode-tagged result, clinician identity and opaque blob path in the
+existing PostgreSQL `AnalysisRecord` table. Database-write failure triggers
+best-effort blob cleanup; an ambiguous response can be retried by ID without
+creating a duplicate. Save failures are shown separately from the clinical
+result with a Retry action. Authenticated history reads filter by mode and
+clinician; administrators can inspect unclassified legacy rows separately.
+Existing records are not changed or deleted. A missing/unreadable old blob
+shows the EN/BM unavailable-image placeholder while retaining its result.
+Image detail resolves a short-lived, read-only user-delegation SAS; the
+container is private and no permanent public URL is stored. No database
+migration or new Azure storage resource is required.
+
+**Limitation:** Default client-only demo sessions cannot securely authorize
+retained clinical images, so demo history saves/reads return 401 with a bilingual
+explanation in the UI. This is not full persistence for the default demo
+experience; an operator must enable verified Entra auth to use retained
+history. No live Azure data/storage access was available to determine which
+legacy images can be recovered. Do not fabricate missing images or infer that
+all old references work. No automatic retention period is imposed; the
+organisation must approve retention/deletion policy.
+
+**Operator configuration (Container App, not retired App Service):** Verify
+runtime `AUTH_MODE=entra`, `SESSION_SECRET` (server-side, stored securely),
+`DATABASE_URL` (Key Vault-backed), `AZURE_STORAGE_ACCOUNT_URL` or
+`AZURE_STORAGE_ACCOUNT`, `AZURE_STORAGE_CONTAINER` and `AZURE_CLIENT_ID`.
+Verify the attached identity has Storage Blob Data Contributor on the existing
+private storage account and can request a user-delegation key; confirm the
+container denies public access. Configure Entra sign-in according to the
+existing authentication setup, and activate/restart the Container App revision
+after changes. No production settings or deployed resources were changed here.
+
+---
+
+## 2026-10-03 — HCP top-level mode selection and deployed-analysis triage
+
+Moved the existing `acute_burn` / `general_wound` selector to the persistent,
+responsive HCP header above the content, removing both sidebar copies. The existing
+localStorage-backed context and mode-filtered sidebar/mobile navigation remain in use:
+General Wound never shows TBSA or Parkland. EN/BM labels reuse the global language
+system; neutral safety/refusal, timeout and response-validation messages now use the
+requested bilingual wording. Clinical-image prompts explicitly permit medically
+relevant private-region findings without bypassing Azure safety filtering.
+
+**Root-cause status:** The repository cannot establish the live failure stage for
+either mode or prove that they share one root cause. A previous change (2026-10-01)
+already addressed reproducible output-validation defects; no evidence establishes
+that the deployed revision includes that change or that image conversion, provider
+auth, filtering, schema validation, or history persistence explains the incident.
+The client converts uploads to a canonical JPEG, sends bare base64 with
+`mimeType=image/jpeg` and explicit assessment type, and the API reconstructs one
+provider-compatible data URL. History persistence is best-effort *after* displaying
+the result. Burn and General Wound use distinct prompt/schema paths.
+
+On the next failing **Container App** request, correlate the deployed revision/SHA,
+timestamp and mode with sanitized route stage/category, API status/correlation ID,
+provider HTTP status and validated provider request ID. Obtain presence-only values
+for runtime `AZURE_AI_ENDPOINT` (bare account endpoint),
+`AZURE_AI_MODEL_DEPLOYMENT` (vision + JSON-capable deployment),
+`AZURE_AI_API_VERSION` (`2024-10-21`), `AZURE_AI_AUTH` (`identity`),
+`AZURE_CLIENT_ID` (assigned identity with Cognitive Services OpenAI User role),
+and optional `AZURE_AI_ANALYSIS_MODEL_DEPLOYMENT`, `AI_ANALYSIS_PIPELINE`,
+`AI_ANALYSIS_TIMEOUT_MS`, `AZURE_AI_MAX_IMAGE_MB`; verify actual endpoint type,
+model support, identity assignment and current Azure filter decision. Bicep
+declares the first five runtime names; no live config or secrets were available
+here. Set corrected values on the Container App revision (not an old App Service
+slot) and activate/restart a new revision only if the evidence requires it.
+No production settings were changed; no redeployment is needed merely to inspect
+logs, but code changes require deployment after merge by an operator.
+
+**Checks:** 152 unit, 36 RAI and 14 integration tests passed; lint, architecture
+drift validation and secret scan passed; CodeQL reported no findings. A normal
+`npm run build` could not reach `fonts.googleapis.com` in this sandbox. TypeScript
+reports pre-existing errors in `lib/analysis/history.ts`; no history code was changed.
+API and browser E2E suites require a successful production build and were not run.
+Neither mode was exercised against live Azure; clinical accuracy and sensitive-area
+provider acceptance remain unverified.
+
+---
+
 ## 2026-10-01 — HCP clinical-image analysis investigation
 
 **Deployed incident status:** The exact failure for either Acute Burn or General Wound

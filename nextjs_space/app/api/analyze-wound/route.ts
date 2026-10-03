@@ -58,6 +58,9 @@ export async function POST(request: NextRequest) {
   try {
     const bodySize = checkRequestBodySize(request.headers.get('content-length'));
     if (!bodySize.ok) {
+      console.error('[Phoenix AI] HCP analysis failed', {
+        assessmentType: 'pre-validation', stage: 'request_size', category: 'image_validation_failed',
+      });
       return new Response(JSON.stringify({ error: bodySize.error, code: 'IMAGE_TOO_LARGE' }), { status: 413 });
     }
 
@@ -75,6 +78,10 @@ export async function POST(request: NextRequest) {
 
     const validation = validateImageInput({ image, mimeType });
     if (!validation.ok) {
+      console.error('[Phoenix AI] HCP analysis failed', {
+        assessmentType, stage: 'image_validation', category: 'image_validation_failed',
+        code: validation.code,
+      });
       const error = language === 'ms'
         ? validation.code === 'IMAGE_TOO_LARGE'
           ? 'Imej terlalu besar. Sila pilih imej yang lebih kecil.'
@@ -111,6 +118,7 @@ export async function POST(request: NextRequest) {
     trackEvent('hcp_analysis_requested', {
       correlationId,
       hasImage: true,
+      assessmentType,
       pipeline: pipelineMode,
       refine: Boolean(refineAnswers),
     });
@@ -148,6 +156,11 @@ export async function POST(request: NextRequest) {
           correlationId,
         });
       } catch (err) {
+        console.error('[Phoenix AI] HCP analysis failed', {
+          assessmentType,
+          stage: 'general_wound',
+          category: imageAnalysisFailure(err).category,
+        });
         const response = aiErrorResponse(err, 'LLM API error');
         const failure = imageAnalysisFailure(err);
         recordImageAnalysisEvent('image_analysis_failed', {
@@ -241,6 +254,11 @@ export async function POST(request: NextRequest) {
             if (fallbackError instanceof AiError) finalError = fallbackError;
           }
         }
+        console.error('[Phoenix AI] HCP analysis failed', {
+          assessmentType,
+          stage: 'acute_burn_staged',
+          category: imageAnalysisFailure(finalError).category,
+        });
         const response = aiErrorResponse(finalError, 'LLM API error');
         const failure = imageAnalysisFailure(finalError);
         recordImageAnalysisEvent('image_analysis_failed', {
@@ -286,6 +304,11 @@ export async function POST(request: NextRequest) {
         })).body,
       });
     } catch (err) {
+      console.error('[Phoenix AI] HCP analysis failed', {
+        assessmentType,
+        stage: 'acute_burn_single',
+        category: imageAnalysisFailure(err).category,
+      });
       const response = aiErrorResponse(err, 'LLM API error');
       const failure = imageAnalysisFailure(err);
       recordImageAnalysisEvent('image_analysis_failed', {
@@ -326,6 +349,7 @@ export async function POST(request: NextRequest) {
     console.error('Analyze wound failed:', {
       category: error instanceof AiError ? error.category : 'UNKNOWN',
       assessmentType: validatedAssessmentType ?? 'pre-validation',
+      stage: 'route',
     });
     if (analysisTelemetry) {
       recordImageAnalysisEvent('image_analysis_failed', {
