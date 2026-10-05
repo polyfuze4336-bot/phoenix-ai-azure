@@ -63,8 +63,10 @@ unavailable, the validated core result is retained and the missing subsection is
 than invented (**RAI-SAFE-003**).
 
 Azure input and output content-filter stops are classified from allowlisted structured fields
-(source, category, severity) without recording raw provider errors or image content. The repository
-provisions `Microsoft.Default`; a live policy/category must still be verified manually in Azure.
+(source, category, severity, and the `content_filter` / `ResponsibleAIPolicyViolation` /
+`content_policy_violation` error codes) without recording raw provider errors or image content. The
+repository provisions `Microsoft.Default`; a live policy/category must still be verified manually in
+Azure.
 An explicit model refusal is treated the same way: it is not replaced with a fabricated result.
 The HCP interface provides a neutral bilingual retry/manual-assessment path. Clinical imagery of
 normally private body regions is not rejected by the image validator based on anatomy; prompts

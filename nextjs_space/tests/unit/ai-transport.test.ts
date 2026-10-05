@@ -136,6 +136,23 @@ test('a 400 with an Azure error body logs its code and records it in telemetry r
     globalThis.fetch = originalFetch;
   }
 });
+test('Azure content_policy_violation image rejection is classified as a content-filter stop', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => Response.json(
+    { error: { code: 'content_policy_violation', type: 'invalid_request_error', message: 'Your input image may contain content that is not allowed by our content safety system.' } },
+    { status: 400 },
+  );
+  try {
+    await assert.rejects(
+      streamOpenAiCompatible({ ...request, retries: 0 }, config),
+      (error: unknown) => error instanceof AiError &&
+        error.category === 'AI_CONTENT_FILTER' && error.status === 422 &&
+        error.contentFilter?.source === 'input',
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 test('transport safely classifies an Azure input content-filter rejection', async () => {
   const originalFetch = globalThis.fetch;
   let calls = 0;

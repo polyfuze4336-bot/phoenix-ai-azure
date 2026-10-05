@@ -31,7 +31,7 @@ function hasContentFilterCode(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false;
   for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
     if (key === 'code' && typeof child === 'string' &&
-      ['content_filter', 'ResponsibleAIPolicyViolation'].includes(child)) return true;
+      ['content_filter', 'ResponsibleAIPolicyViolation', 'content_policy_violation'].includes(child)) return true;
     if (hasContentFilterCode(child)) return true;
   }
   return false;

@@ -9,6 +9,10 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 ## [Unreleased]
 
 ### Changed
+- Classified Azure's `content_policy_violation` image rejection (HTTP 400) as a content-filter stop
+  (`AI_CONTENT_FILTER`, 422) instead of an unknown 502, so wound images blocked by Azure's content
+  safety system are no longer reported as retryable errors. Updated RAI-PRIV-003 evidence text,
+  `clinical-safety.md` and LIM-014 to match. The Azure content-filter policy itself is unchanged.
 - Azure OpenAI request failures now log a privacy-safe error summary (`code`, `type`, `param`,
   inner code and a short redacted message; never image bytes or clinical text) and record the code
   in the AI dependency telemetry reason (for example `http_400:BadRequest`), so unclassified

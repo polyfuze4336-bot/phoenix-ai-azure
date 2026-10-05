@@ -421,7 +421,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'operations',
     status: 'active',
     description:
-      'Telemetry records counts, latencies and bounded operational metadata only. Analysis events may include image size bucket, MIME type, and allowlisted Azure content-filter source/category/severity; provider failures log HTTP status and a validated provider request ID. Blocked-key sanitisation prevents image bytes, Base64, patient identifiers, raw provider errors, prompts, clinical responses, transcripts, tokens and secrets from being logged.',
+      'Telemetry records counts, latencies and bounded operational metadata only. Analysis events may include image size bucket, MIME type, and allowlisted Azure content-filter source/category/severity; provider failures log HTTP status, a validated provider request ID, and allowlisted Azure error code/type/param with a short message that has encoded payloads redacted (never the raw provider body). Blocked-key sanitisation prevents image bytes, Base64, patient identifiers, raw provider errors, prompts, clinical responses, transcripts, tokens and secrets from being logged.',
     evidence: [
       'lib/telemetry/server.ts',
       'lib/telemetry/client.ts',
