@@ -16,6 +16,10 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.8.0] — 2026-10-05
+
+### Changed
+- Added a custom Azure content-filter policy, `phoenix-clinical-imagery`, as a child of the existing AI Services account and attached it to the `gpt-4o` deployment (Violence/Self-harm thresholds High; Hate/Sexual Medium; Jailbreak on; base `Microsoft.Default`). Declared in `infra/modules/foundry-connection.bicep` and applied live. Azure's `content_policy_violation` image rejection is now classified as a content-filter stop. Impact LOW; see `changes/CHANGE-20261005-clinical-content-filter-policy.md`.
 ## [8.7.0] — 2026-10-03
 
 ### Changed

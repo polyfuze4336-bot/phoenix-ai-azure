@@ -43,9 +43,35 @@ resource foundry 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
   }
 }
 
+@description('Custom content-filter policy applied to the model deployment. Raises only the Violence and Self-harm thresholds to High so legitimate burn/wound clinical imagery is not rejected; Hate and Sexual stay at Medium and Jailbreak protection stays on.')
+param raiPolicyName string = 'phoenix-clinical-imagery'
+
+resource clinicalFilterPolicy 'Microsoft.CognitiveServices/accounts/raiPolicies@2024-10-01' = {
+  parent: foundry
+  name: raiPolicyName
+  properties: {
+    mode: 'Blocking'
+    basePolicyName: 'Microsoft.Default'
+    contentFilters: [
+      { name: 'Hate', source: 'Prompt', severityThreshold: 'Medium', blocking: true, enabled: true }
+      { name: 'Hate', source: 'Completion', severityThreshold: 'Medium', blocking: true, enabled: true }
+      { name: 'Sexual', source: 'Prompt', severityThreshold: 'Medium', blocking: true, enabled: true }
+      { name: 'Sexual', source: 'Completion', severityThreshold: 'Medium', blocking: true, enabled: true }
+      { name: 'Violence', source: 'Prompt', severityThreshold: 'High', blocking: true, enabled: true }
+      { name: 'Violence', source: 'Completion', severityThreshold: 'High', blocking: true, enabled: true }
+      { name: 'SelfHarm', source: 'Prompt', severityThreshold: 'High', blocking: true, enabled: true }
+      { name: 'SelfHarm', source: 'Completion', severityThreshold: 'High', blocking: true, enabled: true }
+      { name: 'Jailbreak', source: 'Prompt', blocking: true, enabled: true }
+    ]
+  }
+}
+
 resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
   parent: foundry
   name: modelDeploymentName
+  dependsOn: [
+    clinicalFilterPolicy
+  ]
   sku: {
     name: modelSkuName
     capacity: modelCapacity
@@ -56,7 +82,7 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
       name: 'gpt-4o'
       version: modelVersion
     }
-    raiPolicyName: 'Microsoft.Default'
+    raiPolicyName: raiPolicyName
     versionUpgradeOption: 'NoAutoUpgrade'
   }
 }

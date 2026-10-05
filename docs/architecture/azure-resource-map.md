@@ -47,6 +47,9 @@
 > The `8.7.0` HCP history path uses the existing private Blob account and PostgreSQL model.
 > Entra session configuration and managed-identity Blob permissions require live operator verification;
 > no resources or settings are changed automatically.
+> The `8.8.0` change adds one child resource to the existing AI Services account: a custom
+> content-filter policy (`phoenix-clinical-imagery`) attached to the `gpt-4o` deployment. No other
+> Azure resource, identity, secret, model/version/capacity, network, SKU or region changes.
 
 ## Environment
 
@@ -90,9 +93,11 @@
   retained because the client-only demo identity cannot secure access to clinical records.
 - The application authenticates to Azure AI and Storage using the **user-assigned managed
   identity** (`id-phoenixai-<token>`); no keys are stored in application settings.
-- Bicep declares `raiPolicyName: Microsoft.Default` for `gpt-4o`. Repository evidence cannot prove
-  that the live deployment has not drifted or identify a blocking category before a real rejection;
-  operators must inspect the deployment and its safe filter evidence in Azure.
+- Bicep declares the custom `phoenix-clinical-imagery` content-filter policy (Violence/Self-harm
+  High, Hate/Sexual Medium, Jailbreak on; base `Microsoft.Default`) and attaches it to the
+  `gpt-4o` deployment. It was first applied to the live deployment on 2026-10-05 and verified via
+  ARM (deployment `raiPolicyName`, provisioning `Succeeded`, model/version/capacity unchanged).
+  Operators should still confirm behaviour with real clinical test images.
 - The `BFG Solutions` security group has `Owner` only on the dedicated demo resource group. This
   covers its three current members, not all 42 tenant users, and does not elevate the group at
   subscription scope.

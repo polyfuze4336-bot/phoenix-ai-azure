@@ -202,7 +202,7 @@ Companion diagrams:
 | Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
 | API reliability harness | `tests/reliability/image-analysis-reliability.ts` with safe demo-image inputs; sequential and optional concurrent execution | Implemented; live execution operator-triggered |
 | AI telemetry | `lib/ai/telemetry.ts`, `lib/telemetry/analysis-events.ts`; privacy-safe analysis lifecycle events | Implemented |
-| Azure filter classification | `lib/ai/content-filter.ts`, transport and stream collection; input/output filter and explicit refusal are categorized without bypassing Microsoft.Default; HCP sees a neutral bilingual manual-assessment fallback. Only allowlisted category/severity metadata are recorded, never raw errors or image content | Implemented |
+| Azure filter classification | `lib/ai/content-filter.ts`, transport and stream collection; input/output filter, `content_policy_violation` and explicit refusal are categorized; the `gpt-4o` deployment uses the custom `phoenix-clinical-imagery` policy (Violence/Self-harm thresholds High; Hate/Sexual Medium; Jailbreak on), declared in `infra/modules/foundry-connection.bicep`. HCP sees a neutral bilingual manual-assessment fallback. Only allowlisted category/severity metadata are recorded, never raw errors or image content | Implemented |
 
 **Wound image analysis flow (`/api/analyze-wound`).** The Original HCP client sends image data to
 the API and consumes its SSE completion. The default `staged` pipeline runs four

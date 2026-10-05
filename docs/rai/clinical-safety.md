@@ -65,8 +65,13 @@ than invented (**RAI-SAFE-003**).
 Azure input and output content-filter stops are classified from allowlisted structured fields
 (source, category, severity, and the `content_filter` / `ResponsibleAIPolicyViolation` /
 `content_policy_violation` error codes) without recording raw provider errors or image content. The
-repository provisions `Microsoft.Default`; a live policy/category must still be verified manually in
-Azure.
+`gpt-4o` deployment uses the custom `phoenix-clinical-imagery` Azure content-filter policy
+(2026-10-05), declared in `infra/modules/foundry-connection.bicep`: Violence and Self-harm
+thresholds are raised to High (block only severe content) on prompts and completions, Hate and
+Sexual stay at Medium, and Jailbreak protection stays on. This is a deliberate, narrow adjustment so
+legitimate burn/wound imagery is not rejected; it does not disable filtering, and Azure may still
+block some images. Whether specific images now pass must be confirmed with real clinical test
+images.
 An explicit model refusal is treated the same way: it is not replaced with a fabricated result.
 The HCP interface provides a neutral bilingual retry/manual-assessment path. Clinical imagery of
 normally private body regions is not rejected by the image validator based on anatomy; prompts
