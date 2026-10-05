@@ -9,6 +9,11 @@ technical notes live in [docs/migration/MIGRATION.md](docs/migration/MIGRATION.m
 ## [Unreleased]
 
 ### Changed
+- Azure OpenAI request failures now log a privacy-safe error summary (`code`, `type`, `param`,
+  inner code and a short redacted message; never image bytes or clinical text) and record the code
+  in the AI dependency telemetry reason (for example `http_400:BadRequest`), so unclassified
+  `UNKNOWN` 502 image-analysis failures can be diagnosed. Diagnostics only: no behaviour, UI, or
+  architecture change (architecture impact NONE).
 - Reused the Burn Prevention page's bilingual red First Aid callout, internal First Aid link, and
   educational disclaimer on the Community First Aid Video page.
 - Clarified the Community First Aid Video cooling instruction to use running tap water, with the

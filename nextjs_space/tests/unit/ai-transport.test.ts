@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isRetryableAiStatus, streamOpenAiCompatible } from '../../lib/ai/openai-compatible';
+import { isRetryableAiStatus, streamOpenAiCompatible, summarizeUpstreamError } from '../../lib/ai/openai-compatible';
 import { aiErrorResponse } from '../../lib/ai/ai-provider';
 import { AiError } from '../../lib/ai/types';
 
@@ -97,6 +97,45 @@ test('provider failure diagnostics expose only stage, status and validated reque
   }
 });
 
+test('upstream error summary keeps only safe identifiers and redacts encoded payloads', () => {
+  const blob = 'A'.repeat(120);
+  const summary = summarizeUpstreamError({
+    error: {
+      code: 'invalid_image_url',
+      type: 'invalid_request_error',
+      param: 'messages[1].content[1].image_url',
+      message: `Bad image data:image/jpeg;base64,${blob} and ${blob}`,
+      innererror: { code: 'Weird Code With Spaces' },
+    },
+  });
+  assert.equal(summary?.code, 'invalid_image_url');
+  assert.equal(summary?.type, 'invalid_request_error');
+  assert.equal(summary?.param, 'messages[1].content[1].image_url');
+  assert.equal(summary?.innerCode, undefined);
+  assert.doesNotMatch(summary?.message ?? '', /AAAA/);
+  assert.equal(summarizeUpstreamError('not json'), undefined);
+  assert.equal(summarizeUpstreamError({}), undefined);
+});
+
+test('a 400 with an Azure error body logs its code and records it in telemetry reason', async (t) => {
+  const originalFetch = globalThis.fetch;
+  const logged: unknown[][] = [];
+  t.mock.method(console, 'error', (...args: unknown[]) => { logged.push(args); });
+  globalThis.fetch = async () => Response.json(
+    { error: { code: 'BadRequest', message: 'Image could not be parsed' } },
+    { status: 400 },
+  );
+  try {
+    await assert.rejects(streamOpenAiCompatible({ ...request, retries: 0 }, { ...config, route: 'analyze-wound:observation' }));
+    const detail = logged.find(([m]) => m === '[Phoenix AI] AI provider error detail');
+    assert.deepEqual(detail?.[1], {
+      stage: 'analyze-wound:observation', httpStatus: 400, code: 'BadRequest',
+      type: undefined, param: undefined, innerCode: undefined, message: 'Image could not be parsed',
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 test('transport safely classifies an Azure input content-filter rejection', async () => {
   const originalFetch = globalThis.fetch;
   let calls = 0;

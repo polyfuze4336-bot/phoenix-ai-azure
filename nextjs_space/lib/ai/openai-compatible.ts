@@ -44,6 +44,48 @@ const MAX_RETRY_DELAY_MS = 20_000;
 const MAX_RETRIES = 2;
 const RETRYABLE_HTTP_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
 
+export interface UpstreamErrorSummary {
+  code?: string;
+  type?: string;
+  param?: string;
+  innerCode?: string;
+  message?: string;
+}
+
+const SAFE_TOKEN = /^[A-Za-z0-9_.\-[\]]{1,80}$/;
+
+function safeToken(value: unknown): string | undefined {
+  return typeof value === 'string' && SAFE_TOKEN.test(value) ? value : undefined;
+}
+
+/**
+ * Privacy-safe summary of an upstream (Azure OpenAI) error body for diagnostics.
+ * Only whitelisted identifiers plus a short message with long encoded runs
+ * (e.g. base64) removed — never request content, image bytes or clinical text.
+ */
+export function summarizeUpstreamError(body: unknown): UpstreamErrorSummary | undefined {
+  const error = (body as { error?: unknown } | undefined)?.error;
+  if (!error || typeof error !== 'object') return undefined;
+  const e = error as Record<string, unknown>;
+  const inner = e.innererror && typeof e.innererror === 'object'
+    ? e.innererror as Record<string, unknown>
+    : undefined;
+  const rawMessage = typeof e.message === 'string' ? e.message : undefined;
+  const message = rawMessage
+    ?.replace(/data:[^\s"']*/gi, '[data-url]')
+    .replace(/[A-Za-z0-9+/=_-]{40,}/g, '[redacted]')
+    .replace(/\s+/g, ' ')
+    .slice(0, 200);
+  const summary: UpstreamErrorSummary = {
+    code: safeToken(e.code),
+    type: safeToken(e.type),
+    param: safeToken(e.param),
+    innerCode: safeToken(inner?.code),
+    message,
+  };
+  return Object.values(summary).some((v) => v !== undefined) ? summary : undefined;
+}
+
 export function isRetryableAiStatus(status: number): boolean {
   return RETRYABLE_HTTP_STATUSES.has(status);
 }
@@ -346,6 +388,14 @@ export async function streamOpenAiCompatible(
         } catch {
           upstreamError = undefined;
         }
+        const upstreamSummary = summarizeUpstreamError(upstreamError);
+        if (upstreamSummary) {
+          console.error('[Phoenix AI] AI provider error detail', {
+            stage: config.route ?? request.route ?? 'unknown',
+            httpStatus: response.status,
+            ...upstreamSummary,
+          });
+        }
         const contentFilter = extractContentFilterDetails(upstreamError, 'input');
         if (contentFilter) {
           cleanup();
@@ -394,7 +444,8 @@ export async function streamOpenAiCompatible(
           continue;
         }
         cleanup();
-        recordFailure('error', `http_${response.status}`, attempt + 1);
+        const detailCode = upstreamSummary?.innerCode ?? upstreamSummary?.code;
+        recordFailure('error', detailCode ? `http_${response.status}:${detailCode}` : `http_${response.status}`, attempt + 1);
         throw new AiError({
           code: 'upstream_error',
           category,
