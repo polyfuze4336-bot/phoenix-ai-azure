@@ -20,6 +20,9 @@ Honest staging. **Implemented** items are in the product today; **Next** and **F
 - Structural evaluation harness + RAI test suite (RAI-ACCT-004).
 - All-route AI language propagation, strict non-mixing instructions, completed-output detection, and
   one bounded rewrite retry (RAI-INCL-003).
+- Thirty-second bounded model-call default with one schema-validated Acute Burn single-pass fallback
+  after transient staged failure; provider safety and content-filter stops remain terminal
+  (RAI-REL-001, RAI-SAFE-010).
 
 ## Next (planned, not yet implemented)
 - Provide an in-product AI Assurance view consistent with the retained experience.

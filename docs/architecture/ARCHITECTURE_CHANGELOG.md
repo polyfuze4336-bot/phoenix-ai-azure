@@ -16,6 +16,16 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.9.0] — 2026-10-07
+
+### Changed
+- Reduced the bounded default for each wound-analysis model call from 90 seconds to 30 seconds so
+  transient Acute Burn stage failures enter the existing validated single-pass fallback promptly.
+- Content-filter, safety, authentication, invalid-input, and invalid fallback-output failures remain
+  terminal and are never converted into a completed clinical result.
+- Application behavior only; no Azure resource or content-filter policy change. Impact LOW; see
+  `changes/CHANGE-20261007-wound-analysis-timeout-fallback.md`.
+
 ## [8.8.0] — 2026-10-05
 
 ### Changed

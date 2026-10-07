@@ -535,8 +535,13 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'operations',
     status: 'active',
     description:
-      'Each pipeline stage uses configurable AI_ANALYSIS_TIMEOUT_MS with a bounded default and at most three attempts for explicitly retryable status or network failures, so stalled or transient calls fail safely without unlimited retry.',
-    evidence: ['lib/ai/analysis/pipeline.ts'],
+      'Each model call uses configurable AI_ANALYSIS_TIMEOUT_MS with a 30-second bounded default and at most three transport attempts for explicitly retryable status or network failures. A transient Acute Burn staged failure makes one schema-validated single-pass fallback attempt; content-filter, safety, authentication, invalid-input, and invalid-output failures remain terminal.',
+    evidence: ['lib/ai/analysis/pipeline.ts', 'app/api/analyze-wound/route.ts'],
+    tests: [
+      'tests/unit/analysis-pipeline.test.ts',
+      'tests/unit/ai-transport.test.ts',
+      'tests/unit/hcp-analysis-provider.test.ts',
+    ],
     userVisible: false,
   },
   {

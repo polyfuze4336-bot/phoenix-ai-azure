@@ -74,7 +74,7 @@ export interface PipelineInput {
 
 const SPECIAL_SITES = ['hand', 'finger', 'face', 'foot', 'feet', 'perineum', 'genital', 'joint', 'circumferential', 'eye', 'ear', 'neck'];
 
-const DEFAULT_ANALYSIS_TIMEOUT_MS = 90_000;
+const DEFAULT_ANALYSIS_TIMEOUT_MS = 30_000;
 const MIN_ANALYSIS_TIMEOUT_MS = 10_000;
 const MAX_ANALYSIS_TIMEOUT_MS = 180_000;
 

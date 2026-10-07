@@ -26,9 +26,12 @@ covered by the RAI + unit tests:
    never remain on a routine pathway (**RAI-SAFE-008**).
 6. **Automated consistency review** flags contradictions, unsupported claims and false precision
    (**RAI-SAFE-005**).
-7. **Bounded execution** — each stage uses configurable `AI_ANALYSIS_TIMEOUT_MS`; transport makes no
-   more than three total attempts and retries only 408, 429, 500, 502, 503, 504, or transient network
-   failures, honoring `Retry-After` where supplied (**RAI-REL-001**).
+7. **Bounded execution** — each model call uses configurable `AI_ANALYSIS_TIMEOUT_MS` with a
+   30-second default. Transport makes no more than three total attempts and retries only 408, 429,
+   500, 502, 503, 504, or transient network failures, honoring `Retry-After` where supplied.
+   A transient Acute Burn staged failure makes one validated single-pass fallback attempt; content
+   filtering, safety, authentication, invalid input, and invalid fallback output do not bypass the
+   safe-failure path (**RAI-REL-001**, **RAI-SAFE-010**).
 8. **Parkland indication before calculation** — below-threshold burns receive a bilingual
    not-required state without volumes; missing category is uncertain, and indicated cases without
    weight request weight without calculating a placeholder (**RAI-SAFE-006**).

@@ -141,3 +141,40 @@ test('the HCP route reports fallback refusal instead of the preceding stage time
   assert.equal(response.status, 422);
   assert.equal((await response.json()).code, 'AI_CONTENT_FILTER');
 });
+
+test('the HCP route returns a validated single-pass result after a staged timeout', async (t) => {
+  let requests = 0;
+  t.mock.method(AzureFoundryProvider.prototype, 'streamChatCompletion', async () => {
+    requests += 1;
+    if (requests === 1) {
+      throw new AiError({
+        code: 'timeout',
+        category: 'AI_TIMEOUT',
+        status: 504,
+        clientMessage: 'Timed out',
+      });
+    }
+    return completion({
+      woundType: 'Scald',
+      woundCategory: 'Burn',
+      characteristics: 'Visible blistering',
+      isBurn: true,
+      tbsaEstimate: '5',
+    });
+  });
+  const request = new NextRequest('http://localhost/api/analyze-wound', {
+    method: 'POST',
+    body: JSON.stringify({
+      image: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      mimeType: 'image/png', language: 'en', assessmentType: 'acute_burn',
+    }),
+  });
+
+  const response = await POST(request);
+  const payload = await response.text();
+
+  assert.equal(requests, 2);
+  assert.equal(response.status, 200);
+  assert.match(payload, /"pipelineUsed":"single-fallback"/);
+  assert.match(payload, /"woundCategory":"Burn"/);
+});

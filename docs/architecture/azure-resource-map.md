@@ -50,6 +50,9 @@
 > The `8.8.0` change adds one child resource to the existing AI Services account: a custom
 > content-filter policy (`phoenix-clinical-imagery`) attached to the `gpt-4o` deployment. No other
 > Azure resource, identity, secret, model/version/capacity, network, SKU or region changes.
+> The `8.9.0` timeout correction is application-only. It changes the bounded code default and
+> exercises the existing validated single-pass fallback; no Azure resource, identity, secret,
+> model deployment, filter policy, network path, SKU, region, or app setting is changed.
 
 ## Environment
 

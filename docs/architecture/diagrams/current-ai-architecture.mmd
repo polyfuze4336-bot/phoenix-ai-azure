@@ -9,7 +9,7 @@ flowchart TB
 
     subgraph Routes["Next.js API Routes"]
         RHCPCHAT["/api/hcp-chat\n(mode-aware, validated EN/MS)"]
-        RHCPAN["/api/analyze-wound\n(explicit mode, validated EN/MS;\nfailed output never reported completed)"]
+        RHCPAN["/api/analyze-wound\n(explicit mode, validated EN/MS;\n30s default + validated transient fallback;\nfailed output never reported completed)"]
         RHCPTRANS["/api/analyze-wound/translate\n(text-only existing result)"]
         RCOMCHAT["/api/community-chat\n(validated EN/MS)"]
         RCOMBURN["/api/community-burn\n(validated image + advisory observation)"]
@@ -76,7 +76,7 @@ flowchart TB
     RHCPAN -->|"general_wound"| PGENERAL --> FACTORY
     ORCH --> MODELSEL
     MODELSEL --> AZPROV
-    RHCPAN -.->|"AI_ANALYSIS_PIPELINE=single"| PHCPAN --> FACTORY
+    RHCPAN -.->|"single mode or one transient Acute Burn fallback"| PHCPAN --> FACTORY
     RCOMCHAT --> PCOMCHAT --> FACTORY
 
     RHCPAN --> VALIN

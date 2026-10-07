@@ -10,6 +10,22 @@ technically possible.
 
 ---
 
+## 2026-10-07 — Bounded wound-analysis timeout fallback
+
+The custom clinical-imagery content-filter policy removed the immediate Azure rejection for the
+reported image, but the staged Acute Burn request could then spend 90 seconds on a model call and
+another 90 seconds on its existing single-pass fallback before returning `AI_TIMEOUT`.
+
+The per-model-call default is now 30 seconds. A transient staged Acute Burn failure still makes only
+one schema-validated single-pass fallback attempt. Content-filter, safety, authentication,
+invalid-input, and invalid fallback-output failures remain terminal; the change does not bypass
+Azure filtering or report an invalid response as a completed assessment. `AI_ANALYSIS_TIMEOUT_MS`
+remains operator-configurable within the existing 10,000–180,000 ms bounds. The visible upload,
+loading, retry, and manual-assessment experience is unchanged.
+
+Architecture impact is LOW (`8.8.0` -> `8.9.0`), with no Azure resource, model, policy, identity,
+storage, data, or network change. RAI-REL-001 remains Active with updated code and test evidence.
+
 ## 2026-10-03 — Persistent HCP analysis history (Entra sessions)
 
 **Previous storage:** `AnalysisRecord` already stored results, mode and optional image

@@ -119,7 +119,7 @@ test('analysis timeout is configurable and bounded', () => {
   const saved = process.env.AI_ANALYSIS_TIMEOUT_MS;
   try {
     delete process.env.AI_ANALYSIS_TIMEOUT_MS;
-    assert.equal(getAnalysisTimeoutMs(), 90_000);
+    assert.equal(getAnalysisTimeoutMs(), 30_000);
     process.env.AI_ANALYSIS_TIMEOUT_MS = '1000';
     assert.equal(getAnalysisTimeoutMs(), 10_000);
     process.env.AI_ANALYSIS_TIMEOUT_MS = '999999';
