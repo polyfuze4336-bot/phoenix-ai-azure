@@ -60,6 +60,10 @@
 > `phoenix-clinical-imagery` child resource: Violence Prompt remains enabled but becomes
 > non-blocking annotation. All completion and other-category protections remain configured; no
 > resource, identity, secret, model/version/capacity, network, SKU, region, or app setting is added.
+> The `8.12.0` follow-up updates the same child resource after the exact image remained blocked:
+> Self-harm Prompt also remains enabled but becomes non-blocking annotation. Violence and Self-harm
+> completions and every Hate/Sexual/Jailbreak protection remain configured; no other Azure or
+> application surface changes.
 
 ## Environment
 
@@ -103,8 +107,8 @@
   retained because the client-only demo identity cannot secure access to clinical records.
 - The application authenticates to Azure AI and Storage using the **user-assigned managed
   identity** (`id-phoenixai-<token>`); no keys are stored in application settings.
-- Bicep declares the custom `phoenix-clinical-imagery` content-filter policy (Violence Prompt
-  enabled/non-blocking; Violence Completion and Self-harm Prompt/Completion High; Hate/Sexual
+- Bicep declares the custom `phoenix-clinical-imagery` content-filter policy (Violence/Self-harm
+  Prompt enabled/non-blocking; Violence/Self-harm Completion High; Hate/Sexual input/output
   Medium; Jailbreak on; base `Microsoft.Default`) and attaches it to the
   `gpt-4o` deployment. It was first applied to the live deployment on 2026-10-05 and verified via
   ARM (deployment `raiPolicyName`, provisioning `Succeeded`, model/version/capacity unchanged).

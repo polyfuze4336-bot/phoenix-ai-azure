@@ -25,9 +25,9 @@ Phoenix AI treats the AI model as **configuration under governance**, not a hard
 
 ## Clinical-imagery content filtering
 - `infra/modules/foundry-connection.bicep` attaches `phoenix-clinical-imagery` to the deployment.
-- Violence Prompt classification is enabled but non-blocking so severe wound images can enter the
-  clinical pipeline. Violence Completion and Self-harm Prompt/Completion block at High,
-  Hate/Sexual block at Medium, and Jailbreak protection remains enabled (**RAI-SAFE-014**).
+- Violence and Self-harm Prompt classification is enabled but non-blocking so severe accidental-
+  injury images can enter the clinical pipeline. Their completions block at High, Hate/Sexual
+  input/output block at Medium, and Jailbreak protection remains enabled (**RAI-SAFE-014**).
 - The exception is input-only and category-specific. It does not disable output filtering,
   schema validation, deterministic safety rules, or clinician review.
 

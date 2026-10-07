@@ -1,4 +1,4 @@
-# ADR-0017: Annotate rather than block Violence input for clinical imagery
+# ADR-0017: Annotate rather than block injury-related input for clinical imagery
 
 - **Status:** Accepted
 - **Date:** 2026-10-07
@@ -15,8 +15,12 @@ failure was HTTP 422 `AI_CONTENT_FILTER`, source `input`, within 1.4–2.2 secon
 return category or severity.
 
 Microsoft's image severity definitions list ordinary wounds and surgical treatment as Safe
-Violence imagery but explicit graphic injuries as High Violence. The repeatable image-level failure
-therefore supports a narrow Violence-input mitigation rather than weakening unrelated filters.
+Violence imagery but explicit graphic injuries as High Violence. The repeatable image-level failure initially supported a narrow Violence-input mitigation rather
+than weakening unrelated filters. Azure what-if and deployment evidence confirmed that mitigation
+was applied, but the exact image still failed twice afterward as source `input`; Azure again omitted
+category and severity. Violence was therefore not the only blocking path. Microsoft classifies
+accidental body injury as Safe Self-harm, but false-positive Self-harm classification remains the
+next medically plausible category.
 
 ## Current Architecture
 
@@ -27,9 +31,10 @@ provider refusal as a safe failure.
 
 ## Decision
 
-Keep the Violence Prompt classifier enabled but set `blocking: false`, making it annotation-only.
-Keep Violence Completion and Self-harm Prompt/Completion blocking at High, Hate and Sexual blocking
-at Medium, and Jailbreak Prompt protection enabled.
+Keep the Violence and Self-harm Prompt classifiers enabled but set `blocking: false`, making them
+annotation-only for severe clinical accidental-injury imagery. Keep both Completion filters
+blocking at High, Hate and Sexual Prompt/Completion blocking at Medium, and Jailbreak Prompt
+protection enabled.
 
 ## Alternatives Considered
 
@@ -38,18 +43,23 @@ at Medium, and Jailbreak Prompt protection enabled.
 - **Disable every input filter:** rejected as unnecessarily broad.
 - **Disable Violence output filtering:** rejected because the failure is input-side and output
   protection does not prevent clinical imagery from reaching the model.
+- **Stop after Violence input annotation:** rejected after the successfully deployed policy still
+  produced two exact-image input-filter failures.
+- **Disable Hate, Sexual, or Jailbreak input protection:** rejected without evidence connecting
+  those protections to this clinical photograph.
 - **Alter, blur, crop, or recolor the image to evade classification:** rejected because it could
   remove clinically relevant evidence and intentionally work around a safety classifier.
 
 ## Rationale
 
-The decision is category-specific, input-only, and evidence-based. It enables medically necessary
-graphic wound input while retaining output filtering, unrelated input categories, prompt shields,
+The decision is limited to the two injury-related categories, input-only, and evidence-based. It
+enables medically necessary graphic wound input while retaining output filtering, unrelated input
+categories, prompt shields,
 application validation, schema checks, deterministic controls, and clinician review.
 
 ## Architecture Impact
 
-Architecture version `8.11.0`, impact MEDIUM. The existing policy child resource is reconfigured;
+Architecture versions `8.11.0` and `8.12.0`, impact MEDIUM. The existing policy child resource is reconfigured;
 no component, integration boundary, model, identity, network, data store, or runtime dependency is
 added.
 
@@ -75,13 +85,14 @@ tokens.
 - A genuinely violent image can pass the Violence input filter. Mitigations: HCP-only route,
   retained image validation, clinical prompts, output filtering, schema validation, deterministic
   safety controls, and clinician review.
-- Azure can still reject through Self-harm, Hate, Sexual, Jailbreak, or provider-level protections.
+- Azure can still reject through Hate, Sexual, Jailbreak, or provider-level protections.
 - The exact Azure category was omitted, so live acceptance must be verified after deployment.
 
 ## Rollback
 
-Set Violence Prompt `blocking` back to `true` in `infra/modules/foundry-connection.bicep`, deploy the
-Infrastructure workflow, and confirm the live policy through ARM.
+Set Violence and Self-harm Prompt `blocking` back to `true` in
+`infra/modules/foundry-connection.bicep`, deploy the Infrastructure workflow, and confirm the live
+policy through ARM.
 
 ## Validation
 

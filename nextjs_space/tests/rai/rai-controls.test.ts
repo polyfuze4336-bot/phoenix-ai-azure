@@ -106,7 +106,7 @@ test('RAI-SAFE-014 keeps the clinical-imagery filter exception narrow', () => {
   );
   assert.match(
     policy,
-    /\{ name: 'SelfHarm', source: 'Prompt', severityThreshold: 'High', blocking: true, enabled: true \}/,
+    /\{ name: 'SelfHarm', source: 'Prompt', severityThreshold: 'High', blocking: false, enabled: true \}/,
   );
   assert.match(
     policy,

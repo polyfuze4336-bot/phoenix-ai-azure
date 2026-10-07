@@ -70,9 +70,11 @@ Azure input and output content-filter stops are classified from allowlisted stru
 `content_policy_violation` error codes) without recording raw provider errors or image content. The
 `gpt-4o` uses the custom `phoenix-clinical-imagery` Azure content-filter policy declared in
 `infra/modules/foundry-connection.bicep`. After a supplied severe hand-burn image was rejected as
-input on five consecutive Acute Burn/General Wound attempts, Violence Prompt classification remains
-enabled but is non-blocking annotation. Violence Completion and Self-harm Prompt/Completion remain
-blocked at High, Hate and Sexual remain blocked at Medium, and Jailbreak protection remains on
+input on five consecutive Acute Burn/General Wound attempts, Violence Prompt classification was
+made non-blocking; two post-deployment retries still failed with source `input` and no category.
+Violence and Self-harm Prompt classification therefore remain enabled but are non-blocking
+annotation for severe accidental-injury imagery. Their completions remain blocked at High, Hate
+and Sexual input/output remain blocked at Medium, and Jailbreak protection remains on
 (**RAI-SAFE-014**). This is an explicit medical-imagery exception, not a general filters-off policy.
 Provider refusals from every retained protection still fail safely without a fabricated result.
 An explicit model refusal is treated the same way: it is not replaced with a fabricated result.

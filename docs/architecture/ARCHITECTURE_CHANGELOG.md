@@ -16,6 +16,18 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.12.0] — 2026-10-07
+
+### Changed
+- After the deployed Violence input exception did not resolve the exact image, the
+  `phoenix-clinical-imagery` policy also changes Self-harm input to non-blocking annotation for
+  severe accidental-injury imagery.
+- Violence and Self-harm completions remain blocked at High; Hate and Sexual input/output remain
+  blocked at Medium; Jailbreak protection remains enabled.
+- No model, identity, secret, network, SKU, region, data path, or application UX change. Impact
+  MEDIUM; see amended [ADR-0017](./decisions/ADR-0017-clinical-imagery-violence-input-annotation.md)
+  and `changes/CHANGE-20261007-self-harm-input-annotation.md`.
+
 ## [8.11.0] — 2026-10-07
 
 ### Changed

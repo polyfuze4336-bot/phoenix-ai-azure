@@ -123,7 +123,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'input',
     status: 'active',
     description:
-      'The Azure AI policy keeps Violence input classification enabled but non-blocking so severe wound imagery can reach the clinical pipeline. Violence output and Self-harm remain blocked at High, Hate and Sexual remain blocked at Medium, and Jailbreak protection remains enabled. Provider refusals still fail safely rather than producing a clinical result.',
+      'The Azure AI policy keeps Violence and Self-harm input classification enabled but non-blocking so severe accidental-injury imagery can reach the clinical pipeline. Violence and Self-harm output remain blocked at High, Hate and Sexual input/output remain blocked at Medium, and Jailbreak protection remains enabled. Provider refusals still fail safely rather than producing a clinical result.',
     evidence: [
       'infra/modules/foundry-connection.bicep',
       'lib/ai/content-filter.ts',

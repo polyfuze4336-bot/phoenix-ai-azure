@@ -42,3 +42,12 @@ No image bytes, Base64, patient context, prompt, or clinical output were recorde
 - RAI test asserts the exact Bicep filter entries
 - Unit, RAI, typecheck, build, architecture, and Mermaid checks
 - Inspect live ARM policy and retest the exact supplied image
+
+## Result
+
+The Azure what-if showed Violence Prompt `blocking: true => false`, the infrastructure deployment
+completed successfully, and the model deployment was updated from its prior generated policy name
+to `phoenix-clinical-imagery`. The exact image nevertheless failed twice more as
+`AI_CONTENT_FILTER`, source `input`, in 6.9 and 2.0 seconds. Azure still omitted category and
+severity. Violence input annotation alone did not resolve the incident; see the `8.12.0` follow-up
+change record.

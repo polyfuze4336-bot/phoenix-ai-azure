@@ -10,6 +10,21 @@ technically possible.
 
 ---
 
+## 2026-10-07 — Severe clinical-image Self-harm input annotation
+
+Azure what-if explicitly showed the prior Violence Prompt change from `blocking: true` to `false`,
+and the infrastructure deployment completed successfully. The exact hand-burn image still returned
+HTTP 422 `AI_CONTENT_FILTER`, source `input`, on two subsequent Acute Burn retries (6.9 and 2.0
+seconds; safe correlation IDs retained separately). Azure again omitted category and severity.
+Violence therefore was not the only active blocking path.
+
+Microsoft documents accidental body injury as Safe Self-harm, but the unexplained input rejection
+leaves a false-positive Self-harm classification as the next medically plausible category. With
+owner approval, Self-harm Prompt classification now remains enabled but non-blocking. Violence and
+Self-harm completions remain blocked at High; Hate and Sexual input/output remain blocked at
+Medium; Jailbreak protection remains enabled. Architecture impact is MEDIUM (`8.11.0` ->
+`8.12.0`); ADR-0017 and RAI-SAFE-014 were updated with the evidence and retained boundaries.
+
 ## 2026-10-07 — Severe clinical-image Violence input annotation
 
 The supplied severe hand-burn image reproduced the reported failure on every attempt: four Acute
