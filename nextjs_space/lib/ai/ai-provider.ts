@@ -12,6 +12,7 @@
 
 import { AzureFoundryProvider } from './azure-foundry-provider';
 import { AiError, AiProvider } from './types';
+import { CORRELATION_HEADER } from '@/lib/telemetry/correlation';
 
 /** Instantiate the configured AI provider (Azure OpenAI / Foundry). */
 export function getAiProvider(): AiProvider {
@@ -27,16 +28,40 @@ export function getAiProvider(): AiProvider {
  * message; anything unexpected falls back to a generic 500 (matching the
  * routes' original outer catch).
  */
-export function aiErrorResponse(err: unknown, _upstreamPrefix?: string): Response {
+export function aiErrorResponse(
+  err: unknown,
+  _upstreamPrefix?: string,
+  correlationId?: string,
+): Response {
   if (err instanceof AiError) {
-    return jsonError(err.clientMessage, err.status, err.category, err.contentFilter);
+    return jsonError(err.clientMessage, err.status, err.category, err.contentFilter, correlationId);
   }
-  return jsonError('The AI assessment could not be completed. Please try again.', 500, 'UNKNOWN');
+  return jsonError(
+    'The AI assessment could not be completed. Please try again.',
+    500,
+    'UNKNOWN',
+    undefined,
+    correlationId,
+  );
 }
 
-function jsonError(message: string, status: number, code: string, contentFilter?: AiError['contentFilter']): Response {
-  return new Response(JSON.stringify({ error: message, code, ...(contentFilter ? { contentFilter } : {}) }), {
+function jsonError(
+  message: string,
+  status: number,
+  code: string,
+  contentFilter?: AiError['contentFilter'],
+  correlationId?: string,
+): Response {
+  return new Response(JSON.stringify({
+    error: message,
+    code,
+    ...(correlationId ? { correlationId } : {}),
+    ...(contentFilter ? { contentFilter } : {}),
+  }), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(correlationId ? { [CORRELATION_HEADER]: correlationId } : {}),
+    },
   });
 }

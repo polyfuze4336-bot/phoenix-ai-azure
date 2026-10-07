@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
   const requestStartedAt = Date.now();
   let analysisTelemetry: Omit<ImageAnalysisTelemetryContext, 'errorCategory' | 'httpStatus' | 'latencyMs'> | undefined;
   let validatedAssessmentType: 'acute_burn' | 'general_wound' | undefined;
+  let correlationId: string | undefined;
   try {
     const bodySize = checkRequestBodySize(request.headers.get('content-length'));
     if (!bodySize.ok) {
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const correlationId = getOrCreateCorrelationId(request.headers);
+    correlationId = getOrCreateCorrelationId(request.headers);
     const patient = readPatientContext(body?.patient);
     const refineAnswers = typeof body?.refineAnswers === 'string' ? body.refineAnswers : undefined;
     const priorAnalysis = body?.priorAnalysis && typeof body.priorAnalysis === 'object' ? body.priorAnalysis : undefined;
@@ -102,6 +103,7 @@ export async function POST(request: NextRequest) {
     const pipelineMode = getAnalysisPipelineMode();
     const retryCount = readAnalysisRetryCount(request.headers.get('x-analysis-retry-count'));
     analysisTelemetry = {
+      correlationId,
       modelDeployment: getAnalysisModelDeployment() ?? 'default',
       retryCount,
       imageSizeBucket: imageSizeBucket(validation.bytes),
@@ -161,11 +163,14 @@ export async function POST(request: NextRequest) {
           stage: 'general_wound',
           category: imageAnalysisFailure(err).category,
         });
-        const response = aiErrorResponse(err, 'LLM API error');
+        const response = aiErrorResponse(err, 'LLM API error', correlationId);
         const failure = imageAnalysisFailure(err);
         recordImageAnalysisEvent('image_analysis_failed', {
           ...analysisTelemetry,
           errorCategory: failure.category,
+          contentFilterSource: failure.contentFilterSource,
+          contentFilterCategory: failure.contentFilterCategory,
+          contentFilterSeverity: failure.contentFilterSeverity,
           httpStatus: response.status,
           latencyMs: Date.now() - requestStartedAt,
         });
@@ -259,7 +264,7 @@ export async function POST(request: NextRequest) {
           stage: 'acute_burn_staged',
           category: imageAnalysisFailure(finalError).category,
         });
-        const response = aiErrorResponse(finalError, 'LLM API error');
+        const response = aiErrorResponse(finalError, 'LLM API error', correlationId);
         const failure = imageAnalysisFailure(finalError);
         recordImageAnalysisEvent('image_analysis_failed', {
           ...analysisTelemetry,
@@ -309,7 +314,7 @@ export async function POST(request: NextRequest) {
         stage: 'acute_burn_single',
         category: imageAnalysisFailure(err).category,
       });
-      const response = aiErrorResponse(err, 'LLM API error');
+      const response = aiErrorResponse(err, 'LLM API error', correlationId);
       const failure = imageAnalysisFailure(err);
       recordImageAnalysisEvent('image_analysis_failed', {
         ...analysisTelemetry,
@@ -345,16 +350,20 @@ export async function POST(request: NextRequest) {
       correlationId,
     });
   } catch (error) {
-    const response = aiErrorResponse(error);
+    const response = aiErrorResponse(error, undefined, correlationId);
     console.error('Analyze wound failed:', {
       category: error instanceof AiError ? error.category : 'UNKNOWN',
       assessmentType: validatedAssessmentType ?? 'pre-validation',
       stage: 'route',
     });
     if (analysisTelemetry) {
+      const failure = imageAnalysisFailure(error);
       recordImageAnalysisEvent('image_analysis_failed', {
         ...analysisTelemetry,
-        errorCategory: imageAnalysisFailure(error).category,
+        errorCategory: failure.category,
+        contentFilterSource: failure.contentFilterSource,
+        contentFilterCategory: failure.contentFilterCategory,
+        contentFilterSeverity: failure.contentFilterSeverity,
         httpStatus: response.status,
         latencyMs: Date.now() - requestStartedAt,
       });

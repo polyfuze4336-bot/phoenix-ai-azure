@@ -9,7 +9,7 @@ flowchart TB
 
     subgraph Routes["Next.js API Routes"]
         RHCPCHAT["/api/hcp-chat\n(mode-aware, validated EN/MS)"]
-        RHCPAN["/api/analyze-wound\n(explicit mode, validated EN/MS;\n30s default + validated transient fallback;\nfailed output never reported completed)"]
+        RHCPAN["/api/analyze-wound\n(explicit mode, validated EN/MS;\n30s default + validated transient fallback;\nsafe correlation/filter failure diagnostics;\nfailed output never reported completed)"]
         RHCPTRANS["/api/analyze-wound/translate\n(text-only existing result)"]
         RCOMCHAT["/api/community-chat\n(validated EN/MS)"]
         RCOMBURN["/api/community-burn\n(validated image + advisory observation)"]
@@ -43,7 +43,7 @@ flowchart TB
         VALIN["validation/image-input\nJPEG/PNG/WebP/GIF + MIME/base64/signature\ndecode/dimensions/integrity before model"]
         VALOUT["Mode-specific Zod + JSON extraction\none repair; invalid core fails"]
         STREAM["streaming/sse + collect + text-stream\nempty/interrupted error categories"]
-        TEL["ai/telemetry"]
+        TEL["ai/telemetry\nsafe correlation + allowlisted filter dimensions"]
         LANG["language\nstrict instruction + detection\none bounded rewrite"]
     end
 

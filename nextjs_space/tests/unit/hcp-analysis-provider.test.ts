@@ -127,10 +127,15 @@ test('the HCP route reports fallback refusal instead of the preceding stage time
       category: requests === 1 ? 'AI_TIMEOUT' : 'AI_CONTENT_FILTER',
       status: requests === 1 ? 504 : 422,
       clientMessage: requests === 1 ? 'Timed out' : 'Neutral clinical image refusal',
+      contentFilter: requests === 1 ? undefined : {
+        source: 'input',
+        categories: [{ category: 'violence', filtered: true, severity: 'high' }],
+      },
     });
   });
   const request = new NextRequest('http://localhost/api/analyze-wound', {
     method: 'POST',
+    headers: { 'x-correlation-id': 'safe-route-correlation' },
     body: JSON.stringify({
       image: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
       mimeType: 'image/png', language: 'en', assessmentType: 'acute_burn',
@@ -139,7 +144,16 @@ test('the HCP route reports fallback refusal instead of the preceding stage time
   const response = await POST(request);
   assert.equal(requests, 2);
   assert.equal(response.status, 422);
-  assert.equal((await response.json()).code, 'AI_CONTENT_FILTER');
+  assert.equal(response.headers.get('x-correlation-id'), 'safe-route-correlation');
+  assert.deepEqual(await response.json(), {
+    error: 'Neutral clinical image refusal',
+    code: 'AI_CONTENT_FILTER',
+    correlationId: 'safe-route-correlation',
+    contentFilter: {
+      source: 'input',
+      categories: [{ category: 'violence', filtered: true, severity: 'high' }],
+    },
+  });
 });
 
 test('the HCP route returns a validated single-pass result after a staged timeout', async (t) => {

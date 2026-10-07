@@ -10,6 +10,27 @@ technically possible.
 
 ---
 
+## 2026-10-07 — Privacy-safe content-filter diagnostics
+
+The reported clinical-image message maps to the `AI_CONTENT_FILTER` failure path. The exact
+browser-held image then completed successfully on four consecutive retries (16.9–19.5 seconds), so
+the rejection was not reproducible and did not justify another speculative policy reduction.
+Microsoft documents `High` as the least restrictive standard blocking threshold; turning filtering
+off requires modified-content-filter approval. Violence and Self-harm therefore remain at High,
+Hate and Sexual remain at Medium, and Jailbreak protection remains enabled.
+
+Wound-analysis failures now return their safe correlation ID in the JSON response and
+`x-correlation-id` header. When Azure supplies structured content-filter evidence, the existing
+allowlisted input/output source, harm category, and severity are returned without exposing the
+image, Base64, prompt, patient context, clinical output, or raw provider response. General Wound and
+route-level failures also record those same allowlisted fields in the existing Application Insights
+lifecycle event. Azure may omit detailed filter evidence, so category identification is not
+guaranteed.
+
+Architecture impact is LOW (`8.9.0` -> `8.10.0`), with no Azure resource, model, policy, identity,
+storage, data, network, or visible clinical-workflow change. RAI-PRIV-003 remains Active with
+expanded code and unit-test evidence.
+
 ## 2026-10-07 — Bounded wound-analysis timeout fallback
 
 The custom clinical-imagery content-filter policy removed the immediate Azure rejection for the

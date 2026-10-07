@@ -195,15 +195,17 @@ test('AI content-filter responses expose only allowlisted structured details', a
       source: 'input',
       categories: [{ category: 'violence', filtered: true, severity: 'medium' }],
     },
-  }));
+  }), undefined, 'safe-correlation-123');
   const body = await response.json();
   assert.deepEqual(body, {
     error: 'Clinical image blocked by Azure policy.',
     code: 'AI_CONTENT_FILTER',
+    correlationId: 'safe-correlation-123',
     contentFilter: {
       source: 'input',
       categories: [{ category: 'violence', filtered: true, severity: 'medium' }],
     },
   });
+  assert.equal(response.headers.get('x-correlation-id'), 'safe-correlation-123');
   assert.doesNotMatch(JSON.stringify(body), /must never/);
 });

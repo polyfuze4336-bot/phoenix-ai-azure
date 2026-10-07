@@ -36,6 +36,7 @@ test('RAI-PRIV-003: blocked keys are stripped from telemetry properties', () => 
 
 test('RAI-PRIV-003: safe image metadata survives while image content remains blocked', () => {
   const out = sanitizeProperties({
+    correlationId: 'safe-correlation',
     imageSizeBucket: '1_mb_to_5_mb',
     imageMimeType: 'image/png',
     imageContents: 'never-send-this',
@@ -43,6 +44,7 @@ test('RAI-PRIV-003: safe image metadata survives while image content remains blo
   });
   assert.equal(out.imageSizeBucket, '1_mb_to_5_mb');
   assert.equal(out.imageMimeType, 'image/png');
+  assert.equal(out.correlationId, 'safe-correlation');
   assert.equal(out.imageContents, undefined);
   assert.equal(out.completeClinicalResponse, undefined);
 });

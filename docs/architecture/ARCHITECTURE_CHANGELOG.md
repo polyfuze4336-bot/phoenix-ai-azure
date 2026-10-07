@@ -16,6 +16,18 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.10.0] — 2026-10-07
+
+### Changed
+- Wound-analysis failures now return the privacy-safe correlation ID in both the JSON response and
+  `x-correlation-id` header. Azure content-filter failures continue to return only their existing
+  allowlisted source/category/severity classification.
+- General Wound and route-level failures now send the same allowlisted filter dimensions to the
+  existing Application Insights lifecycle event as Acute Burn failures.
+- No image, prompt, patient context, raw provider response, policy, or Azure resource is exposed or
+  changed. Impact LOW; see
+  `changes/CHANGE-20261007-content-filter-diagnostics.md`.
+
 ## [8.9.0] — 2026-10-07
 
 ### Changed

@@ -6,7 +6,7 @@
 > that environment. It is part of the source code
 > and should be kept reasonably current with implementation during each prototype task.
 >
-> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.9.0`).
+> Architecture version: see [ARCHITECTURE_VERSION](./ARCHITECTURE_VERSION) (currently `8.10.0`).
 > Change history: [ARCHITECTURE_CHANGELOG.md](./ARCHITECTURE_CHANGELOG.md).
 
 Status vocabulary used throughout:
@@ -201,8 +201,8 @@ Companion diagrams:
 | Analysis timeout/retries | `AI_ANALYSIS_TIMEOUT_MS` uses a 30-second bounded default; Acute Burn transient staged failures make one validated single-pass fallback attempt, while content-filter, safety, auth and invalid-input failures remain terminal | Implemented |
 | Analysis evaluation harness | `tests/evaluation/burn-wound/` (structural/safety; live optional) | Implemented (structure); live pending |
 | API reliability harness | `tests/reliability/image-analysis-reliability.ts` with safe demo-image inputs; sequential and optional concurrent execution | Implemented; live execution operator-triggered |
-| AI telemetry | `lib/ai/telemetry.ts`, `lib/telemetry/analysis-events.ts`; privacy-safe analysis lifecycle events | Implemented |
-| Azure filter classification | `lib/ai/content-filter.ts`, transport and stream collection; input/output filter, `content_policy_violation` and explicit refusal are categorized; the `gpt-4o` deployment uses the custom `phoenix-clinical-imagery` policy (Violence/Self-harm thresholds High; Hate/Sexual Medium; Jailbreak on), declared in `infra/modules/foundry-connection.bicep`. HCP sees a neutral bilingual manual-assessment fallback. Only allowlisted category/severity metadata are recorded, never raw errors or image content | Implemented |
+| AI telemetry | `lib/ai/telemetry.ts`, `lib/telemetry/analysis-events.ts`; privacy-safe analysis lifecycle events. Failed wound-analysis responses echo a safe correlation ID in JSON and `x-correlation-id`; lifecycle events use the same ID for operator correlation | Implemented |
+| Azure filter classification | `lib/ai/content-filter.ts`, transport and stream collection; input/output filter, `content_policy_violation` and explicit refusal are categorized; the `gpt-4o` deployment uses the custom `phoenix-clinical-imagery` policy (Violence/Self-harm thresholds High; Hate/Sexual Medium; Jailbreak on), declared in `infra/modules/foundry-connection.bicep`. HCP sees a neutral bilingual manual-assessment fallback. Error responses and telemetry may carry only allowlisted source/category/severity metadata, never raw errors, prompts, patient context, or image content | Implemented |
 
 **Wound image analysis flow (`/api/analyze-wound`).** The Original HCP client sends image data to
 the API and consumes its SSE completion. The default `staged` pipeline runs four

@@ -53,6 +53,9 @@
 > The `8.9.0` timeout correction is application-only. It changes the bounded code default and
 > exercises the existing validated single-pass fallback; no Azure resource, identity, secret,
 > model deployment, filter policy, network path, SKU, region, or app setting is changed.
+> The `8.10.0` diagnostics extension is application-only. It reuses the existing API response and
+> Application Insights paths; no Azure resource, identity, secret, model deployment, filter policy,
+> network path, SKU, region, or app setting is changed.
 
 ## Environment
 

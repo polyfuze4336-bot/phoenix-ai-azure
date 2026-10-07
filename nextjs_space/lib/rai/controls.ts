@@ -421,7 +421,7 @@ export const RAI_CONTROLS: RaiControl[] = [
     layer: 'operations',
     status: 'active',
     description:
-      'Telemetry records counts, latencies and bounded operational metadata only. Analysis events may include image size bucket, MIME type, and allowlisted Azure content-filter source/category/severity; provider failures log HTTP status, a validated provider request ID, and allowlisted Azure error code/type/param with a short message that has encoded payloads redacted (never the raw provider body). Blocked-key sanitisation prevents image bytes, Base64, patient identifiers, raw provider errors, prompts, clinical responses, transcripts, tokens and secrets from being logged.',
+      'Telemetry records counts, latencies and bounded operational metadata only. Analysis events may include image size bucket, MIME type, and allowlisted Azure content-filter source/category/severity; wound-analysis error responses echo a safe correlation ID in the JSON body and response header and may include only the same structured filter classification. Provider failures log HTTP status, a validated provider request ID, and allowlisted Azure error code/type/param with a short message that has encoded payloads redacted (never the raw provider body). Blocked-key sanitisation prevents image bytes, Base64, patient identifiers, raw provider errors, prompts, clinical responses, transcripts, tokens and secrets from being logged or returned as diagnostics.',
     evidence: [
       'lib/telemetry/server.ts',
       'lib/telemetry/client.ts',
@@ -430,7 +430,11 @@ export const RAI_CONTROLS: RaiControl[] = [
       'lib/ai/openai-compatible.ts',
       'app/api/analyze-wound/route.ts',
     ],
-    tests: ['tests/rai/rai-telemetry.test.ts', 'tests/unit/ai-transport.test.ts'],
+    tests: [
+      'tests/rai/rai-telemetry.test.ts',
+      'tests/unit/ai-transport.test.ts',
+      'tests/unit/hcp-analysis-provider.test.ts',
+    ],
     userVisible: false,
   },
   {

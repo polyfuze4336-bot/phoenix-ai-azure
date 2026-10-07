@@ -8,6 +8,7 @@ export type ImageAnalysisEventName =
   | 'image_analysis_failed';
 
 export interface ImageAnalysisTelemetryContext {
+  correlationId: string;
   errorCategory?: string;
   httpStatus: number;
   modelDeployment: string;
@@ -60,6 +61,7 @@ export function recordImageAnalysisEvent(
   context: ImageAnalysisTelemetryContext,
 ): void {
   const properties: TelemetryProperties = {
+    correlationId: context.correlationId,
     errorCategory: context.errorCategory,
     httpStatus: context.httpStatus,
     modelDeployment: context.modelDeployment,

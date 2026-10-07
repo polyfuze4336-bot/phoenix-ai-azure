@@ -82,8 +82,11 @@ request only medically necessary wound findings and respect patient dignity. Thi
 that Azure will accept every image or that any assessment is clinically accurate.
 Failure diagnostics record the assessment mode, stage and sanitized category, and provider HTTP
 status and validated request ID when available. They do not record image bytes, raw provider
-responses or patient context. These diagnostics cannot establish the deployed failure cause
-without live revision and request correlation.
+responses or patient context. Failed wound-analysis responses return the safe request correlation ID
+in their JSON body and `x-correlation-id` header. When Azure supplies structured filter evidence,
+the response and Application Insights event may also include only the allowlisted input/output
+source, harm category, and severity. Azure can omit those fields, so the correlation ID improves
+incident tracing but does not guarantee that every rejection identifies a category.
 
 ## Boundaries
 A single photograph cannot establish depth progression, infection, pain or sensation with certainty.
