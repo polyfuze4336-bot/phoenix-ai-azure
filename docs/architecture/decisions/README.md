@@ -48,6 +48,7 @@ Trivial changes (copy edits, dependency patch bumps, non-structural refactors) d
 | [ADR-0014](./ADR-0014-codespaces-immutable-image-rollback.md) | Codespaces development and immutable-image rollback | Accepted | 2026-08-16 |
 | [ADR-0015](./ADR-0015-retire-community-image-analysis.md) | Retire standalone Community image analysis | Accepted | 2026-08-17 |
 | [ADR-0016](./ADR-0016-runtime-community-first-aid-video.md) | Runtime-configured Community first-aid video | Accepted | 2026-08-29 |
+| [ADR-0017](./ADR-0017-clinical-imagery-violence-input-annotation.md) | Annotate rather than block Violence input for clinical imagery | Accepted | 2026-10-07 |
 
 ## Template
 

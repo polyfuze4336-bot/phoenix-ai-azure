@@ -43,7 +43,7 @@ resource foundry 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
   }
 }
 
-@description('Custom content-filter policy applied to the model deployment. Raises only the Violence and Self-harm thresholds to High so legitimate burn/wound clinical imagery is not rejected; Hate and Sexual stay at Medium and Jailbreak protection stays on.')
+@description('Clinical-imagery content-filter policy. Violence input is annotate-only for severe wound images; Violence output and Self-harm remain blocked at High, Hate and Sexual at Medium, and Jailbreak protection stays on.')
 param raiPolicyName string = 'phoenix-clinical-imagery'
 
 resource clinicalFilterPolicy 'Microsoft.CognitiveServices/accounts/raiPolicies@2024-10-01' = {
@@ -57,7 +57,7 @@ resource clinicalFilterPolicy 'Microsoft.CognitiveServices/accounts/raiPolicies@
       { name: 'Hate', source: 'Completion', severityThreshold: 'Medium', blocking: true, enabled: true }
       { name: 'Sexual', source: 'Prompt', severityThreshold: 'Medium', blocking: true, enabled: true }
       { name: 'Sexual', source: 'Completion', severityThreshold: 'Medium', blocking: true, enabled: true }
-      { name: 'Violence', source: 'Prompt', severityThreshold: 'High', blocking: true, enabled: true }
+      { name: 'Violence', source: 'Prompt', severityThreshold: 'High', blocking: false, enabled: true }
       { name: 'Violence', source: 'Completion', severityThreshold: 'High', blocking: true, enabled: true }
       { name: 'SelfHarm', source: 'Prompt', severityThreshold: 'High', blocking: true, enabled: true }
       { name: 'SelfHarm', source: 'Completion', severityThreshold: 'High', blocking: true, enabled: true }

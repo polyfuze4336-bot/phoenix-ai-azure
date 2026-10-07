@@ -10,6 +10,25 @@ technically possible.
 
 ---
 
+## 2026-10-07 — Severe clinical-image Violence input annotation
+
+The supplied severe hand-burn image reproduced the reported failure on every attempt: four Acute
+Burn submissions and one General Wound submission returned HTTP 422 `AI_CONTENT_FILTER`, source
+`input`, in 1.4–2.2 seconds. Azure omitted category and severity, but the failure persisted across
+both independent prompt/schema paths. Microsoft documents wounds and surgical treatment as Safe
+Violence imagery while explicit graphic injuries can be High Violence. This evidence identifies
+the image-level Violence classifier as the narrowest supported mitigation target.
+
+The existing `phoenix-clinical-imagery` policy now keeps Violence Prompt classification enabled but
+sets it to non-blocking annotation. Violence Completion and Self-harm Prompt/Completion remain
+blocked at High, Hate and Sexual remain blocked at Medium, and Jailbreak protection remains enabled.
+This is not a general filters-off configuration. Invalid input, schema failures, output filtering,
+model refusal, deterministic clinical checks, and clinician oversight remain unchanged.
+
+Architecture impact is MEDIUM (`8.10.0` -> `8.11.0`); no resource, model/version/capacity, identity,
+secret, network, SKU, region, data, storage, or visible workflow is added. The policy decision is
+recorded in ADR-0017 and RAI-SAFE-014 is Active with Bicep and test evidence.
+
 ## 2026-10-07 — Privacy-safe content-filter diagnostics
 
 The reported clinical-image message maps to the `AI_CONTENT_FILTER` failure path. The exact

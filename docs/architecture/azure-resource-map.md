@@ -56,6 +56,10 @@
 > The `8.10.0` diagnostics extension is application-only. It reuses the existing API response and
 > Application Insights paths; no Azure resource, identity, secret, model deployment, filter policy,
 > network path, SKU, region, or app setting is changed.
+> The `8.11.0` clinical-imagery policy change updates only the existing
+> `phoenix-clinical-imagery` child resource: Violence Prompt remains enabled but becomes
+> non-blocking annotation. All completion and other-category protections remain configured; no
+> resource, identity, secret, model/version/capacity, network, SKU, region, or app setting is added.
 
 ## Environment
 
@@ -99,8 +103,9 @@
   retained because the client-only demo identity cannot secure access to clinical records.
 - The application authenticates to Azure AI and Storage using the **user-assigned managed
   identity** (`id-phoenixai-<token>`); no keys are stored in application settings.
-- Bicep declares the custom `phoenix-clinical-imagery` content-filter policy (Violence/Self-harm
-  High, Hate/Sexual Medium, Jailbreak on; base `Microsoft.Default`) and attaches it to the
+- Bicep declares the custom `phoenix-clinical-imagery` content-filter policy (Violence Prompt
+  enabled/non-blocking; Violence Completion and Self-harm Prompt/Completion High; Hate/Sexual
+  Medium; Jailbreak on; base `Microsoft.Default`) and attaches it to the
   `gpt-4o` deployment. It was first applied to the live deployment on 2026-10-05 and verified via
   ARM (deployment `raiPolicyName`, provisioning `Succeeded`, model/version/capacity unchanged).
   Operators should still confirm behaviour with real clinical test images.

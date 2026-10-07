@@ -53,7 +53,7 @@ test('every control has a known principle, layer, status and evidence', () => {
 test('evidence paths look like repo-relative source files', () => {
   for (const c of RAI_CONTROLS) {
     for (const e of c.evidence) {
-      assert.match(e, /\.(ts|tsx|prisma|mjs|md)$/, `${c.id} evidence ${e}`);
+      assert.match(e, /\.(ts|tsx|bicep|prisma|mjs|md)$/, `${c.id} evidence ${e}`);
       assert.ok(!e.startsWith('/'), `${c.id} evidence should be repo-relative: ${e}`);
     }
   }
@@ -85,6 +85,34 @@ test('RAI-PRIV-007 is active and states legal and clinical boundaries in both la
   assert.match(translations, /keperluan perlindungan data peribadi Malaysia yang berkenaan/);
   assert.match(translations, /tidak menggantikan pertimbangan profesional klinikal/);
   assert.doesNotMatch(translations, /PDPA Compliant/);
+});
+
+test('RAI-SAFE-014 keeps the clinical-imagery filter exception narrow', () => {
+  const control = RAI_CONTROLS.find((item) => item.id === 'RAI-SAFE-014');
+  assert.equal(control?.status, 'active');
+  assert.equal(control?.userVisible, false);
+
+  const policy = readFileSync(
+    new URL('../../../infra/modules/foundry-connection.bicep', import.meta.url),
+    'utf8',
+  );
+  assert.match(
+    policy,
+    /\{ name: 'Violence', source: 'Prompt', severityThreshold: 'High', blocking: false, enabled: true \}/,
+  );
+  assert.match(
+    policy,
+    /\{ name: 'Violence', source: 'Completion', severityThreshold: 'High', blocking: true, enabled: true \}/,
+  );
+  assert.match(
+    policy,
+    /\{ name: 'SelfHarm', source: 'Prompt', severityThreshold: 'High', blocking: true, enabled: true \}/,
+  );
+  assert.match(
+    policy,
+    /\{ name: 'SelfHarm', source: 'Completion', severityThreshold: 'High', blocking: true, enabled: true \}/,
+  );
+  assert.match(policy, /\{ name: 'Jailbreak', source: 'Prompt', blocking: true, enabled: true \}/);
 });
 
 test('the five assurance stages are present and ordered', () => {

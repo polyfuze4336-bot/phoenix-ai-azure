@@ -117,6 +117,26 @@ export const RAI_CONTROLS: RaiControl[] = [
     userVisible: true,
   },
   {
+    id: 'RAI-SAFE-014',
+    title: 'Clinical-imagery content-filter boundary',
+    principle: 'reliabilitySafety',
+    layer: 'input',
+    status: 'active',
+    description:
+      'The Azure AI policy keeps Violence input classification enabled but non-blocking so severe wound imagery can reach the clinical pipeline. Violence output and Self-harm remain blocked at High, Hate and Sexual remain blocked at Medium, and Jailbreak protection remains enabled. Provider refusals still fail safely rather than producing a clinical result.',
+    evidence: [
+      'infra/modules/foundry-connection.bicep',
+      'lib/ai/content-filter.ts',
+      'app/api/analyze-wound/route.ts',
+    ],
+    tests: [
+      'tests/rai/rai-controls.test.ts',
+      'tests/unit/ai-transport.test.ts',
+      'tests/unit/hcp-analysis-provider.test.ts',
+    ],
+    userVisible: false,
+  },
+  {
     id: 'RAI-PRIV-006',
     title: 'Request size limits',
     principle: 'privacySecurity',

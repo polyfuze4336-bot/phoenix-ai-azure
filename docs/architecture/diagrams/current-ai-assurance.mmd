@@ -7,6 +7,7 @@ flowchart TB
     subgraph LIn["Input assurance"]
         V1["Image input validation\nRAI-SAFE-001 / RAI-PRIV-006"]
         V2["Image quality assessment\nRAI-SAFE-002"]
+        V3["Clinical-imagery filter boundary\nViolence input annotate-only;\nother protections retained\nRAI-SAFE-014"]
     end
 
     subgraph LAn["Analysis assurance"]
@@ -44,7 +45,7 @@ flowchart TB
 
     OUT["Clinician-supervised result\n+ case record"]
 
-    IN --> V1 --> V2 --> A1
+    IN --> V1 --> V2 --> V3 --> A1
     A1 --> A2 --> A3
     A2 --> A4
     A1 --> A5

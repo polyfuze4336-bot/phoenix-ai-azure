@@ -23,6 +23,14 @@ Phoenix AI treats the AI model as **configuration under governance**, not a hard
 - `AI_ANALYSIS_PIPELINE=staged` (default) runs the four-stage evidence-gated pipeline;
   `AI_ANALYSIS_PIPELINE=single` reverts to the single-pass fallback for rollback.
 
+## Clinical-imagery content filtering
+- `infra/modules/foundry-connection.bicep` attaches `phoenix-clinical-imagery` to the deployment.
+- Violence Prompt classification is enabled but non-blocking so severe wound images can enter the
+  clinical pipeline. Violence Completion and Self-harm Prompt/Completion block at High,
+  Hate/Sexual block at Medium, and Jailbreak protection remains enabled (**RAI-SAFE-014**).
+- The exception is input-only and category-specific. It does not disable output filtering,
+  schema validation, deterministic safety rules, or clinician review.
+
 ## Versioning & traceability
 - Every analysis records the model deployment name, pipeline mode/version, prompt versions and schema
   version in the metadata envelope ([`lib/ai/analysis/metadata.ts`](../../nextjs_space/lib/ai/analysis/metadata.ts))

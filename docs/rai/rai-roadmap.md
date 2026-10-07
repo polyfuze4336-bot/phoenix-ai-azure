@@ -6,6 +6,8 @@ Honest staging. **Implemented** items are in the product today; **Next** and **F
 ## Implemented (today)
 - Five-layer AI assurance model maintained in the code register, documentation, and tests.
 - Input validation + image-quality gating (RAI-SAFE-001/002).
+- Narrow clinical-imagery filter boundary: Violence input is classified but non-blocking, while
+  output and all other retained category protections remain blocking (RAI-SAFE-014).
 - Observation/interpretation separation with field-level confidence + evidence (RAI-SAFE-004,
   RAI-TRANS-001).
 - Deterministic Parkland (weight-gated) and Lund & Browder TBSA (RAI-SAFE-006/011).

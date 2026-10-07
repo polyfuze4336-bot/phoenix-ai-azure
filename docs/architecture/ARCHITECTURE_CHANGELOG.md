@@ -16,6 +16,18 @@ Versioning follows semantic versioning applied to architecture:
 Every architecture-impacting change MUST bump this version and add an entry, and SHOULD reference
 the relevant ADR and change record.
 
+## [8.11.0] — 2026-10-07
+
+### Changed
+- The `phoenix-clinical-imagery` policy keeps Violence input classification enabled but changes
+  that single prompt-side filter to non-blocking annotation so severe clinical wound images can
+  reach the analysis pipeline.
+- Violence completions and Self-harm prompts/completions remain blocked at High; Hate and Sexual
+  remain blocked at Medium; Jailbreak protection remains enabled.
+- No model, identity, secret, network, SKU, region, or application UX change. Impact MEDIUM; see
+  [ADR-0017](./decisions/ADR-0017-clinical-imagery-violence-input-annotation.md) and
+  `changes/CHANGE-20261007-violence-input-annotation.md`.
+
 ## [8.10.0] — 2026-10-07
 
 ### Changed
