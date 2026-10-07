@@ -100,3 +100,14 @@ policy through ARM.
 - RAI control test asserting the exact retained filter boundaries
 - Full unit, RAI, typecheck, build, architecture, and Mermaid validation
 - Live policy inspection and exact-image Acute Burn retest
+
+## Validation Result
+
+Both input changes were observed in Azure what-if as `blocking: true => false`, and infrastructure
+runs `37572683813` and `37574897465` completed successfully. The exact image continued to return
+HTTP 422 `AI_CONTENT_FILTER`, source `input`, after each deployment. After the Self-harm change,
+attempts took 36.3 and 1.8 seconds and Azure still omitted category and severity. The configured
+Violence/Self-harm input filters are therefore not the sole cause. Hate/Sexual and Jailbreak
+protections remain blocking; no further filter was weakened without evidence. Investigation is
+escalated with the privacy-safe support evidence in
+`docs/operations/AZURE-SUPPORT-CONTENT-FILTER-INCIDENT.md`.

@@ -44,3 +44,19 @@ No image bytes, Base64, filename, patient context, prompt, or clinical output we
 - RAI test asserts the exact Bicep filter entries
 - Unit, RAI, typecheck, build, architecture, and Mermaid checks
 - Retest the exact read-only attachment and record only safe operational metadata
+
+## Result
+
+- Infrastructure run `37574897465`: succeeded.
+- Azure what-if showed the intended policy transition `blocking: true => false`.
+- Automatic application deployment run `37574886021`: succeeded.
+- Exact-image Acute Burn retests:
+  - HTTP 422 `AI_CONTENT_FILTER`, source `input`, 36.3 seconds, correlation
+    `5fb7cb76-ac2e-4f7b-a5f3-61f88d3bbf49`.
+  - HTTP 422 `AI_CONTENT_FILTER`, source `input`, 1.8 seconds, correlation
+    `80fa91aa-fec7-43dc-9bab-e628b192f096`.
+- Azure omitted category and severity on both attempts.
+
+Self-harm input annotation did not resolve the incident. The retained Hate/Sexual and Jailbreak
+protections were not weakened speculatively. See the privacy-safe Azure support evidence package in
+`docs/operations/AZURE-SUPPORT-CONTENT-FILTER-INCIDENT.md`.

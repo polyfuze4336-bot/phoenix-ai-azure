@@ -25,6 +25,14 @@ Self-harm completions remain blocked at High; Hate and Sexual input/output remai
 Medium; Jailbreak protection remains enabled. Architecture impact is MEDIUM (`8.11.0` ->
 `8.12.0`); ADR-0017 and RAI-SAFE-014 were updated with the evidence and retained boundaries.
 
+Infrastructure run `37574897465` and automatic application deployment run `37574886021` both
+succeeded. Two exact-image Acute Burn retests still returned HTTP 422 `AI_CONTENT_FILTER`, source
+`input`, in 36.3 and 1.8 seconds. Azure again omitted category and severity. The configurable
+Violence and Self-harm input filters are therefore not the sole cause. Hate/Sexual and Jailbreak
+protections remain blocking; no further protection was weakened without classifier evidence. A
+privacy-safe Azure support package is recorded in
+`docs/operations/AZURE-SUPPORT-CONTENT-FILTER-INCIDENT.md`.
+
 ## 2026-10-07 — Severe clinical-image Violence input annotation
 
 The supplied severe hand-burn image reproduced the reported failure on every attempt: four Acute
